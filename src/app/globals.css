@@ -1,0 +1,6 @@
+/* src/app/globals.css */
+
+/* Importation des trois couches fondamentales de Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
