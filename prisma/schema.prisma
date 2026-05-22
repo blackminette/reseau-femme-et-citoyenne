@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
 }
 
 model Utilisateur {
@@ -27,6 +27,7 @@ model Utilisateur {
 
   suggestions     BoiteAIdees[]
   ateliersPrives  Atelier[]     @relation("PartenaireAtelier")
+  messagesEnvoyes MessageContact[]
 }
 
 model Atelier {
@@ -151,4 +152,7 @@ model MessageContact {
   sujet     String
   message   String
   envoyeLe  DateTime @default(now())
+
+  utilisateurId String?
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
 }
