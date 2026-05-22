@@ -1,4 +1,4 @@
-// src/components/UserDropdown.tsx
+// * src/components/UserDropdown.tsx
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -19,14 +19,14 @@ export default function UserDropdown({ role }: UserDropdownProps) {
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
+                setIsOpen(false); // Ferme le menu si on clique en dehors
             }
         }
 
-        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside); // On écoute les clics sur tout le document
 
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('mousedown', handleClickOutside); // Nettoyage de l'écouteur lors du démontage du composant
         };
     }, [isOpen]);
 

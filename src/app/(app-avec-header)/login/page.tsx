@@ -1,4 +1,4 @@
-// src/app/login/page.tsx
+// * src/app/login/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -17,8 +17,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoading(true);
 
-        // TODO: C'est ici que tu brancheras le code de ton collègue plus tard :
-        // await supabase.auth.signInWithPassword({ email, password })
+        // TODO: Intégrer ici la logique de connexion avec Supabase dès que les identifiants seront disponibles.
 
         console.log('Tentative de connexion avec :', { email, password });
 

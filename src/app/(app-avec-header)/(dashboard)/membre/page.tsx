@@ -1,4 +1,4 @@
-// src/app/(dashboard)/membre/page.tsx
+// * src/app/(dashboard)/membre/page.tsx
 'use client';
 
 import React from 'react';
@@ -27,16 +27,6 @@ export default function MembreDashboard() {
                     </p>
                 </div>
 
-                {/* Future zone pour la Boîte à idées */}
-                <div className="bg-amber-50 rounded-lg border border-amber-200 p-6">
-                    <h3 className="text-amber-800 font-medium mb-1">💡 Une suggestion ou un projet d'atelier ?</h3>
-                    <p className="text-amber-700 text-sm mb-3">
-                        Partagez vos idées directement avec l'équipe administrative de l'association.
-                    </p>
-                    <button className="px-4 py-2 bg-amber-600 text-white rounded text-sm font-medium hover:bg-amber-700 transition-colors">
-                        Oouvrir la Boîte à idées (Bientôt disponible)
-                    </button>
-                </div>
             </div>
         </div>
     );
