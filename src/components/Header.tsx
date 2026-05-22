@@ -30,7 +30,7 @@ export default function Header() {
                     </div>
 
                     {/* Liens de navigation dynamiques selon le rôle */}
-                    <div className="hidden sm:flex sm:space-x-4 items-center">
+                    <div className="flex sm:space-x-4 items-center">
                         <Link href="/" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
                             Accueil
                         </Link>
