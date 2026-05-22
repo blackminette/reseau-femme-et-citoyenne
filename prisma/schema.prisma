@@ -1,13 +1,154 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Utilisateur {
+  id              String        @id @default(uuid()) 
+  email           String        @unique
+  nom             String
+  prenom          String
+  telephone       String?
+  role            String        @default("MEMBRE") 
+  createdAt       DateTime      @default(now())
+
+  reservations    Reservation[]
+  dons            Don[]
+  temoignages     Temoignage[]
+  coursAnimes     Cours[]       @relation("IntervenanteCours")
+
+  tuteurId        String?
+  tuteur          Utilisateur?  @relation("ParentEnfant", fields: [tuteurId], references: [id])
+  enfants         Utilisateur[] @relation("ParentEnfant")
+
+  suggestions     BoiteAIdees[]
+  ateliersPrives  Atelier[]     @relation("PartenaireAtelier")
+}
+
+model Atelier {
+  id                Int           @id @default(autoincrement())
+  titre             String
+  description       String?
+  dateAtelier       DateTime
+  placesMax         Int           @default(15)
+  estPrive          Boolean       @default(false) 
+  typePaiement      String?       
+  creneauVerrouille Boolean       @default(false) 
+  effectifPrevu     Int?          
+
+  partenaireId    String?
+  partenaire      Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id])
+
+  reservations    Reservation[]
+}
+
+model Reservation {
+  id              Int      @id @default(autoincrement())
+  dateReservation DateTime @default(now())
+  statut          String   @default("PENDING") 
+
+  utilisateurId   String
+  utilisateur     Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  atelierId       Int
+  atelier         Atelier      @relation(fields: [atelierId], references: [id], onDelete: Cascade)
+
+  @@unique([utilisateurId, atelierId])
+}
+
+model Cours {
+  id             Int          @id @default(autoincrement())
+  titre          String
+  description    String?
+  estPublic      Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  intervenanteId String
+  intervenante   Utilisateur  @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+
+  compositions   Composition[]
+  programmes     Programme[]
+}
+
+model Exercice {
+  id           Int           @id @default(autoincrement())
+  titre        String
+  instructions String
+  type         String        
+  
+  compositions Composition[]
+  scores       ScoreQuiz[]   
+}
+
+model Composition {
+  id         Int      @id @default(autoincrement())
+  ordre      Int      @default(1) 
+
+  coursId    Int
+  cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
+
+  exerciceId Int
+  exercice   Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
+
+  @@unique([coursId, exerciceId])
+}
+
+model ScoreQuiz {
+  id          Int      @id @default(autoincrement())
+  score       Int      
+  createdAt   DateTime @default(now())
+
+  etudiantId  String
+  exerciceId  Int
+  exercice    Exercice @relation(fields: [exerciceId], references: [id])
+}
+
+model Programme {
+  id                Int      @id @default(autoincrement())
+  datePlanification DateTime
+  
+  coursId           Int
+  cours             Cours    @relation(fields: [coursId], references: [id])
+}
+
+model BoiteAIdees {
+  id          Int      @id @default(autoincrement())
+  sujet       String
+  suggestion  String
+  createdAt   DateTime @default(now())
+
+  membreId    String
+  membre      Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
+}
+
+model Don {
+  id            Int      @id @default(autoincrement())
+  montant       Float
+  dateDon       DateTime @default(now())
+  statut        String   @default("COMPLETED") 
+  utilisateurId String
+  utilisateur   Utilisateur  @relation(fields: [utilisateurId], references: [id])
+}
+
+model Temoignage {
+  id            Int      @id @default(autoincrement())
+  contenu       String
+  estValide     Boolean  @default(false) 
+  createdAt     DateTime @default(now())
+
+  utilisateurId String
+  utilisateur   Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+}
+
+model MessageContact {
+  id        Int      @id @default(autoincrement())
+  nom       String
+  email     String
+  sujet     String
+  message   String
+  envoyeLe  DateTime @default(now())
 }
