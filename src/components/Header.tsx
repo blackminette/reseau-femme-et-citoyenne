@@ -32,14 +32,14 @@ export default function Header() {
                         </Link>
 
                         {/* Onglets pour l'ADMIN */}
-                        {fakeRole === 'ADMIN' && (
+                        {/* {fakeRole === 'ADMIN' && (
                             <>
                                 <Link href="/admin" className="bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm font-medium border border-red-200">
                                     Console Admin
                                 </Link>
                                 <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Mode : Dieu</span>
                             </>
-                        )}
+                        )} */}
 
                         {/* Onglets pour le PARTENAIRE */}
                         {fakeRole === 'PARTENAIRE' && (
