@@ -4,18 +4,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { UserRole } from '@/types/auth';
+import UserDropdown from './UserDropdown';
 
 /**
  * Composant Header Global et Dynamique.
  * Adapte ses boutons de navigation en fonction du rôle de l'utilisateur.
  */
 export default function Header() {
-    // =========================================================================
-    // 🔄 SIMULATION DU RÔLE (MOCK)
-    // Change cette valeur pour tester le Header : 'ADMIN' | 'PARTENAIRE' | 'MEMBRE' | null
-    // =========================================================================
+
     const fakeRole: UserRole | null = 'ADMIN'; // <-- Changez ici pour simuler différents rôles
-    // =========================================================================
 
     return (
         <nav className="bg-white border-b border-slate-200 w-full sticky top-0 z-50 shadow-sm">
@@ -29,7 +26,6 @@ export default function Header() {
                         </Link>
                     </div>
 
-                    {/* Liens de navigation dynamiques selon le rôle */}
                     <div className="flex sm:space-x-4 items-center">
                         <Link href="/" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
                             Accueil
@@ -70,17 +66,11 @@ export default function Header() {
                         )}
                     </div>
 
-                    {/* Bouton de Connexion / Profil (À droite) */}
                     <div className="flex items-center">
                         {fakeRole ? (
                             <div className="flex items-center gap-3">
-                                <span className="text-xs text-slate-500 hidden md:inline">Connecté en tant que <strong>{fakeRole}</strong></span>
-                                <button
-                                    onClick={() => alert('Déconnexion simulée')}
-                                    className="ml-4 px-3 py-1.5 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                                >
-                                    Déconnexion
-                                </button>
+                                {/* On appelle notre menu déroulant ici en lui passant le rôle */}
+                                <UserDropdown role={fakeRole} />
                             </div>
                         ) : (
                             <Link
