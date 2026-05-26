@@ -31,6 +31,14 @@ export default function Header() {
                             Accueil
                         </Link>
 
+                        <Link href="/a-propos" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
+                            À propos
+                        </Link>
+
+                        <Link href="/ateliers" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
+                            Ateliers
+                        </Link>
+
                         {/* Onglets pour l'ADMIN */}
                         {/* {fakeRole === 'ADMIN' && (
                             <>
