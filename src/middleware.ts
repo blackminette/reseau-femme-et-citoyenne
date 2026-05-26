@@ -4,6 +4,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
+import { FakeRole } from '@/types/auth'; //! Juste pour les tests et le développement, à supprimer en prod.
+// TODO : Utilisation du fakerole : - Soit via un cookie (ex: ?fakerole=ADMIN) - Soit via un paramètre d'URL (ex: ?fakerole=ADMIN)
+// TODO : Exemple : http://localhost:3000/admin?fakerole=ADMIN ou http://localhost:3000/partenaire?fakerole=ADMIN
+
+// Middleware de Protection des Routes et de Redirection Basée sur les Rôles (RBAC Strict)
+
 export const config = {
     matcher: [
         '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
@@ -40,9 +46,25 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
+    let session = data.session;
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
+
+    const fakeRole = (request.cookies.get('fakerole')?.value as FakeRole | undefined) //! Juste pour les tests et le développement, à supprimer en prod.
+        ?? (url.searchParams.get('fakerole') as FakeRole | undefined); //! Juste pour les tests et le développement, à supprimer en prod.
+
+    if (!session && fakeRole && process.env.NODE_ENV === 'development') { //! Juste pour les tests et le développement, à supprimer en prod.
+        // Mode développement : simule une session utilisateur pour tester les dashboards.
+        session = {
+            user: {
+                id: 'fake-user',
+                user_metadata: {
+                    role: fakeRole, //! Juste pour les tests et le développement, à supprimer en prod.
+                },
+            },
+        } as any; //! Juste pour les tests et le développement, à supprimer en prod.
+    }
 
     // Liste des routes privées qui demandent une connexion obligatoire
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
@@ -64,7 +86,10 @@ export async function middleware(request: NextRequest) {
     }
 
     // RÉCUPÉRATION DU RÔLE
-    const userRole = session.user.user_metadata?.role as UserRole;
+    // const userRole = session.user.user_metadata?.role as UserRole;
+    const userRole = fakeRole //! Juste pour les tests et le développement, à supprimer en prod.
+        ? (fakeRole as UserRole) //! Juste pour les tests et le développement, à supprimer en prod.
+        : session.user.user_metadata?.role as UserRole; //! Juste pour les tests et le développement, à supprimer en prod.
 
     // CARTOGRAPHIE DES STRATÉGIES DE REDIRECTION (RBAC STRICT)
 

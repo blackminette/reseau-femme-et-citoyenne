@@ -73,12 +73,20 @@ export default function Header() {
                                 <UserDropdown role={fakeRole} />
                             </div>
                         ) : (
-                            <Link
-                                href="/login"
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-                            >
-                                Connexion
-                            </Link>
+                            <>
+                                <Link
+                                    href="/login"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                >
+                                    Connexion
+                                </Link>
+                                <Link
+                                    href="/signup"
+                                    className="ml-4 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                                >
+                                    Inscription
+                                </Link>
+                            </>
                         )}
                     </div>
 
