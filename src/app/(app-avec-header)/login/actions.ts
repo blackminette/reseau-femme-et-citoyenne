@@ -1,14 +1,14 @@
-// src/app/(app-avec-header)/login/actions.ts
+// * src/app/(app-avec-header)/login/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
-// import { supabase } from '@/lib/supabase'; 
+import { getSupabaseServer } from '@/lib/supabase';
 
 export async function loginAction(formData: any) {
     const { email, password } = formData;
 
     try {
-        /*
+        const supabase = await getSupabaseServer();
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -17,14 +17,6 @@ export async function loginAction(formData: any) {
         if (authError || !authData.user) {
             return { success: false, error: "Identifiants ou mot de passe incorrects." };
         }
-        */
-
-        // SIMULATION TEMPORAIRE (En attendant l'Auth Supabase)
-        // Permet de tester le formulaire avec n'importe quel mot de passe pour l'instant
-        if (!email.includes('@')) {
-            return { success: false, error: "Veuillez entrer une adresse e-mail valide." };
-        }
-
 
         // on vérifie que l'utilisateur existe bien dans la table Prisma (ex: s'il a déjà un profil créé)
         const utilisateur = await prisma.utilisateur.findUnique({
