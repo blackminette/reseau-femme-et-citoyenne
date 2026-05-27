@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { loginAction } from './actions';
+import { useRouter } from 'next/navigation';
 
 /**
  * Page de connexion de l'application (/login).
@@ -12,15 +13,26 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    // Soumission du formulaire
+    const router = useRouter();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError(null);
 
-        const result = await loginAction({ email, password });
+        const result = await loginAction({ email, password }); // Appel de l'action côté serveur pour traiter la connexion
 
         setIsLoading(false);
+
+        if (result.success && result.role) {
+            const destination = `/${result.role.toLowerCase()}`; // Redirige en fonction du rôle
+            router.push(destination);
+
+        } else {
+            setError(result.error || "Une erreur est survenue lors de la connexion.");
+        }
     };
 
     return (
