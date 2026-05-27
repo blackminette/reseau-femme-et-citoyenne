@@ -1,33 +1,42 @@
 generator client {
   provider = "prisma-client-js"
-  // output   = "../src/generated/prisma"
-  // engineType = "library"
 }
 
 datasource db {
   provider  = "postgresql"
 }
 
+// 1. Définition de la hiérarchie de progression pédagogique
+enum NiveauPedagogique {
+  NIVEAU_1      // Premier palier / Débutant
+  NIVEAU_2      // Deuxième palier / Intermédiaire
+  NIVEAU_3      // Troisième palier / Avancé
+  ADULTE        // Destiné spécifiquement aux adultes
+}
+
 model Utilisateur {
-  id              String        @id @default(uuid()) 
-  email           String        @unique
+  id              String          @id @default(uuid()) 
+  email           String          @unique
   nom             String
   prenom          String
   telephone       String?
-  role            String        @default("MEMBRE") 
-  createdAt       DateTime      @default(now())
+  role            String          @default("MEMBRE") 
+  createdAt       DateTime        @default(now())
+
+  // Ajout du niveau pédagogique actuel (Optionnel car non requis pour l'admin)
+  niveau          NiveauPedagogique? @default(NIVEAU_1)
 
   reservations    Reservation[]
   dons            Don[]
   temoignages     Temoignage[]
-  coursAnimes     Cours[]       @relation("IntervenanteCours")
+  coursAnimes     Cours[]         @relation("IntervenanteCours")
 
   tuteurId        String?
-  tuteur          Utilisateur?  @relation("ParentEnfant", fields: [tuteurId], references: [id])
-  enfants         Utilisateur[] @relation("ParentEnfant")
+  tuteur          Utilisateur?    @relation("ParentEnfant", fields: [tuteurId], references: [id])
+  enfants         Utilisateur[]   @relation("ParentEnfant")
 
   suggestions     BoiteAIdees[]
-  ateliersPrives  Atelier[]     @relation("PartenaireAtelier")
+  ateliersPrives  Atelier[]       @relation("PartenaireAtelier")
   messagesEnvoyes MessageContact[]
 }
 
@@ -63,14 +72,17 @@ model Reservation {
 }
 
 model Cours {
-  id             Int          @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
   titre          String
-  description    String?
-  estPublic      Boolean      @default(true)
-  createdAt      DateTime     @default(now())
+  description    String?           @db.Text
+  
+  niveauRequis   NiveauPedagogique @default(NIVEAU_1)
+  
+  estPublic      Boolean           @default(true)
+  createdAt      DateTime          @default(now())
 
   intervenanteId String
-  intervenante   Utilisateur  @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+  intervenante   Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
 
   compositions   Composition[]
   programmes     Programme[]
