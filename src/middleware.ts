@@ -1,4 +1,4 @@
-// src/middleware.ts
+// * src/middleware.ts
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
-    // 4. CAS GÉNÉRAL : Si l'utilisateur n'est pas connecté
+    // Si l'utilisateur n'est pas connecté
     if (!session) {
         // Si la route demandée est privée -> Redirection vers /login
         if (isPrivateRoute) {
@@ -63,10 +63,10 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // 5. RÉCUPÉRATION DU RÔLE
+    // RÉCUPÉRATION DU RÔLE
     const userRole = session.user.user_metadata?.role as UserRole;
 
-    // 6. CARTOGRAPHIE DES STRATÉGIES DE REDIRECTION (RBAC STRICT)
+    // CARTOGRAPHIE DES STRATÉGIES DE REDIRECTION (RBAC STRICT)
 
     // REGLE 1 : Protection de l'espace Administrateur
     if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {

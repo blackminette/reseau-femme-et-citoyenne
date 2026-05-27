@@ -1,6 +1,6 @@
-// src/app/layout.tsx
+// * src/app/layout.tsx
 import React from 'react';
-import '@/app/globals.css'; // Ajuste le chemin vers tes styles CSS globaux si nécessaire
+import '@/app/globals.css';
 
 export const metadata = {
     title: 'Mon Projet Association',
