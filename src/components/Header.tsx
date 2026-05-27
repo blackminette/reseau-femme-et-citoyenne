@@ -1,18 +1,60 @@
 // * src/components/Header.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { UserRole } from '@/types/auth';
 import UserDropdown from './UserDropdown';
+import { supabaseClient } from '@/lib/supabaseClient'; // Import du client browser
 
 /**
  * Composant Header Global et Dynamique.
  * Adapte ses boutons de navigation en fonction du rôle de l'utilisateur.
  */
 export default function Header() {
+    // États pour stocker le rôle et le chargement
+    const [role, setRole] = useState<UserRole | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const fakeRole: UserRole | null = 'ADMIN'; // <-- Changez ici pour simuler différents rôles
+    useEffect(() => {
+        // Fonction pour récupérer l'utilisateur et son rôle en BDD
+        const fetchUserRole = async () => {
+            setIsLoading(true);
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (user && user.email) {
+                // Requête client pour récupérer le rôle dans la table Prisma
+                const { data: profile, error } = await supabaseClient
+                    .from('Utilisateur')
+                    .select('role')
+                    .eq('email', user.email)
+                    .single();
+
+                if (!error && profile) {
+                    setRole(profile.role as UserRole);
+                } else {
+                    setRole(null);
+                }
+            } else {
+                setRole(null);
+            }
+            setIsLoading(false);
+        };
+
+        fetchUserRole();
+
+        // Écouter les événements d'authentification (Connexion / Déconnexion)
+        // Permet de rafraîchir le header instantanément sans recharger la page
+        const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                fetchUserRole();
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
 
     return (
         <nav className="bg-white border-b border-slate-200 w-full sticky top-0 z-50 shadow-sm">
@@ -26,51 +68,32 @@ export default function Header() {
                         </Link>
                     </div>
 
+                    {/* Liens de navigation centraux */}
                     <div className="flex sm:space-x-4 items-center">
                         <Link href="/" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
                             Accueil
                         </Link>
 
                         {/* Onglets pour l'ADMIN */}
-                        {/* {fakeRole === 'ADMIN' && (
+                        {!isLoading && role === 'ADMIN' && (
                             <>
                                 <Link href="/admin" className="bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm font-medium border border-red-200">
                                     Console Admin
                                 </Link>
-                                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Mode : Dieu</span>
-                            </>
-                        )} */}
-
-                        {/* Onglets pour le PARTENAIRE */}
-                        {fakeRole === 'PARTENAIRE' && (
-                            <>
-                                <Link href="/partenaire" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
-                                    Réserver un créneau
-                                </Link>
-                                <Link href="/partenaire/factures" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
-                                    Mes Factures
-                                </Link>
-                            </>
-                        )}
-
-                        {/* Onglets pour le MEMBRE */}
-                        {fakeRole === 'MEMBRE' && (
-                            <>
-                                <Link href="/membre" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
-                                    Ma Famille
-                                </Link>
-                                <Link href="/membre" className="text-amber-700 bg-amber-50 px-3 py-2 rounded-md text-sm font-medium border border-amber-200">
-                                    💡 Boîte à idées
-                                </Link>
+                                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Mode : Admin</span>
                             </>
                         )}
                     </div>
 
+                    {/* Section Profil / Connexion (à droite) */}
                     <div className="flex items-center">
-                        {fakeRole ? (
+                        {isLoading ? (
+                            // Petit indicateur discret pendant le chargement de la session
+                            <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
+                        ) : role ? (
                             <div className="flex items-center gap-3">
-                                {/* On appelle notre menu déroulant ici en lui passant le rôle */}
-                                <UserDropdown role={fakeRole} />
+                                {/* Menu déroulant avec le rôle dynamique */}
+                                <UserDropdown role={role} />
                             </div>
                         ) : (
                             <>
