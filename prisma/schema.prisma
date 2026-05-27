@@ -74,7 +74,7 @@ model Reservation {
 model Cours {
   id             Int               @id @default(autoincrement())
   titre          String
-  description    String?           @db.Text
+  contenu        Json              @default("[]")
   
   niveauRequis   NiveauPedagogique @default(NIVEAU_1)
   
