@@ -1,14 +1,12 @@
-import 'dotenv/config';
-import { defineConfig, env } from 'prisma/config';
-
-const isMigrationCommand = process.argv.some(arg => arg.includes('migrate') || arg.includes('db'));
-
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
   migrations: {
-    path: 'prisma/migrations',
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: isMigrationCommand ? env('DIRECT_URL') : env('DATABASE_URL'),
+    url: env("DATABASE_URL"),
   },
 });
