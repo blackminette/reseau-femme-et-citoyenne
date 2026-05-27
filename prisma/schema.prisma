@@ -1,34 +1,30 @@
 generator client {
   provider = "prisma-client-js"
-  // output   = "../src/generated/prisma"
-  // engineType = "library"
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model Utilisateur {
-  id              String        @id @default(uuid()) 
-  email           String        @unique
+  id              String             @id @default(uuid())
+  email           String             @unique
   nom             String
   prenom          String
   telephone       String?
-  role            String        @default("MEMBRE") 
-  createdAt       DateTime      @default(now())
-
-  reservations    Reservation[]
-  dons            Don[]
-  temoignages     Temoignage[]
-  coursAnimes     Cours[]       @relation("IntervenanteCours")
-
+  role            String             @default("MEMBRE")
+  createdAt       DateTime           @default(now())
   tuteurId        String?
-  tuteur          Utilisateur?  @relation("ParentEnfant", fields: [tuteurId], references: [id])
-  enfants         Utilisateur[] @relation("ParentEnfant")
-
+  niveau          NiveauPedagogique? @default(NIVEAU_1)
+  ateliersPrives  Atelier[]          @relation("PartenaireAtelier")
   suggestions     BoiteAIdees[]
-  ateliersPrives  Atelier[]     @relation("PartenaireAtelier")
+  coursAnimes     Cours[]            @relation("IntervenanteCours")
+  dons            Don[]
   messagesEnvoyes MessageContact[]
+  reservations    Reservation[]
+  temoignages     Temoignage[]
+  tuteur          Utilisateur?       @relation("ParentEnfant", fields: [tuteurId], references: [id])
+  enfants         Utilisateur[]      @relation("ParentEnfant")
 }
 
 model Atelier {
@@ -37,42 +33,37 @@ model Atelier {
   description       String?
   dateAtelier       DateTime
   placesMax         Int           @default(15)
-  estPrive          Boolean       @default(false) 
-  typePaiement      String?       
-  creneauVerrouille Boolean       @default(false) 
-  effectifPrevu     Int?          
-
-  partenaireId    String?
-  partenaire      Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id])
-
-  reservations    Reservation[]
+  estPrive          Boolean       @default(false)
+  typePaiement      String?
+  creneauVerrouille Boolean       @default(false)
+  effectifPrevu     Int?
+  partenaireId      String?
+  partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id])
+  reservations      Reservation[]
 }
 
 model Reservation {
-  id              Int      @id @default(autoincrement())
-  dateReservation DateTime @default(now())
-  statut          String   @default("PENDING") 
-
+  id              Int         @id @default(autoincrement())
+  dateReservation DateTime    @default(now())
+  statut          String      @default("PENDING")
   utilisateurId   String
-  utilisateur     Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-
   atelierId       Int
-  atelier         Atelier      @relation(fields: [atelierId], references: [id], onDelete: Cascade)
+  atelier         Atelier     @relation(fields: [atelierId], references: [id], onDelete: Cascade)
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@unique([utilisateurId, atelierId])
 }
 
 model Cours {
-  id             Int          @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
   titre          String
-  description    String?
-  estPublic      Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-
+  estPublic      Boolean           @default(true)
+  createdAt      DateTime          @default(now())
   intervenanteId String
-  intervenante   Utilisateur  @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
-
+  contenu        Json              @default("[]")
+  niveauRequis   NiveauPedagogique @default(NIVEAU_1)
   compositions   Composition[]
+  intervenante   Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
   programmes     Programme[]
 }
 
@@ -80,80 +71,79 @@ model Exercice {
   id           Int           @id @default(autoincrement())
   titre        String
   instructions String
-  type         String        
-  
+  type         String
   compositions Composition[]
-  scores       ScoreQuiz[]   
+  scores       ScoreQuiz[]
 }
 
 model Composition {
   id         Int      @id @default(autoincrement())
-  ordre      Int      @default(1) 
-
+  ordre      Int      @default(1)
   coursId    Int
-  cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
-
   exerciceId Int
+  cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
   exercice   Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
 
   @@unique([coursId, exerciceId])
 }
 
 model ScoreQuiz {
-  id          Int      @id @default(autoincrement())
-  score       Int      
-  createdAt   DateTime @default(now())
-
-  etudiantId  String
-  exerciceId  Int
-  exercice    Exercice @relation(fields: [exerciceId], references: [id])
+  id         Int      @id @default(autoincrement())
+  score      Int
+  createdAt  DateTime @default(now())
+  etudiantId String
+  exerciceId Int
+  exercice   Exercice @relation(fields: [exerciceId], references: [id])
 }
 
 model Programme {
   id                Int      @id @default(autoincrement())
   datePlanification DateTime
-  
   coursId           Int
   cours             Cours    @relation(fields: [coursId], references: [id])
 }
 
 model BoiteAIdees {
-  id          Int      @id @default(autoincrement())
-  sujet       String
-  suggestion  String
-  createdAt   DateTime @default(now())
-
-  membreId    String
-  membre      Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
+  id         Int         @id @default(autoincrement())
+  sujet      String
+  suggestion String
+  createdAt  DateTime    @default(now())
+  membreId   String
+  membre     Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
 }
 
 model Don {
-  id            Int      @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   montant       Float
-  dateDon       DateTime @default(now())
-  statut        String   @default("COMPLETED") 
+  dateDon       DateTime    @default(now())
+  statut        String      @default("COMPLETED")
   utilisateurId String
-  utilisateur   Utilisateur  @relation(fields: [utilisateurId], references: [id])
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
 }
 
 model Temoignage {
-  id            Int      @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   contenu       String
-  estValide     Boolean  @default(false) 
-  createdAt     DateTime @default(now())
-
+  estValide     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
   utilisateurId String
-  utilisateur   Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }
 
 model MessageContact {
-  id        Int      @id @default(autoincrement())
-  nom       String
-  email     String
-  sujet     String
-  message   String
-  envoyeLe  DateTime @default(now())
-
+  id            Int          @id @default(autoincrement())
+  nom           String
+  email         String
+  sujet         String
+  message       String
+  envoyeLe      DateTime     @default(now())
   utilisateurId String?
-  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
+}
+
+enum NiveauPedagogique {
+  NIVEAU_1
+  NIVEAU_2
+  NIVEAU_3
+  ADULTE
 }
