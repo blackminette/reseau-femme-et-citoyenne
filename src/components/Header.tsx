@@ -39,7 +39,7 @@ export default function Header() {
                             Ateliers
                         </Link>
 
-                        <Link href="/actualites" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
+                        <Link href='/actualites' className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
                             Actualités
                         </Link>
 
