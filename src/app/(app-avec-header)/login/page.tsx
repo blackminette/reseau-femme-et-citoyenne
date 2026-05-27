@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { loginAction } from './actions';
 
 /**
  * Page de connexion de l'application (/login).
@@ -13,19 +14,13 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     // Soumission du formulaire
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // TODO: Intégrer ici la logique de connexion avec Supabase dès que les identifiants seront disponibles.
+        const result = await loginAction({ email, password });
 
-        console.log('Tentative de connexion avec :', { email, password });
-
-        // Simulation d'un temps de chargement
-        setTimeout(() => {
-            setIsLoading(false);
-            alert("Le visuel du formulaire fonctionne ! Dès que Supabase sera prêt, cette action te connectera pour de vrai.");
-        }, 1000);
+        setIsLoading(false);
     };
 
     return (
