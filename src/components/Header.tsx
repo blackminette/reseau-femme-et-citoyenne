@@ -86,6 +86,18 @@ export default function Header() {
                             Accueil
                         </Link>
 
+                        <Link href="/a-propos" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
+                            À propos
+                        </Link>
+
+                        <Link href="/ateliers" className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
+                            Ateliers
+                        </Link>
+
+                        <Link href='/actualites' className="text-slate-600 hover:text-slate-900 px-3 py-2 text-sm font-medium">
+                            Actualités
+                        </Link>
+
                         {/* Onglet sécurisé : visible uniquement pour les administrateurs connectés */}
                         {!isLoading && role === 'ADMIN' && (
                             <Link href="/admin" className="bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm font-medium border border-red-200">
