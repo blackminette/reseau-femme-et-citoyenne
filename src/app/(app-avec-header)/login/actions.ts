@@ -15,7 +15,7 @@ export async function loginAction(formData: any) {
         });
 
         if (authError || !authData.user) {
-            return { success: false, error: "Identifiants ou mot de passe incorrects." };
+            return { success: false, error: "[login] Identifiants ou mot de passe incorrects." };
         }
 
         // on vérifie que l'utilisateur existe bien dans la table Prisma (ex: s'il a déjà un profil créé)
@@ -27,7 +27,7 @@ export async function loginAction(formData: any) {
         if (!utilisateur) {
             return {
                 success: false,
-                error: "Compte authentifié, mais aucun profil utilisateur trouvé dans l'association."
+                error: "[login] Compte authentifié, mais aucun profil utilisateur trouvé dans l'association."
             };
         }
 
@@ -39,10 +39,10 @@ export async function loginAction(formData: any) {
         };
 
     } catch (error) {
-        console.error("Erreur critique lors de la connexion :", error);
+        console.error("[login] Erreur critique lors de la connexion :", error);
         return {
             success: false,
-            error: "Une erreur serveur est survenue. Veuillez réessayer plus tard."
+            error: "[login] Une erreur serveur est survenue. Veuillez réessayer plus tard."
         };
     }
 }
