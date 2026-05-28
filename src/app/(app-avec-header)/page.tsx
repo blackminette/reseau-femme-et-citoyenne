@@ -1,14 +1,25 @@
-// * src/app/page.tsx
+// * src/app/(app-avec-header)/page.tsx
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 /**
  * Page d'accueil principale du projet (Racine "/").
  * Transformée en panneau de test pour piloter et valider le Middleware RBAC.
  */
 export default function HomePageTest() {
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        // Déconnexion de Supabase
+        await supabaseClient.auth.signOut();
+        // Force Next.js à rafraîchir le layout, les cookies et le Header instantanément
+        router.refresh();
+    };
+
     return (
         <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6">
             <div className="max-w-2xl w-full bg-white rounded-xl shadow-md border border-slate-200 p-8">
@@ -28,7 +39,7 @@ export default function HomePageTest() {
                 </header>
 
                 {/* Grille des boutons vers les Dashboards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
 
                     {/* Bouton Espace Partenaire */}
                     <Link
@@ -82,6 +93,16 @@ export default function HomePageTest() {
                         </span>
                     </Link>
 
+                </div>
+
+                {/* Bouton de Déconnexion de Test */}
+                <div className="mb-8 flex justify-center">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                    >
+                        🚪 Déconnexion de session
+                    </button>
                 </div>
 
                 {/* Note technique d'accompagnement */}
