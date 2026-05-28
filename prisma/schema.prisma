@@ -6,6 +6,14 @@ datasource db {
   provider = "postgresql"
 }
 
+// 1. Définition de la hiérarchie de progression pédagogique
+enum NiveauPedagogique {
+  NIVEAU_1      // Premier palier / Débutant
+  NIVEAU_2      // Deuxième palier / Intermédiaire
+  NIVEAU_3      // Troisième palier / Avancé
+  ADULTE        // Destiné spécifiquement aux adultes
+}
+
 model Utilisateur {
   id              String             @id @default(uuid())
   email           String             @unique
