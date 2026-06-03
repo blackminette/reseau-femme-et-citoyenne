@@ -1,4 +1,4 @@
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import * as dotenv from 'dotenv';
@@ -17,13 +17,13 @@ async function main() {
   console.log('🌱 (Seeding) ...');
 
   const adminEmail = 'admin@rfc06.fr';
-  const adminId = 'd7586b2b-db15-4af4-b930-5dd152cb32ab'; 
+  const adminId = 'd7586b2b-db15-4af4-b930-5dd152cb32ab';
 
   const admin = await prisma.utilisateur.upsert({
     where: { id: adminId },
-    update: {}, 
-    create: {   
-      id: adminId, 
+    update: {},
+    create: {
+      id: adminId,
       email: adminEmail,
       nom: 'IPSSI',
       prenom: 'Johanna',

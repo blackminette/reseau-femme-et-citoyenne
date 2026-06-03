@@ -1,86 +1,113 @@
 // * src/components/UserDropdown.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+/**
+ Menu déroulant (Dropdown) affiché dans le Header pour la gestion du compte.
+ Il affiche les options de connexion/inscription si l'utilisateur est anonyme,
+ ou le lien vers son tableau de bord et la déconnexion selon son rôle s'il est connecté.
+ Gère automatiquement la fermeture lors d'un clic à l'extérieur.
+ */
+
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { UserRole } from '@/types/auth';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 interface UserDropdownProps {
-    role: UserRole;
+    role: UserRole | null;
 }
 
 export default function UserDropdown({ role }: UserDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
-
-    // Le "Ref" permet d'identifier notre menu déroulant dans la page
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Détecter un clic en dehors du menu
+    // Ferme le menu si on clique en dehors du composant
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false); // Ferme le menu si on clique en dehors
+                setIsOpen(false);
             }
         }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-        document.addEventListener('mousedown', handleClickOutside); // On écoute les clics sur tout le document
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside); // Nettoyage de l'écouteur lors du démontage du composant
-        };
-    }, [isOpen]);
+    // Déconnexion de la session Supabase
+    const handleLogout = async () => {
+        await supabaseClient.auth.signOut();
+        setIsOpen(false);
+    };
 
     return (
-        // On attache la Ref sur le conteneur principal
+        // Conteneur principal en position relative pour caler la boîte déroulante
         <div className="relative inline-block text-left" ref={dropdownRef}>
 
-            {/* Bouton déclencheur */}
+            {/* Bouton déclencheur du menu */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                type="button"
-                className="inline-flex items-center justify-center w-full rounded-lg border border-slate-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 whitespace-nowrap"
             >
-                <span>Mon Profil ({role})</span>
-                <svg className="ml-2 -mr-1 h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                <span>{role ? 'Mon Compte' : 'Menu'}</span>
+                <svg className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
 
-            {/* Le Menu Déroulant */}
+            {/* Fenêtre déroulante alignée et étendue vers la gauche */}
             {isOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-slate-100 focus:outline-none z-50">
-
-                    {/* Section Liens d'actions */}
-                    <div className="py-1">
-                        <Link
-                            href={role === 'ADMIN' ? '/admin' : `/${role.toLowerCase()}`}
-                            className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            Mon Tableau de bord
-                        </Link>
-                        <Link
-                            href="/parametres"
-                            className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            Paramètres
-                        </Link>
-                    </div>
-
-                    {/* Section Déconnexion */}
-                    <div className="py-1">
-                        <button
-                            onClick={() => {
-                                setIsOpen(false);
-                                alert('Déconnexion simulée');
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 font-medium"
-                        >
-                            Se déconnecter
-                        </button>
-                    </div>
-
+                <div
+                    className="absolute right-0 text-left bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50"
+                    style={{
+                        position: 'absolute',
+                        right: '0px',
+                        left: 'auto',
+                        width: '12rem',
+                        textAlign: 'left'
+                    }}
+                >
+                    {role ? (
+                        /* OPTIONS SI CONNECTÉ */
+                        <>
+                            <div style={{ padding: '8px 16px', fontSize: '12px', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>
+                                {role.toLowerCase()}
+                            </div>
+                            <Link
+                                href={`/${role.toLowerCase()}`}
+                                onClick={() => setIsOpen(false)}
+                                style={{ display: 'block', padding: '8px 16px', fontSize: '14px', color: '#334155', textDecoration: 'none' }}
+                            >
+                                Mon Tableau de bord
+                            </Link>
+                            <Link
+                                href="/"
+                                onClick={handleLogout}
+                                style={{ width: '100%', textAlign: 'left', display: 'block', padding: '8px 16px', fontSize: '14px', color: '#dc2626', background: 'none', border: 'none', borderTop: '1px solid #f1f5f9', cursor: 'pointer' }}
+                            >
+                                Déconnexion
+                            </Link>
+                        </>
+                    ) : (
+                        /* OPTIONS SI NON CONNECTÉ */
+                        <>
+                            <div style={{ padding: '8px 16px', fontSize: '12px', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>
+                                Authentification
+                            </div>
+                            <Link
+                                href="/login"
+                                onClick={() => setIsOpen(false)}
+                                style={{ display: 'block', padding: '8px 16px', fontSize: '14px', color: '#334155', textDecoration: 'none' }}
+                            >
+                                Connexion
+                            </Link>
+                            <Link
+                                href="/signup"
+                                onClick={() => setIsOpen(false)}
+                                style={{ display: 'block', padding: '8px 16px', fontSize: '14px', color: '#334155', textDecoration: 'none' }}
+                            >
+                                Inscription
+                            </Link>
+                        </>
+                    )}
                 </div>
             )}
         </div>

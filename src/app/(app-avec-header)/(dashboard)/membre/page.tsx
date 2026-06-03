@@ -1,6 +1,7 @@
 // * src/app/(dashboard)/membre/page.tsx
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 /**
@@ -15,7 +16,7 @@ export default function MembreDashboard() {
                 <header className="mb-8 border-b border-slate-200 pb-4">
                     <h1 className="text-2xl font-bold text-slate-800">Espace Adhérant & Famille</h1>
                     <p className="text-slate-500 text-sm mt-1">
-                        Suivi des enfants, inscriptions aux ateliers associatifs publics et boîte à idées.
+                        Suivi des enfants et inscriptions aux ateliers associatifs publics.
                     </p>
                 </header>
 
@@ -26,7 +27,6 @@ export default function MembreDashboard() {
                         Retrouvez ici la gestion de votre profil et le suivi pédagogique de vos enfants rattachés.
                     </p>
                 </div>
-
             </div>
         </div>
     );
