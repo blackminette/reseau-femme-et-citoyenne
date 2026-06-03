@@ -27,31 +27,6 @@ export default function MembreDashboard() {
                         Retrouvez ici la gestion de votre profil et le suivi pédagogique de vos enfants rattachés.
                     </p>
                 </div>
-
-                {/* Menu */}
-                <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-                    <h2 className="text-lg font-semibold text-slate-700 mb-4">Menu</h2>
-                    <section className="space-y-3 flex flex-col">
-                        <Link href="/membre/enfants" className="text-slate-600 hover:text-blue-500">
-                            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-                                Mes enfants
-                            </button>
-                        </Link>
-
-                        <Link href="/membre/reserver" className="text-slate-600 hover:text-blue-500">
-                            <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
-                                Reserver
-                            </button>
-                        </Link>
-
-                        <Link href="/membre/reservations" className="text-slate-600 hover:text-blue-500">
-                            <button className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors">
-                                Mes réservations
-                            </button>
-                        </Link>
-                    </section>
-                </div>
-
             </div>
         </div>
     );
