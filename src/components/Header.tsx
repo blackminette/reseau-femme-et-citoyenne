@@ -26,7 +26,7 @@ export default function Header() {
             const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
             if (authError) {
-                console.error("[Header] Erreur Auth Supabase :", authError.message);
+                console.log("[Header] Aucun utilisateur connecté ou erreur d'authentification :", authError.message);
             }
 
             if (user) {

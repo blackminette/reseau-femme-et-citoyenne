@@ -4,10 +4,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Routes nécessitant une connexion obligatoire
+// Route sur laquelle le middleware s'applique (toutes les routes privées)
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+        '/membre/:path*',
+        '/admin/:path*',
+        '/enfant/:path*',
+        '/intervenant/:path*',
+        '/benevole/:path*',
+        '/partenaire/:path*',
     ],
 };
 
@@ -77,7 +82,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // 5. Gestion des accès selon le rôle (RBAC)
+    // Gestion des accès selon le rôle (RBAC)
     if (userRole) {
         // Interdit l'accès à /admin si l'utilisateur n'est pas ADMIN
         if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
@@ -104,6 +109,10 @@ export async function middleware(request: NextRequest) {
             }
             if (userRole === 'ENFANT' && !pathname.startsWith('/enfant')) {
                 url.pathname = '/enfant';
+                return NextResponse.redirect(url);
+            }
+            if (userRole === 'ADMIN' && !pathname.startsWith('/admin')) {
+                url.pathname = '/admin';
                 return NextResponse.redirect(url);
             }
         }
