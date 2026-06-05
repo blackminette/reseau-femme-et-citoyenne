@@ -2,12 +2,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerTousLesUtilisateurs } from './actions';
+import { listerTousLesUtilisateurs, modifierUtilisateur } from './actions';
 import Modal from '@/components/Modal';
-
-/**
- * Liste complète des membres avec des boutons pour les modifier ou les supprimer.
-*/
 
 export default function AdminMembresPage() {
     const [membres, setMembres] = useState<any[]>([]);
@@ -15,20 +11,61 @@ export default function AdminMembresPage() {
 
     const [membreSelectionne, setMembreSelectionne] = useState<any | null>(null);
 
-    useEffect(() => {
-        async function chargerMembres() {
-            const reponse = await listerTousLesUtilisateurs();
-            if (reponse.success && reponse.data) {
-                setMembres(reponse.data);
-            }
-            setIsLoading(false);
+    const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
+    const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
+
+    const [formData, setFormData] = useState({
+        nom: '',
+        prenom: '',
+        email: '',
+        telephone: '',
+        role: ''
+    });
+
+    async function chargerMembres() {
+        const reponse = await listerTousLesUtilisateurs();
+        if (reponse.success && reponse.data) {
+            setMembres(reponse.data);
         }
+        setIsLoading(false);
+    }
+
+    useEffect(() => {
         chargerMembres();
     }, []);
 
-    if (isLoading) return <p className="text-slate-500">Chargement des membres...</p>;
+    const ouvrirModalModifier = (membre: any) => {
+        setMembreSelectionne(membre);
+        setFormData({
+            nom: membre.nom || '',
+            prenom: membre.prenom || '',
+            email: membre.email || '',
+            telephone: membre.telephone || '',
+            role: membre.role || 'MEMBRE'
+        });
+        setModalModifierIsOpen(true);
+    };
 
+    const handleModifier = async (e: React.FormEvent) => {
+        e.preventDefault();
 
+        if (!membreSelectionne) return;
+
+        setIsLoading(true); // Petit indicateur visuel
+        const reponse = await modifierUtilisateur(membreSelectionne.id, formData);
+
+        if (reponse.success) {
+            alert("Membre mis à jour avec succès !");
+            setModalModifierIsOpen(false);
+            setMembreSelectionne(null);
+            await chargerMembres(); // On rafraîchit la liste pour voir la modification en direct
+        } else {
+            alert(reponse.error || "Une erreur est survenue.");
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading && membres.length === 0) return <p className="text-slate-500 p-6">Chargement des membres...</p>;
 
     return (
         <>
@@ -43,13 +80,12 @@ export default function AdminMembresPage() {
                                 <th className="pb-3">Email</th>
                                 <th className="pb-3">Rôle</th>
                                 <th className="pb-3">Stats</th>
+                                <th className="pb-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                             {membres.map((membre) => (
                                 <tr key={membre.id} className="hover:bg-slate-50">
-
-                                    {/* Colone nom/prénom avec indication du tuteur si c'est un enfant */}
                                     <td className="py-3 font-medium text-slate-900">
                                         <div>
                                             <p className="font-semibold text-slate-900">{membre.nom} {membre.prenom}</p>
@@ -59,38 +95,48 @@ export default function AdminMembresPage() {
                                         </div>
                                     </td>
 
-                                    {/* Colonne email */}
                                     <td className="py-3 text-slate-500">{membre.email}</td>
 
-                                    {/* Colonne rôle avec badge de niveau pour les enfants */}
-                                    <td className="py-3 text-slate-500"><div className="flex gap-1 items-center">
-                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">
-                                            {membre.role}
-                                        </span>
-                                        {membre.role === 'ENFANT' && (
-                                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">
-                                                {membre.niveau}
+                                    <td className="py-3 text-slate-500">
+                                        <div className="flex gap-1 items-center">
+                                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">
+                                                {membre.role}
                                             </span>
-                                        )}
-                                    </div></td>
-
-                                    {/* Colonne stats avec icônes pour les enfants, réservations, cours animés et dons */}
-                                    <td className="py-3">
-                                        <div className="text-xs text-slate-500 space-y-0.5">
-                                            {membre._count.enfants > 0 && <p>👶 {membre._count.enfants} enfant(s)</p>}
-                                            {membre._count.reservations > 0 && <p>📅 {membre._count.reservations} réservation(s)</p>}
-                                            {membre._count.coursAnimes > 0 && <p>👨‍🏫 {membre._count.coursAnimes} cours animés</p>}
-                                            {membre._count.dons > 0 && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-medium text-[10px]">❤️ Donateur</span>}
+                                            {membre.role === 'ENFANT' && (
+                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">
+                                                    {membre.niveau}
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
 
                                     <td className="py-3">
-                                        <button
-                                            onClick={() => setMembreSelectionne(membre)}
-                                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                                        >
-                                            Détails
-                                        </button>
+                                        <div className="text-xs text-slate-500 space-y-0.5">
+                                            {membre._count?.enfants > 0 && <p>👶 {membre._count.enfants} enfant(s)</p>}
+                                            {membre._count?.reservations > 0 && <p>📅 {membre._count.reservations} réservation(s)</p>}
+                                            {membre._count?.coursAnimes > 0 && <p>👨‍🏫 {membre._count.coursAnimes} cours animés</p>}
+                                            {membre._count?.dons > 0 && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-medium text-[10px]">❤️ Donateur</span>}
+                                        </div>
+                                    </td>
+
+                                    <td className="py-3 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setMembreSelectionne(membre);
+                                                    setModalDetailsIsOpen(true);
+                                                }}
+                                                className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors cursor-pointer"
+                                            >
+                                                Détails
+                                            </button>
+                                            <button
+                                                onClick={() => ouvrirModalModifier(membre)}
+                                                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
+                                            >
+                                                Modifier
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -99,30 +145,27 @@ export default function AdminMembresPage() {
                 </div>
             </div>
 
-            {/* modal de détails du membre */}
+            {/* Modal de détails du membre */}
             <Modal
-                isOpen={membreSelectionne !== null}
-                onClose={() => setMembreSelectionne(null)}
-                title={`Fiche Profil — ${membreSelectionne?.prenom} ${membreSelectionne?.nom}`}
+                isOpen={modalDetailsIsOpen}
+                onClose={() => setModalDetailsIsOpen(false)}
+                title={membreSelectionne ? `Fiche Profil — ${membreSelectionne.prenom} ${membreSelectionne.nom}` : "Fiche Profil"}
             >
                 {membreSelectionne && (
                     <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
-
-                        {/* EN-TÊTE DE LA FICHE (Statut principal) */}
                         <div className="flex justify-between items-start bg-slate-50 p-4 rounded-xl border border-slate-200">
                             <div>
                                 <h2 className="text-lg font-bold text-slate-900">
                                     {membreSelectionne.nom} {membreSelectionne.prenom}
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    Inscrit(e) le {new Date(membreSelectionne.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    Inscrit(e) le {membreSelectionne.createdAt ? new Date(membreSelectionne.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnue'}
                                 </p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                                 <span className="px-2.5 py-1 bg-indigo-600 text-white rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
                                     {membreSelectionne.role}
                                 </span>
-                                {/* Si c'est un enfant, on affiche son niveau pédagogique */}
                                 {membreSelectionne.role === 'ENFANT' && membreSelectionne.niveau && (
                                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded text-xs font-medium">
                                         {membreSelectionne.niveau.replace('_', ' ')}
@@ -131,7 +174,6 @@ export default function AdminMembresPage() {
                             </div>
                         </div>
 
-                        {/* COORDONNÉES ET CONTACT */}
                         <div className="space-y-3">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">
                                 Coordonnées de contact
@@ -156,14 +198,11 @@ export default function AdminMembresPage() {
                             </div>
                         </div>
 
-                        {/* STRUCTURE ET ENTOURAGE FAMILIAL (Tuteur / Enfants) */}
-                        {(membreSelectionne.tuteur || membreSelectionne._count.enfants > 0) && (
+                        {(membreSelectionne.tuteur || membreSelectionne._count?.enfants > 0) && (
                             <div className="space-y-3">
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">
                                     Structure familiale
                                 </h4>
-
-                                {/* Cas 1 : C'est un enfant rattaché à un tuteur (Parent) */}
                                 {membreSelectionne.tuteur && (
                                     <div className="bg-amber-50/60 border border-amber-200 p-3 rounded-lg flex items-center gap-2.5">
                                         <span className="text-lg">👨‍👩</span>
@@ -175,9 +214,7 @@ export default function AdminMembresPage() {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Cas 2 : C'est un parent qui a des enfants inscrits */}
-                                {membreSelectionne._count.enfants > 0 && (
+                                {membreSelectionne._count?.enfants > 0 && (
                                     <div className="bg-sky-50/60 border border-sky-200 p-3 rounded-lg flex items-center gap-2.5">
                                         <span className="text-lg">👶</span>
                                         <div>
@@ -191,60 +228,113 @@ export default function AdminMembresPage() {
                             </div>
                         )}
 
-                        {/* STATISTIQUES ET ENGAGEMENT SUR LA PLATEFORME */}
                         <div className="space-y-3">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">
                                 Activité & Engagement
                             </h4>
-
                             <div className="grid grid-cols-2 gap-3">
-                                {/* Réservations aux ateliers */}
                                 <div className="bg-slate-50 border border-slate-150 p-3 rounded-lg text-center">
                                     <span className="block text-xl mb-1">📅</span>
                                     <span className="block text-xs text-slate-500 font-medium">Réservations</span>
-                                    <span className="text-lg font-extrabold text-slate-800">{membreSelectionne._count.reservations}</span>
+                                    <span className="text-lg font-extrabold text-slate-800">{membreSelectionne._count?.reservations || 0}</span>
                                 </div>
-
-                                {/* Dons effectués */}
-                                <div className={`border p-3 rounded-lg text-center ${membreSelectionne._count.dons > 0 ? 'bg-rose-50/50 border-rose-200' : 'bg-slate-50 border-slate-150'}`}>
+                                <div className={`border p-3 rounded-lg text-center ${membreSelectionne._count?.dons > 0 ? 'bg-rose-50/50 border-rose-200' : 'bg-slate-50 border-slate-150'}`}>
                                     <span className="block text-xl mb-1">❤️</span>
                                     <span className="block text-xs text-slate-500 font-medium">Dons</span>
-                                    <span className={`text-lg font-extrabold ${membreSelectionne._count.dons > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
-                                        {membreSelectionne._count.dons}
+                                    <span className={`text-lg font-extrabold ${membreSelectionne._count?.dons > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                                        {membreSelectionne._count?.dons || 0}
                                     </span>
                                 </div>
-
-                                {/* S'il est enseignant / animateur de cours */}
-                                {membreSelectionne.role === 'INTERVENANT' || membreSelectionne._count.coursAnimes > 0 ? (
-                                    <div className="bg-indigo-50/50 border border-indigo-200 p-3 rounded-lg text-center col-span-2">
-                                        <span className="text-xs text-indigo-700 font-bold uppercase tracking-wide block mb-1">
-                                            👨‍🏫 Panel Enseignant / Intervenant
-                                        </span>
-                                        <p className="text-sm text-slate-700 font-medium">
-                                            Anime actuellement <span className="font-bold text-indigo-600">{membreSelectionne._count.coursAnimes}</span> cours / ateliers.
-                                        </p>
-                                    </div>
-                                ) : null}
                             </div>
                         </div>
 
-                        {/* PIED DE MODAL (Actions complémentaires) */}
                         <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-2">
                             <span className="text-[10px] font-mono text-slate-300 break-all select-all">
                                 UID: {membreSelectionne.id}
                             </span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setMembreSelectionne(null)}
-                                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setModalDetailsIsOpen(false)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                Fermer
+                            </button>
                         </div>
-
                     </div>
                 )}
+            </Modal>
+
+            {/* Modal de modification de membre sécurisée */}
+            <Modal isOpen={modalModifierIsOpen} onClose={() => setModalModifierIsOpen(false)} title="Modifier le membre">
+                <form onSubmit={handleModifier} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Nom</label>
+                        <input
+                            type="text"
+                            value={formData.nom}
+                            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Prénom</label>
+                        <input
+                            type="text"
+                            value={formData.prenom}
+                            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
+                        <input
+                            type="text"
+                            value={formData.telephone}
+                            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Rôle</label>
+                        <select
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                        >
+                            <option value="PARTENAIRE">Partenaire</option>
+                            <option value="INTERVENANT">Intervenant</option>
+                            <option value="MEMBRE">Membre</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setModalModifierIsOpen(false)}
+                            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium transition-colors"
+                        >
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
             </Modal>
         </>
     );
