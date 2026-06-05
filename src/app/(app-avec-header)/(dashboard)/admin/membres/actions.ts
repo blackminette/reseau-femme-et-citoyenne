@@ -64,3 +64,16 @@ export async function modifierUtilisateur(id: string, nouvelleDonnees: any) {
         return { success: false, error: "Impossible de modifier le membre" };
     }
 }
+
+export async function supprimerUtilisateur(id: string) {
+    try {
+        await prisma.utilisateur.delete({
+            where: { id: id }
+        });
+        revalidatePath('/admin/membres');
+        return { success: true };
+    } catch (error) {
+        console.error("Erreur lors de la suppression :", error);
+        return { success: false, error: "Impossible de supprimer le membre" };
+    }
+}

@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerTousLesUtilisateurs, modifierUtilisateur } from './actions';
+import { listerTousLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
 import Modal from '@/components/Modal';
 
 export default function AdminMembresPage() {
@@ -13,6 +13,7 @@ export default function AdminMembresPage() {
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
+    const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         nom: '',
@@ -64,6 +65,26 @@ export default function AdminMembresPage() {
             setIsLoading(false);
         }
     };
+
+    const handleSupprimer = async () => {
+        if (!membreSelectionne) return;
+
+        const confirmation = confirm(`Êtes-vous sûr de vouloir supprimer ${membreSelectionne.prenom} ${membreSelectionne.nom} ? Cette action est irréversible.`);
+        if (!confirmation) return;
+
+        setIsLoading(true);
+        const reponse = await supprimerUtilisateur(membreSelectionne.id);
+
+        if (reponse.success) {
+            alert("Membre supprimé avec succès !");
+            setModalSupprimerIsOpen(false);
+            setMembreSelectionne(null);
+            await chargerMembres();
+        } else {
+            alert(reponse.error || "Une erreur est survenue.");
+            setIsLoading(false);
+        }
+    }
 
     if (isLoading && membres.length === 0) return <p className="text-slate-500 p-6">Chargement des membres...</p>;
 
@@ -135,6 +156,15 @@ export default function AdminMembresPage() {
                                                 className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
                                             >
                                                 Modifier
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setMembreSelectionne(membre);
+                                                    setModalSupprimerIsOpen(true);
+                                                }}
+                                                className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
+                                            >
+                                                Supprimer
                                             </button>
                                         </div>
                                     </td>
@@ -335,6 +365,29 @@ export default function AdminMembresPage() {
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Modal de confirmation de suppression */}
+            <Modal isOpen={modalSupprimerIsOpen} onClose={() => setModalSupprimerIsOpen(false)} title="Confirmer la suppression">
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-700">Êtes-vous sûr de vouloir supprimer <span className="font-bold">{membreSelectionne?.prenom} {membreSelectionne?.nom} ({membreSelectionne?.email})</span> ? Cette action est irréversible.</p>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setModalSupprimerIsOpen(false)}
+                            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSupprimer}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                        >
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </>
     );
