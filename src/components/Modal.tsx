@@ -16,90 +16,43 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+
+        // Bloque le défilement de la page en arrière-plan lorsque la modal est ouverte
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
 
     if (!isOpen || !mounted) return null;
 
     return createPortal(
-        /* On utilise l'attribut style pour forcer le CSS si Tailwind est cassé */
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 99999,
-                padding: '20px'
-            }}
-        >
-            {/* Arrière-plan cliquable pour fermer */}
-            <div
-                onClick={onClose}
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    cursor: 'pointer'
-                }}
-            />
+        /* Grand conteneur fixe, centré au milieu de l'écran avec un arrière-plan assombri */
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
 
-            {/* La boîte blanche centrale */}
-            <div
-                style={{
-                    position: 'relative',
-                    backgroundColor: '#ffffff',
-                    borderRadius: '12px',
-                    width: '100%',
-                    maxWidth: '500px',
-                    maxHeight: '85vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    border: '1px solid #e2e8f0',
-                    zIndex: 100000,
-                    overflow: 'hidden'
-                }}
-            >
+            {/* Arrière-plan cliquable pour fermer la modal */}
+            <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
+
+            {/* La boîte blanche centrale (Fiche Profil) */}
+            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-10 flex flex-col max-h-[85vh]">
+
                 {/* En-tête de la Pop-up */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'between',
-                    padding: '16px',
-                    borderBottom: '1px solid #f1f5f9'
-                }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>
+                <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
+                    <h3 className="text-base font-bold text-slate-800 m-0">
                         {title}
                     </h3>
                     <button
                         onClick={onClose}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            color: '#94a3b8',
-                            fontWeight: 'bold'
-                        }}
+                        className="bg-transparent border-none text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-base font-bold cursor-pointer"
                     >
                         ✕
                     </button>
                 </div>
 
                 {/* Zone de contenu interne défilable */}
-                <div style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    padding: '20px',
-                    backgroundColor: '#ffffff'
-                }}>
+                <div className="flex-1 overflow-y-auto p-5 text-slate-600 text-sm bg-white">
                     {children}
                 </div>
             </div>
