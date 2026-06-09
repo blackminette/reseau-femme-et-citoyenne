@@ -39,7 +39,8 @@ model Atelier {
   id                Int           @id @default(autoincrement())
   titre             String
   description       String?
-  dateAtelier       DateTime
+  dateDebut         DateTime
+  dateFin           DateTime
   placesMax         Int           @default(15)
   estPrive          Boolean       @default(false)
   typePaiement      String?
@@ -147,11 +148,4 @@ model MessageContact {
   envoyeLe      DateTime     @default(now())
   utilisateurId String?
   utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
-}
-
-enum NiveauPedagogique {
-  NIVEAU_1
-  NIVEAU_2
-  NIVEAU_3
-  ADULTE
 }
