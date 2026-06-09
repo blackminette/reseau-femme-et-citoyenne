@@ -26,6 +26,10 @@ export default function AdminSideMenu() {
                 <Link href="/admin/membres" className="w-full px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 rounded-lg transition-colors block">
                     Gérer les membres
                 </Link>
+
+                <Link href="/admin/ateliers" className="w-full px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-600 rounded-lg transition-colors block">
+                    Gérer les ateliers
+                </Link>
             </section>
         </div>
     );
