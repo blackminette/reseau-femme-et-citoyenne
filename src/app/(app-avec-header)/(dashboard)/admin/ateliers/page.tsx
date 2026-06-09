@@ -1,6 +1,8 @@
 // * src/app/(app-avec-header)/(dashboard)/admin/ateliers/page.tsx
 'use client'
 
+/** Page pour gérer les ateliers : création, modification, suppression et déplacement sur un calendrier interactif. */
+
 import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -10,7 +12,7 @@ import frLocale from '@fullcalendar/core/locales/fr';
 import { listerAteliers, sauvegarderAteliers, supprimerAteliers } from './actions';
 import Modal from '@/components/Modal';
 
-export default function AteliersAdminPage() {
+export default function AdminAteliersPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [chargement, setChargement] = useState(true);
