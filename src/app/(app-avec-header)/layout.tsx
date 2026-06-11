@@ -1,6 +1,7 @@
 // * src/app/(app-avec-header)/(dashboard)/layout.tsx
 import React from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 /**
  * Layout spécifique pour l'espace Dashboard et l'accueil.
@@ -12,14 +13,16 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex flex-col min-h-screen bg-slate-50">
+        <div className="flex flex-col min-h-screen bg-[#eedeff]">
             {/* Notre composant Header s'affichera tout en haut */}
             <Header />
 
             {/* Le contenu de la page (/partenaire, /membre, etc.) s'injecte ici */}
-            <main className="flex-grow">
+            <main className="grow">
                 {children}
             </main>
+            {/* Notre composant Footer s'affichera tout en bas */}
+            <Footer />
         </div>
     );
 }
