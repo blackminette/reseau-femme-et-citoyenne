@@ -128,6 +128,7 @@ function redirectUserToDefaultDashboard(role: UserRole, url: URL) {
         case 'PARTENAIRE': url.pathname = '/partenaire'; break;
         case 'ETUDIANT': url.pathname = '/etudiant'; break;
         case 'INTERVENANT': url.pathname = '/intervenant'; break;
+        case 'BENEVOLE': url.pathname = '/benevole'; break;
         case 'MEMBRE': url.pathname = '/membre'; break;
         case 'ENFANT': url.pathname = '/enfant'; break;
         default: url.pathname = '/';
