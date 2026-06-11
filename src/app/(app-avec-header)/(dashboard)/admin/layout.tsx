@@ -61,12 +61,6 @@ export default function MembreLayout({
             {/* Zone de droite décalée proprement par rapport à la largeur de la sidebar fixe (1/6) */}
             <main className="w-5/6 ml-auto min-h-screen flex flex-col">
 
-                {/* Espace de compensation pour le Header global (car ton dossier parent s'appelle app-avec-header). 
-                  Si ton Header global fait 64px de haut (h-16), ce bloc invisible pousse ton contenu admin vers le bas 
-                  pour que rien ne soit masqué dessous.
-                */}
-                <div className="h-16 w-full shrink-0" />
-
                 {/* Contenu de la page de l'administration */}
                 <div className="p-8 flex-1">
                     <div className="max-w-5xl mx-auto w-full">
