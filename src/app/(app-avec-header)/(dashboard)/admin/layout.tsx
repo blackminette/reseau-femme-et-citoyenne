@@ -2,11 +2,12 @@
 
 import React from 'react';
 import AdminSideMenu from '@/components/AdminSideMenu';
+import { deconnexionUtilisateur } from '@/app/auth/auth';
 
 /**
  * Layout unique de l'espace admin. 
- * Il applique le menu fixe à gauche et injecte les pages à droite via {children}.
- * Utilise une marge fixe à gauche pour empêcher le contenu de se superposer sous le menu.
+ * Il intègre la barre latérale sur toute la hauteur à gauche et gère le défilement
+ * indépendant de la zone de contenu à droite.
  */
 
 export default function MembreLayout({
@@ -15,17 +16,62 @@ export default function MembreLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 flex">
 
             {/* Barre latérale fixe à gauche (Prend strictement 1/6 de la largeur) */}
-            <aside className="w-1/6 fixed inset-y-16 left-0 bg-white border-r border-slate-200 z-40 p-4">
-                <AdminSideMenu />
+            <aside className="w-1/6 fixed top-0 bottom-0 left-0 bg-white border-r border-slate-200 z-50 p-5 flex flex-col justify-between overflow-y-auto">
+                <div className="flex flex-col gap-6">
+                    {/* En-tête de marque / Logo du Panel Admin */}
+                    <div className="px-3 py-2 border-b border-slate-100 pb-4 mb-2 flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            A
+                        </div>
+                        <div className="truncate">
+                            <h2 className="text-sm font-bold text-slate-800 leading-none truncate">Console Admin</h2>
+                            <span className="text-[10px] font-medium text-slate-400 mt-0.5 block">Gestion Espace</span>
+                        </div>
+                    </div>
+
+                    {/* Menu de navigation principal */}
+                    <AdminSideMenu />
+                </div>
+
+                {/* Pied de page / Bouton de déconnexion */}
+                <div className="pt-4 border-t border-slate-100 mt-auto">
+                    <form action={deconnexionUtilisateur}>
+                        <button
+                            type="submit"
+                            className="w-full px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200 flex items-center gap-3 group text-left"
+                        >
+                            <svg
+                                className="h-4 w-4 text-slate-400 group-hover:text-rose-500 transition-colors shrink-0"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span className="truncate">Déconnexion</span>
+                        </button>
+                    </form>
+                </div>
             </aside>
 
-            {/* Zone de droite décalée de force par une marge équivalente à la largeur du menu (1/6 = 16.666667%) */}
-            <main className="ml-[16.666667%] p-8">
-                <div className="max-w-5xl mx-auto">
-                    {children}
+            {/* Zone de droite décalée proprement par rapport à la largeur de la sidebar fixe (1/6) */}
+            <main className="w-5/6 ml-auto min-h-screen flex flex-col">
+
+                {/* Espace de compensation pour le Header global (car ton dossier parent s'appelle app-avec-header). 
+                  Si ton Header global fait 64px de haut (h-16), ce bloc invisible pousse ton contenu admin vers le bas 
+                  pour que rien ne soit masqué dessous.
+                */}
+                <div className="h-16 w-full shrink-0" />
+
+                {/* Contenu de la page de l'administration */}
+                <div className="p-8 flex-1">
+                    <div className="max-w-5xl mx-auto w-full">
+                        {children}
+                    </div>
                 </div>
             </main>
 
