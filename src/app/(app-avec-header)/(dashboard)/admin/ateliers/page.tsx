@@ -17,7 +17,6 @@ export default function AdminAteliersPage() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [chargement, setChargement] = useState(true);
 
-    // États pour le formulaire de la Modal (Tampon)
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
     const [formTitle, setFormTitle] = useState('');
     const [formDescription, setFormDescription] = useState('');
