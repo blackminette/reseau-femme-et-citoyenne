@@ -80,6 +80,45 @@ export default function HomePageTest() {
                         </span>
                     </Link>
 
+                    {/* Bouton Espace Intervenant */}
+                    <Link
+                        href="/intervenant"
+                        className="flex flex-col p-4 bg-white border border-slate-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all group"
+                    >
+                        <span className="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
+                            🎓 Espace Intervenant
+                        </span>
+                        <span className="text-xs text-slate-400 mt-1">
+                            Cours & Quiz en autonomie
+                        </span>
+                    </Link>
+
+                    {/* Bouton Espace Bénévole */}
+                    <Link
+                        href="/benevole"
+                        className="flex flex-col p-4 bg-white border border-slate-200 rounded-lg hover:border-green-500 hover:shadow-sm transition-all group"
+                    >
+                        <span className="font-bold text-slate-700 group-hover:text-green-600 transition-colors">
+                            🤝 Espace Bénévole
+                        </span>
+                        <span className="text-xs text-slate-400 mt-1">
+                            Participation & Engagement
+                        </span>
+                    </Link>
+
+                    {/* Bouton Espace Enfant */}
+                    <Link
+                        href="/enfant"
+                        className="flex flex-col p-4 bg-white border border-slate-200 rounded-lg hover:border-purple-500 hover:shadow-sm transition-all group"
+                    >
+                        <span className="font-bold text-slate-700 group-hover:text-purple-600 transition-colors">
+                            👶 Espace Enfant
+                        </span>
+                        <span className="text-xs text-slate-400 mt-1">
+                            Activités & Jeux
+                        </span>
+                    </Link>
+
                     {/* Bouton Console Admin */}
                     <Link
                         href="/admin"
@@ -110,7 +149,7 @@ export default function HomePageTest() {
                     <p className="font-semibold text-slate-700 mb-1">💡 Comment tester le comportement ?</p>
                     <ul className="list-disc list-inside space-y-1">
                         <li><strong>Si tu n'es pas connecté :</strong> Cliquer sur n'importe quel bouton doit te renvoyer automatiquement vers la page <code className="bg-slate-200 px-1 rounded">/login</code> (car aucune session n'existe).</li>
-                        <li><strong>Si ton collègue t'injecte un rôle :</strong> Le middleware te laissera entrer uniquement sur l'espace correspondant et te bloquera les 3 autres.</li>
+                        <li><strong>Si ton collègue t'injecte un rôle :</strong> Le middleware te laissera entrer uniquement sur l'espace correspondant et te bloquera les autres.</li>
                     </ul>
                 </footer>
 
