@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  provider = "postgresql"
 }
 
 enum NiveauPedagogique {
@@ -92,10 +91,9 @@ model Cours {
   estPublic      Boolean           @default(true)
   createdAt      DateTime          @default(now())
   intervenanteId String
-  contenu        Json              @default("[]")
-  niveauRequis   NiveauPedagogique @default(NIVEAU_1)
-  compositions   Composition[]
   intervenante   Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+
+  compositions   Composition[]
   programmes     Programme[]
 }
 
@@ -104,18 +102,14 @@ model Exercice {
   titre        String
   instructions String
   type         String
-  type         String
   compositions Composition[]
-  scores       ScoreQuiz[]
   scores       ScoreQuiz[]
 }
 
 model Composition {
   id         Int      @id @default(autoincrement())
   ordre      Int      @default(1)
-  ordre      Int      @default(1)
   coursId    Int
-  exerciceId Int
   cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
   exerciceId Int
   exercice   Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
@@ -124,12 +118,6 @@ model Composition {
 }
 
 model ScoreQuiz {
-  id         Int      @id @default(autoincrement())
-  score      Int
-  createdAt  DateTime @default(now())
-  etudiantId String
-  exerciceId Int
-  exercice   Exercice @relation(fields: [exerciceId], references: [id])
   id         Int      @id @default(autoincrement())
   score      Int
   createdAt  DateTime @default(now())
@@ -156,27 +144,19 @@ model BoiteAIdees {
 
 model Don {
   id            Int         @id @default(autoincrement())
-  id            Int         @id @default(autoincrement())
   montant       Float
   dateDon       DateTime    @default(now())
   statut        String      @default("COMPLETED")
-  dateDon       DateTime    @default(now())
-  statut        String      @default("COMPLETED")
   utilisateurId String
-  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
 }
 
 model Temoignage {
   id            Int         @id @default(autoincrement())
-  id            Int         @id @default(autoincrement())
   contenu       String
   estValide     Boolean     @default(false)
   createdAt     DateTime    @default(now())
-  estValide     Boolean     @default(false)
-  createdAt     DateTime    @default(now())
   utilisateurId String
-  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }
 
@@ -187,12 +167,6 @@ model MessageContact {
   sujet         String
   message       String
   envoyeLe      DateTime     @default(now())
-  id            Int          @id @default(autoincrement())
-  nom           String
-  email         String
-  sujet         String
-  message       String
-  envoyeLe      DateTime     @default(now())
   utilisateurId String?
-  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
 }
