@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/page.tsx
+// * src/app/(dashboard-adultes)/test.tsx
 'use client';
 
 import React from 'react';
