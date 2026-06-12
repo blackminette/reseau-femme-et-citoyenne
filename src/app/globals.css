@@ -1,6 +1,5 @@
-/* * src/app/globals.css */
-
 @import "tailwindcss";
 
-@source "../components/**/*.{js,ts,jsx,tsx,mdx}";
-@source "./**/*.{js,ts,jsx,tsx,mdx}";
+html {
+    scroll-behavior: smooth;
+}

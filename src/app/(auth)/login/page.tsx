@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/login/page.tsx
+// * src/app/(auth)/login/page.tsx
 'use client';
 
 /**

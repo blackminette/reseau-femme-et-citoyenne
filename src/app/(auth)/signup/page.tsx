@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/sign_in/page.tsx
+// * src/app/(auth)/signup/page.tsx
 'use client';
 
 import React, { useState } from 'react';

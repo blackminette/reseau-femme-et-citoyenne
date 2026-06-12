@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/a-propos/page.tsx
+// * src/app/(vitrine)/a-propos/page.tsx
 'use client';
 
 import React from 'react';
