@@ -44,20 +44,6 @@ export default function PedagogieAdultesPage() {
         fetchModules();
     }, []);
 
-    // Helper pour styliser dynamiquement les badges de niveau
-    const getBadgeColor = (niveau: string) => {
-        switch (niveau) {
-            case 'NIVEAU_1':
-                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            case 'NIVEAU_2':
-                return 'bg-blue-50 text-blue-700 border-blue-200';
-            case 'NIVEAU_3':
-                return 'bg-amber-50 text-amber-700 border-amber-200';
-            default:
-                return 'bg-slate-50 text-slate-700 border-slate-200';
-        }
-    };
-
     const handleCreateModule = async () => {
         // Récupérer les données du formulaire
         const form = document.getElementById('create-module-form') as HTMLFormElement;
@@ -86,28 +72,35 @@ export default function PedagogieAdultesPage() {
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-8 animate-fade-in">
-
+        <div className="p-6 pl-8 pr-8 mx-auto space-y-8 animate-fade-in">
             {/* EN-TÊTE DE LA PAGE */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        <GraduationCap className="h-6 w-6 text-indigo-600" />
-                        Pédagogie Adultes
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Gérez les modules d'apprentissage, organisez l'ordre des cours et supervisez les exercices.
-                    </p>
-                </div>
+            <div className="flex flex-col">
+                <Link href="/admin/pedagogie" className="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1">
+                    <ChevronRight className="h-3 w-3 rotate-180" />
+                    Retour à la pédagogie
+                </Link>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-6">
 
-                {/* Bouton d'action pour la création */}
-                <button
-                    onClick={() => setModalCreateIsOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
-                >
-                    <FolderPlus className="h-4 w-4" />
-                    Nouveau Module
-                </button>
+
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <GraduationCap className="h-6 w-6 text-indigo-600" />
+                            Modules pédagogiques pour adultes
+                        </h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Gérez les modules d'apprentissage.
+                        </p>
+                    </div>
+
+                    {/* Bouton d'action pour la création */}
+                    <button
+                        onClick={() => setModalCreateIsOpen(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+                    >
+                        <FolderPlus className="h-4 w-4" />
+                        Nouveau Module
+                    </button>
+                </div>
             </div>
 
             {/* GESTION DE L'ERREUR */}

@@ -62,8 +62,8 @@ export default function MembreLayout({
             <main className="w-5/6 ml-auto min-h-screen flex flex-col">
 
                 {/* Contenu de la page de l'administration */}
-                <div className="p-8 flex-1">
-                    <div className="max-w-5xl mx-auto w-full">
+                <div className="flex-1">
+                    <div className="mx-auto w-full">
                         {children}
                     </div>
                 </div>
