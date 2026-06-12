@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/layout.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/layout.tsx
 
 import React from 'react';
 import AdminSideMenu from '@/components/AdminSideMenu';

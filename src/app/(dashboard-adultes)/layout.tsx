@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/layout.tsx
+// * src/app/(dashboard-adultes)/layout.tsx
 import React from 'react';
 import Header from '@/components/Header';
 

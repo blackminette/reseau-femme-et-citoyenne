@@ -1,4 +1,4 @@
-// src/app/(app-avec-header)/ateliers/[id]/page.tsx
+// * src/app/(vitrine)/ateliers/[id]/page.tsx
 import React from 'react';
 import Link from 'next/link';
 

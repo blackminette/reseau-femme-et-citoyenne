@@ -1,4 +1,5 @@
-// * src/app/(app-avec-header)/(dashboard)/membre/layout.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/membre/layout.tsx
+
 import React from 'react';
 import MemberSideMenu from '@/components/MemberSideMenu';
 

@@ -1,3 +1,5 @@
+// * src/services/rbac/guards.ts
+
 import { UserRole, UserSession } from '@/types/auth';
 
 /**

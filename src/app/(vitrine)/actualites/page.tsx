@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/actualites/page.tsx
+// * src/app/(vitrine)/actualites/page.tsx
 import React from 'react';
 
 /**

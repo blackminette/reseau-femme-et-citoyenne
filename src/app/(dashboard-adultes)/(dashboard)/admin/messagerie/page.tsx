@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/messagerie/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/messagerie/page.tsx
 'use client';
 
 import React from 'react';

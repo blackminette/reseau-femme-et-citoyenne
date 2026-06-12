@@ -1,4 +1,4 @@
-// * src/app/(app-avec-hezader)/(dashboard)/admin/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/page.tsx
 //! Ne pas oublier de refaire les liens des modules pédagogiques quand les pages seront faites (actuellement, ils pointent tous vers /admin)
 'use client';
 

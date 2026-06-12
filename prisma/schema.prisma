@@ -83,10 +83,16 @@ model Reservation {
   @@unique([utilisateurId, atelierId])
 }
 
+enum PublicCible {
+  ENFANT
+  ADULTE
+}
+
 model Module {
   id           Int               @id @default(autoincrement())
   titre        String
   description  String?
+  public       PublicCible       @default(ADULTE)
   createdAt    DateTime          @default(now())
   cours        Cours[]
 }

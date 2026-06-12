@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/reservations/actions.ts
+// * src/app/(dashboard-adultes)/(dashboard)/admin/reservations/actions.ts
 'use server';
 
 import { prisma } from "@/lib/prisma"; // Ajuste le chemin si nécessaire

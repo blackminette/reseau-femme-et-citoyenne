@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/membre/enfants/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/membre/enfants/page.tsx
 'use client';
 
 import Link from 'next/link';

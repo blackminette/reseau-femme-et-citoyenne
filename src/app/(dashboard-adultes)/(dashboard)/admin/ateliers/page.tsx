@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/ateliers/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/ateliers/page.tsx
 'use client'
 
 /** Page pour gérer les ateliers : création, modification, suppression et déplacement sur un calendrier interactif. */

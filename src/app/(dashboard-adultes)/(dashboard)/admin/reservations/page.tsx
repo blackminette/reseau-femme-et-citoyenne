@@ -1,3 +1,5 @@
+// * src/app/(dashboard-adultes)/(dashboard)/admin/reservations/page.tsx
+
 'use client';
 
 import React, { useEffect, useState } from 'react';

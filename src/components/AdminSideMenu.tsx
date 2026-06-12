@@ -1,3 +1,5 @@
+// * src/components/AdminSideMenu.tsx
+
 'use client';
 
 import React from 'react';

@@ -1,15 +1,15 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/pedagogie/adultes/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/pedagogie/adultes/page.tsx
+
 'use client';
 
 /** Page pour choisir et rediriger vers le bon module pédagogique. */
 
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { listerTousLesModules } from './actions';
+import { listerTousLesModules, creerModule, supprimerModule } from './actions';
 import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle } from 'lucide-react';
 import Modal from '@/components/Modal';
 
-// Type local pour correspondre aux données retournées avec le compteur Prisma
 interface ModuleAvecCompte {
     id: number;
     titre: string;
@@ -24,8 +24,10 @@ interface ModuleAvecCompte {
 export default function PedagogieAdultesPage() {
     const [modules, setModules] = useState<ModuleAvecCompte[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [modalCreateIsOpen, setModalCreateIsOpen] = useState(false);
+    const [modalDeleteIsOpen, setModalDeleteIsOpen] = useState(false);
 
     useEffect(() => {
         async function fetchModules() {
@@ -56,6 +58,33 @@ export default function PedagogieAdultesPage() {
         }
     };
 
+    const handleCreateModule = async () => {
+        // Récupérer les données du formulaire
+        const form = document.getElementById('create-module-form') as HTMLFormElement;
+        const formData = new FormData(form);
+        const titre = formData.get('titre') as string;
+        const description = formData.get('description') as string;
+
+        const result = await creerModule({ titre, description });
+        if (result.success && result.data) {
+            setModules(prev => [result.data as unknown as ModuleAvecCompte, ...prev]);
+            setModalCreateIsOpen(false);
+            form.reset();
+        } else {
+            setError(result.error || "Une erreur est survenue.");
+        }
+    };
+
+    const handleDeleteModule = async (id: number) => {
+        const result = await supprimerModule(id);
+        if (result.success) {
+            setModules(prev => prev.filter(module => module.id !== id));
+            setModalDeleteIsOpen(false);
+        } else {
+            setError(result.error || "Une erreur est survenue.");
+        }
+    };
+
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-8 animate-fade-in">
 
@@ -73,7 +102,7 @@ export default function PedagogieAdultesPage() {
 
                 {/* Bouton d'action pour la création */}
                 <button
-                    onClick={() => setModalIsOpen(true)}
+                    onClick={() => setModalCreateIsOpen(true)}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
                 >
                     <FolderPlus className="h-4 w-4" />
@@ -118,12 +147,12 @@ export default function PedagogieAdultesPage() {
                     <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
                         Commencez par créer votre premier module thématique pour y ajouter des chapitres et des exercices.
                     </p>
-                    <Link
-                        href="/admin/pedagogie/adultes/nouveau"
+                    <button
+                        onClick={() => setModalCreateIsOpen(true)}
                         className="mt-4 inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 gap-1"
                     >
                         Créer le premier module <ChevronRight className="h-3 w-3" />
-                    </Link>
+                    </button>
                 </div>
             )}
 
@@ -136,11 +165,6 @@ export default function PedagogieAdultesPage() {
                             className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md hover:shadow-slate-100 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative"
                         >
                             <div className="space-y-3">
-                                {/* Badge Niveau */}
-                                <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full border ${getBadgeColor(module.niveauRequis)}`}>
-                                    {module.niveauRequis.replace('_', ' ')}
-                                </span>
-
                                 {/* Titre & Description */}
                                 <div>
                                     <h3 className="font-bold text-slate-800 text-base tracking-tight group-hover:text-indigo-600 transition-colors">
@@ -159,18 +183,95 @@ export default function PedagogieAdultesPage() {
                                     <span>{module._count.cours} {module._count.cours > 1 ? 'cours' : 'cours'}</span>
                                 </div>
 
-                                <Link
-                                    href={`/admin/pedagogie/adultes/${module.id}`}
+                                <button
+                                    onClick={() => { setModalDeleteIsOpen(true); setSelectedModuleId(module.id); }}
                                     className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-0.5 group/link"
                                 >
-                                    Gérer
+                                    Supprimer
                                     <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/link:translate-x-0.5" />
-                                </Link>
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
+
+            {/* MODAL DE CRÉATION */}
+            <Modal
+                isOpen={modalCreateIsOpen}
+                onClose={() => setModalCreateIsOpen(false)}
+                title="Créer un nouveau module pédagogique"
+            >
+                <div className="bg-white p-6 rounded-lg">
+                    <form id="create-module-form" className="space-y-4">
+                        <div>
+                            <label htmlFor="titre" className="block text-sm font-medium text-slate-700">
+                                Titre du module <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="titre"
+                                name="titre"
+                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Entrez le titre du module"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-slate-700">
+                                Description du module
+                            </label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                rows={3}
+                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Entrez la description du module"
+                            />
+                        </div>
+                    </form>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <button
+                            onClick={() => setModalCreateIsOpen(false)}
+                            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={() => { handleCreateModule(); }}
+                            className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-md"
+                        >
+                            Créer
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* MODAL DE SUPPRESSION */}
+            <Modal
+                isOpen={modalDeleteIsOpen}
+                onClose={() => setModalDeleteIsOpen(false)}
+                title="Confirmer la suppression"
+            >
+                <div className="bg-white p-6 rounded-lg">
+                    <p className="text-slate-700">
+                        Êtes-vous sûr de vouloir supprimer ce module ?
+                    </p>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <button
+                            onClick={() => setModalDeleteIsOpen(false)}
+                            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={() => { handleDeleteModule(selectedModuleId!); }}
+                            className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 font-medium rounded-md"
+                        >
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+            </Modal>
 
         </div>
     );

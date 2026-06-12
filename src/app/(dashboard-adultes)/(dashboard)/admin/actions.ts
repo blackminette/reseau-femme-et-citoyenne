@@ -1,4 +1,4 @@
-// * src/app/(app-avec-hezader)/(dashboard)/admin/actions.ts
+// * src/app/(dashboard-adultes)/(dashboard)/admin/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';

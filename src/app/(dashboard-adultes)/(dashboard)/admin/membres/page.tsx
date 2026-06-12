@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/membres/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/membres/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react';

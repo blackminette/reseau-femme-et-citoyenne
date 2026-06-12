@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/membre/reserver/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/membre/reserver/page.tsx
 'use client';
 
 import React from 'react';
