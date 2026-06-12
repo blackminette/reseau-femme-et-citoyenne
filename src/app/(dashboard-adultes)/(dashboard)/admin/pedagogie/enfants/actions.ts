@@ -54,6 +54,36 @@ export async function creerModule(formData: { titre: string; description: string
     }
 }
 
+export async function modifierModule(formData: { id: number; titre: string; description: string }) {
+    try {
+        if (!formData.titre || !formData.titre.trim()) {
+            return { success: false, error: "Le titre du module est obligatoire." };
+        }
+
+        const modifierModule = await prisma.module.update({
+            where: {
+                id: formData.id,
+            },
+            data: {
+                titre: formData.titre.trim(),
+                description: formData.description.trim() || null,
+            },
+            include: {
+                _count: {
+                    select: { cours: true }
+                }
+            }
+        });
+
+        revalidatePath('/admin/pedagogie/enfants');
+
+        return { success: true, data: modifierModule }
+    } catch (error) {
+        console.error("Erreur Prisma (modifierModule) :", error);
+        return { success: false, error: "Une erreur est survenue lors de la modification du module." }
+    }
+}
+
 export async function supprimerModule(id: number) {
     try {
         await prisma.module.delete({
