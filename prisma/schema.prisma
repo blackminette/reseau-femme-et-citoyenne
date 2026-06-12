@@ -83,18 +83,34 @@ model Reservation {
   @@unique([utilisateurId, atelierId])
 }
 
-model Cours {
-  id             Int               @id @default(autoincrement())
-  titre          String
-  contenu        Json              @default("[]")
-  niveauRequis   NiveauPedagogique @default(NIVEAU_1)
-  estPublic      Boolean           @default(true)
-  createdAt      DateTime          @default(now())
-  intervenanteId String
-  intervenante   Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+enum PublicCible {
+  ENFANT
+  ADULTE
+}
 
-  compositions   Composition[]
-  programmes     Programme[]
+model Module {
+  id           Int               @id @default(autoincrement())
+  titre        String
+  description  String?
+  public       PublicCible       @default(ADULTE)
+  createdAt    DateTime          @default(now())
+  cours        Cours[]
+}
+
+model Cours {
+  id              Int               @id @default(autoincrement())
+  titre           String
+  estPublic       Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  intervenanteId  String
+  contenu         Json              @default("[]")
+  niveauRequis    NiveauPedagogique @default(NIVEAU_1)
+  moduleId        Int?              // Optionnel : permet d'avoir un cours indépendant si besoin
+  ordreDansModule Int               @default(1) // Pour gérer l'enchaînement des cours (Cours 1, Cours 2...)
+  module          Module?           @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  compositions    Composition[]
+  intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+  programmes      Programme[]
 }
 
 model Exercice {

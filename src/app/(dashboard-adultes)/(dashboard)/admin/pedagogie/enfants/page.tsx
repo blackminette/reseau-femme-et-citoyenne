@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/pedagogie/enfants/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/pedagogie/enfants/page.tsx
 'use client';
 
 /** Page pour pour choisir et rediriger vers le bon module. */

@@ -1,4 +1,4 @@
-// * src/app/(app-avec-header)/(dashboard)/admin/pedagogie/page.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/admin/pedagogie/page.tsx
 'use client';
 
 /** Page pour pour choisir et rediriger vers la bonne section (Adultes ou Enfants). */
