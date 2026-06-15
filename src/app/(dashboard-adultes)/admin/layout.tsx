@@ -16,19 +16,19 @@ export default function MembreLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div className="min-h-screen bg-violet-50 flex">
 
             {/* Barre latérale fixe à gauche (Prend strictement 1/6 de la largeur) */}
-            <aside className="w-1/6 fixed top-0 bottom-0 left-0 bg-white border-r border-slate-200 z-50 p-5 flex flex-col justify-between overflow-y-auto">
+            <aside className="w-1/6 fixed top-0 bottom-0 left-0 bg-white border-r border-violet-200 z-50 p-5 flex flex-col justify-between overflow-y-auto">
                 <div className="flex flex-col gap-6">
                     {/* En-tête de marque / Logo du Panel Admin */}
-                    <div className="px-3 py-2 border-b border-slate-100 pb-4 mb-2 flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    <div className="px-3 py-2 border-b border-violet-100 pb-4 mb-2 flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                             A
                         </div>
                         <div className="truncate">
-                            <h2 className="text-sm font-bold text-slate-800 leading-none truncate">Console Admin</h2>
-                            <span className="text-[10px] font-medium text-slate-400 mt-0.5 block">Gestion Espace</span>
+                            <h2 className="text-sm font-bold text-violet-900 leading-none truncate">Console Admin</h2>
+                            <span className="text-[10px] font-medium text-violet-500 mt-0.5 block">Gestion Espace</span>
                         </div>
                     </div>
 
@@ -37,14 +37,14 @@ export default function MembreLayout({
                 </div>
 
                 {/* Pied de page / Bouton de déconnexion */}
-                <div className="pt-4 border-t border-slate-100 mt-auto">
+                <div className="pt-4 border-t border-violet-100 mt-auto">
                     <form action={deconnexionUtilisateur}>
                         <button
                             type="submit"
-                            className="w-full px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200 flex items-center gap-3 group text-left"
+                            className="w-full px-3 py-2.5 text-sm font-medium text-violet-600 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all duration-200 flex items-center gap-3 group text-left"
                         >
                             <svg
-                                className="h-4 w-4 text-slate-400 group-hover:text-rose-500 transition-colors shrink-0"
+                                className="h-4 w-4 text-violet-500 group-hover:text-amber-500 transition-colors shrink-0"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"

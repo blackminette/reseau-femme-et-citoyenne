@@ -123,8 +123,8 @@ export default function AdminAteliersPage() {
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Gestion des Ateliers</h1>
-                    <p className="text-sm text-slate-500">Planifiez, modifiez et déplacez vos ateliers directement sur le planning interactif.</p>
+                    <h1 className="text-2xl font-bold text-violet-950">Gestion des Ateliers</h1>
+                    <p className="text-sm text-violet-600">Planifiez, modifiez et déplacez vos ateliers directement sur le planning interactif.</p>
                 </div>
             </div>
 
@@ -133,7 +133,7 @@ export default function AdminAteliersPage() {
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
                 </div>
             ) : (
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-violet-200 shadow-sm">
                     <FullCalendar
                         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                         initialView="timeGridWeek" // Affiche la vue semaine par default
@@ -170,23 +170,23 @@ export default function AdminAteliersPage() {
             >
                 <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Nom de l'atelier</label>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Nom de l'atelier</label>
                         <input
                             type="text"
                             value={formTitle}
                             onChange={(e) => setFormTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all"
                             placeholder="Ex: Atelier Peinture, Cours de Yoga..."
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optionnel)</label>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Description (Optionnel)</label>
                         <textarea
                             value={formDescription}
                             onChange={(e) => setFormDescription(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all"
                             placeholder="Ajouter des précisions sur l'atelier..."
                             rows={3}
                         />
@@ -194,33 +194,33 @@ export default function AdminAteliersPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Date & Heure de début</label>
+                            <label className="block text-sm font-medium text-violet-800 mb-1">Date & Heure de début</label>
                             <input
                                 type="datetime-local"
                                 value={formStart}
                                 onChange={(e) => setFormStart(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                                className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Date & Heure de fin</label>
+                            <label className="block text-sm font-medium text-violet-800 mb-1">Date & Heure de fin</label>
                             <input
                                 type="datetime-local"
                                 value={formEnd}
                                 onChange={(e) => setFormEnd(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                                className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
                                 required
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-5 mt-6 border-t border-slate-100">
+                    <div className="flex justify-between items-center pt-5 mt-6 border-t border-violet-100">
                         {selectedEventId ? (
                             <button
                                 type="button"
                                 onClick={handleSupprimer}
-                                className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
                             >
                                 Supprimer l'atelier
                             </button>
@@ -230,13 +230,13 @@ export default function AdminAteliersPage() {
                             <button
                                 type="button"
                                 onClick={() => setModalIsOpen(false)}
-                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors cursor-pointer"
+                                className="px-4 py-2 bg-violet-100 text-violet-800 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors cursor-pointer"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors cursor-pointer shadow-xs"
+                                className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors cursor-pointer shadow-xs"
                             >
                                 {selectedEventId ? "Enregistrer" : "Créer l'atelier"}
                             </button>

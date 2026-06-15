@@ -123,17 +123,17 @@ export default function PedagogieAdultesPage() {
         <div className="p-6 pl-8 pr-8 mx-auto space-y-8 animate-fade-in">
             {/* EN-TÊTE DE LA PAGE */}
             <div className="flex flex-col">
-                <Link href="/admin/pedagogie" className="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1">
+                <Link href="/admin/pedagogie" className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1">
                     <ChevronRight className="h-3 w-3 rotate-180" />
                     Retour à la pédagogie
                 </Link>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-violet-100 pb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <GraduationCap className="h-6 w-6 text-indigo-600" />
+                        <h1 className="text-2xl font-bold text-violet-950 tracking-tight flex items-center gap-2">
+                            <GraduationCap className="h-6 w-6 text-violet-600" />
                             Modules pédagogiques pour adultes
                         </h1>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <p className="text-sm text-violet-600 mt-1">
                             Gérez les modules d'apprentissage.
                         </p>
                     </div>
@@ -143,7 +143,7 @@ export default function PedagogieAdultesPage() {
                             setFormData({ titre: '', description: '' }); // Reset l'état
                             setModalCreateIsOpen(true);
                         }}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-md hover:bg-violet-700 transition-colors"
                     >
                         <FolderPlus className="h-4 w-4" />
                         Nouveau Module
@@ -153,7 +153,7 @@ export default function PedagogieAdultesPage() {
 
             {/* GESTION DE L'ERREUR */}
             {error && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-700 text-sm">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-700 text-sm">
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <span>{error}</span>
                 </div>
@@ -163,15 +163,15 @@ export default function PedagogieAdultesPage() {
             {isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map((n) => (
-                        <div key={n} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
-                            <div className="h-5 bg-slate-100 rounded-md w-1/3 animate-pulse" />
+                        <div key={n} className="bg-white border border-violet-200 rounded-2xl p-5 space-y-4 shadow-sm">
+                            <div className="h-5 bg-violet-100 rounded-md w-1/3 animate-pulse" />
                             <div className="space-y-2">
-                                <div className="h-6 bg-slate-200 rounded-md w-3/4 animate-pulse" />
-                                <div className="h-4 bg-slate-100 rounded-md w-full animate-pulse" />
+                                <div className="h-6 bg-violet-200 rounded-md w-3/4 animate-pulse" />
+                                <div className="h-4 bg-violet-100 rounded-md w-full animate-pulse" />
                             </div>
-                            <div className="pt-4 border-t border-slate-50 flex justify-between">
-                                <div className="h-4 bg-slate-100 rounded-md w-1/4 animate-pulse" />
-                                <div className="h-4 bg-slate-200 rounded-md w-1/3 animate-pulse" />
+                            <div className="pt-4 border-t border-violet-50 flex justify-between">
+                                <div className="h-4 bg-violet-100 rounded-md w-1/4 animate-pulse" />
+                                <div className="h-4 bg-violet-200 rounded-md w-1/3 animate-pulse" />
                             </div>
                         </div>
                     ))}
@@ -180,17 +180,17 @@ export default function PedagogieAdultesPage() {
 
             {/* ÉTAT VIDE */}
             {!isLoading && !error && modules.length === 0 && (
-                <div className="text-center py-16 bg-white border border-dashed border-slate-200 rounded-2xl p-8 max-w-md mx-auto">
-                    <div className="h-12 w-12 bg-slate-50 text-slate-400 flex items-center justify-center rounded-xl mx-auto mb-4">
+                <div className="text-center py-16 bg-white border border-dashed border-violet-200 rounded-2xl p-8 max-w-md mx-auto">
+                    <div className="h-12 w-12 bg-violet-50 text-violet-500 flex items-center justify-center rounded-xl mx-auto mb-4">
                         <BookOpen className="h-6 w-6" />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900">Aucun module pédagogique</h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                    <h3 className="text-sm font-semibold text-violet-950">Aucun module pédagogique</h3>
+                    <p className="text-xs text-violet-600 mt-1 max-w-xs mx-auto">
                         Commencez par créer votre premier module thématique pour y ajouter des chapitres et des exercices.
                     </p>
                     <button
                         onClick={() => setModalCreateIsOpen(true)}
-                        className="mt-4 inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 gap-1"
+                        className="mt-4 inline-flex items-center text-xs font-semibold text-violet-600 hover:text-violet-700 gap-1"
                     >
                         Créer le premier module <ChevronRight className="h-3 w-3" />
                     </button>
@@ -203,15 +203,15 @@ export default function PedagogieAdultesPage() {
                     {modules.map((module) => (
                         <div
                             key={module.id}
-                            className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md hover:shadow-slate-100 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative"
+                            className="group bg-white border border-violet-200 hover:border-violet-200 hover:shadow-md hover:shadow-violet-100 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative"
                         >
                             <Link href={`/admin/pedagogie/adultes/${module.id}`}>
                                 <div className="space-y-3">
                                     <div>
-                                        <h3 className="font-bold text-slate-800 text-base tracking-tight group-hover:text-indigo-600 transition-colors">
+                                        <h3 className="font-bold text-violet-900 text-base tracking-tight group-hover:text-violet-600 transition-colors">
                                             {module.titre}
                                         </h3>
-                                        <p className="text-slate-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+                                        <p className="text-violet-600 text-xs mt-1.5 line-clamp-2 leading-relaxed">
                                             {module.description || "Aucune description fournie pour ce module pédagogique."}
                                         </p>
                                     </div>
@@ -219,16 +219,16 @@ export default function PedagogieAdultesPage() {
                             </Link>
 
                             {/* Actions bas de carte */}
-                            <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-2 py-1 rounded-md">
-                                    <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+                            <div className="mt-5 pt-4 border-t border-violet-100 flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1.5 text-violet-700 font-medium bg-violet-50 px-2 py-1 rounded-md">
+                                    <BookOpen className="h-3.5 w-3.5 text-violet-500" />
                                     <span>{module._count.cours} {module._count.cours > 1 ? 'cours' : 'cours'}</span>
                                 </div>
 
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => ouvrirModalModification(module)}
-                                        className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 group/link"
+                                        className="text-violet-600 hover:text-violet-700 font-semibold flex items-center gap-1 group/link"
                                     >
                                         <Pencil className="h-3.5 w-3.5" />
                                         Modifier
@@ -236,7 +236,7 @@ export default function PedagogieAdultesPage() {
 
                                     <button
                                         onClick={() => { setSelectedModuleId(module.id); setModalDeleteIsOpen(true); }}
-                                        className="text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 group/link"
+                                        className="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1 group/link"
                                     >
                                         <Trash className="h-3.5 w-3.5" />
                                         Supprimer
@@ -257,27 +257,27 @@ export default function PedagogieAdultesPage() {
                 <div className="bg-white p-6 rounded-lg">
                     <form onSubmit={handleCreateModule} className="space-y-4">
                         <div>
-                            <label htmlFor="titre" className="block text-sm font-medium text-slate-700">
-                                Titre du module <span className="text-rose-500">*</span>
+                            <label htmlFor="titre" className="block text-sm font-medium text-violet-800">
+                                Titre du module <span className="text-amber-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 id="titre"
                                 name="titre"
                                 required
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="Entrez le titre du module"
                             />
                         </div>
                         <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-slate-700">
+                            <label htmlFor="description" className="block text-sm font-medium text-violet-800">
                                 Description du module
                             </label>
                             <textarea
                                 id="description"
                                 name="description"
                                 rows={3}
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="Entrez la description du module"
                             />
                         </div>
@@ -285,13 +285,13 @@ export default function PedagogieAdultesPage() {
                             <button
                                 type="button"
                                 onClick={() => setModalCreateIsOpen(false)}
-                                className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium text-sm"
+                                className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-md text-sm"
+                                className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm"
                             >
                                 Créer
                             </button>
@@ -307,21 +307,21 @@ export default function PedagogieAdultesPage() {
                 title="Confirmer la suppression"
             >
                 <div className="bg-white p-6 rounded-lg">
-                    <p className="text-slate-700 text-sm">
+                    <p className="text-violet-800 text-sm">
                         Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.
                     </p>
                     <div className="flex justify-end gap-3 mt-6">
                         <button
                             type="button"
                             onClick={() => setModalDeleteIsOpen(false)}
-                            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium text-sm"
+                            className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm"
                         >
                             Annuler
                         </button>
                         <button
                             type="button"
                             onClick={handleDeleteModule}
-                            className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 font-medium rounded-md text-sm"
+                            className="px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 font-medium rounded-md text-sm"
                         >
                             Supprimer
                         </button>
@@ -338,29 +338,29 @@ export default function PedagogieAdultesPage() {
                 <div className="bg-white p-6 rounded-lg">
                     <form onSubmit={handleModifierModule} className="space-y-4">
                         <div>
-                            <label htmlFor="edit-titre" className="block text-sm font-medium text-slate-700">
-                                Titre du module <span className="text-rose-500">*</span>
+                            <label htmlFor="edit-titre" className="block text-sm font-medium text-violet-800">
+                                Titre du module <span className="text-amber-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 id="edit-titre"
                                 name="titre"
                                 required
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="Entrez le titre du module"
                                 value={formData.titre}
                                 onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label htmlFor="edit-description" className="block text-sm font-medium text-slate-700">
+                            <label htmlFor="edit-description" className="block text-sm font-medium text-violet-800">
                                 Description du module
                             </label>
                             <textarea
                                 id="edit-description"
                                 name="description"
                                 rows={3}
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="Entrez la description du module"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -370,13 +370,13 @@ export default function PedagogieAdultesPage() {
                             <button
                                 type="button"
                                 onClick={() => setModalEditIsOpen(false)}
-                                className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium text-sm"
+                                className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-md text-sm"
+                                className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm"
                             >
                                 Enregistrer
                             </button>
