@@ -87,7 +87,7 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="border-slate-200 bg-white text-slate-900 shadow-xl relative overflow-hidden">
         {/* Accent line - Brand Gradient */}
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffd166] to-[#752fbb]" />
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffd166] to-[#260936]" />
 
         <CardHeader className="space-y-1 text-center pt-10">
           <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">Inscription</CardTitle>
@@ -108,7 +108,7 @@ export function SignupForm({
                 <Field>
                     <FieldLabel htmlFor="prenom" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Prénom</FieldLabel>
                     <div className="relative group">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={16} />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={16} />
                         <Input
                             id="prenom"
                             type="text"
@@ -116,14 +116,14 @@ export function SignupForm({
                             value={prenom}
                             onChange={(e) => setPrenom(e.target.value)}
                             placeholder="Johanna"
-                            className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all rounded-xl"
+                            className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all rounded-xl"
                         />
                     </div>
                 </Field>
                 <Field>
                     <FieldLabel htmlFor="nom" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Nom</FieldLabel>
                     <div className="relative group">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={16} />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={16} />
                         <Input
                             id="nom"
                             type="text"
@@ -131,7 +131,7 @@ export function SignupForm({
                             value={nom}
                             onChange={(e) => setNom(e.target.value)}
                             placeholder="IPSSI"
-                            className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all rounded-xl"
+                            className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all rounded-xl"
                         />
                     </div>
                 </Field>
@@ -140,14 +140,14 @@ export function SignupForm({
               <Field>
                 <FieldLabel htmlFor="telephone" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Téléphone</FieldLabel>
                 <div className="relative group">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={16} />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={16} />
                     <Input
                         id="telephone"
                         type="tel"
                         value={telephone}
                         onChange={(e) => setTelephone(e.target.value)}
                         placeholder="06 01 02 03 04"
-                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all rounded-xl"
                     />
                 </div>
               </Field>
@@ -155,7 +155,7 @@ export function SignupForm({
               <Field>
                 <FieldLabel htmlFor="email" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Email</FieldLabel>
                 <div className="relative group">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={16} />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={16} />
                     <Input
                         id="email"
                         type="email"
@@ -163,7 +163,7 @@ export function SignupForm({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-sm focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all rounded-xl"
                     />
                 </div>
               </Field>
@@ -171,20 +171,20 @@ export function SignupForm({
               <Field>
                 <FieldLabel htmlFor="password" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Mot de passe</FieldLabel>
                 <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={16} />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={16} />
                     <Input 
                         id="password" 
                         type={showPassword ? "text" : "password"} 
                         required 
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 pr-10 h-11 text-sm focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 pr-10 h-11 text-sm focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all rounded-xl"
                         placeholder="8+ car., 1 maj., 1 spécial"
                     />
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#752fbb] transition-colors"
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#260936] transition-colors"
                     >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -194,20 +194,20 @@ export function SignupForm({
               <Field>
                 <FieldLabel htmlFor="confirmPassword" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Confirmation</FieldLabel>
                 <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={16} />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={16} />
                     <Input 
                         id="confirmPassword" 
                         type={showConfirmPassword ? "text" : "password"} 
                         required 
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 pr-10 h-11 text-sm focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-900 pl-10 pr-10 h-11 text-sm focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all rounded-xl"
                         placeholder="Répétez le mot de passe"
                     />
                     <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#752fbb] transition-colors"
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#260936] transition-colors"
                     >
                         {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -215,7 +215,7 @@ export function SignupForm({
               </Field>
 
               <Field className="pt-2">
-                <Button type="submit" disabled={isLoading} className="w-full bg-[#752fbb] hover:bg-[#6026a3] text-white font-bold h-11 transition-all shadow-lg shadow-[#752fbb]/10 rounded-xl text-sm uppercase tracking-wide">
+                <Button type="submit" disabled={isLoading} className="w-full bg-[#260936] hover:bg-[#6026a3] text-white font-bold h-11 transition-all shadow-lg shadow-[#260936]/10 rounded-xl text-sm uppercase tracking-wide">
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Créer mon compte"}
                 </Button>
                 <div className="text-center text-sm text-slate-500 mt-6">
@@ -223,7 +223,7 @@ export function SignupForm({
                   <button 
                     type="button"
                     onClick={() => router.push('/login')}
-                    className="text-[#752fbb] hover:text-slate-900 font-black underline underline-offset-4 transition-colors"
+                    className="text-[#260936] hover:text-slate-900 font-black underline underline-offset-4 transition-colors"
                   >
                     Se connecter
                   </button>

@@ -74,7 +74,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="border-slate-200 bg-white text-slate-900 shadow-xl relative overflow-hidden">
         {/* Accent line - Brand Gradient */}
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffd166] to-[#752fbb]" />
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffd166] to-[#260936]" />
         
         <CardHeader className="space-y-1 text-center pt-10">
           <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">Connexion</CardTitle>
@@ -94,7 +94,7 @@ export function LoginForm({
               <Field>
                 <FieldLabel htmlFor="email" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Email professionnel</FieldLabel>
                 <div className="relative group">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={18} />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={18} />
                     <Input
                         id="email"
                         type="email"
@@ -102,7 +102,7 @@ export function LoginForm({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="bg-slate-50 border-slate-200 text-slate-900 pl-11 focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all h-12 rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-900 pl-11 focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all h-12 rounded-xl"
                     />
                 </div>
               </Field>
@@ -111,32 +111,32 @@ export function LoginForm({
                   <FieldLabel htmlFor="password" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Mot de passe</FieldLabel>
                   <a
                     href="#"
-                    className="text-xs text-[#752fbb] hover:text-slate-900 transition-colors font-bold"
+                    className="text-xs text-[#260936] hover:text-slate-900 transition-colors font-bold"
                   >
                     Oublié ?
                   </a>
                 </div>
                 <div className="relative group">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#752fbb] transition-colors" size={18} />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={18} />
                     <Input 
                         id="password" 
                         type={showPassword ? "text" : "password"} 
                         required 
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="bg-slate-50 border-slate-200 text-slate-900 pl-11 pr-11 focus:border-[#752fbb] focus:ring-1 focus:ring-[#752fbb] transition-all h-12 rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-900 pl-11 pr-11 focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all h-12 rounded-xl"
                     />
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#752fbb] transition-colors"
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#260936] transition-colors"
                     >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
               </Field>
               <Field className="pt-2">
-                <Button type="submit" disabled={isLoading} className="w-full bg-[#752fbb] hover:bg-[#6026a3] text-white font-bold h-13 transition-all shadow-lg shadow-[#752fbb]/10 rounded-xl text-sm uppercase tracking-wide">
+                <Button type="submit" disabled={isLoading} className="w-full bg-[#260936] hover:bg-[#6026a3] text-white font-bold h-13 transition-all shadow-lg shadow-[#260936]/10 rounded-xl text-sm uppercase tracking-wide">
                   {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Se connecter"}
                 </Button>
                 <div className="text-center text-sm text-slate-500 mt-8">
@@ -144,7 +144,7 @@ export function LoginForm({
                   <button 
                     type="button"
                     onClick={() => router.push('/signup')}
-                    className="text-[#752fbb] hover:text-slate-900 font-black underline underline-offset-4 transition-colors"
+                    className="text-[#260936] hover:text-slate-900 font-black underline underline-offset-4 transition-colors"
                   >
                     Créer un compte
                   </button>

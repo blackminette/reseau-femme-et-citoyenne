@@ -77,43 +77,51 @@ export default function Header() {
                 <div className="flex h-24 items-center justify-between">
                     {/* Logo de l'association */}
                     <div className="flex shrink-0 items-center">
-                        <Link href="/" className="flex items-center gap-2 transition hover:opacity-90">
+                        <Link href="/" className="flex items-center gap-3 transition hover:opacity-90 group">
                             <Image
                                 src="/logo.ico"
                                 alt="Logo RFC06"
                                 width={256}
                                 height={256}
-                                className="h-24 w-24"
+                                className="h-16 w-16 sm:h-20 sm:w-20 object-contain"
                             />
+                            <div className="hidden flex-col lg:flex">
+                                <span className="text-xl font-black leading-none bg-gradient-to-r from-[#260936] to-[#ffd166] bg-clip-text text-transparent uppercase tracking-tighter">
+                                    Réseau Femme
+                                </span>
+                                <span className="text-sm font-bold leading-none text-[#260936]/70 uppercase tracking-[0.2em] ml-0.5">
+                                    & Citoyenne
+                                </span>
+                            </div>
                         </Link>
                     </div>
 
                     {/* Liens de navigation centraux : cachés sur mobile, visibles à partir de md */}
-                    <div className="hidden items-center space-x-4 md:flex">
+                    <div className="hidden items-center space-x-1 md:flex">
                         <Link
                             href="/"
-                            className="px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                            className="px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full"
                         >
                             Accueil
                         </Link>
 
                         <Link
                             href="/a-propos"
-                            className="px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                            className="px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full"
                         >
                             À propos
                         </Link>
 
                         <Link
                             href="/ateliers"
-                            className="px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                            className="px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full"
                         >
                             Ateliers
                         </Link>
 
                         <Link
                             href="/actualites"
-                            className="px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                            className="px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full"
                         >
                             Actualités
                         </Link>
@@ -121,9 +129,9 @@ export default function Header() {
                         {!isLoading && role === 'ADMIN' && (
                             <Link
                                 href="/admin"
-                                className="rounded-md border border-red-200 bg-red-50/80 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                                className="ml-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-black text-red-700 transition hover:bg-red-100 uppercase tracking-widest"
                             >
-                                Console Admin
+                                Admin
                             </Link>
                         )}
                     </div>
@@ -136,131 +144,68 @@ export default function Header() {
                             <UserDropdown role={role} />
                         )}
 
-                        {/* Bouton burger animé : les trois barres se transforment progressivement en croix */}
+                        {/* Bouton burger animé */}
                         <button
                             type="button"
                             onClick={() => setIsMenuOpen((open) => !open)}
-                            className={`group relative flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-slate-100/50 hover:text-slate-900 active:scale-90 focus:outline-none focus:ring-2 focus:ring-slate-300 md:hidden motion-reduce:transition-none ${
+                            className={`group relative flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-slate-100/50 hover:text-slate-900 active:scale-90 focus:outline-none focus:ring-2 focus:ring-slate-300 md:hidden ${
                                 isMenuOpen ? 'bg-slate-100/50 shadow-inner' : ''
                             }`}
-                            aria-label={isMenuOpen ? 'Fermer le menu principal' : 'Ouvrir le menu principal'}
-                            aria-controls="mobile-menu"
-                            aria-expanded={isMenuOpen}
+                            aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
                         >
-                            <span className="sr-only">
-                                {isMenuOpen ? 'Fermer le menu principal' : 'Ouvrir le menu principal'}
-                            </span>
-
-                            {/* Barre du haut */}
-                            <span
-                                aria-hidden="true"
-                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none ${
-                                    isMenuOpen
-                                        ? 'translate-y-0 rotate-45'
-                                        : '-translate-y-2 rotate-0 group-hover:-translate-y-2.5'
-                                }`}
-                            />
-
-                            {/* Barre du milieu */}
-                            <span
-                                aria-hidden="true"
-                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-200 ease-out motion-reduce:transition-none ${
-                                    isMenuOpen
-                                        ? 'scale-x-0 opacity-0'
-                                        : 'scale-x-100 opacity-100'
-                                }`}
-                            />
-
-                            {/* Barre du bas */}
-                            <span
-                                aria-hidden="true"
-                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none ${
-                                    isMenuOpen
-                                        ? 'translate-y-0 -rotate-45'
-                                        : 'translate-y-2 rotate-0 group-hover:translate-y-2.5'
-                                }`}
-                            />
+                            <span className="sr-only">{isMenuOpen ? 'Fermer' : 'Ouvrir'}</span>
+                            <span className={`absolute h-0.5 w-6 rounded-full bg-current transition-all ${isMenuOpen ? 'rotate-45' : '-translate-y-2'}`} />
+                            <span className={`absolute h-0.5 w-6 rounded-full bg-current transition-all ${isMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+                            <span className={`absolute h-0.5 w-6 rounded-full bg-current transition-all ${isMenuOpen ? '-rotate-45' : 'translate-y-2'}`} />
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Menu mobile animé : il reste dans le DOM et se déplie doucement */}
+            {/* Menu mobile animé */}
             <div
                 id="mobile-menu"
-                aria-hidden={!isMenuOpen}
-                className={`grid border-t border-slate-200/50 bg-white/80 shadow-sm backdrop-blur-md transition-[grid-template-rows,opacity,transform] duration-420ms ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden motion-reduce:transition-none ${
-                    isMenuOpen
-                        ? 'grid-rows-[1fr] translate-y-0 opacity-100'
-                        : 'pointer-events-none grid-rows-[0fr] -translate-y-1 opacity-0'
+                className={`grid border-t border-slate-200/50 bg-white/80 backdrop-blur-md transition-all duration-300 md:hidden ${
+                    isMenuOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
                 }`}
             >
                 <div className="overflow-hidden">
-                    <div className="space-y-1 px-2 pb-4 pt-3 sm:px-3">
+                    <div className="space-y-1 px-2 pb-4 pt-3">
                         <Link
                             href="/"
                             onClick={closeMenu}
-                            tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
-                                    ? 'translate-x-0 opacity-100 delay-75'
-                                    : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                            className="block rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors"
                         >
                             Accueil
                         </Link>
-
                         <Link
                             href="/a-propos"
                             onClick={closeMenu}
-                            tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
-                                    ? 'translate-x-0 opacity-100 delay-100'
-                                    : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                            className="block rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors"
                         >
                             À propos
                         </Link>
-
                         <Link
                             href="/ateliers"
                             onClick={closeMenu}
-                            tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
-                                    ? 'translate-x-0 opacity-100 delay-150'
-                                    : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                            className="block rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors"
                         >
                             Ateliers
                         </Link>
-
                         <Link
                             href="/actualites"
                             onClick={closeMenu}
-                            tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
-                                    ? 'translate-x-0 opacity-100 delay-200'
-                                    : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                            className="block rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors"
                         >
                             Actualités
                         </Link>
-
                         {!isLoading && role === 'ADMIN' && (
                             <Link
                                 href="/admin"
                                 onClick={closeMenu}
-                                tabIndex={isMenuOpen ? 0 : -1}
-                                className={`mt-4 block rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-base font-medium text-red-700 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-red-100 motion-reduce:transition-none ${
-                                    isMenuOpen
-                                        ? 'translate-x-0 opacity-100 delay-300'
-                                        : '-translate-x-2 opacity-0 delay-0'
-                                }`}
+                                className="mt-4 block rounded-full border border-red-200 bg-red-50 px-3 py-2 text-center text-sm font-black text-red-700 uppercase"
                             >
-                                Console Admin
+                                Admin
                             </Link>
                         )}
                     </div>

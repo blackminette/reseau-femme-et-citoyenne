@@ -11,7 +11,7 @@
 
 export default function Footer() {
     return (
-        <footer className="border-t border-[#bc96e6]/30 bg-[#752fbb] px-6 py-12 text-sm text-[#eedeff] relative overflow-hidden">
+        <footer className="border-t border-[#bc96e6]/30 bg-[#260936] px-6 py-12 text-sm text-[#eedeff] relative overflow-hidden">
             {/* Décoration subtile en arrière-plan */}
             <div className="absolute top-0 left-0 w-64 h-64 bg-[#bc96e6]/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
             
