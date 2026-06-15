@@ -205,16 +205,18 @@ export default function PedagogieAdultesPage() {
                             key={module.id}
                             className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md hover:shadow-slate-100 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative"
                         >
-                            <div className="space-y-3">
-                                <div>
-                                    <h3 className="font-bold text-slate-800 text-base tracking-tight group-hover:text-indigo-600 transition-colors">
-                                        {module.titre}
-                                    </h3>
-                                    <p className="text-slate-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">
-                                        {module.description || "Aucune description fournie pour ce module pédagogique."}
-                                    </p>
+                            <Link href={`/admin/pedagogie/adultes/${module.id}`}>
+                                <div className="space-y-3">
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 text-base tracking-tight group-hover:text-indigo-600 transition-colors">
+                                            {module.titre}
+                                        </h3>
+                                        <p className="text-slate-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+                                            {module.description || "Aucune description fournie pour ce module pédagogique."}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            </Link>
 
                             {/* Actions bas de carte */}
                             <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
