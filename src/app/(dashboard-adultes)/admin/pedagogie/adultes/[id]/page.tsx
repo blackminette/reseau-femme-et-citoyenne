@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getModuleAndCours, creerCours } from './actions';
+import { getModuleAndCours, creerCours, supprimerCours } from './actions';
 import Modal from '@/components/Modal';
 
 interface CoursInfo {
@@ -26,6 +26,8 @@ export default function AdminModulePage() {
     const [module, setModule] = useState<ModuleInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
+    const [coursId, setCoursId] = useState<number | null>(null);
 
     const params = useParams();
     const id = params.id as string;
@@ -73,6 +75,26 @@ export default function AdminModulePage() {
         }
     };
 
+    const handleDelete = async () => {
+        if (coursId === null) return;
+        setError(null);
+
+        const result = await supprimerCours(coursId);
+        if (result.success) {
+            setModule(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    cours: prev.cours.filter(c => c.id !== coursId)
+                };
+            });
+            setIsModalDeleteOpen(false);
+            setCoursId(null);
+        } else {
+            setError("Une erreur est survenue.")
+        }
+    }
+
     if (isLoading) {
         return <div className="p-6">Chargement...</div>;
     }
@@ -102,8 +124,13 @@ export default function AdminModulePage() {
                 {module.cours && module.cours.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
                         {module.cours.map((cours) => (
-                            <div key={cours.id} className="p-4 bg-white border border-violet-200 rounded-xl shadow-sm">
-                                <h3 className="font-medium text-violet-950">{cours.titre}</h3>
+                            <div key={cours.id} className="flex p-4 bg-white border border-violet-200 rounded-xl shadow-sm">
+                                <div>
+                                    <h3 className="font-medium text-violet-950">{cours.titre}</h3>
+                                </div>
+                                <div>
+                                    <button onClick={() => { setIsModalDeleteOpen(true), setCoursId(cours.id) }}>Supprimer</button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -112,6 +139,7 @@ export default function AdminModulePage() {
                 )}
             </div>
 
+            {/* MODAL DE CREATION */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -148,6 +176,35 @@ export default function AdminModulePage() {
                             </button>
                         </div>
                     </form>
+                </div>
+            </Modal>
+
+            {/* MODAL DE SUPPRESSION */}
+            <Modal
+                isOpen={isModalDeleteOpen}
+                onClose={() => setIsModalDeleteOpen(false)}
+                title="Confirmer la suppression"
+            >
+                <div className="bg-white p-6 rounded-lg">
+                    <p className="text-violet-800 text-sm">
+                        Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.
+                    </p>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <button
+                            type="button"
+                            onClick={() => setIsModalDeleteOpen(false)}
+                            className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleDelete()}
+                            className="px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 font-medium rounded-md text-sm"
+                        >
+                            Supprimer
+                        </button>
+                    </div>
                 </div>
             </Modal>
         </div>

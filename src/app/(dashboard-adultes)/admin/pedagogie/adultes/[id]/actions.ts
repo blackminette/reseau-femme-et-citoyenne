@@ -52,3 +52,17 @@ export async function creerCours(id: number, formData: { titre: string }) {
         return { success: false, error: "Erreur lors de la création du cours." }
     }
 }
+
+export async function supprimerCours(id: number) {
+    try {
+        const result = await prisma.cours.delete({
+            where: { id: id }
+        })
+
+        revalidatePath(`/admin/pedagogie/adultes/${id}`);
+
+        return { success: true }
+    } catch (error) {
+        return { success: false, error: "Erreur lors de la suppression du cours." }
+    }
+}
