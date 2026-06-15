@@ -16,8 +16,13 @@ export async function signupAction(formData: any) {
         return { success: false, error: "Les mots de passe ne correspondent pas." };
     }
 
-    if (password.length < 6) {
-        return { success: false, error: "Le mot de passe doit contenir au moins 6 caractères." };
+    // Validation de la complexité du mot de passe
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+        return { 
+            success: false, 
+            error: "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un caractère spécial." 
+        };
     }
 
     try {
@@ -44,15 +49,16 @@ export async function signupAction(formData: any) {
         }
 
         // 2. Création de l'utilisateur dans la base de données via Prisma
-        // On s'assure que le profil est créé pour que le middleware et le reste de l'app fonctionnent.
+        // IMPORTANT: On utilise l'ID de Supabase Auth pour l'id Prisma pour rester cohérent avec le seed
         try {
             await prisma.utilisateur.create({
                 data: {
+                    id: authData.user.id, // Synchronisation de l'ID
                     email: email,
                     nom: nom,
                     prenom: prenom,
-                    telephone: telephone, // Ajout du téléphone
-                    role: "MEMBRE", // Rôle par défaut pour les nouvelles inscriptions
+                    telephone: telephone,
+                    role: "MEMBRE",
                 }
             });
         } catch (prismaError: any) {
