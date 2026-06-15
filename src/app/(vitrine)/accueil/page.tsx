@@ -2,7 +2,7 @@ export default function Accueil() {
     return (
         <div className="bg-[#eedeff]">
             {/* Section hero : grande bannière d'accueil avec image de fond */}
-            <section className="relative min-h-[85vh] w-full bg-[url('/background.png')] bg-cover bg-center text-white flex items-center">
+            <section className="relative min-h-[90vh] w-full bg-[url('/background.png')] bg-cover bg-center text-white flex items-center">
                 {/* Voile dégradé violet pour une DA plus moderne */}
                 <div className="absolute inset-0 bg-linear-to-b from-[#752fbb]/90 via-[#752fbb]/60 to-[#752fbb]/30"></div>
 

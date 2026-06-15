@@ -95,7 +95,7 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="exemple@association.fr"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-800"
                         />
                     </div>
 
@@ -110,18 +110,28 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-800"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm shadow transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                        className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg text-sm shadow transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                     >
                         {isLoading ? 'Connexion en cours...' : 'Se connecter'}
                     </button>
                 </form>
+
+                <p className="mt-6 text-center text-sm text-slate-600">
+                    Pas encore de compte ?{' '}
+                    <button 
+                        onClick={() => router.push('/signup')}
+                        className="text-blue-500 hover:underline focus:outline-none"
+                    >
+                        S'inscrire
+                    </button>
+                </p>
 
                 {/* Note informative de test */}
                 <div className="mt-6 p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800 text-center">
