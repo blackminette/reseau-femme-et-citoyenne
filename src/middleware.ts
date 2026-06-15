@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/auth';
 // Route sur laquelle le middleware s'applique (toutes les routes privées)
 export const config = {
     matcher: [
-        '/membre/:path*',
+        // '/membre/:path*', // TEMP : protection retirée pour pouvoir voir la page sans login. Remettre cette ligne quand le login Supabase sera prêt.
         '/admin/:path*',
         '/enfant/:path*',
         '/intervenant/:path*',

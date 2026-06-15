@@ -1,33 +1,48 @@
-// * src/app/(dashboard-adultes)/(dashboard)/membre/page.tsx
-'use client';
+import Link from "next/link";
+import { CalendarCheck, Users, ArrowRight } from "lucide-react";
+import LogoutButton from "@/components/LogoutButton";
 
-import Link from 'next/link';
-import React from 'react';
+export const metadata = {
+    title: "Mon espace membre",
+    description: "Gérez vos réservations et le suivi de vos enfants.",
+};
 
-/**
- * Page d'accueil de l'espace Membre (Parents / Adultes).
- * Accessible uniquement pour le rôle 'MEMBRE'.
- */
+// Les raccourcis du tableau de bord (chaque carte est un lien)
+const ACTIONS = [
+    { href: "/membre/reservations", Icon: CalendarCheck, titre: "Mes réservations", texte: "Consultez et gérez les ateliers réservés pour vos enfants." },
+    { href: "/membre/enfants", Icon: Users, titre: "Mes enfants", texte: "Ajoutez vos enfants et suivez leur progression pédagogique." },
+];
+
 export default function MembreDashboard() {
     return (
-        <div className="min-h-screen bg-slate-50 p-8">
-            <div className="max-w-4xl mx-auto">
-                {/* En-tête */}
-                <header className="mb-8 border-b border-slate-200 pb-4">
-                    <h1 className="text-2xl font-bold text-slate-800">Espace Adhérant & Famille</h1>
-                    <p className="text-slate-500 text-sm mt-1">
-                        Suivi des enfants et inscriptions aux ateliers associatifs publics.
-                    </p>
-                </header>
+        <div className="space-y-8">
 
-                {/* Section Principale */}
-                <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm mb-6">
-                    <h2 className="text-lg font-semibold text-slate-700 mb-2">Tableau de bord</h2>
-                    <p className="text-slate-600 text-sm">
-                        Retrouvez ici la gestion de votre profil et le suivi pédagogique de vos enfants rattachés.
-                    </p>
+            {/* En-tête : titre à gauche, bouton de déconnexion à droite */}
+            <header className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-1">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-indigo-500">Compte membre</span>
+                    <h1 className="text-3xl font-extrabold text-slate-900">Bienvenue dans votre espace</h1>
+                    <p className="text-slate-500">Gérez vos réservations et le suivi de vos enfants.</p>
                 </div>
+                <LogoutButton />
+            </header>
+
+            {/* Les deux raccourcis */}
+            <div className="grid gap-6 sm:grid-cols-2">
+                {ACTIONS.map(({ href, Icon, titre, texte }) => (
+                    <Link key={href} href={href} className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-indigo-200 transition-all">
+                        <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
+                            <Icon className="w-6 h-6 text-indigo-500" aria-hidden />
+                        </div>
+                        <h2 className="mt-4 text-lg font-bold text-slate-900">{titre}</h2>
+                        <p className="mt-1 text-sm text-slate-600 leading-relaxed">{texte}</p>
+                        <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-indigo-600">
+                            Ouvrir <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden />
+                        </span>
+                    </Link>
+                ))}
             </div>
+
         </div>
     );
 }
