@@ -22,7 +22,7 @@ export default function RootLayout({
             <body className="antialiased bg-slate-100 text-slate-900 flex flex-col min-h-screen">
                 {/* C'est ici que Next.js viendra injecter tes différentes pages */}
                 <Header />
-                <main className="grow">
+                <main className="grow flex flex-col">
                     {children}
                 </main>
                 <Footer />
