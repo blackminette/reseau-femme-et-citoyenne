@@ -3,7 +3,7 @@
 
 /**
  * DESCRIPTION :
- * Barre latérale de l'espace membre (compte parent).
+ * Barre latérale de l'espace membre.
  * Reproduit la maquette validée : bloc marque, navigation à icônes (lucide-react)
  * avec état actif en dégradé violet, encart d'aide et bouton de déconnexion.
  */
@@ -54,7 +54,7 @@ export default function MemberSideMenu() {
                 </div>
                 <div className="leading-tight">
                     <div className="text-lg font-bold text-[#6d5ba8]">Réseau F&amp;C</div>
-                    <div className="mt-0.5 text-[11px] text-slate-400">Espace parent</div>
+                    <div className="mt-0.5 text-[11px] text-slate-400">Espace membre</div>
                 </div>
             </Link>
 

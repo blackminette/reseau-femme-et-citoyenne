@@ -27,12 +27,12 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-    title: "Mon compte parent",
+    title: "Mon espace membre",
     description: "Suivez la progression de vos enfants et gérez leur compte.",
 };
 
 // ─── Données simulées (visuel uniquement — pas de base de données) ───
-const PARENT = { prenom: "Sophie", nom: "Martin" };
+const MEMBRE = { prenom: "Sophie", nom: "Martin" };
 
 const STATS: { Icon: LucideIcon; valeur: string; label: string; sub: string; bg: string; couleur: string }[] = [
     { Icon: Users, valeur: "2", label: "Enfants suivis", sub: "profils actifs", bg: "bg-[#f4f1fb]", couleur: "text-[#6d5ba8]" },
@@ -87,16 +87,16 @@ export default function MembreDashboard() {
             {/* ─── Barre du haut : titre + chip utilisateur ─── */}
             <div className="flex flex-wrap items-center justify-between gap-5">
                 <div>
-                    <h1 className="text-[26px] font-bold text-[#2c2c3a]">Mon compte parent</h1>
+                    <h1 className="text-[26px] font-bold text-[#2c2c3a]">Mon espace membre</h1>
                     <p className="text-[13px] text-slate-500">Suivez la progression de vos enfants et gérez leur compte.</p>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#9b8cff] to-[#6d5ba8] text-sm font-bold text-white">
-                        {PARENT.prenom[0]}{PARENT.nom[0]}
+                        {MEMBRE.prenom[0]}{MEMBRE.nom[0]}
                     </div>
                     <div className="leading-tight">
-                        <div className="text-[13px] font-bold text-slate-800">{PARENT.prenom} {PARENT.nom}</div>
-                        <div className="text-[11px] text-slate-500">Compte parent</div>
+                        <div className="text-[13px] font-bold text-slate-800">{MEMBRE.prenom} {MEMBRE.nom}</div>
+                        <div className="text-[11px] text-slate-500">Compte membre</div>
                     </div>
                 </div>
             </div>
@@ -106,7 +106,7 @@ export default function MembreDashboard() {
                 <div className="pointer-events-none absolute -right-10 -top-14 h-52 w-52 rounded-full bg-white/[0.07]" aria-hidden />
                 <div className="pointer-events-none absolute right-32 -bottom-20 h-36 w-36 rounded-full bg-white/5" aria-hidden />
                 <div className="relative flex-1">
-                    <h2 className="mb-1 text-[26px] font-bold">Bonjour {PARENT.prenom} !</h2>
+                    <h2 className="mb-1 text-[26px] font-bold">Bonjour {MEMBRE.prenom} !</h2>
                     <p className="text-sm opacity-90">Suivez les progrès de vos enfants et accompagnez-les dans leurs apprentissages.</p>
                     <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1.5 text-xs font-semibold">
                         <Award className="h-4 w-4" aria-hidden /> 6 badges remportés en famille
