@@ -3,10 +3,11 @@ import React from 'react';
 import '@/app/globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-export const metadata = {
-    title: 'Mon Projet Association',
-    description: 'Application de gestion avec contrôle des rôles (RBAC)',
-};
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 /**
  * Root Layout obligatoire. 
