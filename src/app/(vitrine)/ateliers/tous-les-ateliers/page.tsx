@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { Quicksand } from 'next/font/google';
 
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+//import Header from '@/components/Header';
+//import Footer from '@/components/Footer';
 
 const quicksand = Quicksand({ 
     subsets: ['latin'],
@@ -41,18 +41,19 @@ const listeAteliers = [
 export default function TousNosAteliers(){
     return (
         <>
-            {/* Header */}
-            <Header />
 
             {/* Fond violet */}
             <div className='bg-[#eedeff] min-h-screen py-16 px-4'>
                 <div className='w-7xl mx-auto'>
 
                     {/* Titre principal */}
-                    <h1 className={`${quicksand.className} text-5xl font-bold text-center text-[#260936] mb-24`}>Tous nos Ateliers</h1>
+                    <h1 className='text-5xl font-bold text-center text-transparent leading-none 
+                    bg-gradient-to-r from-[#260936] via-[#260936] via-35% to-[#ffd166] to-70% 
+                    bg-clip-text uppercase'>Tous nos ateliers</h1>
+
 
                     {/* Grille avec les encadres des ateliers */}
-                    <section className="mx-8 my-32 rounded-[2.5rem] bg-[#752fbb] p-8 md:p-20 text-center text-white shadow-2xl max-w-[90rem] xl:mx-auto relative">
+                    <section className="mx-8 my-32 rounded-[2.5rem] bg-[#260936] p-8 md:p-20 text-center text-white shadow-2xl max-w-[90rem] xl:mx-auto relative">
                         <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
                             <svg width="100%" height="100%">
                                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -72,8 +73,8 @@ export default function TousNosAteliers(){
 
                                     {/* Bloc Texte : Titre + Description sous l'image */}
                                     <div className="flex flex-col gap-1 my-3 justify-center">
-                                        <h3 className="text-lg font-semibold text-[#260936]">{atelier.titre}</h3>
-                                        <p className="text-sm font-normal text-white/80 line-clamp-2 px-2">{atelier.description}</p>
+                                        <h3 className="text-lg font-semibold text-[#ffd166]">{atelier.titre}</h3>
+                                        <p className="text-sm font-normal md:text-base text-[#eedeff]/80 line-clamp-2 px-2">{atelier.description}</p>
                                     </div>
 
 
@@ -92,8 +93,6 @@ export default function TousNosAteliers(){
                 </div>
             </div>
 
-            {/* Footer */}
-            <Footer />
         </>
     );
 }
