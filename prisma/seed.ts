@@ -138,9 +138,32 @@ async function main() {
       description: 'Découvrir les concepts fondamentaux de la programmation algorithmique.',
       public: 'ADULTE' as const,
       cours: [
-        { titre: 'Introduction aux variables', ordreDansModule: 1 },
-        { titre: 'Les conditions et les structures logiques', ordreDansModule: 2 },
-        { titre: 'Les boucles (While et For)', ordreDansModule: 3 }
+        {
+          titre: 'Introduction aux variables',
+          ordreDansModule: 1,
+          contenu: [
+            {
+              numeroPage: 1,
+              titre: "Qu'est-ce qu'une variable ?",
+              texteExplicatif: "En programmation, une variable est un espace de stockage nommé qui permet de conserver une donnée en mémoire.\n\nImaginez une boîte avec une étiquette collée dessus : le nom de l'étiquette est le nom de la variable, et ce qu'il y a dans la boîte est sa valeur.",
+              imageUrl: "https://images.unsplash.com/photo-1516259762381-22954d7d3ad2?w=600"
+            },
+            {
+              numeroPage: 2,
+              titre: "Les types de données",
+              texteExplicatif: "Une boîte (variable) peut contenir différents types d'objets :\n- Du texte (String) : ex: \"Johanna\"\n- Un nombre entier ou décimal (Number) : ex: 26\n- Un booléen (Boolean) : vrai ou faux (True/False)",
+              imageUrl: null
+            },
+            {
+              numeroPage: 3,
+              titre: "Exemple de code",
+              texteExplicatif: "Voici comment on déclare une variable en JavaScript :\n\nlet prenom = \"Johanna\";\nlet age = 26;\n\nÀ partir de ce moment, l'ordinateur se souvient de ces valeurs tant que le programme tourne.",
+              imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=600"
+            }
+          ]
+        },
+        { titre: 'Les conditions et les structures logiques', ordreDansModule: 2, contenu: [] },
+        { titre: 'Les boucles (While et For)', ordreDansModule: 3, contenu: [] }
       ]
     },
     {
@@ -148,8 +171,8 @@ async function main() {
       description: 'Créer ses premières pages web dynamiques et responsives.',
       public: 'ADULTE' as const,
       cours: [
-        { titre: 'Structure et sémantique HTML5', ordreDansModule: 1 },
-        { titre: 'Mise en page moderne avec CSS Grid et Flexbox', ordreDansModule: 2 }
+        { titre: 'Structure et sémantique HTML5', ordreDansModule: 1, contenu: [] },
+        { titre: 'Mise en page moderne avec CSS Grid et Flexbox', ordreDansModule: 2, contenu: [] }
       ]
     },
     {
@@ -157,9 +180,9 @@ async function main() {
       description: 'Apprendre à programmer de manière ludique avec des blocs colorés.',
       public: 'ENFANT' as const,
       cours: [
-        { titre: 'Découverte de l\'interface et du lutin', ordreDansModule: 1 },
-        { titre: 'Faire bouger et animer son premier personnage', ordreDansModule: 2 },
-        { titre: 'Création d\'un mini-jeu de labyrinthe', ordreDansModule: 3 }
+        { titre: 'Découverte de l\'interface et du lutin', ordreDansModule: 1, contenu: [] },
+        { titre: 'Faire bouger et animer son premier personnage', ordreDansModule: 2, contenu: [] },
+        { titre: 'Création d\'un mini-jeu de labyrinthe', ordreDansModule: 3, contenu: [] }
       ]
     },
     {
@@ -167,8 +190,8 @@ async function main() {
       description: 'Découvrir la logique des capteurs et des moteurs pas à pas.',
       public: 'ENFANT' as const,
       cours: [
-        { titre: 'Qu\'est-ce qu\'un robot ?', ordreDansModule: 1 },
-        { titre: 'Programmer des déplacements simples', ordreDansModule: 2 }
+        { titre: 'Qu\'est-ce qu\'un robot ?', ordreDansModule: 1, contenu: [] },
+        { titre: 'Programmer des déplacements simples', ordreDansModule: 2, contenu: [] }
       ]
     }
   ];
@@ -188,7 +211,8 @@ async function main() {
           titre: coursItem.titre,
           estPublic: true,
           intervenanteId: idIntervenante,
-          contenu: JSON.stringify([]),
+          // Utilise le tableau de pages fourni ou un tableau vide par défaut
+          contenu: coursItem.contenu ? coursItem.contenu : [],
           moduleId: moduleCree.id,
           ordreDansModule: coursItem.ordreDansModule
         }

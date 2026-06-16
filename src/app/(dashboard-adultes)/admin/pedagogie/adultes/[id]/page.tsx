@@ -1,9 +1,12 @@
+// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getModuleAndCours, creerCours, supprimerCours } from './actions';
 import Modal from '@/components/Modal';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react'
 
 interface CoursInfo {
     id: number;
@@ -105,9 +108,25 @@ export default function AdminModulePage() {
 
     return (
         <div className="p-6 space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-violet-950">Détails du module : {module.titre}</h1>
-                {module.description && <p className="text-violet-600 mt-2">{module.description}</p>}
+            <div className="flex flex-col space-y-4 mb-6">
+                <Link
+                    href="/admin/pedagogie/adultes"
+                    className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
+                >
+                    <ChevronRight className="h-3 w-3 rotate-180" />
+                    Retour à la gestion des modules
+                </Link>
+
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-violet-950">
+                        Détails du module : {module.titre}
+                    </h1>
+                    {module.description && (
+                        <p className="text-sm text-violet-600 max-w-2xl leading-relaxed">
+                            {module.description}
+                        </p>
+                    )}
+                </div>
             </div>
 
             <div className="border-t border-violet-100 pt-6">
@@ -126,27 +145,25 @@ export default function AdminModulePage() {
                         {module.cours.map((cours) => (
                             <div
                                 key={cours.id}
-                                className="p-4 bg-white border border-violet-200 rounded-xl shadow-sm flex items-center justify-between gap-4 hover:border-violet-300 transition-colors"
+                                className="bg-white border border-violet-200 rounded-xl shadow-sm flex items-center justify-between gap-2 hover:border-violet-300 hover:shadow-md transition-all group pr-2"
                             >
-                                {/* Partie gauche : Titre du cours */}
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium text-violet-950 truncate">{cours.titre}</h3>
-                                </div>
+                                <Link
+                                    href={`/admin/pedagogie/adultes/${moduleId}/cours/${cours.id}`}
+                                    className="flex-1 min-w-0 p-4 cursor-pointer"
+                                >
+                                    <h3 className="font-medium text-violet-950 truncate group-hover:text-violet-600 transition-colors">
+                                        {cours.titre}
+                                    </h3>
+                                </Link>
 
-                                {/* Partie droite : Bouton Supprimer */}
                                 <button
                                     onClick={() => {
-                                        // Si tu as besoin d'ouvrir une modal de confirmation d'abord :
                                         setCoursId(cours.id);
                                         setIsModalDeleteOpen(true);
-
-                                        // OU si tu veux l'exécuter directement (pense à ajouter un confirm) :
-                                        // if(confirm("Supprimer ce cours ?")) handleDelete(cours.id);
                                     }}
-                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex items-center justify-center shrink-0"
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex items-center justify-center shrink-0 mr-2 relative z-10"
                                     title="Supprimer le cours"
                                 >
-                                    {/* Icône de poubelle en SVG (plus propre qu'un simple texte "X") */}
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
