@@ -15,19 +15,34 @@ export async function getCours(id: number) {
     }
 }
 
-export async function modifierTitreCours(id: number, editTitre: string, moduleId: number) {
+export async function modifierTitreCours(coursId: number, editTitre: string, moduleId: number) {
     try {
         const result = await prisma.cours.update({
-            where: { id: id },
+            where: { id: coursId },
             data: {
                 titre: editTitre
             }
         });
 
-        revalidatePath(`/admin/pedagogie/adultes/${moduleId}/cours/${id}`)
+        revalidatePath(`/admin/pedagogie/adultes/${moduleId}/cours/${coursId}`);
 
         return { success: true }
     } catch (error) {
         return { success: false, error: "Erreur lors de la modification du titre du cours." }
+    }
+}
+
+export async function modifierContenuCours(coursId: number, nouveauContenue: any[], moduleId: number) {
+    try {
+        const result = await prisma.cours.update({
+            where: { id: coursId },
+            data: { contenu: nouveauContenue }
+        })
+
+        revalidatePath(`/admin/pedagogie/adultes/${moduleId}/cours/${coursId}`);
+
+        return { success: true }
+    } catch (error) {
+        return { success: false, error: "Erreur lors de la mise a jour du contenue." }
     }
 }
