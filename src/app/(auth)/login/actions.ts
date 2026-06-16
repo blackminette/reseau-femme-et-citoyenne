@@ -14,22 +14,32 @@ export async function loginAction(formData: any) {
             password,
         });
 
-        if (authError || !authData.user) {
-            return { success: false, error: "[login] Identifiants ou mot de passe incorrects." };
+        if (authError) {
+            console.error("[login] Erreur Supabase Auth:", authError.message);
+            // On renvoie le message de Supabase qui est souvent explicite (ex: Email not confirmed)
+            return { success: false, error: authError.message };
         }
 
-        // on vérifie que l'utilisateur existe bien dans la table Prisma (ex: s'il a déjà un profil créé)
+        if (!authData.user) {
+            return { success: false, error: "Utilisateur non trouvé dans Supabase Auth." };
+        }
+
+        console.log("[login] Authentification Supabase réussie pour:", email);
+
+        // on vérifie que l'utilisateur existe bien dans la table Prisma
         const utilisateur = await prisma.utilisateur.findUnique({
             where: { email: email }
         });
 
-        // Si l'utilisateur n'existe pas, on renvoie une erreur (même si l'auth Supabase a réussi)
         if (!utilisateur) {
+            console.error("[login] Profil Prisma manquant pour:", email);
             return {
                 success: false,
-                error: "[login] Compte authentifié, mais aucun profil utilisateur trouvé dans l'association."
+                error: "Votre compte est validé, mais votre profil n'a pas été trouvé dans notre base de données. Contactez un administrateur."
             };
         }
+
+        console.log("[login] Profil trouvé, rôle:", utilisateur.role);
 
 
         // Si tout est bon, on renvoie le rôle de l'utilisateur pour adapter l'interface ensuite
