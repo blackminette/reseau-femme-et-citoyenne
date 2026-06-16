@@ -19,8 +19,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="fr">
-            <body className="antialiased bg-slate-100 text-slate-900 flex flex-col min-h-screen">
+        <html lang="fr" className={geist.variable}>
+            <body className={cn("antialiased bg-slate-100 text-slate-900 flex flex-col min-h-screen font-sans", geist.className)}>
                 {/* C'est ici que Next.js viendra injecter tes différentes pages */}
                 <Header />
                 <main className="grow flex flex-col">
