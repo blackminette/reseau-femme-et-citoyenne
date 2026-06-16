@@ -3,10 +3,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getModuleAndCours, creerCours, supprimerCours } from './actions';
+// On importe une action fictive "changerOrdreCours" (à créer dans tes actions)
+import { getModuleAndCours, creerCours, supprimerCours, changerOrdreCours } from './actions';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react'; // Ajout des icônes de flèches
 
 interface CoursInfo {
     id: number;
@@ -36,6 +37,10 @@ export default function AdminModulePage() {
     const id = params.id as string;
     const moduleId = parseInt(id, 10);
 
+    const trierLesCours = (coursListe: CoursInfo[]) => {
+        return [...coursListe].sort((a, b) => a.ordreDansModule - b.ordreDansModule);
+    };
+
     useEffect(() => {
         const handleGetModule = async () => {
             if (!moduleId) return;
@@ -44,7 +49,9 @@ export default function AdminModulePage() {
 
             const result = await getModuleAndCours(moduleId);
             if (result.success && result.data) {
-                setModule(result.data as unknown as ModuleInfo);
+                const moduleData = result.data as unknown as ModuleInfo;
+                moduleData.cours = trierLesCours(moduleData.cours);
+                setModule(moduleData);
             } else {
                 setError(result.error || "Impossible de charger le module.");
             }
@@ -68,7 +75,7 @@ export default function AdminModulePage() {
                 if (!prev) return null;
                 return {
                     ...prev,
-                    cours: [result.data as unknown as CoursInfo, ...prev.cours]
+                    cours: trierLesCours([result.data as unknown as CoursInfo, ...prev.cours])
                 };
             });
             setIsModalOpen(false);
@@ -96,7 +103,23 @@ export default function AdminModulePage() {
         } else {
             setError("Une erreur est survenue.")
         }
-    }
+    };
+
+    const handleReordonner = async (coursId: number, direction: 'HAUT' | 'BAS') => {
+        if (!module) return;
+        setError(null);
+
+        const result = await changerOrdreCours(coursId, direction, moduleId);
+
+        if (result.success && result.data) {
+            const result = await getModuleAndCours(moduleId);
+            const moduleData = result.data as unknown as ModuleInfo;
+            moduleData.cours = trierLesCours(moduleData.cours);
+            setModule(moduleData);
+        } else {
+            setError(result.error || "Impossible de modifier l'ordre.");
+        }
+    };
 
     if (isLoading) {
         return <div className="p-6">Chargement...</div>;
@@ -142,39 +165,66 @@ export default function AdminModulePage() {
 
                 {module.cours && module.cours.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
-                        {module.cours.map((cours) => (
+                        {module.cours.map((cours, index) => (
                             <div
                                 key={cours.id}
-                                className="bg-white border border-violet-200 rounded-xl shadow-sm flex items-center justify-between gap-2 hover:border-violet-300 hover:shadow-md transition-all group pr-2"
+                                className="bg-white border border-violet-200 rounded-xl shadow-sm flex items-center justify-between gap-2 hover:border-violet-300 hover:shadow-md transition-all group pr-3"
                             >
                                 <Link
                                     href={`/admin/pedagogie/adultes/${moduleId}/cours/${cours.id}`}
                                     className="flex-1 min-w-0 p-4 cursor-pointer"
                                 >
                                     <h3 className="font-medium text-violet-950 truncate group-hover:text-violet-600 transition-colors">
-                                        {cours.titre}
+                                        {index + 1}. {cours.titre}
                                     </h3>
                                 </Link>
 
-                                <button
-                                    onClick={() => {
-                                        setCoursId(cours.id);
-                                        setIsModalDeleteOpen(true);
-                                    }}
-                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex items-center justify-center shrink-0 mr-2 relative z-10"
-                                    title="Supprimer le cours"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth={1.5}
-                                        stroke="currentColor"
-                                        className="w-5 h-5"
+                                {/* ZONE DE BOUTONS D'ACTION (Flèches d'ordre + Supprimer) */}
+                                <div className="flex items-center gap-1 relative z-10">
+                                    {/* Bouton Monter (Masqué ou désactivé pour le tout premier cours) */}
+                                    <button
+                                        onClick={() => handleReordonner(cours.id, 'HAUT')}
+                                        disabled={index === 0}
+                                        className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                        title="Monter le cours"
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                    </svg>
-                                </button>
+                                        <ArrowUp className="w-4 h-4" />
+                                    </button>
+
+                                    {/* Bouton Descendre (Masqué ou désactivé pour le tout dernier cours) */}
+                                    <button
+                                        onClick={() => handleReordonner(cours.id, 'BAS')}
+                                        disabled={index === module.cours.length - 1}
+                                        className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                        title="Descendre le cours"
+                                    >
+                                        <ArrowDown className="w-4 h-4" />
+                                    </button>
+
+                                    {/* Séparateur visuel subtil */}
+                                    <span className="w-[1px] h-4 bg-slate-200 mx-1"></span>
+
+                                    {/* Ton bouton supprimer d'origine */}
+                                    <button
+                                        onClick={() => {
+                                            setCoursId(cours.id);
+                                            setIsModalDeleteOpen(true);
+                                        }}
+                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex items-center justify-center shrink-0"
+                                        title="Supprimer le cours"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth={1.5}
+                                            stroke="currentColor"
+                                            className="w-5 h-5"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -231,7 +281,7 @@ export default function AdminModulePage() {
             >
                 <div className="bg-white p-6 rounded-lg">
                     <p className="text-violet-800 text-sm">
-                        Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.
+                        Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible.
                     </p>
                     <div className="flex justify-end gap-3 mt-6">
                         <button

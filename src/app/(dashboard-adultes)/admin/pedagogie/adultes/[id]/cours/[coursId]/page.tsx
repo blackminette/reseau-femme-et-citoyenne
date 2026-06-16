@@ -4,8 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, MoveRight, MoveLeft } from 'lucide-react';
-import { getCours } from './actions';
+import { ChevronRight, MoveRight, MoveLeft, Pencil } from 'lucide-react';
+import { getCours, modifierTitreCours } from './actions';
 
 interface PageCours {
     numeroPage: number;
@@ -27,6 +27,8 @@ export default function AdminModifieCoursPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [cours, setCours] = useState<CoursInfo | null>(null);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [isEditingTitre, setIsEditingTitre] = useState(false);
+    const [editTitre, setEditTitre] = useState(cours?.titre || "");
 
     const params = useParams();
     const router = useRouter();
@@ -66,6 +68,10 @@ export default function AdminModifieCoursPage() {
         handleGetCours();
     }, [coursId]);
 
+    useEffect(() => {
+        if (cours) setEditTitre(cours.titre);
+    }, [cours]);
+
     if (isLoading) {
         return <div className="p-6 text-sm text-violet-600">Chargement du cours...</div>;
     }
@@ -80,7 +86,7 @@ export default function AdminModifieCoursPage() {
             <div className="flex flex-col space-y-4 mb-6">
                 <Link
                     href={`/admin/pedagogie/adultes/${moduleId}`}
-                    className="text-xs font-medium text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
+                    className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
                 >
                     <ChevronRight className="h-3 w-3 rotate-180" />
                     Retour au module
@@ -90,9 +96,48 @@ export default function AdminModifieCoursPage() {
                     <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">
                         Cours #{cours.ordreDansModule}
                     </span>
-                    <h1 className="text-2xl font-bold tracking-tight text-violet-950">
-                        {cours.titre}
-                    </h1>
+                    {isEditingTitre ? (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={editTitre}
+                                onChange={(e) => setEditTitre(e.target.value)}
+                                onBlur={async () => {
+                                    setIsEditingTitre(false);
+                                    if (editTitre.trim() && editTitre !== cours.titre) {
+                                        setCours(prev => prev ? { ...prev, titre: editTitre } : null);
+
+                                        const result = await modifierTitreCours(cours.id, editTitre, moduleId);
+                                        // if (!result.success) { setError(result.error); ... }
+                                    } else {
+                                        setEditTitre(cours.titre);
+                                    }
+                                }}
+                                onKeyDown={async (e) => {
+                                    if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                    }
+                                    if (e.key === 'Escape') {
+                                        setEditTitre(cours.titre);
+                                        setIsEditingTitre(false);
+                                    }
+                                }}
+                                autoFocus
+                                className="text-2xl font-bold tracking-tight text-violet-950 border-b-2 border-violet-500 bg-transparent focus:outline-none p-0 max-w-md"
+                            />
+                            <span className="text-xs text-slate-400 italic">(Pressez Entrée pour valider)</span>
+                        </div>
+                    ) : (
+                        <div
+                            onClick={() => setIsEditingTitre(true)}
+                            className="flex items-center gap-2 group cursor-pointer w-fit"
+                        >
+                            <h1 className="text-2xl font-bold tracking-tight text-violet-950 group-hover:text-violet-700 transition-colors">
+                                {cours.titre}
+                            </h1>
+                            <Pencil className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors shrink-0" />
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -13,7 +13,7 @@ export async function getModuleAndCours(id: number) {
             include: {
                 cours: {
                     orderBy: {
-                        createdAt: 'desc'
+                        ordreDansModule: 'asc'
                     }
                 }
             }
@@ -65,4 +65,37 @@ export async function supprimerCours(id: number) {
     } catch (error) {
         return { success: false, error: "Erreur lors de la suppression du cours." }
     }
+}
+
+export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BAS', moduleId: number) {
+    try {
+        const coursActuel = await prisma.cours.findUnique({ where: { id: coursId } });
+        if (!coursActuel) return { success: false, error: "Cours introuvable" };
+
+        const coursVoisin = await prisma.cours.findFirst({
+            where: {
+                moduleId: coursActuel.moduleId,
+                ordreDansModule: direction === 'HAUT'
+                    ? { lt: coursActuel.ordreDansModule } // Strictement inférieur
+                    : { gt: coursActuel.ordreDansModule } // Strictement supérieur
+            },
+            orderBy: {
+                ordreDansModule: direction === 'HAUT' ? 'desc' : 'asc'
+            }
+        });
+
+        if (!coursVoisin) return { success: false, error: "Déplacement impossible" };
+
+        await prisma.$transaction([
+            prisma.cours.update({ where: { id: coursActuel.id }, data: { ordreDansModule: coursVoisin.ordreDansModule } }),
+            prisma.cours.update({ where: { id: coursVoisin.id }, data: { ordreDansModule: coursActuel.ordreDansModule } })
+        ]);
+
+        revalidatePath(`/admin/pedagogie/adultes/${moduleId}`);
+
+        return { success: true, data: true };
+    } catch (error) {
+        return { success: false, error: "Erreur lors de la réorganisation des cours." }
+    }
+
 }

@@ -14,3 +14,20 @@ export async function getCours(id: number) {
         return { success: false, error: "Erreur lors de la récupération du cours." }
     }
 }
+
+export async function modifierTitreCours(id: number, editTitre: string, moduleId: number) {
+    try {
+        const result = await prisma.cours.update({
+            where: { id: id },
+            data: {
+                titre: editTitre
+            }
+        });
+
+        revalidatePath(`/admin/pedagogie/adultes/${moduleId}/cours/${id}`)
+
+        return { success: true }
+    } catch (error) {
+        return { success: false, error: "Erreur lors de la modification du titre du cours." }
+    }
+}
