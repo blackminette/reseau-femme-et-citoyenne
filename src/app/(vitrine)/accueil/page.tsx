@@ -1,6 +1,6 @@
 export default function Accueil() {
     return (
-        <div className="bg-[#eedeff]">
+        <div className="bg-[#eedeff] pb-16 grow">
             {/* Section hero : grande bannière d'accueil avec image de fond */}
             <section className="relative min-h-[85vh] w-full bg-[url('/background.png')] bg-cover bg-center text-white flex items-center">
                 {/* Voile dégradé violet pour une DA plus moderne */}
@@ -55,7 +55,7 @@ export default function Accueil() {
             {/* Section de présentation rapide de l'association et de son impact */}
             <section
                 id="prochaine-section"
-                className="mx-4 my-12 scroll-mt-24 rounded-2rem bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl shadow-[#bc96e6]/20 max-w-7xl md:mx-auto"
+                className="mx-4 mt-12 scroll-mt-24 rounded-2rem bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl shadow-[#bc96e6]/20 max-w-7xl md:mx-auto"
             >
                 {/* Présentation : titre à gauche, texte à droite sur écran moyen et grand */}
                 <div className="grid gap-12 md:grid-cols-[350px_1fr] items-center text-left">
@@ -105,7 +105,7 @@ export default function Accueil() {
             </section>
 
             {/* Section des dernières actualités */}
-            <section className="mx-4 my-16 rounded-[2.5rem] bg-[#752fbb] p-8 md:p-20 text-center text-white shadow-2xl max-w-7xl md:mx-auto relative overflow-hidden">
+            <section className="mx-4 mt-16 rounded-[2.5rem] bg-[#752fbb] p-8 md:p-20 text-center text-white shadow-2xl max-w-7xl md:mx-auto relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
                     <svg width="100%" height="100%"><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" /></pattern><rect width="100%" height="100%" fill="url(#grid)" /></svg>
                 </div>
@@ -142,7 +142,7 @@ export default function Accueil() {
             </section>
 
             {/* Section soutien - Version uniformisée en couleur */}
-            <section className="mx-4 my-16 rounded-[2.5rem] bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl max-w-7xl md:mx-auto overflow-hidden relative">
+            <section className="mx-4 mt-16 rounded-[2.5rem] bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl max-w-7xl md:mx-auto overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-[#ffd166]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#bc96e6]/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
 
@@ -202,7 +202,7 @@ export default function Accueil() {
             </section>
 
             {/* Section localisation avec deux cartes séparées */}
-            <section className="mx-4 my-16 rounded-[2.5rem] bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl max-w-7xl md:mx-auto">
+            <section className="mx-4 mt-16 rounded-[2.5rem] bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl max-w-7xl md:mx-auto">
                 <h2 className="mb-12 text-4xl font-black text-[#752fbb]">
                     Nous trouver
                 </h2>
