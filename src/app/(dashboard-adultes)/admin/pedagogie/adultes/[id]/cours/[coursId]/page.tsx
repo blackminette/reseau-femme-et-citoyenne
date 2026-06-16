@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, MoveRight, MoveLeft, Pencil } from 'lucide-react';
+import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus } from 'lucide-react';
 // On importe la nouvelle action serveur ici
 import { getCours, modifierTitreCours, modifierContenuCours } from './actions';
 
@@ -75,7 +75,7 @@ export default function AdminModifieCoursPage() {
         handleGetCours();
     }, [coursId]);
 
-    // Met à jour les champs d'édition dès qu'on change de page (Suivant/Précédent)
+    // Met à jour les champs d'édition dès qu'on change de page (Suivant/Précédent/Nouvelle page)
     useEffect(() => {
         if (cours) {
             setEditTitre(cours.titre);
@@ -87,7 +87,7 @@ export default function AdminModifieCoursPage() {
         }
     }, [cours, currentPageIndex]);
 
-    // Fonction globale pour sauvegarder le JSON complet
+    // Fonction globale pour sauvegarder le JSON complet après modification inline
     const handleSauvegarderPage = async (cle: 'titre' | 'texteExplicatif', nouvelleValeur: string) => {
         if (!cours) return;
 
@@ -103,6 +103,30 @@ export default function AdminModifieCoursPage() {
         const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
         if (!result.success) {
             setError(result.error || "Impossible de sauvegarder les modifications de la page.");
+        }
+    };
+
+    // CORRECTION : Ajout d'une nouvelle page dans le tableau JSON + Sauvegarde BDD
+    const handleCreate = async () => {
+        if (!cours) return;
+
+        const nouvellePage: PageCours = {
+            numeroPage: cours.contenu.length + 1,
+            titre: `Nouvelle Page ${cours.contenu.length + 1}`,
+            texteExplicatif: "Écrivez le contenu explicatif de votre slide ici...",
+            imageUrl: null
+        };
+
+        const nouveauContenu = [...cours.contenu, nouvellePage];
+
+        setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
+
+        const nouvelIndex = nouveauContenu.length - 1;
+        setCurrentPageIndex(nouvelIndex);
+
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        if (!result.success) {
+            setError(result.error || "Erreur lors de la création de la page en base de données.");
         }
     };
 
@@ -170,7 +194,16 @@ export default function AdminModifieCoursPage() {
 
             {/* Section Affichage du contenu JSON */}
             <div className="border-t border-violet-100 pt-6">
-                <h2 className="text-lg font-semibold text-violet-900 mb-6">Contenu pédagogique du cours</h2>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-violet-900">Contenu pédagogique du cours</h2>
+                    <button
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-100 transition-colors border border-violet-200/60 shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Ajouter une page
+                    </button>
+                </div>
 
                 {cours.contenu && cours.contenu.length > 0 ? (
                     <div className="space-y-6">
@@ -184,7 +217,7 @@ export default function AdminModifieCoursPage() {
                                         {/* Header de la Page (Modifiable au clic) */}
                                         <div className="flex items-center justify-between border-b border-violet-50 pb-3 mb-4">
                                             {isEditingPageTitre ? (
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 w-full max-w-xl">
                                                     <input
                                                         type="text"
                                                         value={editPageTitre}
@@ -202,9 +235,9 @@ export default function AdminModifieCoursPage() {
                                                             if (e.key === 'Escape') { setEditPageTitre(page.titre); setIsEditingPageTitre(false); }
                                                         }}
                                                         autoFocus
-                                                        className="font-bold text-violet-950 text-base border-b border-violet-400 bg-transparent focus:outline-none max-w-md w-full"
+                                                        className="font-bold text-violet-950 text-base border-b border-violet-400 bg-transparent focus:outline-none w-full"
                                                     />
-                                                    <span className="text-xs text-slate-400 italic">(Pressez Entrée pour valider ou Echap pour annuler)</span>
+                                                    <span className="text-xs text-slate-400 italic shrink-0">(Entrée pour valider)</span>
                                                 </div>
                                             ) : (
                                                 <h3
@@ -227,7 +260,7 @@ export default function AdminModifieCoursPage() {
                                             <div className="space-y-1">
                                                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block">Texte explicatif :</label>
                                                 {isEditingPageTexte ? (
-                                                    <div>
+                                                    <div className="space-y-1">
                                                         <textarea
                                                             value={editPageTexte}
                                                             onChange={(e) => setEditPageTexte(e.target.value)}
@@ -238,7 +271,6 @@ export default function AdminModifieCoursPage() {
                                                                 }
                                                             }}
                                                             onKeyDown={(e) => {
-                                                                // Shift+Entrée pour aller à la ligne, Entrée seule valide la modification
                                                                 if (e.key === 'Enter' && !e.shiftKey) {
                                                                     e.preventDefault();
                                                                     e.currentTarget.blur();
@@ -248,12 +280,12 @@ export default function AdminModifieCoursPage() {
                                                             rows={6}
                                                             className="w-full text-sm text-slate-700 leading-relaxed p-2 border border-violet-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500 whitespace-pre-line"
                                                         />
-                                                        <span className="text-xs text-slate-400 italic">(Pressez Entrée pour valider, shift+Entrée pour aller à la ligne)</span>
+                                                        <span className="text-xs text-slate-400 italic block">(Cliquez en dehors ou pressez Entrée pour valider. Shift+Entrée pour sauter une ligne)</span>
                                                     </div>
                                                 ) : (
                                                     <div
                                                         onClick={() => setIsEditingPageTexte(true)}
-                                                        className="text-sm text-slate-700 leading-relaxed whitespace-pre-line border border-transparent hover:border-dashed hover:border-violet-300 hover:bg-violet-50/20 p-2 rounded-lg cursor-pointer transition-all group relative"
+                                                        className="text-sm text-slate-700 leading-relaxed whitespace-pre-line border border-transparent hover:border-dashed hover:border-violet-300 hover:bg-violet-50/20 p-2 rounded-lg cursor-pointer transition-all group relative min-h-[100px]"
                                                     >
                                                         <Pencil className="w-4 h-4 text-slate-400 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         {page.texteExplicatif || <span className="text-slate-400 italic">Aucun texte pour le moment. Cliquez pour en ajouter un.</span>}

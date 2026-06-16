@@ -105,9 +105,9 @@ model Cours {
   intervenanteId  String
   contenu         Json              @default("[]")
   niveauRequis    NiveauPedagogique @default(NIVEAU_1)
-  moduleId        Int?              // Optionnel : permet d'avoir un cours indépendant si besoin
+  moduleId        Int              
   ordreDansModule Int               @default(1) // Pour gérer l'enchaînement des cours (Cours 1, Cours 2...)
-  module          Module?           @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   compositions    Composition[]
   intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
   programmes      Programme[]
