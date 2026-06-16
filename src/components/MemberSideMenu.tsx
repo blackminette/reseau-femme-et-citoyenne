@@ -4,24 +4,34 @@
 /**
  * DESCRIPTION :
  * Barre latérale de l'espace membre (compte parent).
- * Reproduit la maquette validée : bloc marque, navigation à icônes avec
- * état actif en dégradé violet, encart d'aide et bouton de déconnexion.
+ * Reproduit la maquette validée : bloc marque, navigation à icônes (lucide-react)
+ * avec état actif en dégradé violet, encart d'aide et bouton de déconnexion.
  */
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import React from 'react';
+import {
+    LayoutDashboard,
+    Users,
+    TrendingUp,
+    Palette,
+    CalendarCheck,
+    Lightbulb,
+    LifeBuoy,
+    LogOut,
+} from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
-// Liens du menu : icône (emoji), libellé et destination.
+// Liens du menu : icône (lucide), libellé et destination.
 const LIENS = [
-    { icon: '📊', label: 'Tableau de bord', href: '/membre' },
-    { icon: '👨‍👩‍👧', label: 'Mes enfants', href: '/membre/enfants' },
-    { icon: '📈', label: 'Progression détaillée', href: '/membre#progression-detail' },
-    { icon: '🎨', label: 'Ateliers & Réservations', href: '/membre/reserver' },
-    { icon: '🗓️', label: 'Mes réservations', href: '/membre/reservations' },
-    { icon: '💡', label: 'Conseils & Astuces', href: '/membre#conseils' },
-    { icon: '🆘', label: 'Contact', href: '/contact' },
+    { Icon: LayoutDashboard, label: 'Tableau de bord', href: '/membre' },
+    { Icon: Users, label: 'Mes enfants', href: '/membre/enfants' },
+    { Icon: TrendingUp, label: 'Progression détaillée', href: '/membre#progression-detail' },
+    { Icon: Palette, label: 'Ateliers & Réservations', href: '/membre/reserver' },
+    { Icon: CalendarCheck, label: 'Mes réservations', href: '/membre/reservations' },
+    { Icon: Lightbulb, label: 'Conseils & Astuces', href: '/membre#conseils' },
+    { Icon: LifeBuoy, label: 'Contact', href: '/contact' },
 ];
 
 export default function MemberSideMenu() {
@@ -50,7 +60,7 @@ export default function MemberSideMenu() {
 
             {/* Navigation */}
             <nav className="flex flex-1 flex-col gap-0.5">
-                {LIENS.map(({ icon, label, href }) => {
+                {LIENS.map(({ Icon, label, href }) => {
                     // Lien actif : uniquement les vrais liens de page (sans ancre #...).
                     // Les ancres (#progression-detail, #conseils) ne déclenchent pas l'état actif.
                     const estAncre = href.includes('#');
@@ -66,7 +76,7 @@ export default function MemberSideMenu() {
                                     : 'text-[#6b6b7b] hover:bg-[#f4f1fb] hover:text-[#6d5ba8]')
                             }
                         >
-                            <span className="w-[22px] text-center text-lg">{icon}</span>
+                            <Icon className="h-[18px] w-[18px] flex-shrink-0" aria-hidden />
                             {label}
                         </Link>
                     );
@@ -92,7 +102,7 @@ export default function MemberSideMenu() {
                 onClick={handleLogout}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#fff3f3] py-2.5 text-[13px] font-semibold text-[#d63031] transition-colors hover:bg-[#ffd6d6]"
             >
-                🚪 Se déconnecter
+                <LogOut className="h-4 w-4" aria-hidden /> Se déconnecter
             </button>
         </div>
     );
