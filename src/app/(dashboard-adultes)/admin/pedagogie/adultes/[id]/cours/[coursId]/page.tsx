@@ -4,9 +4,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus } from 'lucide-react';
-// On importe la nouvelle action serveur ici
+import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { getCours, modifierTitreCours, modifierContenuCours } from './actions';
+import Modal from '@/components/Modal';
 
 interface PageCours {
     numeroPage: number;
@@ -29,9 +29,10 @@ export default function AdminModifieCoursPage() {
     const [cours, setCours] = useState<CoursInfo | null>(null);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     const [isEditingTitre, setIsEditingTitre] = useState(false);
     const [editTitre, setEditTitre] = useState(cours?.titre || "");
-
     const [isEditingPageTitre, setIsEditingPageTitre] = useState(false);
     const [isEditingPageTexte, setIsEditingPageTexte] = useState(false);
     const [editPageTitre, setEditPageTitre] = useState("");
@@ -106,7 +107,7 @@ export default function AdminModifieCoursPage() {
         }
     };
 
-    // CORRECTION : Ajout d'une nouvelle page dans le tableau JSON + Sauvegarde BDD
+    // Ajout d'une nouvelle page dans le tableau JSON + Sauvegarde BDD
     const handleCreate = async () => {
         if (!cours) return;
 
@@ -127,6 +128,74 @@ export default function AdminModifieCoursPage() {
         const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
         if (!result.success) {
             setError(result.error || "Erreur lors de la création de la page en base de données.");
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!cours || cours.contenu.length === 0) return;
+
+        const confirmer = confirm("Êtes-vous sûr de vouloir supprimer cette page ? Cette action est irréversible.");
+        if (!confirmer) return;
+
+        const contenuFiltre = cours.contenu.filter((_, index) => index !== currentPageIndex);
+
+        const nouveauContenu = contenuFiltre.map((page, index) => ({
+            ...page,
+            numeroPage: index + 1
+        }));
+
+        const nouvelIndex = Math.max(0, Math.min(currentPageIndex, nouveauContenu.length - 1));
+
+        setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
+        setCurrentPageIndex(nouvelIndex);
+
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        if (!result.success) {
+            setError(result.error || "Erreur lors de la suppression de la page en base de données.");
+        }
+    };
+
+    const handleReordonner = async (numeroPage: number, direction: 'HAUT' | 'BAS') => {
+        if (!cours) return;
+        setError(null);
+
+        // trouver le bon index
+        const indexActuel = cours.contenu.findIndex(p => p.numeroPage === numeroPage);
+        if (indexActuel === -1) return;
+
+        // calculer le nouvel index
+        const nouvelIndex = direction === 'HAUT' ? indexActuel - 1 : indexActuel + 1;
+
+        // sécurité
+        if (nouvelIndex < 0 || nouvelIndex >= cours.contenu.length) return;
+
+        // intervertir les index
+        const nouveauContenu = [...cours.contenu];
+        [nouveauContenu[indexActuel], nouveauContenu[nouvelIndex]] = [
+            nouveauContenu[nouvelIndex],
+            nouveauContenu[indexActuel]
+        ];
+
+        // réindexer les pages
+        const contenuReindexe = nouveauContenu.map((page, idx) => ({
+            ...page,
+            numeroPage: idx + 1
+        }));
+
+        // mettre à jour l'index de la page affiché si besoin
+        if (currentPageIndex === indexActuel) {
+            setCurrentPageIndex(nouvelIndex);
+        } else if (currentPageIndex === nouvelIndex) {
+            setCurrentPageIndex(indexActuel);
+        }
+
+        // mettre à jour côté client
+        setCours(prev => prev ? { ...prev, contenu: contenuReindexe } : null);
+
+        // mettre à jour côté BDD
+        const result = await modifierContenuCours(cours.id, contenuReindexe, moduleId);
+        if (!result.success) {
+            setError(result.error || "Erreur lors de la réorganisation des pages en base de données.");
         }
     };
 
@@ -196,13 +265,29 @@ export default function AdminModifieCoursPage() {
             <div className="border-t border-violet-100 pt-6">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-violet-900">Contenu pédagogique du cours</h2>
-                    <button
-                        onClick={handleCreate}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-100 transition-colors border border-violet-200/60 shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Ajouter une page
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-violet-200/60 shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Modifier l'ordre
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-red-200 shadow-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Supprimer la page
+                        </button>
+                        <button
+                            onClick={handleCreate}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-violet-200/60 shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Ajouter une page
+                        </button>
+                    </div>
                 </div>
 
                 {cours.contenu && cours.contenu.length > 0 ? (
@@ -344,6 +429,49 @@ export default function AdminModifieCoursPage() {
                     </div>
                 )}
             </div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Modifier l'ordre des pages"
+            >
+                <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto p-1">
+                    {cours.contenu.map((page, index) => (
+                        <div
+                            key={page.numeroPage}
+                            className="bg-slate-50 border border-violet-100 rounded-xl flex items-center justify-between p-3 transition-all hover:border-violet-300 hover:bg-white shadow-sm"
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold shrink-0">
+                                    {index + 1}
+                                </span>
+                                <h3 className="text-sm font-medium text-violet-950 truncate max-w-[240px]">
+                                    {page.titre}
+                                </h3>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                    onClick={() => handleReordonner(page.numeroPage, 'HAUT')}
+                                    disabled={index === 0}
+                                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                    title="Monter la page"
+                                >
+                                    <ArrowUp className="w-4 h-4" />
+                                </button>
+
+                                <button
+                                    onClick={() => handleReordonner(page.numeroPage, 'BAS')}
+                                    disabled={index === cours.contenu.length - 1}
+                                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                    title="Descendre la page"
+                                >
+                                    <ArrowDown className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Modal>
         </div>
     );
 }
