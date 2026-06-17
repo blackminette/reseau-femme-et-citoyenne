@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { getCours, modifierTitreCours, modifierContenuCours } from './actions';
 import Modal from '@/components/Modal';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 interface PageCours {
     numeroPage: number;
@@ -30,6 +31,7 @@ export default function AdminModifieCoursPage() {
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const [isEditingTitre, setIsEditingTitre] = useState(false);
     const [editTitre, setEditTitre] = useState(cours?.titre || "");
@@ -39,10 +41,11 @@ export default function AdminModifieCoursPage() {
     const [editPageTexte, setEditPageTexte] = useState("");
 
     const params = useParams();
-    const router = useRouter();
 
     const moduleId = parseInt(params.id as string, 10);
     const coursId = parseInt(params.coursId as string, 10);
+
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const handleGetCours = async () => {
@@ -89,7 +92,7 @@ export default function AdminModifieCoursPage() {
     }, [cours, currentPageIndex]);
 
     // Fonction globale pour sauvegarder le JSON complet après modification inline
-    const handleSauvegarderPage = async (cle: 'titre' | 'texteExplicatif', nouvelleValeur: string) => {
+    const handleSauvegarderPage = async (cle: 'titre' | 'texteExplicatif' | 'imageUrl', nouvelleValeur: string) => {
         if (!cours) return;
 
         const nouveauContenu = [...cours.contenu];
@@ -196,6 +199,83 @@ export default function AdminModifieCoursPage() {
         const result = await modifierContenuCours(cours.id, contenuReindexe, moduleId);
         if (!result.success) {
             setError(result.error || "Erreur lors de la réorganisation des pages en base de données.");
+        }
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !cours) return;
+
+        try {
+            setIsUploadingImage(true);
+            setError(null);
+
+            // générer un nom unique
+            const extension = file.name.split('.').pop();
+            const nomFichier = `cours-${cours.id}-page-${currentPageIndex + 1}-${Date.now()}.${extension}`;
+
+            // envoyer le fichier vers supabase
+            const { data, error: uploadError } = await supabaseClient.storage
+                .from('cours-image')
+                .upload(nomFichier, file, {
+                    cacheControl: '3600',
+                    upsert: true // écrase si le fichier existe déjà
+                });
+
+            if (uploadError) throw uploadError;
+
+            // récupérer l'URL publique de l'image
+            const { data: { publicUrl } } = supabaseClient.storage
+                .from('cours-image')
+                .getPublicUrl(nomFichier);
+
+            // si la page avait déjà une image, on la supprimer de Supabase pour ne pas encombrer le stockage
+            const ancienneImageUrl = cours.contenu[currentPageIndex]?.imageUrl;
+            if (ancienneImageUrl) {
+                // extraire le nom du fichier depuis l'ancienne URL
+                const ancienNomFichier = ancienneImageUrl.split('/').pop();
+                if (ancienNomFichier) {
+                    await supabaseClient.storage.from('cours-image').remove([ancienNomFichier]);
+                }
+            }
+
+            // sauvegarder la vraie URL publique dans le JSON et en BDD
+            await handleSauvegarderPage('imageUrl', publicUrl);
+
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || "Erreur lors du téléversement de l'image.");
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const handleSupprimerImage = async () => {
+        if (!cours) return;
+
+        const ancienneImageUrl = cours.contenu[currentPageIndex]?.imageUrl;
+        if (!ancienneImageUrl) return;
+
+        try {
+            setIsUploadingImage(true);
+
+            // supprimer le fichier physiquement du Storage Supabase
+            const nomFichier = ancienneImageUrl.split('/').pop();
+            if (nomFichier) {
+                const { error: deleteError } = await supabaseClient.storage
+                    .from('cours-image')
+                    .remove([nomFichier]);
+
+                if (deleteError) throw deleteError;
+            }
+
+            // mettre à jour le JSON en BDD pour vider le champ
+            await handleSauvegarderPage('imageUrl', null as any);
+
+        } catch (err: any) {
+            setError("Erreur lors de la suppression du fichier sur le serveur.");
+        } finally {
+            setIsUploadingImage(false);
         }
     };
 
@@ -379,19 +459,81 @@ export default function AdminModifieCoursPage() {
                                             </div>
 
                                             {/* Image de la page */}
-                                            {page.imageUrl ? (
-                                                <div className="border border-slate-100 rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center max-h-64">
-                                                    <img
-                                                        src={page.imageUrl}
-                                                        alt={page.titre}
-                                                        className="object-contain w-full h-full max-h-64"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="border border-dashed border-slate-200 rounded-lg bg-slate-50/50 p-6 flex flex-col items-center justify-center text-center h-40">
-                                                    <span className="text-xs text-slate-400 italic">Aucune illustration sur cette page</span>
-                                                </div>
-                                            )}
+                                            {/* Conteneur de l'image / zone de dépôt */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block">
+                                                    Illustration :
+                                                </label>
+
+                                                {/* Input HTML caché mais indispensable */}
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleImageChange}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+
+                                                {page.imageUrl ? (
+                                                    /* s'il y a une image, on l'affiche avec un effet au survol */
+                                                    <div className="relative border border-slate-100 rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center max-h-64 group">
+                                                        <img
+                                                            src={page.imageUrl}
+                                                            alt={page.titre}
+                                                            className="object-contain w-full h-full max-h-64 transition-opacity group-hover:opacity-40"
+                                                        />
+
+                                                        {/* Overlay qui apparaît au survol */}
+                                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => fileInputRef.current?.click()}
+                                                                disabled={isUploadingImage}
+                                                                className="px-3 py-1.5 bg-white text-violet-700 font-medium text-xs rounded-lg shadow-md hover:bg-violet-50 transition-all flex items-center gap-1"
+                                                            >
+                                                                <Pencil className="w-3 h-3" /> Changer
+                                                            </button>
+                                                            <button
+                                                                onClick={handleSupprimerImage}
+                                                                disabled={isUploadingImage}
+                                                                className="px-3 py-1.5 bg-red-600 text-white font-medium text-xs rounded-lg shadow-md hover:bg-red-700 transition-all flex items-center gap-1"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" /> Supprimer
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Indicateur de chargement transparent si un upload est en cours */}
+                                                        {isUploadingImage && (
+                                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-xs text-violet-600 font-medium animate-pulse">
+                                                                Téléversement...
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    /* s'il n'y a pas d'image, on affiche l'encadré pointillé */
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        disabled={isUploadingImage}
+                                                        className="w-full border-2 border-dashed border-slate-200 hover:border-violet-400 hover:bg-violet-50/30 rounded-lg p-6 flex flex-col items-center justify-center text-center h-40 transition-all cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isUploadingImage ? (
+                                                            <span className="text-xs text-violet-600 font-medium animate-pulse">Envoi en cours...</span>
+                                                        ) : (
+                                                            <>
+                                                                <div className="p-2 bg-slate-100 rounded-full text-slate-400 group-hover:bg-violet-100 group-hover:text-violet-600 transition-all mb-2">
+                                                                    <Plus className="w-4 h-4" />
+                                                                </div>
+                                                                <span className="text-xs font-semibold text-slate-500 group-hover:text-violet-700 transition-colors">
+                                                                    Ajouter une illustration
+                                                                </span>
+                                                                <span className="text-[11px] text-slate-400 mt-0.5">
+                                                                    PNG, JPG jusqu'à 4Mo
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
