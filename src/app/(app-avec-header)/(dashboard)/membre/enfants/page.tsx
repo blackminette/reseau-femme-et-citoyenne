@@ -1,52 +1,58 @@
 import Link from "next/link";
-import { UserPlus, CalendarDays } from "lucide-react";
+import { UserPlus, CalendarDays, Plus } from "lucide-react";
+import { ENFANTS } from "@/lib/membre-data";
 
 export const metadata = {
     title: "Mes enfants",
     description: "Les enfants rattachés à votre compte.",
 };
 
-// Enfants simulés (à remplacer par la base de données plus tard)
-const ENFANTS = [
-    { id: 1, prenom: "Lina",  naissance: "12 mars 2016",    initiales: "L", couleur: "from-indigo-400 to-purple-500" },
-    { id: 2, prenom: "Adam",  naissance: "5 juillet 2018",  initiales: "A", couleur: "from-rose-400 to-pink-500"   },
-];
-
 export default function MembreEnfantsPage() {
     return (
-        <div className="space-y-8">
+        <div className="text-violet-900">
 
-            {/* Bandeau d'accueil dégradé : titre à gauche, bouton "Ajouter" à droite */}
-            <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white shadow-lg">
-                <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" aria-hidden />
-                <div className="relative flex flex-wrap items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-extrabold">Mes enfants</h1>
-                        <p className="text-white/80">Les enfants rattachés à votre compte.</p>
+            {/* En-tête : titre à gauche, bouton "Ajouter" à droite */}
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-violet-200 pb-5">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-3xl font-bold tracking-tight text-violet-950">Mes enfants</h1>
+                    <p className="text-sm text-violet-600">Les enfants rattachés à votre compte.</p>
+                </div>
+                <Link
+                    href="/membre/enfants/ajouter"
+                    className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
+                >
+                    <UserPlus className="h-4 w-4" aria-hidden /> Ajouter un enfant
+                </Link>
+            </div>
+
+            {/* Liste des enfants (ou état vide) */}
+            {ENFANTS.length === 0 ? (
+                <div className="mt-6 max-w-5xl rounded-2xl border-2 border-dashed border-violet-200 bg-white p-10 text-center shadow-xs">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                        <UserPlus className="h-8 w-8" aria-hidden />
                     </div>
-                    <Link href="/membre/enfants/ajouter" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-indigo-600 bg-white hover:bg-white/90 transition-colors">
-                        <UserPlus className="w-4 h-4" aria-hidden /> Ajouter un enfant
+                    <h2 className="mt-5 text-xl font-bold text-violet-950">Aucun enfant rattaché</h2>
+                    <p className="mx-auto mt-2 max-w-md text-sm text-violet-600">
+                        Ajoutez un enfant pour suivre sa progression et l&apos;inscrire à des ateliers.
+                    </p>
+                    <Link
+                        href="/membre/enfants/ajouter"
+                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
+                    >
+                        <Plus className="h-4 w-4" aria-hidden /> Ajouter un enfant
                     </Link>
                 </div>
-            </header>
-
-            {/* Liste des enfants (ou message si vide) */}
-            {ENFANTS.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center text-slate-500">
-                    Aucun enfant rattaché pour le moment.
-                </div>
             ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="mt-6 grid max-w-5xl gap-4 sm:grid-cols-2">
                     {ENFANTS.map(({ id, prenom, naissance, initiales, couleur }) => (
-                        <article key={id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center gap-5">
-                            {/* Avatar avec dégradé de couleur */}
-                            <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${couleur} flex items-center justify-center text-white text-xl font-bold shrink-0`}>
+                        <article key={id} className="flex items-center gap-5 rounded-2xl border border-violet-200 bg-white p-6 shadow-xs">
+                            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${couleur} text-xl font-bold text-white`}>
                                 {initiales}
                             </div>
                             <div className="space-y-1">
-                                <h2 className="font-bold text-slate-900 text-lg">{prenom}</h2>
-                                <p className="inline-flex items-center gap-1.5 text-sm text-slate-500">
-                                    <CalendarDays className="w-4 h-4" aria-hidden /> Né(e) le {naissance}
+                                <h2 className="text-lg font-bold text-violet-950">{prenom}</h2>
+                                <p className="inline-flex items-center gap-1.5 text-sm text-violet-500">
+                                    <CalendarDays className="h-4 w-4" aria-hidden /> Né(e) le {naissance}
                                 </p>
                             </div>
                         </article>

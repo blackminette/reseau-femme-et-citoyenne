@@ -1,19 +1,13 @@
 import Link from "next/link";
 import { CalendarPlus, CalendarDays, Clock, User } from "lucide-react";
+import { RESERVATIONS } from "@/lib/membre-data";
 
 export const metadata = {
     title: "Mes réservations",
     description: "Les ateliers que vous avez réservés, pour vous et vos enfants.",
 };
 
-// Réservations simulées (à remplacer par la base de données plus tard).
-// "participant" = le membre lui-même ou l'un de ses enfants.
-const RESERVATIONS = [
-    { id: 1, atelier: "Atelier numérique", participant: "Moi (Sophie Martin)", date: "Mercredi 18 juin 2026", creneau: "14h00 – 15h30", statut: "Confirmée" },
-    { id: 2, atelier: "Français langue étrangère", participant: "Moi (Sophie Martin)", date: "Jeudi 19 juin 2026", creneau: "09h30 – 11h00", statut: "En attente" },
-];
-
-// Couleur du badge selon le statut de la réservation
+// Couleur du badge selon le statut de la réservation.
 const STATUT_STYLE: Record<string, string> = {
     "Confirmée": "bg-emerald-50 text-emerald-600",
     "En attente": "bg-amber-50 text-amber-600",

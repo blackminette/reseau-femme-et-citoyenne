@@ -3,20 +3,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, Users, Check } from "lucide-react";
+import { ENFANTS, ATELIERS, NOM_COMPLET_MEMBRE } from "@/lib/membre-data";
 
 // Participants possibles : le membre lui-même, puis ses enfants rattachés (s'il en a).
-// ENFANTS vide pour la démo "sans enfant" → le membre peut quand même réserver pour lui.
-const MOI = "Moi (Sophie Martin)";
-const ENFANTS: string[] = [];
-const PARTICIPANTS = [MOI, ...ENFANTS];
-
-// Ateliers disponibles à la réservation (simulés) — mélange adultes / enfants.
-const ATELIERS = [
-    { id: 1, titre: "Atelier numérique", date: "Mercredi 18 juin 2026", creneau: "14h00 – 15h30", places: 5, public: "Adultes" },
-    { id: 2, titre: "Français langue étrangère", date: "Jeudi 19 juin 2026", creneau: "09h30 – 11h00", places: 3, public: "Adultes" },
-    { id: 3, titre: "Initiation au dessin", date: "Mercredi 25 juin 2026", creneau: "16h00 – 17h00", places: 4, public: "Enfants" },
-    { id: 4, titre: "Éveil musical", date: "Samedi 28 juin 2026", creneau: "10h30 – 11h30", places: 0, public: "Enfants" },
-];
+const PARTICIPANTS = [`Moi (${NOM_COMPLET_MEMBRE})`, ...ENFANTS.map(e => `${e.prenom} ${e.nom}`)];
 
 export default function MembreReserverPage() {
     const router = useRouter();

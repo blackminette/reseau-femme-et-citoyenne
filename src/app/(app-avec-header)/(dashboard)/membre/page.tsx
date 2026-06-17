@@ -12,11 +12,6 @@ import {
     Calendar,
     Flame,
     Target,
-    BookOpen,
-    Calculator,
-    Palette,
-    Laptop,
-    Scale,
     CheckCircle2,
     AlertTriangle,
     Lightbulb,
@@ -24,65 +19,12 @@ import {
     Plus,
     UserPlus,
 } from "lucide-react";
+import { MEMBRE, ENFANTS, ACTIVITES, RESERVATIONS, type Metriques } from "@/lib/membre-data";
 
 export const metadata = {
     title: "Mon espace membre",
     description: "Suivez votre progression et celle de vos enfants, gérez vos réservations.",
 };
-
-// ─── Données simulées (visuel uniquement — pas de base de données) ───
-
-// Métriques d'apprentissage communes au membre et à ses enfants.
-type Metriques = {
-    progression: number; ModuleIcon: LucideIcon; modulePref: string;
-    temps: string; derniere: string; serie: number; quizReussis: number; quizTotal: number;
-};
-
-// Le membre est aussi un apprenant : il a sa propre progression.
-const MEMBRE: Metriques & { prenom: string; nom: string; initiales: string; badges: number; modules: { Icon: LucideIcon; label: string }[] } = {
-    prenom: "Sophie", nom: "Martin", initiales: "SM",
-    progression: 64, ModuleIcon: Laptop, modulePref: "Numérique",
-    temps: "3h45", derniere: "20/05/2026", serie: 3, quizReussis: 6, quizTotal: 8,
-    badges: 3,
-    modules: [
-        { Icon: Laptop, label: "Numérique" },
-        { Icon: BookOpen, label: "Lecture & compréhension" },
-        { Icon: Scale, label: "Éducation civique" },
-    ],
-};
-
-// Détail par enfant : "difficulte" = null si tout va bien, sinon liste de modules.
-type Enfant = Metriques & {
-    prenom: string; nom: string; age: number; username: string; initiales: string; couleur: string;
-    difficulte: string[] | null; reservations: number; badges: number;
-};
-
-const TOUS_LES_ENFANTS: Enfant[] = [
-    {
-        prenom: "Lina", nom: "Martin", age: 10, username: "lina_martin", initiales: "L", couleur: "from-indigo-400 to-purple-500",
-        progression: 73, ModuleIcon: BookOpen, modulePref: "Lecture & compréhension",
-        temps: "1h12", derniere: "22/05/2026", serie: 0, quizReussis: 5, quizTotal: 7, difficulte: null,
-        reservations: 2, badges: 4,
-    },
-    {
-        prenom: "Adam", nom: "Martin", age: 7, username: "adam_martin", initiales: "A", couleur: "from-rose-400 to-pink-500",
-        progression: 48, ModuleIcon: Calculator, modulePref: "Logique & calcul",
-        temps: "42 min", derniere: "19/05/2026", serie: 0, quizReussis: 2, quizTotal: 4, difficulte: ["Lecture & compréhension"],
-        reservations: 1, badges: 2,
-    },
-];
-
-// 🔁 DÉMO : true = membre SANS enfant (état vide) · false = membre AVEC enfants (dashboard complet).
-// Plus tard, remplacer cette logique par les enfants réellement rattachés au compte (BDD).
-const SIMULER_SANS_ENFANT = true;
-const ENFANTS: Enfant[] = SIMULER_SANS_ENFANT ? [] : TOUS_LES_ENFANTS;
-
-// Activité récente (uniquement pertinente s'il y a des enfants).
-const ACTIVITES: { enfant: string; Icon: LucideIcon; action: string; module: string; date: string; score: string; parfait: boolean }[] = [
-    { enfant: "Lina", Icon: BookOpen, action: "a terminé le quiz", module: "Lecture & compréhension", date: "Hier", score: "8/8", parfait: true },
-    { enfant: "Adam", Icon: Calculator, action: "a fait l'exercice", module: "Logique & calcul", date: "Il y a 2 jours", score: "5/7", parfait: false },
-    { enfant: "Lina", Icon: Palette, action: "a fait l'exercice", module: "Arts créatifs", date: "Il y a 3 jours", score: "6/6", parfait: true },
-];
 
 // Grille des 6 métriques, réutilisée pour le membre et chaque enfant.
 function MetriquesGrid({ m }: { m: Metriques }) {
@@ -147,18 +89,17 @@ function MetriquesGrid({ m }: { m: Metriques }) {
 export default function MembreDashboard() {
     // Logique de code : tout dépend de la présence (ou non) d'enfants rattachés.
     const aDesEnfants = ENFANTS.length > 0;
-    const nbReservations = ENFANTS.reduce((s, c) => s + c.reservations, 0);
 
     const STATS: { Icon: LucideIcon; valeur: string; label: string; accent: "violet" | "amber" }[] = [
         { Icon: TrendingUp, valeur: `${MEMBRE.progression}%`, label: "Ma progression", accent: "violet" },
         { Icon: Award, valeur: String(MEMBRE.badges), label: "Mes badges", accent: "amber" },
         { Icon: Users, valeur: String(ENFANTS.length), label: "Enfants suivis", accent: "violet" },
-        { Icon: CalendarCheck, valeur: String(nbReservations), label: "Réservations", accent: "amber" },
+        { Icon: CalendarCheck, valeur: String(RESERVATIONS.length), label: "Réservations", accent: "amber" },
     ];
 
     const ACTIONS: { href: string; Icon: LucideIcon; titre: string; texte: string }[] = [
         { href: "/membre/enfants", Icon: Users, titre: "Mes enfants", texte: aDesEnfants ? "Voir et ajouter" : "Ajouter un enfant" },
-        { href: "/membre/reserver", Icon: CalendarPlus, titre: "Réserver un atelier", texte: "Inscrire un enfant" },
+        { href: "/membre/reserver", Icon: CalendarPlus, titre: "Réserver un atelier", texte: "S'inscrire à une session" },
         { href: "/membre/reservations", Icon: CalendarCheck, titre: "Mes réservations", texte: "Consulter & gérer" },
     ];
 
