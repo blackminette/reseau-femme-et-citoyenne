@@ -80,16 +80,16 @@ export default function Header() {
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-slate-200/70 bg-white/70 backdrop-blur-md shadow-sm">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex h-32 items-center justify-between flex-wrap lg:flex-nowrap gap-4 py-2">
+                <div className="flex h-25 items-center justify-between flex-wrap lg:flex-nowrap gap-4 py-2">
                     {/* Logo */}
                     <div className="flex shrink-0 items-center">
                         <Link href="/" onClick={closeAllMenus} className="flex items-center gap-2 transition hover:opacity-90">
                             <Image
                                 src="/RFC_Logo.webp"
                                 alt="Logo RFC06"
-                                width={150}
-                                height={50}
-                                className="h-16 w-auto object-contain"
+                                width={280}
+                                height={94}
+                                className="h-28 w-auto object-contain mt-4"
                                 priority
                             />
                             <div className="flex flex-col text-[10px] sm:text-sm">
