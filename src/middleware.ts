@@ -12,6 +12,10 @@ export const config = {
         '/intervenant/:path*',
         '/benevole/:path*',
         '/partenaire/:path*',
+        '/login',
+        '/signup',
+        '/forgot-password',
+        '/reset-password',
     ],
 };
 
@@ -40,7 +44,16 @@ export async function middleware(request: NextRequest) {
     const pathname = url.pathname;
 
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
+    const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+    
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
+    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+
+    // Redirect authenticated users away from auth routes
+    if (user && isAuthRoute) {
+        url.pathname = '/';
+        return NextResponse.redirect(url);
+    }
 
     if (!user) {
         if (isPrivateRoute) {
@@ -48,11 +61,6 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(url);
         }
         return response;
-    }
-
-    if (pathname === '/login') {
-        url.pathname = '/';
-        return NextResponse.redirect(url);
     }
 
     let userRole: UserRole | null = null;
@@ -72,17 +80,23 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!userRole && isPrivateRoute) {
-        console.warn("[Middleware] !!! ACCÈS AUTORISÉ PAR DÉFAUT (Profil non trouvé pour l'ID)", user.id);
-        // On laisse passer malgré l'absence de rôle pour vous permettre d'accéder au dashboard (DEBUG)
-        return response; 
+        console.warn("[Middleware] Accès refusé : Profil non trouvé pour l'ID", user.id);
+        url.pathname = '/login';
+        return NextResponse.redirect(url);
     }
 
+    // ... (rest of the middleware)
+    
     if (userRole) {
+        console.log(`[Middleware] Debug: User ${user.id} has role ${userRole}. Current path: ${pathname}`);
+        
         if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
+            console.log(`[Middleware] Debug: Redirecting non-admin from admin path`);
             return redirectUserToDefaultDashboard(userRole, url);
         }
 
         if (isPrivateRoute) {
+            console.log(`[Middleware] Debug: Checking private route ${pathname} for user role ${userRole}`);
             if (userRole === 'PARTENAIRE' && !pathname.startsWith('/partenaire')) {
                 url.pathname = '/partenaire';
                 return NextResponse.redirect(url);
@@ -92,6 +106,7 @@ export async function middleware(request: NextRequest) {
                 return NextResponse.redirect(url);
             }
             if (userRole === 'MEMBRE' && !pathname.startsWith('/membre')) {
+                console.log(`[Middleware] Debug: Redirecting member to /membre`);
                 url.pathname = '/membre';
                 return NextResponse.redirect(url);
             }

@@ -13,9 +13,13 @@ export default function Header() {
     const [isLoading, setIsLoading] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
-    // États pour les menus (desktop et mobile)
+    // États pour le desktop (gérés par click-outside)
     const [isProposOpen, setIsProposOpen] = useState(false);
     const [isAteliersOpen, setIsAteliersOpen] = useState(false);
+
+    // États pour le mobile (clic direct)
+    const [isProposMobileOpen, setIsProposMobileOpen] = useState(false);
+    const [isAteliersMobileOpen, setIsAteliersMobileOpen] = useState(false);
 
     const proposRef = useRef<HTMLDivElement>(null);
     const ateliersRef = useRef<HTMLDivElement>(null);
@@ -69,6 +73,8 @@ export default function Header() {
         setIsMenuOpen(false);
         setIsProposOpen(false);
         setIsAteliersOpen(false);
+        setIsProposMobileOpen(false);
+        setIsAteliersMobileOpen(false);
     };
 
     return (
@@ -86,7 +92,6 @@ export default function Header() {
                                 className="h-16 w-auto object-contain"
                                 priority
                             />
-                            {/* Nom de l'asso toujours visible */}
                             <div className="flex flex-col text-[10px] sm:text-sm">
                                 <span className="font-black bg-gradient-to-r from-[#260936] to-[#ffd166] bg-clip-text text-transparent uppercase tracking-tighter">
                                     Réseau Femme
@@ -99,8 +104,8 @@ export default function Header() {
                     </div>
 
                     {/* Nav Links (Desktop) */}
-                    <div className="hidden items-center space-x-1 lg:space-x-4 lg:flex whitespace-nowrap">
-                        <Link href="/" className="px-3 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Accueil</Link>
+                    <div className="hidden items-center space-x-0.5 lg:space-x-3 lg:flex whitespace-nowrap">
+                        <Link href="/" className="px-2 lg:px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Accueil</Link>
 
                         {/* Dropdown À propos */}
                         <div className="relative" ref={proposRef}>
@@ -110,13 +115,13 @@ export default function Header() {
                                     setIsProposOpen(!isProposOpen);
                                     setIsAteliersOpen(false);
                                 }} 
-                                className="px-3 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full flex items-center gap-1"
+                                className="px-2 lg:px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full flex items-center gap-1"
                             >
                                 À propos
                                 <svg className={`w-3 h-3 transition-transform ${isProposOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </button>
                             {isProposOpen && (
-                                <div className="absolute left-0 top-full w-48 bg-white rounded-xl shadow-lg py-2 border border-slate-100 z-50">
+                                <div className="absolute left-0 top-full w-40 bg-white rounded-xl shadow-lg py-2 border border-slate-100 z-50">
                                     <Link href="/a-propos#histoire" onClick={closeAllMenus} className="block px-4 py-2 text-sm text-slate-700 hover:bg-[#260936]/5 hover:text-[#260936]">Histoire</Link>
                                     <Link href="/a-propos#equipe" onClick={closeAllMenus} className="block px-4 py-2 text-sm text-slate-700 hover:bg-[#260936]/5 hover:text-[#260936]">Équipe</Link>
                                     <Link href="/a-propos#partenaires" onClick={closeAllMenus} className="block px-4 py-2 text-sm text-slate-700 hover:bg-[#260936]/5 hover:text-[#260936]">Partenaires</Link>
@@ -132,32 +137,32 @@ export default function Header() {
                                     setIsAteliersOpen(!isAteliersOpen);
                                     setIsProposOpen(false);
                                 }} 
-                                className="px-3 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full flex items-center gap-1"
+                                className="px-2 lg:px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full flex items-center gap-1"
                             >
                                 Ateliers
                                 <svg className={`w-3 h-3 transition-transform ${isAteliersOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </button>
                             {isAteliersOpen && (
-                                <div className="absolute left-0 top-full w-48 bg-white rounded-xl shadow-lg py-2 border border-slate-100 z-50">
+                                <div className="absolute left-0 top-full w-40 bg-white rounded-xl shadow-lg py-2 border border-slate-100 z-50">
                                     <Link href="/ateliers/tous-les-ateliers" onClick={closeAllMenus} className="block px-4 py-2 text-sm text-slate-700 hover:bg-[#260936]/5 hover:text-[#260936]">Tous les ateliers</Link>
                                     <Link href="/ateliers/planning" onClick={closeAllMenus} className="block px-4 py-2 text-sm text-slate-700 hover:bg-[#260936]/5 hover:text-[#260936]">Planning</Link>
                                 </div>
                             )}
                         </div>
 
-                        <Link href="/actualites" className="px-3 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Actualités</Link>
-                        <Link href="/dons" className="px-3 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Don</Link>
-                        <Link href="/contact" className="px-3 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Contact</Link>
+                        <Link href="/actualites" className="px-2 lg:px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Actualités</Link>
+                        <Link href="/dons" className="px-2 lg:px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Don</Link>
+                        <Link href="/contact" className="px-2 lg:px-4 py-2 text-sm font-bold text-[#260936] transition-all hover:text-[#ffd166] hover:bg-[#260936]/5 rounded-full">Contact</Link>
                         
                         {!isLoading && role === 'ADMIN' && (
-                            <Link href="/admin" className="ml-2 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-black text-red-700 transition hover:bg-red-100 uppercase tracking-widest">
+                            <Link href="/admin" className="ml-1 rounded-full border border-red-200 bg-red-50 px-2 lg:px-3 py-1.5 text-xs font-black text-red-700 transition hover:bg-red-100 uppercase tracking-widest">
                                 Admin
                             </Link>
                         )}
                     </div>
 
                     {/* Right Section */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
                         {isLoading ? (
                             <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-100/50" />
                         ) : (
@@ -190,10 +195,10 @@ export default function Header() {
                         
                         {/* Mobile À propos */}
                         <div>
-                            <button onClick={(e) => { e.stopPropagation(); setIsProposOpen(!isProposOpen); }} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors">
-                                À propos <span>{isProposOpen ? '-' : '+'}</span>
+                            <button onClick={() => setIsProposMobileOpen(!isProposMobileOpen)} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors">
+                                À propos <span>{isProposMobileOpen ? '-' : '+'}</span>
                             </button>
-                            <div className={`grid transition-all duration-300 ease-in-out ${isProposOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                            <div className={`grid transition-all duration-300 ease-in-out ${isProposMobileOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                                 <div className="overflow-hidden">
                                     <div className="pl-6 space-y-1 pb-2">
                                         <Link href="/a-propos#histoire" onClick={closeAllMenus} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:text-[#260936]">Histoire</Link>
@@ -206,10 +211,10 @@ export default function Header() {
 
                         {/* Mobile Ateliers */}
                         <div>
-                            <button onClick={(e) => { e.stopPropagation(); setIsAteliersOpen(!isAteliersOpen); }} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors">
-                                Ateliers <span>{isAteliersOpen ? '-' : '+'}</span>
+                            <button onClick={() => setIsAteliersMobileOpen(!isAteliersMobileOpen)} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-bold text-[#260936] hover:text-[#ffd166] hover:bg-[#260936]/5 transition-colors">
+                                Ateliers <span>{isAteliersMobileOpen ? '-' : '+'}</span>
                             </button>
-                            <div className={`grid transition-all duration-300 ease-in-out ${isAteliersOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                            <div className={`grid transition-all duration-300 ease-in-out ${isAteliersMobileOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                                 <div className="overflow-hidden">
                                     <div className="pl-6 space-y-1 pb-2">
                                         <Link href="/ateliers/tous-les-ateliers" onClick={closeAllMenus} className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:text-[#260936]">Tous les ateliers</Link>
