@@ -15,11 +15,11 @@ export default function MembreLayout({
     children: React.ReactNode;
 }) {
     return (
-        // Le conteneur principal (fond légèrement violacé, comme la maquette)
-        <div className="min-h-screen bg-[#f8f6fc]">
+        // Conteneur principal (fond violet, aligné sur la console admin)
+        <div className="min-h-screen bg-violet-50">
 
             {/* Barre latérale fixe à gauche, sous le header global (h-16), jusqu'en bas */}
-            <aside className="fixed top-16 bottom-0 left-0 z-40 w-64 overflow-y-auto border-r border-[#ece7f5] bg-white p-5">
+            <aside className="fixed top-16 bottom-0 left-0 z-40 w-64 overflow-y-auto border-r border-violet-200 bg-white p-5">
                 <MemberSideMenu />
             </aside>
 

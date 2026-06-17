@@ -4,34 +4,46 @@
 /**
  * DESCRIPTION :
  * Barre latérale de l'espace membre.
- * Reproduit la maquette validée : bloc marque, navigation à icônes (lucide-react)
- * avec état actif en dégradé violet, encart d'aide et bouton de déconnexion.
+ * Aligne le design sur la console admin : marque, navigation sectionnée avec
+ * état actif (fond indigo + barre latérale), chevron au survol et déconnexion.
  */
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React from 'react';
 import {
     LayoutDashboard,
-    Users,
-    TrendingUp,
-    Palette,
     CalendarCheck,
-    Lightbulb,
+    CalendarPlus,
+    Users,
     LifeBuoy,
+    ChevronRight,
     LogOut,
+    type LucideIcon,
 } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
-// Liens du menu : icône (lucide), libellé et destination.
-const LIENS = [
-    { Icon: LayoutDashboard, label: 'Tableau de bord', href: '/membre' },
-    { Icon: Users, label: 'Mes enfants', href: '/membre/enfants' },
-    { Icon: TrendingUp, label: 'Progression détaillée', href: '/membre#progression-detail' },
-    { Icon: Palette, label: 'Ateliers & Réservations', href: '/membre/reserver' },
-    { Icon: CalendarCheck, label: 'Mes réservations', href: '/membre/reservations' },
-    { Icon: Lightbulb, label: 'Conseils & Astuces', href: '/membre#conseils' },
-    { Icon: LifeBuoy, label: 'Contact', href: '/contact' },
+// Navigation organisée en sections, comme la sidebar admin.
+const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: LucideIcon }[] }[] = [
+    {
+        titre: "Vue d'ensemble",
+        liens: [{ href: '/membre', label: 'Tableau de bord', Icon: LayoutDashboard }],
+    },
+    {
+        titre: 'Mes activités',
+        liens: [
+            { href: '/membre/reservations', label: 'Mes réservations', Icon: CalendarCheck },
+            { href: '/membre/reserver', label: 'Réserver un atelier', Icon: CalendarPlus },
+        ],
+    },
+    {
+        titre: 'Ma famille',
+        liens: [{ href: '/membre/enfants', label: 'Mes enfants', Icon: Users }],
+    },
+    {
+        titre: 'Aide',
+        liens: [{ href: '/contact', label: 'Contact', Icon: LifeBuoy }],
+    },
 ];
 
 export default function MemberSideMenu() {
@@ -44,66 +56,70 @@ export default function MemberSideMenu() {
     };
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col select-none">
 
-            {/* Bloc marque */}
-            <Link href="/membre" className="flex items-center gap-3 border-b border-[#f0ecf8] pb-5 mb-4">
-                <div className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#1a1f4e] to-[#2c3a8e] leading-none text-white">
-                    <small className="text-[8px] font-semibold tracking-wider opacity-85">RFC</small>
-                    <span className="text-[15px] font-extrabold">06</span>
+            {/* Marque */}
+            <div className="mb-2 flex items-center gap-2.5 border-b border-violet-100 px-3 pb-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold text-white">
+                    M
                 </div>
-                <div className="leading-tight">
-                    <div className="text-lg font-bold text-[#6d5ba8]">Réseau F&amp;C</div>
-                    <div className="mt-0.5 text-[11px] text-slate-400">Espace membre</div>
+                <div className="truncate">
+                    <h2 className="truncate text-sm font-bold leading-none text-violet-900">Espace Membre</h2>
+                    <span className="mt-0.5 block text-[10px] font-medium text-violet-500">Mon compte</span>
                 </div>
-            </Link>
-
-            {/* Navigation */}
-            <nav className="flex flex-1 flex-col gap-0.5">
-                {LIENS.map(({ Icon, label, href }) => {
-                    // Lien actif : uniquement les vrais liens de page (sans ancre #...).
-                    // Les ancres (#progression-detail, #conseils) ne déclenchent pas l'état actif.
-                    const estAncre = href.includes('#');
-                    const actif = !estAncre && (href === '/membre' ? pathname === '/membre' : pathname === href);
-                    return (
-                        <Link
-                            key={label}
-                            href={href}
-                            className={
-                                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ' +
-                                (actif
-                                    ? 'bg-gradient-to-br from-[#9b8cff] to-[#6d5ba8] font-semibold text-white shadow-[0_4px_14px_rgba(155,140,255,0.3)]'
-                                    : 'text-[#6b6b7b] hover:bg-[#f4f1fb] hover:text-[#6d5ba8]')
-                            }
-                        >
-                            <Icon className="h-[18px] w-[18px] flex-shrink-0" aria-hidden />
-                            {label}
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            {/* Encart d'aide */}
-            <div className="mt-4 rounded-2xl bg-[#f4f1fb] p-4">
-                <h4 className="mb-1.5 text-[13px] font-bold text-[#6d5ba8]">Besoin d&apos;aide ?</h4>
-                <p className="mb-3 text-[11px] leading-relaxed text-[#7d7d8a]">
-                    Consultez notre centre d&apos;aide ou contactez-nous.
-                </p>
-                <Link
-                    href="/contact"
-                    className="block w-full rounded-lg border border-[#d4cef0] bg-white py-2 text-center text-xs font-semibold text-[#6d5ba8] transition-colors hover:border-[#6d5ba8] hover:bg-[#6d5ba8] hover:text-white"
-                >
-                    Centre d&apos;aide
-                </Link>
             </div>
 
+            {/* Navigation sectionnée */}
+            <nav className="flex flex-1 flex-col gap-6">
+                {SECTIONS.map((section) => (
+                    <div key={section.titre} className="flex w-full flex-col gap-1">
+                        <h3 className="mb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            {section.titre}
+                        </h3>
+                        {section.liens.map(({ href, label, Icon }) => {
+                            const isActive = pathname === href;
+                            return (
+                                <Link
+                                    key={href}
+                                    href={href}
+                                    className={`group relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                                        isActive
+                                            ? 'bg-indigo-50 font-semibold text-indigo-600'
+                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                    }`}
+                                >
+                                    {/* Barre latérale de l'onglet actif */}
+                                    {isActive && (
+                                        <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-md bg-indigo-600" />
+                                    )}
+                                    <div className="flex items-center gap-3">
+                                        <span className={isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}>
+                                            <Icon className="h-4 w-4" />
+                                        </span>
+                                        <span>{label}</span>
+                                    </div>
+                                    <ChevronRight
+                                        className={`h-3.5 w-3.5 -translate-x-1 text-slate-400 opacity-0 transition-all ${
+                                            isActive ? '' : 'group-hover:translate-x-0 group-hover:opacity-100'
+                                        }`}
+                                    />
+                                </Link>
+                            );
+                        })}
+                    </div>
+                ))}
+            </nav>
+
             {/* Déconnexion */}
-            <button
-                onClick={handleLogout}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#fff3f3] py-2.5 text-[13px] font-semibold text-[#d63031] transition-colors hover:bg-[#ffd6d6]"
-            >
-                <LogOut className="h-4 w-4" aria-hidden /> Se déconnecter
-            </button>
+            <div className="mt-auto border-t border-violet-100 pt-4">
+                <button
+                    onClick={handleLogout}
+                    className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-violet-600 transition-all duration-200 hover:bg-amber-50 hover:text-amber-600"
+                >
+                    <LogOut className="h-4 w-4 shrink-0 text-violet-500 transition-colors group-hover:text-amber-500" />
+                    <span className="truncate">Déconnexion</span>
+                </button>
+            </div>
         </div>
     );
 }
