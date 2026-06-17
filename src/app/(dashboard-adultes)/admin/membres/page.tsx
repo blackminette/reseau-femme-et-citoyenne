@@ -4,11 +4,20 @@
 import React, { useEffect, useState } from 'react';
 import { listerTousLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
 import Modal from '@/components/Modal';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
+
+const ROLE_STYLES: Record<string, string> = {
+    ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
+    INTERVENANT: 'bg-violet-50 text-violet-700 border-violet-200',
+    BENEVOLE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    PARTENAIRE: 'bg-amber-50 text-amber-700 border-amber-200',
+    MEMBRE: 'bg-blue-50 text-blue-700 border-blue-200',
+    ENFANT: 'bg-slate-50 text-slate-700 border-slate-200',
+};
 
 export default function AdminMembresPage() {
     const [membres, setMembres] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
     const [membreSelectionne, setMembreSelectionne] = useState<any | null>(null);
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
@@ -49,17 +58,15 @@ export default function AdminMembresPage() {
 
     const handleModifier = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!membreSelectionne) return;
 
-        setIsLoading(true); // Petit indicateur visuel
+        setIsLoading(true);
         const reponse = await modifierUtilisateur(membreSelectionne.id, formData);
 
         if (reponse.success) {
-            alert("Membre mis à jour avec succès !");
             setModalModifierIsOpen(false);
             setMembreSelectionne(null);
-            await chargerMembres(); // On rafraîchit la liste pour voir la modification en direct
+            await chargerMembres();
         } else {
             alert(reponse.error || "Une erreur est survenue.");
             setIsLoading(false);
@@ -69,14 +76,10 @@ export default function AdminMembresPage() {
     const handleSupprimer = async () => {
         if (!membreSelectionne) return;
 
-        const confirmation = confirm(`Êtes-vous sûr de vouloir supprimer ${membreSelectionne.prenom} ${membreSelectionne.nom} ? Cette action est irréversible.`);
-        if (!confirmation) return;
-
         setIsLoading(true);
         const reponse = await supprimerUtilisateur(membreSelectionne.id);
 
         if (reponse.success) {
-            alert("Membre supprimé avec succès !");
             setModalSupprimerIsOpen(false);
             setMembreSelectionne(null);
             await chargerMembres();
@@ -84,87 +87,119 @@ export default function AdminMembresPage() {
             alert(reponse.error || "Une erreur est survenue.");
             setIsLoading(false);
         }
+    };
+
+    if (isLoading && membres.length === 0) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <p className="text-violet-600 font-medium animate-pulse">Chargement des membres de l'association...</p>
+            </div>
+        );
     }
 
-    if (isLoading && membres.length === 0) return <p className="text-violet-600 p-6">Chargement des membres...</p>;
-
     return (
-        <>
-            <div className="bg-white rounded-xl border border-violet-200 p-6 shadow-sm">
-                <h1 className="text-2xl font-bold text-violet-900 mb-4">Gestion des membres</h1>
+        <div>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-violet-950 tracking-tight">Gestion des membres</h1>
+                <p className="text-sm text-violet-600/80 mt-1">
+                    Visualisez, modifiez les rôles et gérez les profils des familles, intervenants et administrateurs du réseau.
+                </p>
+            </div>
 
+            <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-violet-200 text-violet-500 text-sm font-semibold">
-                                <th className="pb-3">Nom / Prénom</th>
-                                <th className="pb-3">Email</th>
-                                <th className="pb-3">Rôle</th>
-                                <th className="pb-3">Stats</th>
-                                <th className="pb-3 text-right">Actions</th>
+                            <tr className="bg-slate-50/70 border-b border-violet-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <th className="px-6 py-4">Nom / Prénom</th>
+                                <th className="px-6 py-4">Email</th>
+                                <th className="px-6 py-4">Rôle</th>
+                                <th className="px-6 py-4">Statistiques</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm text-violet-800">
+                        <tbody className="divide-y divide-slate-100 text-sm text-violet-900">
                             {membres.map((membre) => (
-                                <tr key={membre.id} className="hover:bg-violet-50">
-                                    <td className="py-3 font-medium text-violet-950">
-                                        <div>
-                                            <p className="font-semibold text-violet-950">{membre.nom} {membre.prenom}</p>
+                                <tr key={membre.id} className="hover:bg-violet-50/40 transition-colors duration-150">
+                                    {/* Colonne Identité */}
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-slate-900">{membre.nom} {membre.prenom}</span>
                                             {membre.tuteur && (
-                                                <p className="text-xs text-violet-500">Enfant de: {membre.tuteur.prenom}</p>
+                                                <span className="text-xs text-violet-500/90 mt-0.5">
+                                                    👶 Enfant de : <span className="font-medium">{membre.tuteur.prenom}</span>
+                                                </span>
                                             )}
                                         </div>
                                     </td>
 
-                                    <td className="py-3 text-violet-600">{membre.email}</td>
+                                    {/* Colonne Email */}
+                                    <td className="px-6 py-4 text-slate-600 font-normal">
+                                        {membre.email}
+                                    </td>
 
-                                    <td className="py-3 text-violet-600">
-                                        <div className="flex gap-1 items-center">
-                                            <span className="px-2 py-0.5 bg-violet-50 text-violet-700 rounded text-xs font-bold">
-                                                {membre.role}
+                                    {/* Colonne Rôle et Niveaux */}
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-wrap gap-1.5 items-center">
+                                            <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
+                                                {membre.role?.toLowerCase()}
                                             </span>
-                                            {membre.role === 'ENFANT' && (
-                                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">
+                                            {membre.role === 'ENFANT' && membre.niveau && (
+                                                <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
                                                     {membre.niveau}
                                                 </span>
                                             )}
                                         </div>
                                     </td>
 
-                                    <td className="py-3">
-                                        <div className="text-xs text-violet-600 space-y-0.5">
-                                            {membre._count?.enfants > 0 && <p>👶 {membre._count.enfants} enfant(s)</p>}
-                                            {membre._count?.reservations > 0 && <p>📅 {membre._count.reservations} réservation(s)</p>}
-                                            {membre._count?.coursAnimes > 0 && <p>👨‍🏫 {membre._count.coursAnimes} cours animés</p>}
-                                            {membre._count?.dons > 0 && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-medium text-[10px]">❤️ Donateur</span>}
+                                    {/* Colonne Compteurs / Stats */}
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1 text-xs text-slate-600">
+                                            {membre._count?.enfants > 0 && <span>👶 {membre._count.enfants} enfant(s)</span>}
+                                            {membre._count?.reservations > 0 && <span>📅 {membre._count.reservations} réservation(s)</span>}
+                                            {membre._count?.coursAnimes > 0 && <span className="text-violet-600 font-medium">👨‍🏫 {membre._count.coursAnimes} cours animés</span>}
+                                            {membre._count?.dons > 0 && (
+                                                <span className="w-fit px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[11px] font-semibold">
+                                                    ❤️ Donateur
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
 
-                                    <td className="py-3 text-right">
-                                        <div className="flex justify-end gap-2">
+                                    {/* Colonne Actions adoucie */}
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end items-center gap-2">
+                                            {/* Bouton Détails / Voir */}
                                             <button
                                                 onClick={() => {
                                                     setMembreSelectionne(membre);
                                                     setModalDetailsIsOpen(true);
                                                 }}
-                                                className="px-3 py-1.5 bg-violet-100 text-violet-800 rounded-lg text-xs font-medium hover:bg-violet-200 transition-colors cursor-pointer"
+                                                title="Voir les détails"
+                                                className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
                                             >
-                                                Détails
+                                                <Eye className="w-4 h-4" />
                                             </button>
+
+                                            {/* Bouton Modifier */}
                                             <button
                                                 onClick={() => ouvrirModalModifier(membre)}
-                                                className="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 transition-colors shadow-sm cursor-pointer"
+                                                title="Modifier le membre"
+                                                className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
                                             >
-                                                Modifier
+                                                <Pencil className="w-4 h-4" />
                                             </button>
+
+                                            {/* Bouton Supprimer */}
                                             <button
                                                 onClick={() => {
                                                     setMembreSelectionne(membre);
                                                     setModalSupprimerIsOpen(true);
                                                 }}
-                                                className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 transition-colors shadow-sm cursor-pointer"
+                                                title="Supprimer le membre"
+                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
                                             >
-                                                Supprimer
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -181,6 +216,7 @@ export default function AdminMembresPage() {
                 onClose={() => setModalDetailsIsOpen(false)}
                 title={membreSelectionne ? `Fiche Profil — ${membreSelectionne.prenom} ${membreSelectionne.nom}` : "Fiche Profil"}
             >
+                {/* ... (Reste de ton code pour la modal de détails intact) ... */}
                 {membreSelectionne && (
                     <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
                         <div className="flex justify-between items-start bg-violet-50 p-4 rounded-xl border border-violet-200">
@@ -389,6 +425,6 @@ export default function AdminMembresPage() {
                     </div>
                 </div>
             </Modal>
-        </>
+        </div>
     );
 }
