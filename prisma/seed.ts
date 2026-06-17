@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { NiveauPedagogique, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import * as dotenv from 'dotenv';
@@ -141,6 +141,7 @@ async function main() {
         {
           titre: 'Introduction aux variables',
           ordreDansModule: 1,
+          niveauRequis: NiveauPedagogique.ADULTE,
           contenu: [
             {
               numeroPage: 1,
@@ -162,8 +163,8 @@ async function main() {
             }
           ]
         },
-        { titre: 'Les conditions et les structures logiques', ordreDansModule: 2, contenu: [] },
-        { titre: 'Les boucles (While et For)', ordreDansModule: 3, contenu: [] }
+        { titre: 'Les conditions et les structures logiques', ordreDansModule: 2, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] },
+        { titre: 'Les boucles (While et For)', ordreDansModule: 3, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] }
       ]
     },
     {
@@ -171,8 +172,8 @@ async function main() {
       description: 'Créer ses premières pages web dynamiques et responsives.',
       public: 'ADULTE' as const,
       cours: [
-        { titre: 'Structure et sémantique HTML5', ordreDansModule: 1, contenu: [] },
-        { titre: 'Mise en page moderne avec CSS Grid et Flexbox', ordreDansModule: 2, contenu: [] }
+        { titre: 'Structure et sémantique HTML5', ordreDansModule: 1, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] },
+        { titre: 'Mise en page moderne avec CSS Grid et Flexbox', ordreDansModule: 2, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] }
       ]
     },
     {
@@ -180,9 +181,9 @@ async function main() {
       description: 'Apprendre à programmer de manière ludique avec des blocs colorés.',
       public: 'ENFANT' as const,
       cours: [
-        { titre: 'Découverte de l\'interface et du lutin', ordreDansModule: 1, contenu: [] },
-        { titre: 'Faire bouger et animer son premier personnage', ordreDansModule: 2, contenu: [] },
-        { titre: 'Création d\'un mini-jeu de labyrinthe', ordreDansModule: 3, contenu: [] }
+        { titre: 'Découverte de l\'interface et du lutin', ordreDansModule: 1, niveauRequis: NiveauPedagogique.NIVEAU_1, contenu: [] },
+        { titre: 'Faire bouger et animer son premier personnage', ordreDansModule: 2, niveauRequis: NiveauPedagogique.NIVEAU_2, contenu: [] },
+        { titre: 'Création d\'un mini-jeu de labyrinthe', ordreDansModule: 3, niveauRequis: NiveauPedagogique.NIVEAU_3, contenu: [] }
       ]
     },
     {
@@ -190,8 +191,8 @@ async function main() {
       description: 'Découvrir la logique des capteurs et des moteurs pas à pas.',
       public: 'ENFANT' as const,
       cours: [
-        { titre: 'Qu\'est-ce qu\'un robot ?', ordreDansModule: 1, contenu: [] },
-        { titre: 'Programmer des déplacements simples', ordreDansModule: 2, contenu: [] }
+        { titre: 'Qu\'est-ce qu\'un robot ?', ordreDansModule: 1, niveauRequis: NiveauPedagogique.NIVEAU_1, contenu: [] },
+        { titre: 'Programmer des déplacements simples', ordreDansModule: 2, niveauRequis: NiveauPedagogique.NIVEAU_2, contenu: [] }
       ]
     }
   ];

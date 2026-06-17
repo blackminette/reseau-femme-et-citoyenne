@@ -5,6 +5,7 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServer } from '@/lib/supabase';
+import { NiveauPedagogique } from '@prisma/client';
 
 export async function getModuleAndCours(id: number) {
     try {
@@ -41,7 +42,8 @@ export async function creerCours(id: number, formData: { titre: string }) {
             data: {
                 titre: formData.titre,
                 intervenanteId: user.id,
-                moduleId: id
+                moduleId: id,
+                niveauRequis: NiveauPedagogique.NIVEAU_1
             }
         })
 

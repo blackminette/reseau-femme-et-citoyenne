@@ -3,6 +3,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { NiveauPedagogique } from '@prisma/client';
 
 export async function getCours(id: number) {
     try {
@@ -15,12 +16,18 @@ export async function getCours(id: number) {
     }
 }
 
-export async function modifierTitreCours(coursId: number, editTitre: string, moduleId: number) {
+export async function modifierInfosCours(
+    coursId: number,
+    editTitre: string,
+    niveauRequis: NiveauPedagogique,
+    moduleId: number
+) {
     try {
         const result = await prisma.cours.update({
             where: { id: coursId },
             data: {
-                titre: editTitre
+                titre: editTitre,
+                niveauRequis: niveauRequis
             }
         });
 
@@ -28,7 +35,8 @@ export async function modifierTitreCours(coursId: number, editTitre: string, mod
 
         return { success: true }
     } catch (error) {
-        return { success: false, error: "Erreur lors de la modification du titre du cours." }
+        console.error(error);
+        return { success: false, error: "Erreur lors de la modification du cours." }
     }
 }
 

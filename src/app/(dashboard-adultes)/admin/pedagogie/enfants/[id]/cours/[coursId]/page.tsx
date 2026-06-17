@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
-import { getCours, modifierTitreCours, modifierContenuCours } from './actions';
+import { getCours, modifierInfosCours, modifierContenuCours } from './actions';
 import Modal from '@/components/Modal';
 import { supabaseClient } from '@/lib/supabaseClient';
 
@@ -21,8 +21,16 @@ interface CoursInfo {
     titre: string;
     ordreDansModule: number;
     contenu: PageCours[];
+    niveauRequis: string;
     createdAt: Date;
 }
+
+const NIVEAUX_OPTIONS = ['NIVEAU_1', 'NIVEAU_2', 'NIVEAU_3'];
+const NIVEAUX_LABELS: Record<string, string> = {
+    NIVEAU_1: 'Niveau 1 (Débutant)',
+    NIVEAU_2: 'Niveau 2 (Intermédiaire)',
+    NIVEAU_3: 'Niveau 3 (Avancé)',
+};
 
 export default function AdminModifieCoursPage() {
     const [error, setError] = useState<string | null>(null);
@@ -35,6 +43,8 @@ export default function AdminModifieCoursPage() {
 
     const [isEditingTitre, setIsEditingTitre] = useState(false);
     const [editTitre, setEditTitre] = useState(cours?.titre || "");
+    const [editNiveau, setEditNiveau] = useState(cours?.niveauRequis || "NIVEAU_1"); // <-- État pour le niveau du formulaire
+
     const [isEditingPageTitre, setIsEditingPageTitre] = useState(false);
     const [isEditingPageTexte, setIsEditingPageTexte] = useState(false);
     const [editPageTitre, setEditPageTitre] = useState("");
@@ -83,6 +93,7 @@ export default function AdminModifieCoursPage() {
     useEffect(() => {
         if (cours) {
             setEditTitre(cours.titre);
+            setEditNiveau(cours.niveauRequis || "NIVEAU_1");
             const currentPage = cours.contenu[currentPageIndex];
             if (currentPage) {
                 setEditPageTitre(currentPage.titre);
@@ -90,6 +101,18 @@ export default function AdminModifieCoursPage() {
             }
         }
     }, [cours, currentPageIndex]);
+
+    const handleSauvegarderInfosCours = async (nouveauTitre: string, nouveauNiveau: string) => {
+        if (!cours) return;
+
+        setCours(prev => prev ? { ...prev, titre: nouveauTitre, niveauRequis: nouveauNiveau } : null);
+
+        const result = await modifierInfosCours(cours.id, nouveauTitre, nouveauNiveau as any, moduleId);
+        if (!result.success) {
+            setError("Une erreur est survenue lors de la modification des informations du cours.");
+        }
+        setIsEditingTitre(false);
+    };
 
     // Fonction globale pour sauvegarder le JSON complet après modification inline
     const handleSauvegarderPage = async (cle: 'titre' | 'texteExplicatif' | 'imageUrl', nouvelleValeur: string) => {
@@ -102,7 +125,7 @@ export default function AdminModifieCoursPage() {
             [cle]: nouvelleValeur
         };
 
-        setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
+        setCours(prev => prev ? { ...prev, contenido: nouveauContenu } : null);
 
         const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
         if (!result.success) {
@@ -302,40 +325,70 @@ export default function AdminModifieCoursPage() {
                     <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">
                         Cours #{cours.ordreDansModule}
                     </span>
+
                     {isEditingTitre ? (
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="text"
-                                value={editTitre}
-                                onChange={(e) => setEditTitre(e.target.value)}
-                                onBlur={async () => {
-                                    setIsEditingTitre(false);
-                                    if (editTitre.trim() && editTitre !== cours.titre) {
-                                        setCours(prev => prev ? { ...prev, titre: editTitre } : null);
-                                        const result = await modifierTitreCours(cours.id, editTitre, moduleId);
-                                        if (!result.success) { setError("Une erreur est survenue."); }
-                                    } else {
-                                        setEditTitre(cours.titre);
-                                    }
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') e.currentTarget.blur();
-                                    if (e.key === 'Escape') { setEditTitre(cours.titre); setIsEditingTitre(false); }
-                                }}
-                                autoFocus
-                                className="text-2xl font-bold tracking-tight text-violet-950 border-b-2 border-violet-500 bg-transparent focus:outline-none p-0 max-w-md"
-                            />
-                            <span className="text-xs text-slate-400 italic">(Pressez Entrée pour valider ou Echap pour annuler)</span>
+                        <div className="flex flex-col gap-3 p-4 border border-violet-200 rounded-lg bg-violet-50/50 max-w-xl">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-violet-900">Titre du cours</label>
+                                <input
+                                    type="text"
+                                    value={editTitre}
+                                    onChange={(e) => setEditTitre(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSauvegarderInfosCours(editTitre, editNiveau);
+                                        if (e.key === 'Escape') { setEditTitre(cours.titre); setEditNiveau(cours.niveauRequis); setIsEditingTitre(false); }
+                                    }}
+                                    autoFocus
+                                    className="text-lg font-bold text-violet-950 border-b border-violet-400 bg-white focus:outline-none p-1.5 rounded"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-violet-900">Niveau requis</label>
+                                <select
+                                    value={editNiveau}
+                                    onChange={(e) => setEditNiveau(e.target.value)}
+                                    className="p-1.5 border border-violet-300 rounded bg-white text-sm text-violet-950 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                >
+                                    {NIVEAUX_OPTIONS.map((niv) => (
+                                        <option key={niv} value={niv}>
+                                            {NIVEAUX_LABELS[niv] || niv}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 mt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => { setEditTitre(cours.titre); setEditNiveau(cours.niveauRequis); setIsEditingTitre(false); }}
+                                    className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSauvegarderInfosCours(editTitre, editNiveau)}
+                                    className="px-3 py-1 text-xs bg-violet-600 text-white rounded font-medium hover:bg-violet-700 transition-colors shadow-sm"
+                                >
+                                    Valider
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <div
                             onClick={() => setIsEditingTitre(true)}
-                            className="flex items-center gap-2 group cursor-pointer w-fit"
+                            className="flex flex-col gap-1 group cursor-pointer w-fit"
                         >
-                            <h1 className="text-2xl font-bold tracking-tight text-violet-950 group-hover:text-violet-700 transition-colors">
-                                {cours.titre}
-                            </h1>
-                            <Pencil className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors shrink-0" />
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-bold tracking-tight text-violet-950 group-hover:text-violet-700 transition-colors">
+                                    {cours.titre}
+                                </h1>
+                                <Pencil className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors shrink-0" />
+                            </div>
+                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded w-fit">
+                                {NIVEAUX_LABELS[cours.niveauRequis] || cours.niveauRequis || 'Aucun niveau requis'}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -459,13 +512,11 @@ export default function AdminModifieCoursPage() {
                                             </div>
 
                                             {/* Image de la page */}
-                                            {/* Conteneur de l'image / zone de dépôt */}
                                             <div className="space-y-1">
                                                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block">
                                                     Illustration :
                                                 </label>
 
-                                                {/* Input HTML caché mais indispensable */}
                                                 <input
                                                     type="file"
                                                     ref={fileInputRef}
@@ -475,7 +526,6 @@ export default function AdminModifieCoursPage() {
                                                 />
 
                                                 {page.imageUrl ? (
-                                                    /* s'il y a une image, on l'affiche avec un effet au survol */
                                                     <div className="relative border border-slate-100 rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center max-h-64 group">
                                                         <img
                                                             src={page.imageUrl}
@@ -483,7 +533,6 @@ export default function AdminModifieCoursPage() {
                                                             className="object-contain w-full h-full max-h-64 transition-opacity group-hover:opacity-40"
                                                         />
 
-                                                        {/* Overlay qui apparaît au survol */}
                                                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                             <button
                                                                 onClick={() => fileInputRef.current?.click()}
@@ -501,7 +550,6 @@ export default function AdminModifieCoursPage() {
                                                             </button>
                                                         </div>
 
-                                                        {/* Indicateur de chargement transparent si un upload est en cours */}
                                                         {isUploadingImage && (
                                                             <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-xs text-violet-600 font-medium animate-pulse">
                                                                 Téléversement...
@@ -509,7 +557,6 @@ export default function AdminModifieCoursPage() {
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    /* s'il n'y a pas d'image, on affiche l'encadré pointillé */
                                                     <button
                                                         type="button"
                                                         onClick={() => fileInputRef.current?.click()}
@@ -567,53 +614,10 @@ export default function AdminModifieCoursPage() {
                     </div>
                 ) : (
                     <div className="text-center py-12 border border-dashed border-violet-200 rounded-xl bg-violet-50/20">
-                        <p className="text-sm text-violet-600 italic">Ce cours ne contient aucune page de texte pour le moment.</p>
+                        <span className="text-sm text-slate-500">Aucune page dans ce cours. Cliquez sur "Ajouter une page".</span>
                     </div>
                 )}
             </div>
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Modifier l'ordre des pages"
-            >
-                <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto p-1">
-                    {cours.contenu.map((page, index) => (
-                        <div
-                            key={page.numeroPage}
-                            className="bg-slate-50 border border-violet-100 rounded-xl flex items-center justify-between p-3 transition-all hover:border-violet-300 hover:bg-white shadow-sm"
-                        >
-                            <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold shrink-0">
-                                    {index + 1}
-                                </span>
-                                <h3 className="text-sm font-medium text-violet-950 truncate max-w-[240px]">
-                                    {page.titre}
-                                </h3>
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                    onClick={() => handleReordonner(page.numeroPage, 'HAUT')}
-                                    disabled={index === 0}
-                                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                                    title="Monter la page"
-                                >
-                                    <ArrowUp className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                    onClick={() => handleReordonner(page.numeroPage, 'BAS')}
-                                    disabled={index === cours.contenu.length - 1}
-                                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                                    title="Descendre la page"
-                                >
-                                    <ArrowDown className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </Modal>
         </div>
     );
 }

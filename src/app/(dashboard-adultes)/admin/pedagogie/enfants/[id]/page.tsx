@@ -3,17 +3,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-// On importe une action fictive "changerOrdreCours" (à créer dans tes actions)
 import { getModuleAndCours, creerCours, supprimerCours, changerOrdreCours } from './actions';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
-import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react'; // Ajout des icônes de flèches
+import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { NiveauPedagogique } from '@prisma/client';
 
 interface CoursInfo {
     id: number;
     titre: string;
     description: string | null;
     ordreDansModule: number;
+    niveauRequis: NiveauPedagogique;
     createdAt: Date;
 }
 
@@ -36,6 +37,26 @@ export default function AdminModulePage() {
     const params = useParams();
     const id = params.id as string;
     const moduleId = parseInt(id, 10);
+
+    const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
+        NIVEAU_1: {
+            label: 'Débutant',
+            classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        },
+        NIVEAU_2: {
+            label: 'Intermédiaire',
+            classes: 'bg-amber-50 text-amber-700 border-amber-200'
+        },
+        NIVEAU_3: {
+            label: 'Avancé',
+            classes: 'bg-rose-50 text-rose-700 border-rose-200'
+        },
+        ADULTE: {
+            label: 'Adulte',
+            // Un joli badge violet pour s'accorder avec votre thème principal
+            classes: 'bg-violet-50 text-violet-700 border-violet-200'
+        }
+    };
 
     const trierLesCours = (coursListe: CoursInfo[]) => {
         return [...coursListe].sort((a, b) => a.ordreDansModule - b.ordreDansModule);
@@ -172,11 +193,21 @@ export default function AdminModulePage() {
                             >
                                 <Link
                                     href={`/admin/pedagogie/enfants/${moduleId}/cours/${cours.id}`}
-                                    className="flex-1 min-w-0 p-4 cursor-pointer"
+                                    className="flex-1 min-w-0 p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                                 >
-                                    <h3 className="font-medium text-violet-950 truncate group-hover:text-violet-600 transition-colors">
-                                        {index + 1}. {cours.titre}
-                                    </h3>
+                                    <div className="min-w-0">
+                                        <h3 className="font-medium text-violet-950 truncate group-hover:text-violet-600 transition-colors">
+                                            {index + 1}. {cours.titre}
+                                        </h3>
+                                    </div>
+
+                                    {/* AFFICHAGE DU NIVEAU STYLISÉ */}
+                                    {cours.niveauRequis && (
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0 w-fit ${NIVEAU_STYLES[cours.niveauRequis]?.classes || 'bg-slate-50 text-slate-600 border-slate-200'
+                                            }`}>
+                                            {NIVEAU_STYLES[cours.niveauRequis]?.label || cours.niveauRequis}
+                                        </span>
+                                    )}
                                 </Link>
 
                                 {/* ZONE DE BOUTONS D'ACTION (Flèches d'ordre + Supprimer) */}
