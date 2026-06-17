@@ -19,7 +19,7 @@ import {
     Plus,
     UserPlus,
 } from "lucide-react";
-import { MEMBRE, ENFANTS, ACTIVITES, RESERVATIONS, type Metriques } from "@/lib/membre-data";
+import { MEMBRE, ENFANTS_RATTACHES, ACTIVITES, RESERVATIONS, type Metriques } from "@/lib/membre-data";
 
 export const metadata = {
     title: "Mon espace membre",
@@ -86,9 +86,20 @@ function MetriquesGrid({ m }: { m: Metriques }) {
     );
 }
 
-export default function MembreDashboard() {
-    // Logique de code : tout dépend de la présence (ou non) d'enfants rattachés.
-    const aDesEnfants = ENFANTS.length > 0;
+export default async function MembreDashboard({
+    searchParams,
+}: {
+    searchParams: Promise<{ vue?: string }>;
+}) {
+    // ╔═══════════════ DÉMO — À SUPPRIMER quand la BDD sera branchée ═══════════════╗
+    // Bascule l'état Avec/Sans enfant via l'URL (?vue=avec / ?vue=sans) pour la démo.
+    // Pour retirer : supprimer ce bloc + le sélecteur plus bas + le paramètre `searchParams`
+    // de la signature, puis remplacer par une seule ligne :
+    //     const ENFANTS = ENFANTS_RATTACHES;   (ou le fetch BDD des enfants du membre)
+    const { vue } = await searchParams;
+    const aDesEnfants = vue !== "sans";
+    const ENFANTS = aDesEnfants ? ENFANTS_RATTACHES : [];
+    // ╚═════════════════════════════════════════════════════════════════════════════╝
 
     const STATS: { Icon: LucideIcon; valeur: string; label: string; accent: "violet" | "amber" }[] = [
         { Icon: TrendingUp, valeur: `${MEMBRE.progression}%`, label: "Ma progression", accent: "violet" },
@@ -105,6 +116,23 @@ export default function MembreDashboard() {
 
     return (
         <div className="text-violet-900">
+
+            {/* ─── Sélecteur d'aperçu démo (à retirer une fois la BDD branchée) ─── */}
+            <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-violet-300 bg-violet-50/60 px-3 py-2 text-xs">
+                <span className="font-semibold text-violet-500">Aperçu démo :</span>
+                <Link
+                    href="/membre?vue=avec"
+                    className={`rounded-lg px-3 py-1 transition-colors ${aDesEnfants ? "bg-violet-600 font-semibold text-white" : "font-medium text-violet-600 hover:bg-violet-100"}`}
+                >
+                    Avec enfants
+                </Link>
+                <Link
+                    href="/membre?vue=sans"
+                    className={`rounded-lg px-3 py-1 transition-colors ${!aDesEnfants ? "bg-violet-600 font-semibold text-white" : "font-medium text-violet-600 hover:bg-violet-100"}`}
+                >
+                    Sans enfant
+                </Link>
+            </div>
 
             {/* ─── En-tête ─── */}
             <div className="flex flex-col gap-1 border-b border-violet-200 pb-5">
