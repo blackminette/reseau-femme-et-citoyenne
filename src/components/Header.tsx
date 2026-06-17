@@ -89,7 +89,7 @@ export default function Header() {
                                 alt="Logo RFC06"
                                 width={280}
                                 height={94}
-                                className="h-28 w-auto object-contain mt-4"
+                                className="h-16 sm:h-28 w-auto object-contain"
                                 priority
                             />
                             <div className="flex flex-col text-[10px] sm:text-sm">
