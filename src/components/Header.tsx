@@ -75,7 +75,7 @@ export default function Header() {
 
                     {/* Logo de l'association */}
                     <div className="flex-shrink-0 flex items-center">
-                        <Link href="/" className="text-xl font-bold text-indigo-600 tracking-tight hover:opacity-90">
+                        <Link href="/accueil" className="text-xl font-bold text-indigo-600 tracking-tight hover:opacity-90">
                             🤝 MonAsso
                         </Link>
                     </div>
