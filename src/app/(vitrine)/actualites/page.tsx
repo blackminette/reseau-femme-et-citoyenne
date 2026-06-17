@@ -6,7 +6,7 @@ export default async function ActualitesPage() {
     return (
         <div className="min-h-screen bg-[#eedeff] px-6 py-8 text-[#2b1459]">
             <div className="mx-auto max-w-7xl">
-                <h1 className="mb-10 text-center text-3xl font-semibold text-[#752fbb]">
+                <h1 className="mb-10 text-center text-5xl font-semibold text-[#752fbb] md:text-5xl">
                     Actualit&eacute;s
                 </h1>
 
