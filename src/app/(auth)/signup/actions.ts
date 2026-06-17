@@ -70,7 +70,7 @@ export async function signupAction(formData: any) {
             throw prismaError;
         }
 
-        return { success: true };
+        return { success: true, needsConfirmation: true };
 
     } catch (error) {
         console.error("[signup] Erreur critique lors de l'inscription :", error);

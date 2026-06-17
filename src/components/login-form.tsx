@@ -109,12 +109,13 @@ export function LoginForm({
               <Field>
                 <div className="flex items-center justify-between mb-1">
                   <FieldLabel htmlFor="password" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Mot de passe</FieldLabel>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
+                    onClick={() => router.push('/forgot-password')}
                     className="text-xs text-[#260936] hover:text-slate-900 transition-colors font-bold"
                   >
                     Oublié ?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative group">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={18} />
@@ -136,7 +137,7 @@ export function LoginForm({
                 </div>
               </Field>
               <Field className="pt-2">
-                <Button type="submit" disabled={isLoading} className="w-full bg-[#260936] hover:bg-[#6026a3] text-white font-bold h-13 transition-all shadow-lg shadow-[#260936]/10 rounded-xl text-sm uppercase tracking-wide">
+                <Button type="submit" disabled={isLoading} className="w-full bg-[#260936] hover:bg-[#6026a3] text-white font-bold h-12 transition-all shadow-lg shadow-[#260936]/10 rounded-xl text-sm uppercase tracking-wide">
                   {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Se connecter"}
                 </Button>
                 <div className="text-center text-sm text-slate-500 mt-8">

@@ -36,17 +36,18 @@ export default function Header() {
             if (user) {
                 console.log('[Header] Utilisateur connecté trouvé dans Supabase :', user.email);
 
-                const { data: profile, error: dbError } = await supabaseClient
+                const { data: profiles, error: dbError } = await supabaseClient
                     .from('Utilisateur')
                     .select('role')
-                    .eq('email', user.email)
-                    .single();
+                    .eq('id', user.id);
 
                 if (dbError) {
                     console.error('[Header] Erreur BDD (Table Utilisateur) :', dbError.message);
                     setRole(null);
-                } else if (profile) {
-                    setRole(profile.role as UserRole);
+                } else if (profiles && profiles.length > 0) {
+                    setRole(profiles[0].role as UserRole);
+                } else {
+                    setRole(null);
                 }
             } else {
                 setRole(null);
