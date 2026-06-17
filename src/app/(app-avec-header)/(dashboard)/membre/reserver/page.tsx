@@ -1,77 +1,84 @@
-'use client'; // nécessaire car on gère le choix de l'enfant et le clic "Réserver"
+'use client'; // nécessaire car on gère le choix du participant et le clic "Réserver"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, Users, Check } from "lucide-react";
 
-// Enfants du compte (à remplacer par la base de données plus tard)
-const ENFANTS = ["Lina", "Adam"];
+// Participants possibles : le membre lui-même, puis ses enfants rattachés (s'il en a).
+// ENFANTS vide pour la démo "sans enfant" → le membre peut quand même réserver pour lui.
+const MOI = "Moi (Sophie Martin)";
+const ENFANTS: string[] = [];
+const PARTICIPANTS = [MOI, ...ENFANTS];
 
-// Ateliers disponibles à la réservation (simulés)
+// Ateliers disponibles à la réservation (simulés) — mélange adultes / enfants.
 const ATELIERS = [
-    { id: 1, titre: "Initiation au dessin",   date: "Mercredi 18 juin 2026", creneau: "14h00 – 15h30", places: 4 },
-    { id: 2, titre: "Atelier pâtisserie",     date: "Samedi 21 juin 2026",   creneau: "10h00 – 12h00", places: 2 },
-    { id: 3, titre: "Théâtre & expression",   date: "Mercredi 25 juin 2026", creneau: "16h00 – 17h00", places: 6 },
-    { id: 4, titre: "Éveil musical",          date: "Samedi 28 juin 2026",   creneau: "10h30 – 11h30", places: 0 },
+    { id: 1, titre: "Atelier numérique", date: "Mercredi 18 juin 2026", creneau: "14h00 – 15h30", places: 5, public: "Adultes" },
+    { id: 2, titre: "Français langue étrangère", date: "Jeudi 19 juin 2026", creneau: "09h30 – 11h00", places: 3, public: "Adultes" },
+    { id: 3, titre: "Initiation au dessin", date: "Mercredi 25 juin 2026", creneau: "16h00 – 17h00", places: 4, public: "Enfants" },
+    { id: 4, titre: "Éveil musical", date: "Samedi 28 juin 2026", creneau: "10h30 – 11h30", places: 0, public: "Enfants" },
 ];
 
 export default function MembreReserverPage() {
     const router = useRouter();
-    const [enfant, setEnfant] = useState(ENFANTS[0]);
+    const [participant, setParticipant] = useState(PARTICIPANTS[0]);
 
     const handleReserver = () => {
-        // TODO : enregistrer la réservation en base de données
+        // TODO : enregistrer la réservation en base de données pour `participant`
         router.push("/membre/reservations");
     };
 
     return (
-        <div className="space-y-8">
+        <div className="text-violet-900">
 
-            <div className="space-y-3">
-                {/* Lien retour vers la liste des réservations */}
-                <Link href="/membre/reservations" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 transition-colors">
-                    <ArrowLeft className="w-4 h-4" aria-hidden /> Retour aux réservations
-                </Link>
-                {/* Bandeau d'accueil dégradé */}
-                <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white shadow-lg">
-                    <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" aria-hidden />
-                    <div className="relative space-y-1">
-                        <h1 className="text-3xl font-extrabold">Réserver un atelier</h1>
-                        <p className="text-white/80">Choisissez un enfant puis un atelier disponible.</p>
-                    </div>
-                </header>
+            {/* Lien retour */}
+            <Link href="/membre/reservations" className="inline-flex items-center gap-1.5 text-sm text-violet-500 transition-colors hover:text-violet-700">
+                <ArrowLeft className="h-4 w-4" aria-hidden /> Retour aux réservations
+            </Link>
+
+            {/* En-tête */}
+            <div className="mt-3 flex flex-col gap-1 border-b border-violet-200 pb-5">
+                <h1 className="text-3xl font-bold tracking-tight text-violet-950">Réserver un atelier</h1>
+                <p className="text-sm text-violet-600">Choisissez le participant puis un atelier disponible.</p>
             </div>
 
-            {/* Choix de l'enfant pour qui réserver */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-2 max-w-sm">
-                <label htmlFor="enfant" className="block text-sm font-semibold text-slate-700">Pour quel enfant ?</label>
+            {/* Choix du participant */}
+            <div className="mt-6 max-w-sm rounded-2xl border border-violet-200 bg-white p-6 shadow-xs">
+                <label htmlFor="participant" className="block text-sm font-semibold text-violet-800">Pour qui ?</label>
                 <select
-                    id="enfant" value={enfant} onChange={e => setEnfant(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    id="participant" value={participant} onChange={e => setParticipant(e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-violet-200 px-4 py-2.5 text-violet-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
-                    {ENFANTS.map(nom => <option key={nom} value={nom}>{nom}</option>)}
+                    {PARTICIPANTS.map(nom => <option key={nom} value={nom}>{nom}</option>)}
                 </select>
+                {ENFANTS.length === 0 && (
+                    <p className="mt-2 text-[11px] text-violet-500">
+                        Ajoutez un enfant depuis « Mes enfants » pour pouvoir réserver aussi pour lui.
+                    </p>
+                )}
             </div>
 
             {/* Liste des ateliers disponibles */}
-            <div className="grid gap-4">
-                {ATELIERS.map(({ id, titre, date, creneau, places }) => {
+            <div className="mt-6 grid gap-4">
+                {ATELIERS.map(({ id, titre, date, creneau, places, public: pub }) => {
                     const complet = places === 0;
                     return (
-                        <article key={id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-wrap items-center justify-between gap-4">
+                        <article key={id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-violet-200 bg-white p-6 shadow-xs">
                             <div className="space-y-2">
-                                <h2 className="font-bold text-slate-900">{titre}</h2>
-                                <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-500">
-                                    <span className="inline-flex items-center gap-1.5"><CalendarDays className="w-4 h-4" aria-hidden /> {date}</span>
-                                    <span className="inline-flex items-center gap-1.5"><Clock className="w-4 h-4" aria-hidden /> {creneau}</span>
-                                    <span className="inline-flex items-center gap-1.5"><Users className="w-4 h-4" aria-hidden /> {complet ? "Complet" : `${places} place${places > 1 ? "s" : ""}`}</span>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="font-bold text-violet-950">{titre}</h2>
+                                    <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-600">{pub}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-violet-500">
+                                    <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" aria-hidden /> {date}</span>
+                                    <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4" aria-hidden /> {creneau}</span>
+                                    <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4" aria-hidden /> {complet ? "Complet" : `${places} place${places > 1 ? "s" : ""}`}</span>
                                 </div>
                             </div>
                             <button
                                 onClick={handleReserver} disabled={complet}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-2.5 font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-200"
                             >
-                                <Check className="w-4 h-4" aria-hidden /> Réserver
+                                <Check className="h-4 w-4" aria-hidden /> Réserver
                             </button>
                         </article>
                     );
