@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Ajout du router pour sécuriser la redirection
+import { useRouter } from 'next/navigation'; // Ajout du router pour sÃ©curiser la redirection
 import { UserRole } from '@/types/auth';
 import { supabaseClient } from '@/lib/supabaseClient';
 
@@ -12,6 +12,22 @@ interface UserDropdownProps {
 }
 
 export default function UserDropdown({ role }: UserDropdownProps) {
+    const roleNormalise = role?.toUpperCase();
+
+    const dashboardHref =
+        roleNormalise === 'ADMIN'
+            ? '/admin'
+            : roleNormalise === 'MEMBRE'
+              ? '/membre'
+              : roleNormalise === 'ENFANT'
+                ? '/enfant'
+                : roleNormalise === 'PARTENAIRE'
+                  ? '/partenaire'
+                  : roleNormalise === 'BENEVOLE'
+                    ? '/benevole'
+                    : roleNormalise === 'INTERVENANT' || roleNormalise === 'INTERVENANTE'
+                      ? '/intervenant'
+                      : '/accueil';
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter(); // Instanciation du router
@@ -27,10 +43,10 @@ export default function UserDropdown({ role }: UserDropdownProps) {
     }, []);
 
     const handleLogout = async () => {
-        // On empêche la fermeture et la navigation tant que Supabase n'a pas confirmé la déconnexion
+        // On empÃªche la fermeture et la navigation tant que Supabase n'a pas confirmÃ© la dÃ©connexion
         await supabaseClient.auth.signOut();
         setIsOpen(false);
-        router.push('/'); // Redirection sécurisée APRÈS la destruction de la session
+        router.push('/'); // Redirection sÃ©curisÃ©e APRÃˆS la destruction de la session
     };
 
     return (
@@ -59,7 +75,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
                                 {role}
                             </div>
                             <Link
-                                href={`/${role.toLowerCase()}`}
+                                href={dashboardHref}
                                 onClick={() => setIsOpen(false)}
                                 className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                 role="menuitem"
@@ -71,7 +87,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
                                 className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-slate-100"
                                 role="menuitem"
                             >
-                                Déconnexion
+                                DÃ©connexion
                             </button>
                         </>
                     ) : (

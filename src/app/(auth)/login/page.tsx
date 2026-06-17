@@ -54,8 +54,20 @@ export default function LoginPage() {
             router.refresh();
 
             // Redirection vers le tableau de bord lié au rôle
-            const destination = `/${result.role.toLowerCase()}`;
-            router.push(destination);
+            const role = String(result.role).toUpperCase();
+
+            const routesParRole: Record<string, string> = {
+                ADMIN: '/admin',
+                MEMBRE: '/membre',
+                ENFANT: '/enfant',
+                PARTENAIRE: '/partenaire',
+                BENEVOLE: '/benevole',
+                INTERVENANT: '/intervenant',
+                INTERVENANTE: '/intervenant',
+            };
+
+            const destination = routesParRole[role] ?? '/accueil';
+            router.replace(destination);
 
         } else {
             setIsLoading(false);

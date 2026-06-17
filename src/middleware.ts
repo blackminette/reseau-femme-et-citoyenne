@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Route sur laquelle le middleware s'applique (toutes les routes privées)
+// Route sur laquelle le middleware s'applique (toutes les routes privÃ©es)
 export const config = {
     matcher: [
         '/membre/:path*',
@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
         request: { headers: request.headers },
     });
 
-    // Initialisation du client Supabase pour gérer les cookies de session
+    // Initialisation du client Supabase pour gÃ©rer les cookies de session
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -37,16 +37,16 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    // Récupération de l'utilisateur connecté
+    // RÃ©cupÃ©ration de l'utilisateur connectÃ©
     const { data: { user } } = await supabase.auth.getUser();
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
-    // Détection des routes privées (/admin, /membre...)
+    // DÃ©tection des routes privÃ©es (/admin, /membre...)
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
-    // Si non connecté et tente d'aller sur une page privée -> Redirection /login
+    // Si non connectÃ© et tente d'aller sur une page privÃ©e -> Redirection /login
     if (!user) {
         if (isPrivateRoute) {
             url.pathname = '/login';
@@ -55,13 +55,13 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // Si déjà connecté et tente d'aller sur /login -> Redirection vers l'accueil
+    // Si dÃ©jÃ  connectÃ© et tente d'aller sur /login -> Redirection vers l'accueil
     if (pathname === '/login') {
         url.pathname = '/';
         return NextResponse.redirect(url);
     }
 
-    // Récupération du rôle de l'utilisateur dans la table Prisma
+    // RÃ©cupÃ©ration du rÃ´le de l'utilisateur dans la table Prisma
     let userRole: UserRole | null = null;
 
     if (user.email) {
@@ -76,20 +76,20 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Sécurité : Bloque l'accès si l'utilisateur n'a aucun rôle enregistré en base
+    // SÃ©curitÃ© : Bloque l'accÃ¨s si l'utilisateur n'a aucun rÃ´le enregistrÃ© en base
     if (!userRole && isPrivateRoute) {
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
 
-    // Gestion des accès selon le rôle (RBAC)
+    // Gestion des accÃ¨s selon le rÃ´le (RBAC)
     if (userRole) {
-        // Interdit l'accès à /admin si l'utilisateur n'est pas ADMIN
+        // Interdit l'accÃ¨s Ã  /admin si l'utilisateur n'est pas ADMIN
         if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
             return redirectUserToDefaultDashboard(userRole, url);
         }
 
-        // Redirige de force l'utilisateur vers son propre espace s'il s'est trompé d'URL
+        // Redirige de force l'utilisateur vers son propre espace s'il s'est trompÃ© d'URL
         if (isPrivateRoute) {
             if (userRole === 'PARTENAIRE' && !pathname.startsWith('/partenaire')) {
                 url.pathname = '/partenaire';
@@ -121,13 +121,14 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
-// Fonction utilitaire pour renvoyer un utilisateur vers son tableau de bord par défaut
+// Fonction utilitaire pour renvoyer un utilisateur vers son tableau de bord par dÃ©faut
 function redirectUserToDefaultDashboard(role: UserRole, url: URL) {
     switch (role) {
         case 'ADMIN': url.pathname = '/admin'; break;
         case 'PARTENAIRE': url.pathname = '/partenaire'; break;
         case 'ETUDIANT': url.pathname = '/etudiant'; break;
         case 'INTERVENANT': url.pathname = '/intervenant'; break;
+        case 'INTERVENANTE': url.pathname = '/intervenant'; break;
         case 'BENEVOLE': url.pathname = '/benevole'; break;
         case 'MEMBRE': url.pathname = '/membre'; break;
         case 'ENFANT': url.pathname = '/enfant'; break;
