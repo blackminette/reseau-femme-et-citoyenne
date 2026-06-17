@@ -165,12 +165,14 @@ export default function Accueil() {
                             </div>
                             <h3 className="text-2xl font-black mb-2 text-[#260936]">Don ponctuel</h3>
                             <p className="text-sm text-slate-500 mb-8 font-medium">Soutenez nos projets financièrement</p>
-                            <button
-                                type="button"
-                                className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
-                            >
-                                Faire un don
-                            </button>
+                            <div className="mt-auto w-full">
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
+                                >
+                                    Faire un don
+                                </button>
+                            </div>
                         </div>
 
                         {/* Bloc Bénévolat */}
@@ -180,12 +182,14 @@ export default function Accueil() {
                             </div>
                             <h3 className="text-2xl font-black mb-2 text-[#260936]">Engagement</h3>
                             <p className="text-sm text-slate-500 mb-8 font-medium">Offrez de votre temps et vos compétences</p>
-                            <button
-                                type="button"
-                                className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
-                            >
-                                Devenir Bénévole
-                            </button>
+                            <div className="mt-auto w-full">
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
+                                >
+                                    Devenir Bénévole
+                                </button>
+                            </div>
                         </div>
 
                         {/* Bloc Partenariat */}
@@ -195,12 +199,14 @@ export default function Accueil() {
                             </div>
                             <h3 className="text-2xl font-black mb-2 text-[#260936]">Partenariat</h3>
                             <p className="text-sm text-slate-500 mb-8 font-medium">Construisons ensemble des projets durables</p>
-                            <button
-                                type="button"
-                                className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
-                            >
-                                Devenir Partenaire
-                            </button>
+                            <div className="mt-auto w-full">
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
+                                >
+                                    Devenir Partenaire
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
