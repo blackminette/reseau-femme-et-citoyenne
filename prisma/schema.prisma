@@ -105,33 +105,25 @@ model Cours {
   intervenanteId  String
   contenu         Json              @default("[]")
   niveauRequis    NiveauPedagogique @default(NIVEAU_1)
-  moduleId        Int              
-  ordreDansModule Int               @default(1) // Pour gérer l'enchaînement des cours (Cours 1, Cours 2...)
+  moduleId        Int               
+  ordreDansModule Int               @default(1) 
   module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  compositions    Composition[]
+  exercices       Exercice[]        
   intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
   programmes      Programme[]
 }
 
 model Exercice {
-  id           Int           @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   titre        String
   instructions String
   type         String
-  contenu      Json          @default("[]")
-  compositions Composition[]
+  contenu      Json        @default("[]")
+  ordre        Int         @default(1) 
+  coursId      Int
+  cours        Cours       @relation(fields: [coursId], references: [id], onDelete: Cascade)
+
   scores       ScoreQuiz[]
-}
-
-model Composition {
-  id         Int      @id @default(autoincrement())
-  ordre      Int      @default(1)
-  coursId    Int
-  cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
-  exerciceId Int
-  exercice   Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
-
-  @@unique([coursId, exerciceId])
 }
 
 model ScoreQuiz {
