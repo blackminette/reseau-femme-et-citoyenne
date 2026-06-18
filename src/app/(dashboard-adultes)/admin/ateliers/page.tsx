@@ -1,14 +1,13 @@
 // * src/app/(dashboard-adultes)/admin/ateliers/page.tsx
 'use client'
 
-/** Page pour gérer les ateliers : création, modification, suppression et déplacement sur un calendrier interactif. */
-
 import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import frLocale from '@fullcalendar/core/locales/fr';
+import { Calendar, Loader2, Plus, Trash2, X } from 'lucide-react';
 import { listerAteliers, sauvegarderAteliers, supprimerAteliers } from './actions';
 import Modal from '@/components/Modal';
 
@@ -25,39 +24,40 @@ export default function AdminAteliersPage() {
 
     const chargerLesAteliers = async () => {
         setChargement(true);
-        const res = await listerAteliers();
-        if (res.success && res.data) {
-            // On mappe (transforme) tes données Atelier pour FullCalendar
-            const ateliersFormates = res.data.map((atelier: any) => ({
-                id: atelier.id.toString(), // FullCalendar attend une chaîne pour l'ID
-                title: atelier.titre,
-                start: new Date(atelier.dateDebut).toISOString().slice(0, 16),
-                end: new Date(atelier.dateFin).toISOString().slice(0, 16),
-                extendedProps: {
-                    description: atelier.description || '',
-                }
-            }));
-            setEvents(ateliersFormates);
+        try {
+            const res = await listerAteliers();
+            if (res.success && res.data) {
+                const ateliersFormates = res.data.map((atelier: any) => ({
+                    id: atelier.id.toString(),
+                    title: atelier.titre,
+                    start: new Date(atelier.dateDebut).toISOString().slice(0, 16),
+                    end: new Date(atelier.dateFin).toISOString().slice(0, 16),
+                    extendedProps: {
+                        description: atelier.description || '',
+                    }
+                }));
+                setEvents(ateliersFormates);
+            }
+        } catch (error) {
+            console.error("Erreur chargement ateliers:", error);
+        } finally {
+            setChargement(false);
         }
-        setChargement(false);
     };
 
     useEffect(() => {
         chargerLesAteliers();
     }, []);
 
-    // Clic sur une case vide (Création d'un nouvel atelier)
     const handleDateSelect = (selectInfo: any) => {
-        setSelectedEventId(null); // On remet à blanc l'ID pour indiquer une création
+        setSelectedEventId(null);
         setFormTitle('');
         setFormDescription('');
-        // Extraction des dates au format requis par l'input datetime-local (YYYY-MM-DDTHH:MM)
         setFormStart(selectInfo.startStr.slice(0, 16));
         setFormEnd(selectInfo.endStr ? selectInfo.endStr.slice(0, 16) : selectInfo.startStr.slice(0, 16));
         setModalIsOpen(true);
     };
 
-    // Clic sur un atelier existant (Modification / Suppression)
     const handleEventClick = (clickInfo: any) => {
         const event = clickInfo.event;
         setSelectedEventId(event.id);
@@ -68,7 +68,6 @@ export default function AdminAteliersPage() {
         setModalIsOpen(true);
     };
 
-    // Changement automatique lors d'un Glisser-Déposer (Drag & Drop) ou d'un étirement
     const handleEventChange = async (changeInfo: any) => {
         const { event } = changeInfo;
         const res = await sauvegarderAteliers({
@@ -81,11 +80,10 @@ export default function AdminAteliersPage() {
 
         if (!res.success) {
             alert("Erreur lors du déplacement de l'atelier");
-            changeInfo.revert(); // Annule le déplacement visuel si ça plante en BDD
+            changeInfo.revert();
         }
     };
 
-    // Soumission du Formulaire
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -105,7 +103,6 @@ export default function AdminAteliersPage() {
         }
     };
 
-    // Suppression d'un atelier
     const handleSupprimer = async () => {
         if (!selectedEventId) return;
 
@@ -119,46 +116,174 @@ export default function AdminAteliersPage() {
             }
         }
     };
+
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-violet-950">Gestion des Ateliers</h1>
-                    <p className="text-sm text-violet-600">Planifiez, modifiez et déplacez vos ateliers directement sur le planning interactif.</p>
+        <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 text-violet-900 min-h-screen">
+            {/* EN-TÊTE PRINCIPAL */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-6">
+                <div className="flex items-start gap-4">
+                    <div className="p-3 bg-violet-50 text-violet-600 rounded-2xl border border-violet-100 hidden sm:block">
+                        <Calendar className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold text-violet-950 tracking-tight">Gestion des Ateliers</h1>
+                        <p className="text-sm text-slate-500 mt-1">Planifiez, modifiez et déplacez vos ateliers directement sur le planning interactif.</p>
+                    </div>
                 </div>
+                <button
+                    onClick={() => {
+                        setSelectedEventId(null);
+                        setFormTitle('');
+                        setFormDescription('');
+                        const maintenant = new Date().toISOString().slice(0, 16);
+                        setFormStart(maintenant);
+                        setFormEnd(maintenant);
+                        setModalIsOpen(true);
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-all shadow-xs cursor-pointer active:scale-98 self-start sm:self-center"
+                >
+                    <Plus className="h-4 w-4" />
+                    Nouvel atelier
+                </button>
             </div>
 
+            {/* ZONE CALENDRIER / CHARGEMENT */}
             {chargement ? (
-                <div className="flex justify-center items-center h-96">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+                <div className="flex flex-col justify-center items-center h-[500px] bg-white rounded-2xl border border-slate-200/80 shadow-xs gap-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Chargement du planning...</p>
                 </div>
             ) : (
-                <div className="bg-white p-6 rounded-2xl border border-violet-200 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs calendrier">
                     <FullCalendar
                         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                        initialView="timeGridWeek" // Affiche la vue semaine par default
+                        initialView="timeGridWeek"
                         headerToolbar={{
                             left: 'prev,next today',
                             center: 'title',
                             right: 'dayGridMonth,timeGridWeek,timeGridDay'
                         }}
                         locales={[frLocale]}
-                        locale="fr" // Calendrier en français
+                        locale="fr"
                         timeZone="local"
                         events={events}
-                        editable={true} // Active le Drag & Drop et l'étirement des événements
-                        selectable={true} // Permet de cliquer/glisser sur des créneaux vides
+                        editable={true}
+                        selectable={true}
                         selectMirror={true}
                         dayMaxEvents={true}
                         select={handleDateSelect}
                         eventClick={handleEventClick}
-                        eventDrop={handleEventChange} // Déclenché quand on glisse/déplace un événement
-                        eventResize={handleEventChange} // Déclenché quand on étire la durée d'un événement
-                        slotMinTime="08:00:00" // Heure de début visible (8h)
-                        slotMaxTime="20:00:00" // Heure de fin visible (20h)
-                        allDaySlot={false} // Désactive la ligne "Toute la journée" pour gagner de la place
+                        eventDrop={handleEventChange}
+                        eventResize={handleEventChange}
+                        slotMinTime="08:00:00"
+                        slotMaxTime="20:00:00"
+                        allDaySlot={false}
                         height="auto"
                     />
+
+                    {/* ENCAPSULATION ET SUBLIMATION DESIGN DE FULLCALENDAR */}
+                    <style dangerouslySetInnerHTML={{
+                        __html: `
+                        .calendrier {
+                            --fc-border-color: #e2dff0;
+                            --fc-daygrid-event-dot-width: 8px;
+
+                            /* Événements globaux */
+                            --fc-event-bg-color: #7c3aed;
+                            --fc-event-border-color: #6d28d9;
+                            --fc-event-text-color: #ffffff;
+
+                            /* Boutons de navigation */
+                            --fc-button-bg-color: #ffffff;
+                            --fc-button-border-color: #d8d4f2;
+                            --fc-button-text-color: #1e1b4b; 
+                            --fc-button-hover-bg-color: #f5f3ff;
+                            --fc-button-hover-border-color: #a78bfa;
+                            --fc-button-active-bg-color: #ede9fe;
+                            --fc-button-active-border-color: #8b5cf6;
+
+                            /* Surlignage du jour actuel */
+                            --fc-today-bg-color: #eee9ff !important; 
+                        }
+
+                        /* Coloration du fond de la grille */
+                        .calendrier .fc-timegrid-slots td, 
+                        .calendrier .fc-daygrid-day {
+                            background-color: #faf9ff;
+                        }
+
+                        /* Titre principal du calendrier */
+                        .calendrier .fc-toolbar-title {
+                            font-size: 1.25rem !important;
+                            font-weight: 700 !important;
+                            color: #1e1b4b !important;
+                            letter-spacing: -0.025em;
+                            text-transform: capitalize;
+                        }
+
+                        /* Boutons de navigation */
+                        .calendrier .fc-button {
+                            border-radius: 0.75rem !important;
+                            font-size: 0.875rem !important;
+                            font-weight: 600 !important;
+                            padding: 0.5rem 0.875rem !important;
+                            box-shadow: 0 1px 2px 0 rgba(124, 58, 237, 0.05) !important;
+                            transition: all 0.2s;
+                            text-transform: capitalize;
+                        }
+
+                        .calendrier .fc-button-primary:not(:disabled).fc-button-active,
+                        .calendrier .fc-button-primary:not(:disabled):active {
+                            background-color: #7c3aed !important;
+                            color: #ffffff !important;
+                            border-color: #6d28d9 !important;
+                        }
+
+                        .calendrier .fc-button-group {
+                            gap: 4px;
+                        }
+
+                        /* En-têtes des jours */
+                        .calendrier .fc-col-header-cell {
+                            background-color: #f5f3ff !important;
+                            padding: 12px 0 !important;
+                            border-bottom: 2px solid #c0b6f2 !important;
+                        }
+                        .calendrier .fc-col-header-cell-cushion {
+                            color: #4c1d95 !important;
+                            font-weight: 700 !important;
+                            font-size: 0.875rem;
+                            text-decoration: none !important;
+                        }
+
+                        /* Axe des heures à gauche */
+                        .calendrier .fc-timegrid-slot-label-cushion {
+                            color: #6d28d9 !important;
+                            font-size: 0.75rem !important;
+                            font-weight: 500;
+                        }
+
+                        /* Style des cartes événements */
+                        .calendrier .fc-timegrid-event, .calendrier .fc-daygrid-event {
+                            border-radius: 8px !important;
+                            padding: 4px 6px !important;
+                            border: none !important;
+                            border-left: 4px solid #4c1d95 !important;
+                            background-color: #7c3aed !important;
+                            box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.2), 0 2px 4px -2px rgba(124, 58, 237, 0.2) !important;
+                        }
+
+                        .calendrier .fc-event-title {
+                            font-weight: 600 !important;
+                            font-size: 0.75rem !important;
+                            color: #ffffff !important;
+                        }
+                        .calendrier .fc-event-time {
+                            font-size: 0.7rem !important;
+                            color: #f3e8ff !important;
+                            font-weight: 500;
+                        }
+                    `}} />
                 </div>
             )}
 
@@ -168,77 +293,79 @@ export default function AdminAteliersPage() {
                 onClose={() => setModalIsOpen(false)}
                 title={selectedEventId ? "Modifier l'Atelier" : "Planifier un Atelier"}
             >
-                <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+                <form onSubmit={handleSubmit} className="space-y-5 pt-2">
                     <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Nom de l'atelier</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1.5">Nom de l'atelier</label>
                         <input
                             type="text"
                             value={formTitle}
                             onChange={(e) => setFormTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all"
-                            placeholder="Ex: Atelier Peinture, Cours de Yoga..."
+                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-violet-900 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all placeholder:text-slate-400"
+                            placeholder="Ex: Atelier Numérique pour débutants"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Description (Optionnel)</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1.5">Description (Optionnel)</label>
                         <textarea
                             value={formDescription}
                             onChange={(e) => setFormDescription(e.target.value)}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all"
-                            placeholder="Ajouter des précisions sur l'atelier..."
+                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-violet-900 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all placeholder:text-slate-400"
+                            placeholder="Détails, prérequis ou informations pour l'intervenant..."
                             rows={3}
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-violet-800 mb-1">Date & Heure de début</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1.5">Début</label>
                             <input
                                 type="datetime-local"
                                 value={formStart}
                                 onChange={(e) => setFormStart(e.target.value)}
-                                className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
+                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-violet-800 mb-1">Date & Heure de fin</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1.5">Fin</label>
                             <input
                                 type="datetime-local"
                                 value={formEnd}
                                 onChange={(e) => setFormEnd(e.target.value)}
-                                className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
+                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
                                 required
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-5 mt-6 border-t border-violet-100">
+                    {/* PIED DE MODAL ET ACTIONS */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-5 mt-6 border-t border-slate-100">
                         {selectedEventId ? (
                             <button
                                 type="button"
                                 onClick={handleSupprimer}
-                                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-rose-200 text-rose-600 rounded-xl text-sm font-semibold hover:bg-rose-50 hover:border-rose-300 transition-all cursor-pointer active:scale-98 shadow-xs"
                             >
+                                <Trash2 className="h-4 w-4" />
                                 Supprimer l'atelier
                             </button>
-                        ) : <div />}
+                        ) : <div className="hidden sm:block" />}
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2.5 justify-end">
                             <button
                                 type="button"
                                 onClick={() => setModalIsOpen(false)}
-                                className="px-4 py-2 bg-violet-100 text-violet-800 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors cursor-pointer"
+                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-all cursor-pointer active:scale-98"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors cursor-pointer shadow-xs"
+                                className="px-5 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-all cursor-pointer active:scale-98 shadow-xs"
                             >
-                                {selectedEventId ? "Enregistrer" : "Créer l'atelier"}
+                                {selectedEventId ? "Enregistrer les modifications" : "Créer l'atelier"}
                             </button>
                         </div>
                     </div>
