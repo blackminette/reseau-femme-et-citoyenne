@@ -380,6 +380,7 @@ export default function AdminMembresPage() {
                         >
                             <option value="PARTENAIRE">Partenaire</option>
                             <option value="INTERVENANT">Intervenant</option>
+                            <option value="BENEVOLE">Benevole</option>
                             <option value="MEMBRE">Membre</option>
                             <option value="ADMIN">Admin</option>
                         </select>

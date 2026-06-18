@@ -8,7 +8,7 @@ export async function listerTousLesUtilisateurs() {
     try {
         const utilisateurs = await prisma.utilisateur.findMany({
             orderBy: {
-                createdAt: 'desc', // Ordre décroissant
+                createdAt: 'desc',
             },
             select: {
                 id: true,
