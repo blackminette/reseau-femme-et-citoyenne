@@ -8,6 +8,9 @@ export const metadata = {
 };
 
 export default function EnfantDashboard() {
+    // Nombre de badges débloqués (dérivé des données, cohérent avec la page « Mes badges »).
+    const nbBadgesObtenus = BADGES.filter((b) => b.obtenu).length;
+
     return (
         <div className="text-violet-900">
 
@@ -38,7 +41,7 @@ export default function EnfantDashboard() {
                     </h2>
                     <p className="text-sm opacity-90">Termine une activité dans un module et continue à progresser !</p>
                     <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1.5 text-xs font-semibold">
-                        <Award className="h-4 w-4" aria-hidden /> {ENFANT.badgesObtenus} badges obtenus
+                        <Award className="h-4 w-4" aria-hidden /> {nbBadgesObtenus} badge{nbBadgesObtenus > 1 ? "s" : ""} obtenu{nbBadgesObtenus > 1 ? "s" : ""}
                     </div>
                 </div>
                 <div className="relative z-10 min-w-[220px] rounded-2xl bg-white/15 p-4 backdrop-blur">
@@ -103,7 +106,7 @@ export default function EnfantDashboard() {
                 <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-xs">
                     <div className="mb-3.5 text-[15px] font-bold text-violet-950">Mes badges</div>
                     <div className="grid grid-cols-2 gap-3">
-                        {BADGES.map(({ label, Icon, desc, obtenu }) => (
+                        {BADGES.slice(0, 4).map(({ label, Icon, desc, obtenu }) => (
                             <div
                                 key={label}
                                 title={desc}
