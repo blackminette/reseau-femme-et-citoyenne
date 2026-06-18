@@ -12,9 +12,11 @@ export async function forgotPasswordAction(email: string) {
         const supabase = await getSupabaseServer();
         
         // On demande à Supabase d'envoyer un email de réinitialisation
-        // Le redirectTo doit être configuré dans Supabase (ex: http://localhost:3000/reset-password)
+        // Utilisation de l'URL du site via la variable d'env, ou fallback sécurisé
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.NODE_ENV === 'production' ? 'https://votre-domaine-reel.com' : 'http://localhost:3000');
+        
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/reset-password`,
+            redirectTo: `${baseUrl}/auth/callback?next=/reset-password`,
         });
 
         if (error) {
