@@ -45,7 +45,7 @@ const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: Luc
     },
     {
         titre: 'Activités',
-        liens: [{ href: '/enfant/modules', label: 'Mes ateliers', Icon: Palette }],
+        liens: [{ href: '/enfant/ateliers', label: 'Mes ateliers', Icon: Palette }],
     },
 ];
 
