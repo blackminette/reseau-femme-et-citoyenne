@@ -118,6 +118,7 @@ model Exercice {
   titre        String
   instructions String
   type         String
+  contenu      Json          @default("[]")
   compositions Composition[]
   scores       ScoreQuiz[]
 }
