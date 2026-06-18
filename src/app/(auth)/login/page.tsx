@@ -3,9 +3,9 @@
 
 /**
  * Page du formulaire de connexion de l'application.
- * Elle envoie les identifiants à une action serveur pour authentifier l'utilisateur,
+ * Elle envoie les identifiants a une action serveur pour authentifier l'utilisateur,
  * puis elle synchronise manuellement la session obtenue avec le client Supabase
- * pour mettre à jour instantanément l'état du Header avant la redirection.
+ * pour mettre a jour instantanement l'etat du Header avant la redirection.
  */
 
 import React, { useState } from 'react';
@@ -27,17 +27,17 @@ export default function LoginPage() {
         setIsLoading(true);
         setError(null);
 
-        // Appel du traitement de connexion côté serveur
+        // Appel du traitement de connexion cote serveur
         const result = await loginAction({ email, password });
 
         if (result.success && result.role) {
-            console.log("Connexion serveur réussie !");
+            console.log("Connexion serveur reussie !");
 
             try {
-                // Récupération de la session créée par le serveur
+                // Recuperation de la session creee par le serveur
                 const { data: { session } } = await supabaseClient.auth.getSession();
 
-                // Injection de la session côté client pour synchroniser le Header
+                // Injection de la session cote client pour synchroniser le Header
                 if (session) {
                     await supabaseClient.auth.setSession({
                         access_token: session.access_token,
@@ -50,10 +50,10 @@ export default function LoginPage() {
                 console.warn("Erreur de synchronisation client/serveur :", syncError);
             }
 
-            // Rafraîchissement des composants serveur de la page
+            // Rafraichissement des composants serveur de la page
             router.refresh();
 
-            // Redirection vers le tableau de bord lié au rôle
+            // Redirection vers le tableau de bord lie au role
             const role = String(result.role).toUpperCase();
 
             const routesParRole: Record<string, string> = {
@@ -79,11 +79,11 @@ export default function LoginPage() {
         <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6">
             <div className="max-w-md w-full bg-white rounded-xl shadow-md border border-slate-200 p-8">
 
-                {/* En-tête de la carte */}
+                {/* En-tete de la carte */}
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-slate-800">Bienvenue</h1>
                     <p className="text-slate-500 text-sm mt-1">
-                        Connectez-vous pour accéder à votre espace personnalisé
+                        Connectez-vous pour acceder a votre espace personnalise
                     </p>
                 </div>
 
@@ -121,7 +121,7 @@ export default function LoginPage() {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
+                            placeholder="********"
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
                         />
                     </div>

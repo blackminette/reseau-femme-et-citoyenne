@@ -4,12 +4,42 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getAuthErrorMessage, requireAdmin } from '@/services/rbac/server';
 import type { UserRole } from '@/types/auth';
+import type { Prisma } from '@prisma/client';
+
+type ActionError = { success: false; error: string };
 
 type ActionResult<T = unknown> =
     | { success: true; data?: T }
-    | { success: false; error: string };
+    | ActionError;
 
 type ModifierUtilisateurPayload = Record<string, unknown>;
+
+const UTILISATEUR_ADMIN_ARGS = {
+    select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        email: true,
+        telephone: true,
+        role: true,
+        createdAt: true,
+        _count: {
+            select: {
+                reservations: true,
+                coursAnimes: true,
+                dons: true,
+            },
+        },
+        tuteur: {
+            select: {
+                nom: true,
+                prenom: true,
+            },
+        },
+    },
+} satisfies Prisma.UtilisateurDefaultArgs;
+
+type UtilisateurAdmin = Prisma.UtilisateurGetPayload<typeof UTILISATEUR_ADMIN_ARGS>;
 
 const ROLES_MODIFIABLES = [
     'ADMIN',
@@ -65,7 +95,7 @@ function normaliserDonneesUtilisateur(payload: ModifierUtilisateurPayload) {
     };
 }
 
-async function verifierAdmin(): Promise<ActionResult | null> {
+async function verifierAdmin(): Promise<ActionError | null> {
     try {
         await requireAdmin();
         return null;
@@ -75,7 +105,7 @@ async function verifierAdmin(): Promise<ActionResult | null> {
     }
 }
 
-export async function listerTousLesUtilisateurs() {
+export async function listerTousLesUtilisateurs(): Promise<ActionResult<UtilisateurAdmin[]>> {
     const erreurAutorisation = await verifierAdmin();
 
     if (erreurAutorisation) {
@@ -87,30 +117,7 @@ export async function listerTousLesUtilisateurs() {
             orderBy: {
                 createdAt: 'desc',
             },
-            select: {
-                id: true,
-                nom: true,
-                prenom: true,
-                email: true,
-                telephone: true,
-                role: true,
-                createdAt: true,
-                niveau: true,
-                _count: {
-                    select: {
-                        enfants: true,
-                        reservations: true,
-                        coursAnimes: true,
-                        dons: true,
-                    },
-                },
-                tuteur: {
-                    select: {
-                        nom: true,
-                        prenom: true,
-                    },
-                },
-            },
+            select: UTILISATEUR_ADMIN_ARGS.select,
         });
 
         return { success: true, data: utilisateurs };

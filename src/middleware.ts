@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Route sur laquelle le middleware s'applique (toutes les routes privÃ©es)
+// Route sur laquelle le middleware s'applique (toutes les routes privees)
 export const config = {
     matcher: [
         '/membre/:path*',
@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
         request: { headers: request.headers },
     });
 
-    // Initialisation du client Supabase pour gÃ©rer les cookies de session
+    // Initialisation du client Supabase pour gerer les cookies de session
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -37,16 +37,16 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    // RÃ©cupÃ©ration de l'utilisateur connectÃ©
+    // Recuperation de l'utilisateur connecte
     const { data: { user } } = await supabase.auth.getUser();
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
-    // DÃ©tection des routes privÃ©es (/admin, /membre...)
+    // Detection des routes privees (/admin, /membre...)
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
-    // Si non connectÃ© et tente d'aller sur une page privÃ©e -> Redirection /login
+    // Si non connecte et tente d'aller sur une page privee -> Redirection /login
     if (!user) {
         if (isPrivateRoute) {
             url.pathname = '/login';
@@ -55,13 +55,13 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // Si dÃ©jÃ  connectÃ© et tente d'aller sur /login -> Redirection vers l'accueil
+    // Si deja connecte et tente d'aller sur /login -> Redirection vers l'accueil
     if (pathname === '/login') {
         url.pathname = '/';
         return NextResponse.redirect(url);
     }
 
-    // RÃ©cupÃ©ration du rÃ´le de l'utilisateur dans la table Prisma
+    // Recuperation du role de l'utilisateur dans la table Prisma
     let userRole: UserRole | null = null;
 
     if (user.email) {
@@ -76,20 +76,20 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // SÃ©curitÃ© : Bloque l'accÃ¨s si l'utilisateur n'a aucun rÃ´le enregistrÃ© en base
+    // Securite : bloque l'acces si l'utilisateur n'a aucun role enregistre en base
     if (!userRole && isPrivateRoute) {
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
 
-    // Gestion des accÃ¨s selon le rÃ´le (RBAC)
+    // Gestion des acces selon le role (RBAC)
     if (userRole) {
-        // Interdit l'accÃ¨s Ã  /admin si l'utilisateur n'est pas ADMIN
+        // Interdit l'acces a /admin si l'utilisateur n'est pas ADMIN
         if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
             return redirectUserToDefaultDashboard(userRole, url);
         }
 
-        // Redirige de force l'utilisateur vers son propre espace s'il s'est trompÃ© d'URL
+        // Redirige l'utilisateur vers son propre espace s'il s'est trompe d'URL
         if (isPrivateRoute) {
             if (userRole === 'PARTENAIRE' && !pathname.startsWith('/partenaire')) {
                 url.pathname = '/partenaire';
@@ -121,8 +121,8 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
-// Fonction utilitaire pour renvoyer un utilisateur vers son tableau de bord par dÃ©faut
-function redirectUserToDefaultDashboard(role: UserRole, url: URL) {
+// Fonction utilitaire pour renvoyer un utilisateur vers son tableau de bord par defaut
+function redirectUserToDefaultDashboard(role: UserRole | 'INTERVENANTE', url: URL) {
     switch (role) {
         case 'ADMIN': url.pathname = '/admin'; break;
         case 'PARTENAIRE': url.pathname = '/partenaire'; break;

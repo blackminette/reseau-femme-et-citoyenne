@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Ajout du router pour sÃ©curiser la redirection
+import { useRouter } from 'next/navigation'; // Router utilise pour securiser la redirection
 import { UserRole } from '@/types/auth';
 import { supabaseClient } from '@/lib/supabaseClient';
 
@@ -43,15 +43,15 @@ export default function UserDropdown({ role }: UserDropdownProps) {
     }, []);
 
     const handleLogout = async () => {
-        // On empÃªche la fermeture et la navigation tant que Supabase n'a pas confirmÃ© la dÃ©connexion
+        // On attend que Supabase confirme la deconnexion avant de rediriger
         await supabaseClient.auth.signOut();
         setIsOpen(false);
-        router.push('/'); // Redirection sÃ©curisÃ©e APRÃˆS la destruction de la session
+        router.push('/'); // Redirection apres destruction de la session
     };
 
     return (
         <div className="relative inline-block text-left" ref={dropdownRef}>
-            
+
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-expanded={isOpen}
@@ -65,7 +65,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
             </button>
 
             {isOpen && (
-                <div 
+                <div
                     className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 origin-top-right"
                     role="menu"
                 >
@@ -87,7 +87,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
                                 className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-slate-100"
                                 role="menuitem"
                             >
-                                DÃ©connexion
+                                DECONNEXION
                             </button>
                         </>
                     ) : (
