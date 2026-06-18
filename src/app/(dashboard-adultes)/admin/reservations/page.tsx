@@ -58,11 +58,9 @@ export default function AdminReservations() {
     const modifierStatut = async (id: string, nouveauStatut: 'CONFIRMED' | 'CANCELLED') => {
         const response = await changerStatutReservation(id, nouveauStatut);
         if (response.success) {
-            // Mise à jour optimiste/locale de l'état
             setReservations(prev =>
                 prev.map(res => res.id === id ? { ...res, statut: nouveauStatut } : res)
             );
-            // Re-calculer les petits compteurs à la volée
             setStats(prev => ({
                 ...prev,
                 enAttente: nouveauStatut === 'CONFIRMED' || nouveauStatut === 'CANCELLED'
@@ -113,7 +111,7 @@ export default function AdminReservations() {
                 </div>
 
                 <div className="bg-white border border-violet-200 p-6 rounded-2xl flex items-center gap-4">
-                    <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
                         <Clock className="h-6 w-6" />
                     </div>
                     <div>
