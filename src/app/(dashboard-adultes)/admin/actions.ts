@@ -27,3 +27,16 @@ export async function compterContenu() {
         return { success: false, data: null }
     }
 }
+
+export async function recupererModulesPedagogiques() {
+    try {
+        const result = await prisma.module.findMany({
+            orderBy: {
+                createdAt: "asc"
+            }
+        })
+        return { success: true, data: result }
+    } catch (error) {
+        return { success: false, error: "Erreur lors de la récupération des modules." }
+    }
+}
