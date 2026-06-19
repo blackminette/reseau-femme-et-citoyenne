@@ -1,6 +1,8 @@
 // * src/app/(app-sans-header)/enfant/page.tsx
 import { Target, Award, TrendingUp } from "lucide-react";
 import { ENFANT, MODULES, BADGES, DERNIER_BADGE, RESULTATS, ACTIVITE } from "@/lib/enfant-data";
+import EnfantHeader from "@/components/EnfantHeader";
+import HeroBanner from "@/components/HeroBanner";
 
 export const metadata = {
     title: "Mon espace",
@@ -15,26 +17,13 @@ export default function EnfantDashboard() {
         <div className="text-violet-900">
 
             {/* ─── Barre du haut : titre + chip enfant ─── */}
-            <div className="flex flex-wrap items-center justify-between gap-5">
-                <div>
-                    <h1 className="text-[26px] font-bold tracking-tight text-violet-950">Bonjour {ENFANT.prenom} !</h1>
-                    <p className="text-[13px] text-violet-600">Tu as {ENFANT.age} ans — continue comme ça, tu fais des progrès incroyables !</p>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
-                        {ENFANT.initiales}
-                    </div>
-                    <div className="leading-tight">
-                        <div className="text-[13px] font-bold text-violet-950">{ENFANT.prenom} {ENFANT.nom}</div>
-                        <div className="text-[11px] text-violet-500">{ENFANT.age} ans</div>
-                    </div>
-                </div>
-            </div>
+            <EnfantHeader
+                titre={`Bonjour ${ENFANT.prenom} !`}
+                sousTitre={`Tu as ${ENFANT.age} ans — continue comme ça, tu fais des progrès incroyables !`}
+            />
 
             {/* ─── Mission du jour ─── */}
-            <section className="relative mt-6 flex flex-wrap items-center justify-between gap-6 overflow-hidden rounded-[20px] bg-gradient-to-br from-violet-500 to-purple-600 p-7 text-white">
-                <div className="pointer-events-none absolute -right-10 -top-14 h-52 w-52 rounded-full bg-white/[0.07]" aria-hidden />
-                <div className="pointer-events-none absolute right-32 -bottom-20 h-36 w-36 rounded-full bg-white/5" aria-hidden />
+            <HeroBanner>
                 <div className="relative flex-1">
                     <h2 className="mb-1 flex items-center gap-2 text-[26px] font-bold">
                         <Target className="h-6 w-6" aria-hidden /> Mission du jour
@@ -53,7 +42,7 @@ export default function EnfantDashboard() {
                         <div className="text-lg font-extrabold">{ENFANT.progression}%</div>
                     </div>
                 </div>
-            </section>
+            </HeroBanner>
 
             {/* ─── Mes modules ─── */}
             <section id="modules" className="mt-8 scroll-mt-6">
