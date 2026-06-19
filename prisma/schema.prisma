@@ -6,73 +6,111 @@ datasource db {
   provider = "postgresql"
 }
 
-// 1. Définition de la hiérarchie de progression pédagogique
 enum NiveauPedagogique {
-  NIVEAU_1      // Premier palier / Débutant
-  NIVEAU_2      // Deuxième palier / Intermédiaire
-  NIVEAU_3      // Troisième palier / Avancé
-  ADULTE        // Destiné spécifiquement aux adultes
+  NIVEAU_1
+  NIVEAU_2
+  NIVEAU_3
+  ADULTE
 }
 
 model Utilisateur {
-  id              String             @id @default(uuid())
-  email           String             @unique
-  nom             String
-  prenom          String
-  telephone       String?
-  role            String             @default("MEMBRE")
-  createdAt       DateTime           @default(now())
-  tuteurId        String?
-  niveau          NiveauPedagogique? @default(NIVEAU_1)
-  ateliersPrives  Atelier[]          @relation("PartenaireAtelier")
-  suggestions     BoiteAIdees[]
-  coursAnimes     Cours[]            @relation("IntervenanteCours")
-  dons            Don[]
-  messagesEnvoyes MessageContact[]
+  id        String            @id @default(cuid())
+  email     String            @unique
+  nom       String
+  prenom    String
+  telephone String?
+  role      String            @default("MEMBRE")
+  createdAt DateTime          @default(now())
+  niveau    NiveauPedagogique? @default(NIVEAU_1)
+
   reservations    Reservation[]
+  dons            Don[]
   temoignages     Temoignage[]
-  tuteur          Utilisateur?       @relation("ParentEnfant", fields: [tuteurId], references: [id])
-  enfants         Utilisateur[]      @relation("ParentEnfant")
+  coursAnimes     Cours[]           @relation("IntervenanteCours")
+  suggestions     BoiteAIdees[]
+  ateliersPrives  Atelier[]         @relation("PartenaireAtelier")
+  messagesEnvoyes MessageContact[]
+
+  tuteurId        String?
+  tuteur          Utilisateur?      @relation("ParentEnfant", fields: [tuteurId], references: [id])
+  enfants         Utilisateur[]     @relation("ParentEnfant")
 }
 
 model Atelier {
   id                Int           @id @default(autoincrement())
   titre             String
   description       String?
-  dateAtelier       DateTime
+  dateDebut         DateTime
+  dateFin           DateTime
   placesMax         Int           @default(15)
   estPrive          Boolean       @default(false)
   typePaiement      String?
   creneauVerrouille Boolean       @default(false)
   effectifPrevu     Int?
+
+  // 🔄 Remplacement de l'adresse par la relation Lieu
+  lieuId            String
+  lieu              Lieu          @relation(fields: [lieuId], references: [id], onDelete: Restrict)
+
   partenaireId      String?
   partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id])
+
   reservations      Reservation[]
+}
+
+// ✨ Nouveau modèle pour centraliser et sécuriser les adresses
+model Lieu {
+  id           String    @id @default(cuid())
+  nom          String    // Ex: "Parc Borély" ou "Cabinet de sophrologie"
+  adresseTexte String    // L'adresse propre complète pour l'affichage (ex: "12 Rue des Fleurs, 75001 Paris")
+  adresseIdBan String    @unique // 🛡️ L'ID unique officiel (BAN) pour éviter les doublons textuels
+  estExterieur Boolean   @default(false)
+  
+  ateliers     Atelier[]
 }
 
 model Reservation {
   id              Int         @id @default(autoincrement())
   dateReservation DateTime    @default(now())
   statut          String      @default("PENDING")
+
   utilisateurId   String
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
   atelierId       Int
   atelier         Atelier     @relation(fields: [atelierId], references: [id], onDelete: Cascade)
-  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@unique([utilisateurId, atelierId])
 }
 
+enum PublicCible {
+  ENFANT
+  ADULTE
+}
+
+model Module {
+  id           Int               @id @default(autoincrement())
+  titre        String
+  description  String?
+  public       PublicCible       @default(ADULTE)
+  createdAt    DateTime          @default(now())
+  cours        Cours[]
+}
+
 model Cours {
-  id             Int               @id @default(autoincrement())
-  titre          String
-  estPublic      Boolean           @default(true)
-  createdAt      DateTime          @default(now())
-  intervenanteId String
-  contenu        Json              @default("[]")
-  niveauRequis   NiveauPedagogique @default(NIVEAU_1)
-  compositions   Composition[]
-  intervenante   Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
-  programmes     Programme[]
+  id              Int               @id @default(autoincrement())
+  titre           String
+  estPublic       Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  intervenanteId  String
+  contenu         Json              @default("[]")
+  niveauRequis    NiveauPedagogique @default(NIVEAU_1)
+  moduleId        Int?              // Optionnel : permet d'avoir un cours indépendant si besoin
+  ordreDansModule Int               @default(1) // Pour gérer l'enchaînement des cours (Cours 1, Cours 2...)
+  module          Module?           @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  compositions    Composition[]
+  intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+  programmes      Programme[]
 }
 
 model Exercice {
@@ -88,8 +126,8 @@ model Composition {
   id         Int      @id @default(autoincrement())
   ordre      Int      @default(1)
   coursId    Int
-  exerciceId Int
   cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
+  exerciceId Int
   exercice   Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
 
   @@unique([coursId, exerciceId])
@@ -112,12 +150,12 @@ model Programme {
 }
 
 model BoiteAIdees {
-  id         Int         @id @default(autoincrement())
-  sujet      String
-  suggestion String
-  createdAt  DateTime    @default(now())
-  membreId   String
-  membre     Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
+  id          Int         @id @default(autoincrement())
+  sujet       String
+  suggestion  String
+  createdAt   DateTime    @default(now())
+  membreId    String
+  membre      Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
 }
 
 model Don {
@@ -138,6 +176,20 @@ model Temoignage {
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }
 
+model Actualite {
+  id              Int      @id @default(autoincrement())
+  titre           String
+  tag             String
+  datePublication DateTime
+  extrait         String
+  ctaLabel        String   @default("Lire la suite")
+  ctaHref         String   @default("/ateliers")
+  ordre           Int      @default(1)
+  estPublic       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model MessageContact {
   id            Int          @id @default(autoincrement())
   nom           String
@@ -146,12 +198,5 @@ model MessageContact {
   message       String
   envoyeLe      DateTime     @default(now())
   utilisateurId String?
-  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
-}
-
-enum NiveauPedagogique {
-  NIVEAU_1
-  NIVEAU_2
-  NIVEAU_3
-  ADULTE
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
 }
