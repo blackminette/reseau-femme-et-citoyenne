@@ -161,6 +161,50 @@ async function main() {
               texteExplicatif: "Voici comment on déclare une variable en JavaScript :\n\nlet prenom = \"Johanna\";\nlet age = 26;\n\nÀ partir de ce moment, l'ordinateur se souvient de ces valeurs tant que le programme tourne.",
               imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=600"
             }
+          ],
+          // Injection des exercices spécifiques à ce cours
+          exercices: [
+            {
+              titre: "Quiz : Les types de variables",
+              instructions: "Sélectionnez la bonne réponse pour chaque question sur les types de données.",
+              type: "QCM",
+              ordre: 1,
+              contenu: [
+                {
+                  id: "q1",
+                  question: "Quel type de donnée représente la valeur suivante : 26 ?",
+                  options: ["String (Texte)", "Number (Nombre)", "Boolean (Booléen)", "Null"],
+                  reponseCorrecte: "Number (Nombre)"
+                },
+                {
+                  id: "q2",
+                  question: "Comment écrit-on correctement une valeur de type String (Texte) ?",
+                  options: ["let prenom = Johanna;", "let prenom = \"Johanna\";", "let prenom = 26;", "let prenom = true;"],
+                  reponseCorrecte: "let prenom = \"Johanna\";"
+                }
+              ]
+            },
+            {
+              titre: "Logique : Algorithme de préparation",
+              instructions: "Remettez les étapes de la manipulation d'une variable dans le bon ordre chronologique.",
+              type: "IMAGES_ORDRE",
+              ordre: 2,
+              contenu: [
+                { id: "step_1", label: "Déclarer la variable (créer la boîte vide)", ordreCorrect: 1, imageUrl: "https://images.unsplash.com/photo-1512418490979-92798cec1380?w=300" },
+                { id: "step_2", label: "Affecter une valeur initiale (mettre un objet dedans)", ordreCorrect: 2, imageUrl: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=300" },
+                { id: "step_3", label: "Lire la valeur pour l'afficher à l'écran (regarder le contenu)", ordreCorrect: 3, imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300" }
+              ]
+            },
+            {
+              titre: "Exercice d'application : Votre première variable",
+              instructions: "Répondez par écrit à la consigne demandée.",
+              type: "QUESTION_OUVERTE",
+              ordre: 3,
+              contenu: {
+                consigne: "Écrivez la ligne de code JavaScript permettant de déclarer une variable nommée 'ville' contenant le texte 'Nice'.",
+                reponseAttendue: "let ville = \"Nice\";"
+              }
+            }
           ]
         },
         { titre: 'Les conditions et les structures logiques', ordreDansModule: 2, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] },
@@ -207,15 +251,25 @@ async function main() {
     });
 
     for (const coursItem of item.cours) {
+      // Préparation de la structure de création du cours
+      const extraData: any = {};
+
+      // Si le cours contient des exercices décrits ci-dessus, on les ajoute à la transaction de création
+      if ('exercices' in coursItem && coursItem.exercices) {
+        extraData.exercices = {
+          create: coursItem.exercices
+        };
+      }
+
       await prisma.cours.create({
         data: {
           titre: coursItem.titre,
           estPublic: true,
           intervenanteId: idIntervenante,
-          // Utilise le tableau de pages fourni ou un tableau vide par défaut
           contenu: coursItem.contenu ? coursItem.contenu : [],
           moduleId: moduleCree.id,
-          ordreDansModule: coursItem.ordreDansModule
+          ordreDansModule: coursItem.ordreDansModule,
+          ...extraData // Injecte les exercices de manière transparente
         }
       });
     }
