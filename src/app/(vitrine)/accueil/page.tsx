@@ -1,3 +1,8 @@
+'use client';
+
+import React from 'react';
+import { Accessibility } from 'lucide-react';
+
 export default function Accueil() {
     return (
         <div className="bg-[#eedeff] pb-16 grow">
@@ -55,7 +60,7 @@ export default function Accueil() {
             {/* Section de présentation rapide de l'association et de son impact */}
             <section
                 id="prochaine-section"
-                className="mx-4 mt-12 scroll-mt-24 rounded-2rem bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl shadow-[#bc96e6]/20 max-w-7xl md:mx-auto"
+                className="mx-4 mt-12 scroll-mt-24 rounded-[2.5rem] bg-white p-8 md:p-20 text-center text-gray-800 shadow-2xl shadow-[#bc96e6]/20 max-w-7xl md:mx-auto"
             >
                 {/* Présentation : titre à gauche, texte à droite sur écran moyen et grand */}
                 <div className="grid gap-12 md:grid-cols-[350px_1fr] items-center text-left">
@@ -160,12 +165,14 @@ export default function Accueil() {
                             </div>
                             <h3 className="text-2xl font-black mb-2 text-[#260936]">Don ponctuel</h3>
                             <p className="text-sm text-slate-500 mb-8 font-medium">Soutenez nos projets financièrement</p>
-                            <button
-                                type="button"
-                                className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
-                            >
-                                Faire un don
-                            </button>
+                            <div className="mt-auto w-full">
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
+                                >
+                                    Faire un don
+                                </button>
+                            </div>
                         </div>
 
                         {/* Bloc Bénévolat */}
@@ -175,12 +182,14 @@ export default function Accueil() {
                             </div>
                             <h3 className="text-2xl font-black mb-2 text-[#260936]">Engagement</h3>
                             <p className="text-sm text-slate-500 mb-8 font-medium">Offrez de votre temps et vos compétences</p>
-                            <button
-                                type="button"
-                                className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
-                            >
-                                Devenir Bénévole
-                            </button>
+                            <div className="mt-auto w-full">
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
+                                >
+                                    Devenir Bénévole
+                                </button>
+                            </div>
                         </div>
 
                         {/* Bloc Partenariat */}
@@ -190,12 +199,14 @@ export default function Accueil() {
                             </div>
                             <h3 className="text-2xl font-black mb-2 text-[#260936]">Partenariat</h3>
                             <p className="text-sm text-slate-500 mb-8 font-medium">Construisons ensemble des projets durables</p>
-                            <button
-                                type="button"
-                                className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
-                            >
-                                Devenir Partenaire
-                            </button>
+                            <div className="mt-auto w-full">
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full bg-[#260936] text-white px-8 py-4 font-black transition hover:bg-[#bc96e6] shadow-lg shadow-[#260936]/20"
+                                >
+                                    Devenir Partenaire
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -260,8 +271,8 @@ export default function Accueil() {
                 </div>
 
                 <div className="mt-16 p-6 rounded-2xl bg-[#eedeff]/40 border border-[#bc96e6]/30 inline-flex items-center gap-4">
-                    <div className="p-3 bg-white rounded-xl shadow-sm text-[#260936]">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="1"/><path d="M18 19a6 6 0 1 0-12 0"/><path d="M10 8h4l1 7h-6z"/><path d="m14 8 1-3h1"/><path d="m10 8-1-3h-1"/></svg>
+                    <div className="p-3 bg-white rounded-xl shadow-sm text-[#0047AB]">
+                        <Accessibility size={24} />
                     </div>
                     <p className="text-sm font-bold text-slate-700 leading-tight">Tous nos lieux sont accessibles aux PMR et poussettes.</p>
                 </div>

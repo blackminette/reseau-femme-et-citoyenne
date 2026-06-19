@@ -27,19 +27,24 @@ export async function loginAction(formData: any) {
         console.log("[login] Authentification Supabase réussie pour:", email);
 
         // on vérifie que l'utilisateur existe bien dans la table Prisma
-        const utilisateur = await prisma.utilisateur.findUnique({
+        let utilisateur = await prisma.utilisateur.findUnique({
             where: { email: email }
         });
 
         if (!utilisateur) {
-            console.error("[login] Profil Prisma manquant pour:", email);
-            return {
-                success: false,
-                error: "Votre compte est validé, mais votre profil n'a pas été trouvé dans notre base de données. Contactez un administrateur."
-            };
+            console.log("[login] Profil Prisma manquant, création automatique pour:", email);
+            utilisateur = await prisma.utilisateur.create({
+                data: {
+                    id: authData.user.id, // Synchronisation de l'ID
+                    email: email,
+                    nom: authData.user.user_metadata?.nom || 'Nom par défaut',
+                    prenom: authData.user.user_metadata?.prenom || 'Prénom par défaut',
+                    role: 'MEMBRE' // Rôle par défaut
+                }
+            });
         }
 
-        console.log("[login] Profil trouvé, rôle:", utilisateur.role);
+        console.log("[login] Profil trouvé/créé, rôle:", utilisateur.role);
 
 
         // Si tout est bon, on renvoie le rôle de l'utilisateur pour adapter l'interface ensuite

@@ -1,13 +1,11 @@
 // * src/app/(auth)/signup/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
 export async function signupAction(formData: any) {
     const { email, password, confirmPassword, nom, prenom, telephone } = formData;
 
-    // Validations de base
     if (!email || !password || !nom || !prenom) {
         return { success: false, error: "Tous les champs sont obligatoires." };
     }
@@ -16,7 +14,6 @@ export async function signupAction(formData: any) {
         return { success: false, error: "Les mots de passe ne correspondent pas." };
     }
 
-    // Validation de la complexité du mot de passe
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
     if (!passwordRegex.test(password)) {
         return { 
@@ -28,14 +25,14 @@ export async function signupAction(formData: any) {
     try {
         const supabase = await getSupabaseServer();
 
-        // 1. Inscription dans Supabase Auth
-        // Note : Selon la configuration Supabase, cela peut envoyer un mail de confirmation.
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
-                    full_name: `${prenom} ${nom}`,
+                    nom,
+                    prenom,
+                    telephone
                 }
             }
         });
@@ -45,38 +42,16 @@ export async function signupAction(formData: any) {
         }
 
         if (!authData.user) {
-            return { success: false, error: "Une erreur inconnue est survenue lors de l'inscription." };
+            return { success: false, error: "Une erreur inconnue est survenue." };
         }
 
-        // 2. Création de l'utilisateur dans la base de données via Prisma
-        // IMPORTANT: On utilise l'ID de Supabase Auth pour l'id Prisma pour rester cohérent avec le seed
-        try {
-            await prisma.utilisateur.create({
-                data: {
-                    id: authData.user.id, // Synchronisation de l'ID
-                    email: email,
-                    nom: nom,
-                    prenom: prenom,
-                    telephone: telephone,
-                    role: "MEMBRE",
-                }
-            });
-        } catch (prismaError: any) {
-            console.error("[signup] Erreur Prisma:", prismaError);
-            // Si l'utilisateur existe déjà dans Prisma mais pas dans Supabase Auth (cas limite)
-            if (prismaError.code === 'P2002') {
-                return { success: false, error: "Cet email est déjà utilisé." };
-            }
-            throw prismaError;
-        }
-
-        return { success: true };
+        return { success: true, needsConfirmation: true };
 
     } catch (error) {
-        console.error("[signup] Erreur critique lors de l'inscription :", error);
+        console.error("[signup] Erreur critique :", error);
         return {
             success: false,
-            error: "Une erreur serveur est survenue. Veuillez réessayer plus tard."
+            error: "Une erreur serveur est survenue."
         };
     }
 }
