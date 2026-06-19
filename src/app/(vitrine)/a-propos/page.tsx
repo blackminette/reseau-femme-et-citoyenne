@@ -96,7 +96,7 @@ export default function AProposPage() {
         <div className="bg-[#eedeff]">
 
             {/* Bandeau violet */}
-            <section className="bg-gradient-to-br from-[#260936] via-[#752fbb] to-[#260936] text-white">
+            <section className="bg-gradient-to-br from-[#8a63c9] via-[#9a73d4] to-[#b38fe0] text-white">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid md:grid-cols-2 gap-10 items-center">
                     <div className="space-y-6">
                         <span className="text-xs font-semibold tracking-widest uppercase text-[#ffd166]">Association</span>
@@ -187,7 +187,7 @@ export default function AProposPage() {
                     ))}
                 </div>
 
-                <div className="mt-12 bg-gradient-to-br from-[#752fbb] to-[#260936] rounded-2xl text-center text-white px-6 py-12">
+                <div className="mt-12 bg-gradient-to-br from-[#9a73d4] to-[#b38fe0] rounded-2xl text-center text-white px-6 py-12">
                     <h3 className="text-2xl font-extrabold">Devenez partenaire</h3>
                     <p className="text-[#eedeff] max-w-lg mx-auto mt-3">Vous souhaitez soutenir nos actions et contribuer à l'épanouissement des enfants de notre région ? Rejoignez notre réseau de partenaires !</p>
                     <Link href="/contact" className={`${BTN} mt-6 bg-[#ffd166] text-[#260936] hover:bg-[#ffc94d]`}>
