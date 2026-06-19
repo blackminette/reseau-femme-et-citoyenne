@@ -63,3 +63,55 @@ export async function supprimerExercice(exerciceId: number, coursId: number, mod
         return { success: false, error: "Erreur lors de la suppression de l'exercice." };
     }
 }
+
+export async function changerOrdreExercice(
+    exerciceId: number,
+    direction: 'HAUT' | 'BAS',
+    coursId: number,
+    moduleId: number
+) {
+    try {
+        const exerciceActuel = await prisma.exercice.findUnique({ where: { id: exerciceId } });
+        if (!exerciceActuel) return { success: false, error: "Exercice introuvable." };
+
+        const exerciceVoisin = await prisma.exercice.findFirst({
+            where: {
+                coursId: coursId,
+                ordre: direction === 'HAUT'
+                    ? { lt: exerciceActuel.ordre }
+                    : { gt: exerciceActuel.ordre }
+            },
+            orderBy: {
+                ordre: direction === 'HAUT' ? 'desc' : 'asc'
+            }
+        });
+
+        if (!exerciceVoisin) return { success: true, message: "Déplacement non nécessaire." };
+
+        const ordreActuel = exerciceActuel.ordre;
+        const ordreVoisin = exerciceVoisin.ordre;
+
+        await prisma.$transaction([
+            prisma.exercice.update({
+                where: { id: exerciceActuel.id },
+                data: { ordre: -1 }
+            }),
+            prisma.exercice.update({
+                where: { id: exerciceVoisin.id },
+                data: { ordre: ordreActuel }
+            }),
+            prisma.exercice.update({
+                where: { id: exerciceActuel.id },
+                data: { ordre: ordreVoisin }
+            })
+        ]);
+
+        const path = `/admin/pedagogie/adultes/${moduleId}/listeExercice/${coursId}`;
+        revalidatePath(path, 'page');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Erreur dans changerOrdreExercice :", error);
+        return { success: false, error: "Erreur lors du réarrangement des exercices." };
+    }
+}

@@ -4,8 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { creerExercice, getListeExercice, supprimerExercice } from './actions';
-import { BrainCircuit, ChevronRight, Loader2, Plus, Puzzle, HelpCircle, FileText, Trash2 } from 'lucide-react';
+import { changerOrdreExercice, creerExercice, getListeExercice, supprimerExercice } from './actions';
+import { BrainCircuit, ChevronRight, Loader2, Plus, Puzzle, HelpCircle, FileText, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import Modal from '@/components/Modal';
 
 interface ExerciceInfo {
@@ -112,6 +112,19 @@ export default function ListeExercice() {
         }
     }
 
+    const handleReordonner = async (exerciceId: number, direction: "HAUT" | "BAS") => {
+        if (!exercice || !coursId || !moduleId) return;
+        setError(null);
+
+        const result = await changerOrdreExercice(exerciceId, direction, coursId, moduleId)
+
+        if (result.success) {
+            await rafraichirDonnees();
+        } else {
+            setError(result?.error || "Une erreur est survenue lors du déplacement.")
+        }
+    }
+
     return (
         <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 text-violet-900 min-h-screen">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -150,7 +163,7 @@ export default function ListeExercice() {
                 </div>
             ) : exercice.length > 0 ? (
                 <div className="grid grid-cols-1 gap-3">
-                    {exercice.map((ex) => (
+                    {exercice.map((ex, index) => (
                         <div
                             key={ex.id}
                             className="flex items-center justify-between bg-white rounded-xl border border-slate-200/80 hover:border-violet-300 hover:shadow-xs transition-all group"
@@ -174,6 +187,25 @@ export default function ListeExercice() {
 
                             {/* Section Actions */}
                             <div className="p-4 flex items-center gap-2 shrink-0">
+                                {/* Bouton Monter (Masqué ou désactivé pour le tout premier cours) */}
+                                <button
+                                    onClick={() => handleReordonner(ex.id, 'HAUT')}
+                                    disabled={index === 0}
+                                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                    title="Monter le cours"
+                                >
+                                    <ArrowUp className="w-4 h-4" />
+                                </button>
+
+                                {/* Bouton Descendre (Masqué ou désactivé pour le tout dernier cours) */}
+                                <button
+                                    onClick={() => handleReordonner(ex.id, 'BAS')}
+                                    disabled={index === exercice.length - 1}
+                                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                    title="Descendre le cours"
+                                >
+                                    <ArrowDown className="w-4 h-4" />
+                                </button>
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg transition-all shadow-xs cursor-pointer active:scale-98"
