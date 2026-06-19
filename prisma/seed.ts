@@ -143,7 +143,7 @@ async function main() {
   const actualitesDeTest = [
     {
       titre: 'Label "Association Engagée" renouvelé pour 2025',
-      tag: 'EVENT',
+      tag: 'Vie associative',
       datePublication: new Date('2025-04-03T12:00:00.000Z'),
       extrait:
         'Pour la troisième année consécutive, la Ville de Nice renouvelle notre label qui récompense notre engagement auprès des familles.',
@@ -154,7 +154,7 @@ async function main() {
     },
     {
       titre: 'Nouveau : ateliers jardinage et permaculture',
-      tag: 'ATELIER',
+      tag: 'Atelier à thème',
       datePublication: new Date('2025-03-20T12:00:00.000Z'),
       extrait:
         'À partir d’avril, nous proposons des ateliers de jardinage urbain pour initier les enfants à la permaculture et au respect de la nature.',
@@ -165,7 +165,7 @@ async function main() {
     },
     {
       titre: 'Le spectacle de Noël : un franc succès !',
-      tag: 'SPECTACLE',
+      tag: 'Événement',
       datePublication: new Date('2025-01-10T12:00:00.000Z'),
       extrait:
         'Plus de 200 personnes ont assisté au spectacle de théâtre de décembre. Les enfants ont présenté une pièce écrite par eux-mêmes.',
@@ -176,13 +176,46 @@ async function main() {
     },
     {
       titre: 'Des actions construites avec les partenaires locaux',
-      tag: 'VIE ASSOCIATIVE',
+      tag: 'Partenaire',
       datePublication: new Date('2026-05-28T12:00:00.000Z'),
       extrait:
         'L’association continue de structurer ses contenus et ses actions pour proposer des repères clairs, utiles et accessibles à tous.',
       ctaLabel: 'Découvrir',
       ctaHref: '/contact',
       ordre: 4,
+      estPublic: true,
+    },
+    {
+      titre: 'Forum de l’engagement : présence de l’association',
+      tag: 'Événement',
+      datePublication: new Date('2026-06-10T12:00:00.000Z'),
+      extrait:
+        'L’association participe à un temps fort local pour présenter ses actions, ses ateliers et ses besoins en bénévoles.',
+      ctaLabel: 'Lire l’article',
+      ctaHref: '/actualites/forum-engagement-2026',
+      ordre: 5,
+      estPublic: true,
+    },
+    {
+      titre: 'Nouvelle session : accompagnement aux démarches',
+      tag: 'Plateforme éducative',
+      datePublication: new Date('2026-06-18T12:00:00.000Z'),
+      extrait:
+        'Un nouveau cycle de séances est prévu pour aider les publics à mieux comprendre les démarches du quotidien et avancer pas à pas.',
+      ctaLabel: 'Découvrir',
+      ctaHref: '/ateliers',
+      ordre: 6,
+      estPublic: true,
+    },
+    {
+      titre: 'Maison des Associations Saint Roch : atelier inclusion numérique',
+      tag: 'Atelier',
+      datePublication: new Date('2026-06-19T12:00:00.000Z'),
+      extrait:
+        'Atelier inclusion numérique le lundi de 14h à 16h pour accompagner les publics sur les bases du numérique.',
+      ctaLabel: 'Voir l’atelier',
+      ctaHref: '/ateliers',
+      ordre: 7,
       estPublic: true,
     },
   ];
