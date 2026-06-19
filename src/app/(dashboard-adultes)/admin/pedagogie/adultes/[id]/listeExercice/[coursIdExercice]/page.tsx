@@ -153,9 +153,12 @@ export default function ListeExercice() {
                     {exercice.map((ex) => (
                         <div
                             key={ex.id}
-                            className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200/80 hover:border-violet-300 hover:shadow-xs transition-all group"
+                            className="flex items-center justify-between bg-white rounded-xl border border-slate-200/80 hover:border-violet-300 hover:shadow-xs transition-all group"
                         >
-                            <div className="flex items-center gap-3.5">
+                            <Link
+                                href={`/admin/pedagogie/adultes/${moduleId}/listeExercice/${coursId}/exercice/${ex.id}`}
+                                className="flex-1 flex items-center gap-3.5 p-4 cursor-pointer"
+                            >
                                 <div className="p-2.5 bg-violet-50/60 rounded-xl border border-violet-100/50 group-hover:bg-violet-100/50 transition-colors">
                                     {getExerciceIcon(ex.type)}
                                 </div>
@@ -167,21 +170,16 @@ export default function ListeExercice() {
                                         {ex.type || 'Standard'}
                                     </span>
                                 </div>
-                            </div>
+                            </Link>
 
-                            <div className="flex items-center gap-2">
-                                <Link
-                                    href={`/admin/pedagogie/adultes/${moduleId}/listeExercice/${coursId}/${ex.id}`}
-                                    className="px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-violet-50 hover:text-violet-700 border border-slate-200 hover:border-violet-200 rounded-lg text-xs font-semibold transition-all"
-                                >
-                                    Modifier
-                                </Link>
+                            {/* Section Actions */}
+                            <div className="p-4 flex items-center gap-2 shrink-0">
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg transition-all shadow-xs cursor-pointer active:scale-98"
-                                    onClick={() => {
+                                    onClick={(e) => {
                                         if (confirm("Voulez-vous vraiment supprimer cet exercice ? Cette action est irréversible.")) {
-                                            handleDelete(ex.id)
+                                            handleDelete(ex.id);
                                         }
                                     }}
                                 >
