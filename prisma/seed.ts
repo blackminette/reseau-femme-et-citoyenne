@@ -120,7 +120,7 @@ async function main() {
       },
     });
 
-    console.log(`[COMPTE] Compte [${user.role}] pour ${user.prenom} ${user.nom} synchronise ! (Mdp: ${user.motDePasse})`);
+    console.log(`[COMPTE] Compte [${user.role}] pour ${user.prenom} ${user.nom} synchronise.`);
   }
 
   console.log('[OK] Seeding termine avec succes et pret pour le login local !');
