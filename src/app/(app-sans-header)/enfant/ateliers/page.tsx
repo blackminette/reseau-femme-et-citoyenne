@@ -115,11 +115,11 @@ export default function EnfantAteliersPage() {
                         <div className="min-w-0 flex-1">
                             <div className="text-sm font-bold text-violet-950">{a.titre}</div>
                             <div className="mt-1 text-[11.5px] leading-snug text-violet-500">{a.desc}</div>
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-600"><CalendarDays className="h-3 w-3" aria-hidden /> {a.date}</span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-600"><Clock className="h-3 w-3" aria-hidden /> {a.heure}</span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-600"><MapPin className="h-3 w-3" aria-hidden /> {a.lieu}</span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-600"><Users className="h-3 w-3" aria-hidden /> {a.places} places</span>
+                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-violet-500">
+                                <span className="inline-flex items-center gap-1"><CalendarDays className="h-3 w-3" aria-hidden /> {a.date}</span>
+                                <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {a.heure}</span>
+                                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" aria-hidden /> {a.lieu}</span>
+                                <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" aria-hidden /> {a.places} places</span>
                             </div>
                             <span className="mt-2 inline-block rounded-full bg-gradient-to-r from-violet-500 to-purple-400 px-2.5 py-0.5 text-[10.5px] font-semibold text-white">{a.ageMin} – {a.ageMax} ans</span>
                         </div>
