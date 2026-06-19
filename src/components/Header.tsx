@@ -140,9 +140,8 @@ export default function Header() {
                         <button
                             type="button"
                             onClick={() => setIsMenuOpen((open) => !open)}
-                            className={`group relative flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-slate-100/50 hover:text-slate-900 active:scale-90 focus:outline-none focus:ring-2 focus:ring-slate-300 md:hidden motion-reduce:transition-none ${
-                                isMenuOpen ? 'bg-slate-100/50 shadow-inner' : ''
-                            }`}
+                            className={`group relative flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-slate-100/50 hover:text-slate-900 active:scale-90 focus:outline-none focus:ring-2 focus:ring-slate-300 md:hidden motion-reduce:transition-none ${isMenuOpen ? 'bg-slate-100/50 shadow-inner' : ''
+                                }`}
                             aria-label={isMenuOpen ? 'Fermer le menu principal' : 'Ouvrir le menu principal'}
                             aria-controls="mobile-menu"
                             aria-expanded={isMenuOpen}
@@ -154,31 +153,28 @@ export default function Header() {
                             {/* Barre du haut */}
                             <span
                                 aria-hidden="true"
-                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none ${
-                                    isMenuOpen
+                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none ${isMenuOpen
                                         ? 'translate-y-0 rotate-45'
                                         : '-translate-y-2 rotate-0 group-hover:-translate-y-2.5'
-                                }`}
+                                    }`}
                             />
 
                             {/* Barre du milieu */}
                             <span
                                 aria-hidden="true"
-                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-200 ease-out motion-reduce:transition-none ${
-                                    isMenuOpen
+                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-200 ease-out motion-reduce:transition-none ${isMenuOpen
                                         ? 'scale-x-0 opacity-0'
                                         : 'scale-x-100 opacity-100'
-                                }`}
+                                    }`}
                             />
 
                             {/* Barre du bas */}
                             <span
                                 aria-hidden="true"
-                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none ${
-                                    isMenuOpen
+                                className={`absolute h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none ${isMenuOpen
                                         ? 'translate-y-0 -rotate-45'
                                         : 'translate-y-2 rotate-0 group-hover:translate-y-2.5'
-                                }`}
+                                    }`}
                             />
                         </button>
                     </div>
@@ -189,11 +185,10 @@ export default function Header() {
             <div
                 id="mobile-menu"
                 aria-hidden={!isMenuOpen}
-                className={`grid border-t border-slate-200/50 bg-white/80 shadow-sm backdrop-blur-md transition-[grid-template-rows,opacity,transform] duration-420ms ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden motion-reduce:transition-none ${
-                    isMenuOpen
+                className={`grid border-t border-slate-200/50 bg-white/80 shadow-sm backdrop-blur-md transition-[grid-template-rows,opacity,transform] duration-420ms ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden motion-reduce:transition-none ${isMenuOpen
                         ? 'grid-rows-[1fr] translate-y-0 opacity-100'
                         : 'pointer-events-none grid-rows-[0fr] -translate-y-1 opacity-0'
-                }`}
+                    }`}
             >
                 <div className="overflow-hidden">
                     <div className="space-y-1 px-2 pb-4 pt-3 sm:px-3">
@@ -201,11 +196,10 @@ export default function Header() {
                             href="/"
                             onClick={closeMenu}
                             tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
+                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${isMenuOpen
                                     ? 'translate-x-0 opacity-100 delay-75'
                                     : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                                }`}
                         >
                             Accueil
                         </Link>
@@ -214,11 +208,10 @@ export default function Header() {
                             href="/a-propos"
                             onClick={closeMenu}
                             tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
+                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${isMenuOpen
                                     ? 'translate-x-0 opacity-100 delay-100'
                                     : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                                }`}
                         >
                             À propos
                         </Link>
@@ -227,11 +220,10 @@ export default function Header() {
                             href="/ateliers"
                             onClick={closeMenu}
                             tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
+                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${isMenuOpen
                                     ? 'translate-x-0 opacity-100 delay-150'
                                     : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                                }`}
                         >
                             Ateliers
                         </Link>
@@ -240,11 +232,10 @@ export default function Header() {
                             href="/actualites"
                             onClick={closeMenu}
                             tabIndex={isMenuOpen ? 0 : -1}
-                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${
-                                isMenuOpen
+                            className={`block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-slate-50 hover:text-slate-900 motion-reduce:transition-none ${isMenuOpen
                                     ? 'translate-x-0 opacity-100 delay-200'
                                     : '-translate-x-2 opacity-0 delay-0'
-                            }`}
+                                }`}
                         >
                             Actualités
                         </Link>
@@ -254,11 +245,10 @@ export default function Header() {
                                 href="/admin"
                                 onClick={closeMenu}
                                 tabIndex={isMenuOpen ? 0 : -1}
-                                className={`mt-4 block rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-base font-medium text-red-700 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-red-100 motion-reduce:transition-none ${
-                                    isMenuOpen
+                                className={`mt-4 block rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-base font-medium text-red-700 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-1 hover:bg-red-100 motion-reduce:transition-none ${isMenuOpen
                                         ? 'translate-x-0 opacity-100 delay-300'
                                         : '-translate-x-2 opacity-0 delay-0'
-                                }`}
+                                    }`}
                             >
                                 Console Admin
                             </Link>
