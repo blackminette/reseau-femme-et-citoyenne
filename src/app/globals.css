@@ -1,8 +1,6 @@
 /* * src/app/globals.css */
-
 @import "tailwindcss";
 
-/* Importation des trois couches fondamentales de Tailwind CSS */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+html {
+    scroll-behavior: smooth;
+}
