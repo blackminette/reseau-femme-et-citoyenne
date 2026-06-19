@@ -1,9 +1,9 @@
 'use client'; // nécessaire car on gère le choix du participant et le clic "Réserver"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, CalendarDays, Clock, Users, Check } from "lucide-react";
+import { CalendarDays, Clock, Users, Check } from "lucide-react";
 import { ENFANTS, ATELIERS, NOM_COMPLET_MEMBRE } from "@/lib/membre-data";
+import PageHeader from "@/components/PageHeader";
 
 // Participants possibles : le membre lui-même, puis ses enfants rattachés (s'il en a).
 const PARTICIPANTS = [`Moi (${NOM_COMPLET_MEMBRE})`, ...ENFANTS.map(e => `${e.prenom} ${e.nom}`)];
@@ -20,16 +20,11 @@ export default function MembreReserverPage() {
     return (
         <div className="text-violet-900">
 
-            {/* Lien retour */}
-            <Link href="/membre/reservations" className="inline-flex items-center gap-1.5 text-sm text-violet-500 transition-colors hover:text-violet-700">
-                <ArrowLeft className="h-4 w-4" aria-hidden /> Retour aux réservations
-            </Link>
-
-            {/* En-tête */}
-            <div className="mt-3 flex flex-col gap-1 border-b border-violet-200 pb-5">
-                <h1 className="text-3xl font-bold tracking-tight text-violet-950">Réserver un atelier</h1>
-                <p className="text-sm text-violet-600">Choisissez le participant puis un atelier disponible.</p>
-            </div>
+            <PageHeader
+                retour={{ href: "/membre/reservations", label: "Retour aux réservations" }}
+                titre="Réserver un atelier"
+                sousTitre="Choisissez le participant puis un atelier disponible."
+            />
 
             {/* Choix du participant */}
             <div className="mt-6 max-w-sm rounded-2xl border border-violet-200 bg-white p-6 shadow-xs">

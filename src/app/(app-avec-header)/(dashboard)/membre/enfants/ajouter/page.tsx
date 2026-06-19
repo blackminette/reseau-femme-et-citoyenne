@@ -1,8 +1,8 @@
 'use client'; // nécessaire car cette page contient un formulaire interactif
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 
 // Style commun aux champs du formulaire.
 const CHAMP = "w-full rounded-xl border border-violet-200 px-4 py-2.5 text-violet-900 placeholder:text-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500";
@@ -23,16 +23,11 @@ export default function AjouterEnfantPage() {
     return (
         <div className="text-violet-900">
 
-            {/* Lien retour */}
-            <Link href="/membre/enfants" className="inline-flex items-center gap-1.5 text-sm text-violet-500 transition-colors hover:text-violet-700">
-                <ArrowLeft className="h-4 w-4" aria-hidden /> Retour aux enfants
-            </Link>
-
-            {/* En-tête */}
-            <div className="mt-3 flex flex-col gap-1 border-b border-violet-200 pb-5">
-                <h1 className="text-3xl font-bold tracking-tight text-violet-950">Ajouter un enfant</h1>
-                <p className="text-sm text-violet-600">Renseignez les informations de l&apos;enfant.</p>
-            </div>
+            <PageHeader
+                retour={{ href: "/membre/enfants", label: "Retour aux enfants" }}
+                titre="Ajouter un enfant"
+                sousTitre="Renseignez les informations de l'enfant."
+            />
 
             <form onSubmit={handleSubmit} className="mt-6 max-w-lg space-y-6 rounded-2xl border border-violet-200 bg-white p-8 shadow-xs">
 

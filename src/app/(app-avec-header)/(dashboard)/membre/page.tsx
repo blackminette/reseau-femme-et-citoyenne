@@ -20,6 +20,8 @@ import {
     UserPlus,
 } from "lucide-react";
 import { MEMBRE, ENFANTS_RATTACHES, ACTIVITES, RESERVATIONS, type Metriques } from "@/lib/membre-data";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata = {
     title: "Mon espace membre",
@@ -135,14 +137,12 @@ export default async function MembreDashboard({
             </div>
 
             {/* ─── En-tête ─── */}
-            <div className="flex flex-col gap-1 border-b border-violet-200 pb-5">
-                <h1 className="text-3xl font-bold tracking-tight text-violet-950">Mon espace membre</h1>
-                <p className="text-sm text-violet-600">
-                    {aDesEnfants
-                        ? "Suivez votre progression et celle de vos enfants, gérez vos réservations."
-                        : "Bienvenue ! Suivez votre progression et ajoutez un enfant pour suivre la sienne."}
-                </p>
-            </div>
+            <PageHeader
+                titre="Mon espace membre"
+                sousTitre={aDesEnfants
+                    ? "Suivez votre progression et celle de vos enfants, gérez vos réservations."
+                    : "Bienvenue ! Suivez votre progression et ajoutez un enfant pour suivre la sienne."}
+            />
 
             {/* ─── Vue d'ensemble : statistiques ─── */}
             <section className="mt-8">
@@ -307,21 +307,13 @@ export default async function MembreDashboard({
                 /* ─── État vide : aucun enfant rattaché ─── */
                 <section className="mt-8 mb-4">
                     <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes enfants</h3>
-                    <div className="mt-4 max-w-5xl rounded-2xl border-2 border-dashed border-violet-200 bg-white p-10 text-center shadow-xs">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                            <UserPlus className="h-8 w-8" />
-                        </div>
-                        <h3 className="mt-5 text-xl font-bold text-violet-950">Aucun enfant pour le moment</h3>
-                        <p className="mx-auto mt-2 max-w-md text-sm text-violet-600">
-                            Ajoutez un enfant à votre compte pour suivre sa progression, ses ateliers et ses badges. Son tableau de bord détaillé apparaîtra ici.
-                        </p>
-                        <Link
-                            href="/membre/enfants/ajouter"
-                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
-                        >
-                            <Plus className="h-4 w-4" /> Ajouter un enfant
-                        </Link>
-                    </div>
+                    <EmptyState
+                        className="mt-4"
+                        Icon={UserPlus}
+                        titre="Aucun enfant pour le moment"
+                        texte="Ajoutez un enfant à votre compte pour suivre sa progression, ses ateliers et ses badges. Son tableau de bord détaillé apparaîtra ici."
+                        action={{ href: "/membre/enfants/ajouter", label: "Ajouter un enfant", Icon: Plus }}
+                    />
                 </section>
             )}
         </div>
