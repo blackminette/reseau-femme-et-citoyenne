@@ -4,10 +4,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Routes nécessitant une connexion obligatoire
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+        '/membre/:path*',
+        '/admin/:path*',
+        '/enfant/:path*',
+        '/intervenant/:path*',
+        '/benevole/:path*',
+        '/partenaire/:path*',
+        '/login',
+        '/signup',
+        '/forgot-password',
+        '/reset-password',
     ],
 };
 
@@ -16,7 +24,6 @@ export async function middleware(request: NextRequest) {
         request: { headers: request.headers },
     });
 
-    // Initialisation du client Supabase pour gérer les cookies de session
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,16 +39,22 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    // Récupération de l'utilisateur connecté
     const { data: { user } } = await supabase.auth.getUser();
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
-    // Détection des routes privées (/admin, /membre...)
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
+    const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+    
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
+    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
 
-    // Si non connecté et tente d'aller sur une page privée -> Redirection /login
+    // Redirect authenticated users away from auth routes
+    if (user && isAuthRoute) {
+        url.pathname = '/';
+        return NextResponse.redirect(url);
+    }
+
     if (!user) {
         if (isPrivateRoute) {
             url.pathname = '/login';
@@ -50,48 +63,42 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // Si déjà connecté et tente d'aller sur /login -> Redirection vers l'accueil
-    if (pathname === '/login') {
-        url.pathname = '/';
-        return NextResponse.redirect(url);
-    }
-
-    // Récupération du rôle de l'utilisateur dans la table Prisma
     let userRole: UserRole | null = null;
 
-    if (user.email) {
-        const { data: profile, error } = await supabase
-            .from('Utilisateur') // Nom de ta table Prisma
+    if (user.id) {
+        // La table s'appelle "Utilisateur" dans Postgres (PascalCase)
+        const { data: profiles, error: roleError } = await supabase
+            .from('Utilisateur')
             .select('role')
-            .eq('email', user.email)
-            .single();
+            .eq('id', user.id);
 
-        if (!error && profile) {
-            userRole = profile.role as UserRole;
+        if (roleError) {
+            console.error("[Middleware] Erreur accès table Utilisateur:", roleError.message);
+        } else if (profiles && profiles.length > 0) {
+            userRole = profiles[0].role as UserRole;
         }
     }
 
-    // Sécurité : Bloque l'accès si l'utilisateur n'a aucun rôle enregistré en base
     if (!userRole && isPrivateRoute) {
+        console.warn("[Middleware] Accès refusé : Profil non trouvé pour l'ID", user.id);
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
 
-    // 5. Gestion des accès selon le rôle (RBAC)
+    // ... (rest of the middleware)
+    
     if (userRole) {
-        // Interdit l'accès à /admin si l'utilisateur n'est pas ADMIN
+        console.log(`[Middleware] Debug: User ${user.id} has role ${userRole}. Current path: ${pathname}`);
+        
         if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
+            console.log(`[Middleware] Debug: Redirecting non-admin from admin path`);
             return redirectUserToDefaultDashboard(userRole, url);
         }
 
-        // Redirige de force l'utilisateur vers son propre espace s'il s'est trompé d'URL
         if (isPrivateRoute) {
+            console.log(`[Middleware] Debug: Checking private route ${pathname} for user role ${userRole}`);
             if (userRole === 'PARTENAIRE' && !pathname.startsWith('/partenaire')) {
                 url.pathname = '/partenaire';
-                return NextResponse.redirect(url);
-            }
-            if (userRole === 'ETUDIANT' && !pathname.startsWith('/etudiant')) {
-                url.pathname = '/etudiant';
                 return NextResponse.redirect(url);
             }
             if (userRole === 'INTERVENANT' && !pathname.startsWith('/intervenant')) {
@@ -99,11 +106,16 @@ export async function middleware(request: NextRequest) {
                 return NextResponse.redirect(url);
             }
             if (userRole === 'MEMBRE' && !pathname.startsWith('/membre')) {
+                console.log(`[Middleware] Debug: Redirecting member to /membre`);
                 url.pathname = '/membre';
                 return NextResponse.redirect(url);
             }
             if (userRole === 'ENFANT' && !pathname.startsWith('/enfant')) {
                 url.pathname = '/enfant';
+                return NextResponse.redirect(url);
+            }
+            if (userRole === 'ADMIN' && !pathname.startsWith('/admin')) {
+                url.pathname = '/admin';
                 return NextResponse.redirect(url);
             }
         }
@@ -112,13 +124,12 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
-// Fonction utilitaire pour renvoyer un utilisateur vers son tableau de bord par défaut
 function redirectUserToDefaultDashboard(role: UserRole, url: URL) {
     switch (role) {
         case 'ADMIN': url.pathname = '/admin'; break;
         case 'PARTENAIRE': url.pathname = '/partenaire'; break;
-        case 'ETUDIANT': url.pathname = '/etudiant'; break;
         case 'INTERVENANT': url.pathname = '/intervenant'; break;
+        case 'BENEVOLE': url.pathname = '/benevole'; break;
         case 'MEMBRE': url.pathname = '/membre'; break;
         case 'ENFANT': url.pathname = '/enfant'; break;
         default: url.pathname = '/';
