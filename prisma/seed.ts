@@ -197,13 +197,18 @@ async function main() {
             },
             {
               titre: "Exercice d'application : Votre première variable",
-              instructions: "Répondez par écrit à la consigne demandée.",
-              type: "QUESTION_OUVERTE",
+              instructions: "Répondez par vrai ou faux.",
+              type: "VRAI_FAUX",
               ordre: 3,
-              contenu: {
-                consigne: "Écrivez la ligne de code JavaScript permettant de déclarer une variable nommée 'ville' contenant le texte 'Nice'.",
-                reponseAttendue: "let ville = \"Nice\";"
-              }
+              contenu: [
+                {
+                  id: "v1",
+                  numeroPage: 1,
+                  affirmation: "Une variable est forcément un nombre.",
+                  options: ["Vrai", "Faux"],
+                  reponseCorrecte: "Faux"
+                }
+              ]
             }
           ]
         },
