@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[coursId]/cours/[id]/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/cours/[cpursId]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
