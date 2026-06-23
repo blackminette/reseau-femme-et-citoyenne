@@ -75,22 +75,19 @@ async function main() {
     }
   ];
 
-  // Variable temporaire pour stocker l'ID de l'intervenante pour la liaison des cours/ateliers
   let intervenanteId = '';
 
-  // 2. Boucle pour créer sur Supabase Auth ET synchroniser dans Prisma via l'UUID généré
+  // 2. Boucle pour créer sur Supabase Auth ET synchroniser dans Prisma
   for (const user of utilisateursDeTest) {
     let supabaseAuthId: string;
 
-    // A. Création/Vérification du compte dans Supabase Auth (Sans envoi d'email)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: user.email,
       password: user.motDePasse,
-      email_confirm: true // Valide le compte d'office pour éviter le blocage au login
+      email_confirm: true 
     });
 
     if (authError) {
-      // Si l'utilisateur existe déjà sur Supabase Auth, on récupère simplement son UUID existant
       if (authError.message.includes('already exists') || authError.message.includes('email_exists')) {
         const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
         const userExistant = listData?.users.find(u => u.email === user.email);
@@ -105,21 +102,18 @@ async function main() {
         continue;
       }
     } else {
-      // Si la création est neuve, on extrait l'UUID généré par Supabase
       supabaseAuthId = authData.user.id;
     }
 
-    // Garde en mémoire l'ID de l'intervenante pour la suite
     if (user.role === 'INTERVENANTE') {
       intervenanteId = supabaseAuthId;
     }
 
-    // B. Exécution de l'upsert Prisma indexé sur cet UUID
     await prisma.utilisateur.upsert({
-      where: { id: supabaseAuthId }, // Utilise l'ID authentifié comme clé primaire
+      where: { id: supabaseAuthId },
       update: {}, 
       create: {
-        id: supabaseAuthId, // On force Prisma à s'aligner sur l'UUID de Supabase
+        id: supabaseAuthId,
         email: user.email,
         nom: user.nom,
         prenom: user.prenom,
@@ -128,13 +122,28 @@ async function main() {
       },
     });
 
-    console.log(`👤 Compte [${user.role}] pour ${user.prenom} ${user.nom} synchronisé ! (Mdp: ${user.motDePasse})`);
+    console.log(`👤 Compte [${user.role}] pour ${user.prenom} ${user.nom} synchronisé !`);
   }
 
-  // --- NOUVELLE SECTION FUSIONNÉE : LIEUX ET ATELIERS ---
-  console.log('🌱 (Seeding) Injection des lieux et ateliers de test pour le calendrier...');
+  // --- LOGIQUE DE CALCUL DYNAMIQUE DE LA SEMAINE COURANTE ---
+  const aujourdhui = new Date();
+  const diff = aujourdhui.getDay() === 0 ? 6 : aujourdhui.getDay() - 1;
+  
+  // Calcul du lundi de cette semaine à minuit pile
+  const lundiCourant = new Date(aujourdhui);
+  lundiCourant.setDate(aujourdhui.getDate() - diff);
+  lundiCourant.setHours(0, 0, 0, 0);
 
-  // A. Ajout ou récupération des lieux uniques via l'ID BAN officiel
+  // Helper pour générer des dates de manière lisible
+  const getDatePourJourEtHeure = (joursDepuisLundi: number, heures: number, minutes: number = 0) => {
+    const d = new Date(lundiCourant);
+    d.setDate(lundiCourant.getDate() + joursDepuisLundi);
+    d.setHours(heures, minutes, 0, 0);
+    return d;
+  };
+
+  console.log('🌱 (Seeding) Injection des lieux et ateliers dynamiques pour cette semaine...');
+
   const lieuMedia = await prisma.lieu.upsert({
     where: { adresseIdBan: 'ban-id-12345' },
     update: {},
@@ -157,49 +166,49 @@ async function main() {
     },
   });
 
-  // Nettoyage des anciens ateliers de test pour éviter l'encombrement au rafraîchissement
+  // Nettoyage complet
   await prisma.atelier.deleteMany({});
 
-  // B. Ajout des Ateliers de test calés sur Juin 2026 (Mois et année en cours)
+  // B. Ajout des Ateliers de test calculés dynamiquement sur la semaine actuelle
   await prisma.atelier.createMany({
     data: [
       {
         titre: 'Conte & bricolage',
-        description: '3 - 5 ans Saint-Roch. Doudou bienvenu.',
-        dateDebut: new Date('2026-06-17T14:00:00Z'), // Mercredi à 14h
-        dateFin: new Date('2026-06-17T16:00:00Z'),
+        description: '3 - 5 ans. Doudou bienvenu.',
+        dateDebut: getDatePourJourEtHeure(1, 10), // 1 = Mardi, 10h
+        dateFin: getDatePourJourEtHeure(1, 12),   // Mardi, 12h
         placesMax: 10,
         lieuId: lieuMedia.id,
       },
       {
         titre: 'Création de Jeux Scratch',
-        description: 'Niveau Poussins.',
-        dateDebut: new Date('2026-06-17T16:30:00Z'), // Mercredi à 16h30
-        dateFin: new Date('2026-06-17T18:00:00Z'),
+        description: 'Niveau Poussins (3 - 5 ans).',
+        dateDebut: getDatePourJourEtHeure(2, 14), // 2 = Mercredi, 14h
+        dateFin: getDatePourJourEtHeure(2, 16),   // Mercredi, 16h
         placesMax: 15,
         lieuId: lieuMedia.id,
       },
       {
         titre: 'Robotique & Kits Arduino',
-        description: 'Niveau Collège (11-15 ans).',
-        dateDebut: new Date('2026-06-20T10:00:00Z'), // Samedi à 10h
-        dateFin: new Date('2026-06-20T12:30:00Z'),
+        description: 'Découverte ludique.',
+        dateDebut: getDatePourJourEtHeure(2, 16, 30), // Mercredi, 16h30
+        dateFin: getDatePourJourEtHeure(2, 18),      // Mercredi, 18h
         placesMax: 15,
         lieuId: lieuLab.id,
       },
       {
-        titre: 'Initiation HTML / CSS',
-        description: 'Niveau Primaire.',
-        dateDebut: new Date('2026-06-20T14:00:00Z'), // Samedi à 14h
-        dateFin: new Date('2026-06-20T16:30:00Z'),
+        titre: 'Initiation Peinture',
+        description: 'Expression créative libre.',
+        dateDebut: getDatePourJourEtHeure(5, 14), // 5 = Samedi, 14h
+        dateFin: getDatePourJourEtHeure(5, 16),   // Samedi, 16h
         placesMax: 12,
         lieuId: lieuLab.id,
       }
     ],
   });
 
-  console.log('✅ Données de planning injectées et prêtes pour l\'affichage !');
-  console.log('✅ Seeding terminé avec succès et prêt pour le login local !');
+  console.log('✅ Données de planning injectées dynamiquement pour la semaine en cours !');
+  console.log('✅ Seeding terminé avec succès !');
 }
 
 main()
@@ -208,6 +217,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    // Ferme proprement le pool à la fin
     await pool.end();
   });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma'; // Assure-toi d'utiliser l'import nommé avec accolades suite à ton correctif
-import PlanningClient from './PlanningClient';
+import PlanningClient from './planningClient';
 
 export default async function PlanningPage() {
   // Récupération de tous les ateliers programmés avec leurs relations indispensables
