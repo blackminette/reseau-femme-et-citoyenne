@@ -46,7 +46,7 @@ const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: Luc
     },
 ];
 
-export default function MemberSideMenu({ onNavigate }: { onNavigate?: () => void }) {
+export default function MemberSideMenu() {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -82,7 +82,6 @@ export default function MemberSideMenu({ onNavigate }: { onNavigate?: () => void
                                 <Link
                                     key={href}
                                     href={href}
-                                    onClick={onNavigate}
                                     className={`group relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                                         isActive
                                             ? 'bg-indigo-50 font-semibold text-indigo-600'
