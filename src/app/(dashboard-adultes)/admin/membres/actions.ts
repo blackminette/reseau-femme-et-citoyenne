@@ -4,11 +4,23 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
-export async function listerTousLesUtilisateurs() {
+export async function listerLesUtilisateurs(trie: string, filtre?: string) {
     try {
+        const whereCondition: any = {};
+
+        if (filtre) {
+            whereCondition.OR = [
+                { role: filtre },
+                { nom: { contains: filtre, mode: 'insensitive' } },
+                { prenom: { contains: filtre, mode: 'insensitive' } },
+                { email: { contains: filtre, mode: 'insensitive' } },
+            ];
+        }
+
         const utilisateurs = await prisma.utilisateur.findMany({
+            where: whereCondition,
             orderBy: {
-                createdAt: 'desc',
+                createdAt: trie === 'CROISSANT' ? 'asc' : 'desc',
             },
             select: {
                 id: true,

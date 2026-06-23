@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerTousLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
+import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
 import Modal from '@/components/Modal';
-import { Eye, Pencil, Trash2, Search, Filter } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -24,6 +24,11 @@ export default function AdminMembresPage() {
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
     const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
 
+    const [filter, setFilter] = useState<string>("");
+    const [trie, setTrie] = useState<string>('DECROISSANT');
+    const [search, setSearch] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+
     const [formData, setFormData] = useState({
         nom: '',
         prenom: '',
@@ -32,17 +37,42 @@ export default function AdminMembresPage() {
         role: ''
     });
 
+    // Effet de "Debounce" : Attend 400ms après la fin de la saisie avant de déclencher la recherche
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 400);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     async function chargerMembres() {
-        const reponse = await listerTousLesUtilisateurs();
+        setIsLoading(true);
+        const termeRecherche = filter || debouncedSearch;
+        const reponse = await listerLesUtilisateurs(trie, termeRecherche);
+
         if (reponse.success && reponse.data) {
-            setMembres(reponse.data);
+            if (filter && debouncedSearch) {
+                const searchLower = debouncedSearch.toLowerCase();
+                const dataFiltree = reponse.data.filter((m: any) =>
+                    m.nom?.toLowerCase().includes(searchLower) ||
+                    m.prenom?.toLowerCase().includes(searchLower) ||
+                    m.email?.toLowerCase().includes(searchLower)
+                );
+                setMembres(dataFiltree);
+            } else {
+                setMembres(reponse.data);
+            }
         }
         setIsLoading(false);
     }
 
+    // Le tableau se rafraîchit dès qu'un filtre, le texte ou le tri change
     useEffect(() => {
         chargerMembres();
-    }, []);
+    }, [filter, debouncedSearch, trie]);
 
     const ouvrirModalModifier = (membre: any) => {
         setMembreSelectionne(membre);
@@ -89,14 +119,6 @@ export default function AdminMembresPage() {
         }
     };
 
-    if (isLoading && membres.length === 0) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <p className="text-violet-600 font-medium animate-pulse">Chargement des membres de l'association...</p>
-            </div>
-        );
-    }
-
     return (
         <div>
             <div className="mb-8">
@@ -107,22 +129,46 @@ export default function AdminMembresPage() {
             </div>
 
             <div className="mb-6 p-4 bg-white border border-violet-100 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-3 w-full">
+                {/* Barre de recherche */}
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
                         type="text"
                         name="search"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         placeholder="Rechercher un membre (nom, prénom, email...)"
                         className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
                     />
                 </div>
 
+                {/* Sélecteur de Tri (Stylisé) */}
+                <div className="relative min-w-[160px]">
+                    <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                    <select
+                        name="trie"
+                        id="trie"
+                        value={trie}
+                        onChange={(e) => setTrie(e.target.value)}
+                        className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all appearance-none cursor-pointer"
+                    >
+                        <option value="DECROISSANT">Décroissant</option>
+                        <option value="CROISSANT">Croissant</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <ChevronDown className='h-5 w-5' />
+                    </div>
+                </div>
+
+                {/* Sélecteur de Rôle */}
                 <div className="relative min-w-[220px]">
                     <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <select
                         name="filter"
                         id="filter"
                         className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all appearance-none cursor-pointer"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
                     >
                         <option value="">Tous les rôles</option>
                         <option value="ADMIN">Administrateur</option>
@@ -134,109 +180,122 @@ export default function AdminMembresPage() {
                         <option value="ETUDIANT">Étudiant</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <ChevronDown className='h-5 w-5' />
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/70 border-b border-violet-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                                <th className="px-6 py-4">Nom / Prénom</th>
-                                <th className="px-6 py-4">Email</th>
-                                <th className="px-6 py-4">Rôle</th>
-                                <th className="px-6 py-4">Statistiques</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm text-violet-900">
-                            {membres.map((membre) => (
-                                <tr key={membre.id} className="hover:bg-violet-50/40 transition-colors duration-150">
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold text-slate-900">{membre.nom} {membre.prenom}</span>
-                                            {membre.tuteur && (
-                                                <span className="text-xs text-violet-500/90 mt-0.5">
-                                                    👶 Enfant de : <span className="font-medium">{membre.tuteur.prenom}</span>
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-4 text-slate-600 font-normal">
-                                        {membre.email}
-                                    </td>
-
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-wrap gap-1.5 items-center">
-                                            <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
-                                                {membre.role?.toLowerCase()}
-                                            </span>
-                                            {membre.role === 'ENFANT' && membre.niveau && (
-                                                <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
-                                                    {membre.niveau}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1 text-xs text-slate-600">
-                                            {membre._count?.enfants > 0 && <span>👶 {membre._count.enfants} enfant(s)</span>}
-                                            {membre._count?.reservations > 0 && <span>📅 {membre._count.reservations} réservation(s)</span>}
-                                            {membre._count?.coursAnimes > 0 && <span className="text-violet-600 font-medium">👨‍🏫 {membre._count.coursAnimes} cours animés</span>}
-                                            {membre._count?.dons > 0 && (
-                                                <span className="w-fit px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[11px] font-semibold">
-                                                    ❤️ Donateur
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end items-center gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setMembreSelectionne(membre);
-                                                    setModalDetailsIsOpen(true);
-                                                }}
-                                                title="Voir les détails"
-                                                className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-
-                                            <button
-                                                onClick={() => ouvrirModalModifier(membre)}
-                                                title="Modifier le membre"
-                                                className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-
-                                            <button
-                                                onClick={() => {
-                                                    setMembreSelectionne(membre);
-                                                    setModalSupprimerIsOpen(true);
-                                                }}
-                                                title="Supprimer le membre"
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {isLoading && membres.length === 0 ? (
+                <div className="flex items-center justify-center min-h-[200px]">
+                    <p className="text-violet-600 font-medium animate-pulse">Chargement...</p>
                 </div>
-            </div>
+            ) : (
+                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50/70 border-b border-violet-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                    <th className="px-6 py-4">Nom / Prénom</th>
+                                    <th className="px-6 py-4">Email</th>
+                                    <th className="px-6 py-4">Rôle</th>
+                                    <th className="px-6 py-4">Statistiques</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-sm text-violet-900">
+                                {membres.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-10 text-center text-slate-400 italic">
+                                            Aucun membre ne correspond à votre recherche.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    membres.map((membre) => (
+                                        <tr key={membre.id} className="hover:bg-violet-50/40 transition-colors duration-150">
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-slate-900">{membre.nom} {membre.prenom}</span>
+                                                    {membre.tuteur && (
+                                                        <span className="text-xs text-violet-500/90 mt-0.5">
+                                                            👶 Enfant de : <span className="font-medium">{membre.tuteur.prenom}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
 
+                                            <td className="px-6 py-4 text-slate-600 font-normal">
+                                                {membre.email}
+                                            </td>
+
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1.5 items-center">
+                                                    <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
+                                                        {membre.role?.toLowerCase()}
+                                                    </span>
+                                                    {membre.role === 'ENFANT' && membre.niveau && (
+                                                        <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
+                                                            {membre.niveau}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1 text-xs text-slate-600">
+                                                    {membre._count?.enfants > 0 && <span>👶 {membre._count.enfants} enfant(s)</span>}
+                                                    {membre._count?.reservations > 0 && <span>📅 {membre._count.reservations} réservation(s)</span>}
+                                                    {membre._count?.coursAnimes > 0 && <span className="text-violet-600 font-medium">👨‍🏫 {membre._count.coursAnimes} cours animés</span>}
+                                                    {membre._count?.dons > 0 && (
+                                                        <span className="w-fit px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[11px] font-semibold">
+                                                            ❤️ Donateur
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setMembreSelectionne(membre);
+                                                            setModalDetailsIsOpen(true);
+                                                        }}
+                                                        title="Voir les détails"
+                                                        className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => ouvrirModalModifier(membre)}
+                                                        title="Modifier le membre"
+                                                        className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setMembreSelectionne(membre);
+                                                            setModalSupprimerIsOpen(true);
+                                                        }}
+                                                        title="Supprimer le membre"
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de détails */}
             <Modal
                 isOpen={modalDetailsIsOpen}
                 onClose={() => setModalDetailsIsOpen(false)}
@@ -354,6 +413,7 @@ export default function AdminMembresPage() {
                 )}
             </Modal>
 
+            {/* Modal de modification */}
             <Modal isOpen={modalModifierIsOpen} onClose={() => setModalModifierIsOpen(false)} title="Modifier le membre">
                 <form onSubmit={handleModifier} className="space-y-4">
                     <div>
@@ -430,6 +490,7 @@ export default function AdminMembresPage() {
                 </form>
             </Modal>
 
+            {/* Modal de suppression */}
             <Modal isOpen={modalSupprimerIsOpen} onClose={() => setModalSupprimerIsOpen(false)} title="Confirmer la suppression">
                 <div className="space-y-4">
                     <p className="text-sm text-violet-800">Êtes-vous sûr de vouloir supprimer <span className="font-bold">{membreSelectionne?.prenom} {membreSelectionne?.nom} ({membreSelectionne?.email})</span> ? Cette action est irréversible.</p>
