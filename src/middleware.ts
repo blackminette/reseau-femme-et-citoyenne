@@ -49,23 +49,9 @@ export async function middleware(request: NextRequest) {
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
     const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
 
-    // Redirect authenticated users away from auth routes
-    if (user && isAuthRoute) {
-        url.pathname = '/';
-        return NextResponse.redirect(url);
-    }
-
-    if (!user) {
-        if (isPrivateRoute) {
-            url.pathname = '/login';
-            return NextResponse.redirect(url);
-        }
-        return response;
-    }
-
     let userRole: UserRole | null = null;
 
-    if (user.id) {
+    if (user && user.id) {
         // La table s'appelle "Utilisateur" dans Postgres (PascalCase)
         const { data: profiles, error: roleError } = await supabase
             .from('Utilisateur')
@@ -77,6 +63,23 @@ export async function middleware(request: NextRequest) {
         } else if (profiles && profiles.length > 0) {
             userRole = profiles[0].role as UserRole;
         }
+    }
+
+    // Redirect authenticated users away from auth routes to their default dashboard
+    if (user && isAuthRoute) {
+        if (userRole) {
+            return redirectUserToDefaultDashboard(userRole, url);
+        }
+        url.pathname = '/';
+        return NextResponse.redirect(url);
+    }
+
+    if (!user) {
+        if (isPrivateRoute) {
+            url.pathname = '/login';
+            return NextResponse.redirect(url);
+        }
+        return response;
     }
 
     if (!userRole && isPrivateRoute) {

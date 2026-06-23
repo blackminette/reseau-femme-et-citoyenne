@@ -14,6 +14,10 @@ import { usePathname } from 'next/navigation';
 export default function Footer() {
     const pathname = usePathname();
 
+    if (pathname?.startsWith('/enfant')) {
+        return null;
+    }
+
     // Détermination de la marge à gauche pour éviter le chevauchement avec les menus latéraux fixes
     let marginClass = '';
     if (pathname) {

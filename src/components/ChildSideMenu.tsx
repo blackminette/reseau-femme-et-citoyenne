@@ -49,11 +49,12 @@ const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: Luc
     },
 ];
 
-export default function ChildSideMenu() {
+export default function ChildSideMenu({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
 
     const handleLogout = async () => {
+        if (onClose) onClose();
         await supabaseClient.auth.signOut();
         router.push('/');
     };
@@ -85,6 +86,7 @@ export default function ChildSideMenu() {
                                 <Link
                                     key={label}
                                     href={href}
+                                    onClick={onClose}
                                     className={`group relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                                         isActive
                                             ? 'bg-indigo-50 font-semibold text-indigo-600'

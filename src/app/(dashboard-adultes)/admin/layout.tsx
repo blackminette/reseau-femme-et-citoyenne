@@ -16,10 +16,10 @@ export default function MembreLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div className="min-h-screen bg-slate-50 flex flex-row">
 
-            {/* Barre latérale fixe à gauche (Prend strictement 1/6 de la largeur) */}
-            <aside className="w-1/6 fixed top-0 bottom-0 left-0 bg-white border-r border-slate-200 z-50 p-5 flex flex-col justify-between overflow-y-auto">
+            {/* Barre latérale sticky à gauche (Prend strictement 1/6 de la largeur) */}
+            <aside className="w-1/6 sticky top-[116px] h-[calc(100vh-116px)] bg-white border-r border-slate-200 z-50 p-5 flex flex-col justify-between overflow-y-auto shrink-0">
                 <div className="flex flex-col gap-6">
                     {/* En-tête de marque / Logo du Panel Admin */}
                     <div className="px-3 py-2 border-b border-slate-100 pb-4 mb-2 flex items-center gap-2.5">
@@ -58,8 +58,8 @@ export default function MembreLayout({
                 </div>
             </aside>
 
-            {/* Zone de droite décalée proprement par rapport à la largeur de la sidebar fixe (1/6) */}
-            <main className="w-5/6 ml-auto min-h-screen flex flex-col">
+            {/* Zone de droite */}
+            <main className="flex-1 min-h-screen flex flex-col">
 
                 {/* Contenu de la page de l'administration */}
                 <div className="p-8 flex-1">

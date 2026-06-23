@@ -7,6 +7,7 @@ import { UserRole } from '@/types/auth';
 import UserDropdown from './UserDropdown';
 import { supabaseClient } from '@/lib/supabaseClient';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
     const [role, setRole] = useState<UserRole | null>(null);
@@ -76,6 +77,11 @@ export default function Header() {
         setIsProposMobileOpen(false);
         setIsAteliersMobileOpen(false);
     };
+
+    const pathname = usePathname();
+    if (pathname?.startsWith('/enfant')) {
+        return null;
+    }
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-slate-200/70 bg-white/70 backdrop-blur-md shadow-sm">

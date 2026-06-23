@@ -64,11 +64,13 @@ export default function EnfantAteliersPage() {
                         const st = STATUT[r.statut];
                         const PaiementIcon = r.paiement === "Carte bancaire" ? CreditCard : Banknote;
                         return (
-                            <div key={r.id} className={`flex overflow-hidden rounded-2xl border border-violet-200 border-l-4 bg-white shadow-xs ${st.border}`}>
+                            <div key={r.id} className={`flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-violet-200 border-l-4 bg-white shadow-xs ${st.border}`}>
                                 {/* Bloc date */}
-                                <div className="flex min-w-[92px] flex-col items-center justify-center bg-gradient-to-br from-violet-50 to-violet-100 p-4 text-center">
-                                    <div className="text-2xl font-extrabold leading-none text-violet-700">{r.jour}</div>
-                                    <div className="mt-1 text-[11px] font-semibold uppercase text-violet-500">{r.mois}</div>
+                                <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center bg-gradient-to-br from-violet-50 to-violet-100 p-4 text-center sm:min-w-[92px] gap-2 sm:gap-0">
+                                    <div className="flex items-baseline sm:block gap-1.5">
+                                        <div className="text-xl sm:text-2xl font-extrabold leading-none text-violet-700">{r.jour}</div>
+                                        <div className="text-[11px] font-semibold uppercase text-violet-500">{r.mois}</div>
+                                    </div>
                                     <div className="text-[10px] text-violet-400">{r.annee}</div>
                                 </div>
                                 {/* Corps */}
@@ -77,20 +79,20 @@ export default function EnfantAteliersPage() {
                                         <r.Icon className="h-[18px] w-[18px] text-violet-600" aria-hidden /> {r.atelier}
                                     </div>
                                     <div className="mt-1.5 space-y-1 text-[12.5px] text-violet-500">
-                                        <div className="flex items-center gap-1.5">
-                                            <MapPin className="h-3.5 w-3.5" aria-hidden /> {r.lieu}
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" aria-hidden /> {r.lieu}</span>
                                             <span className="text-violet-300">·</span>
-                                            <Baby className="h-3.5 w-3.5" aria-hidden /> {r.age} ans
+                                            <span className="flex items-center gap-1"><Baby className="h-3.5 w-3.5" aria-hidden /> {r.age} ans</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <PaiementIcon className="h-3.5 w-3.5" aria-hidden /> {r.paiement}
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            <span className="flex items-center gap-1"><PaiementIcon className="h-3.5 w-3.5" aria-hidden /> {r.paiement}</span>
                                             <span className="text-violet-300">·</span> Demandé le {r.demande}
                                         </div>
                                         {r.message && <div className="italic text-violet-400">« {r.message} »</div>}
                                     </div>
                                 </div>
                                 {/* Statut */}
-                                <div className="flex items-center p-4">
+                                <div className="flex items-center px-4 pb-4 sm:pb-0 sm:pr-4">
                                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ${st.pill}`}>
                                         <st.Icon className="h-3.5 w-3.5" aria-hidden /> {r.statut}
                                     </span>
