@@ -6,14 +6,15 @@
 
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { listerTousLesModules, creerModule, supprimerModule, modifierModule } from './actions';
-import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash } from 'lucide-react';
+import { listerTousLesModules, creerModule, supprimerModule, modifierModule, activateModule } from './actions';
+import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/Modal';
 
 interface ModuleAvecCompte {
     id: number;
     titre: string;
     description: string | null;
+    isPublished: boolean;
     createdAt: Date;
     _count: {
         cours: number;
@@ -101,6 +102,21 @@ export default function PedagogieAdultesPage() {
         }
     };
 
+    const handleActiveModule = async () => {
+        if (selectedModuleId === null) return;
+        const selectedModule = modules.find(m => m.id === selectedModuleId);
+        if (!selectedModule) return;
+
+        const newStatus = !selectedModule.isPublished
+
+        const result = await activateModule(selectedModule.id, newStatus)
+        if (result.success) {
+            setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m))
+        } else {
+            setError(result.error || "Une erreur est survenue.");
+        }
+    }
+
     return (
         <div className="p-6 pl-8 pr-8 mx-auto space-y-8 animate-fade-in">
             <div className="flex flex-col">
@@ -171,12 +187,41 @@ export default function PedagogieAdultesPage() {
             {!isLoading && !error && modules.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {modules.map(module => (
-                        <div key={module.id} className="group bg-white border border-violet-200 hover:border-violet-200 hover:shadow-md hover:shadow-violet-100 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative">
-                            <Link href={`/admin/pedagogie/adultes/${module.id}`}>
+                        <div
+                            key={module.id}
+                            className={`group bg-white border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative
+                    ${module.isPublished
+                                    ? 'border-violet-200 hover:shadow-md hover:shadow-violet-100'
+                                    : 'border-slate-200 border-dashed bg-slate-50/50 opacity-85 hover:opacity-100'
+                                }`}
+                        >
+                            {/* Indicateur visuel de statut (Badge) */}
+                            <div className="absolute top-4 right-4 z-10">
+                                {module.isPublished ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Publié
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">
+                                        Brouillon
+                                    </span>
+                                )}
+                            </div>
+
+                            <Link href={`/admin/pedagogie/adultes/${module.id}`} className="pr-16">
                                 <div className="space-y-3">
                                     <div>
-                                        <h3 className="font-bold text-violet-900 text-base tracking-tight group-hover:text-violet-600 transition-colors">{module.titre}</h3>
-                                        <p className="text-violet-600 text-xs mt-1.5 line-clamp-2 leading-relaxed">{module.description || "Aucune description fournie pour ce module pédagogique."}</p>
+                                        <h3 className={`font-bold text-base tracking-tight transition-colors
+                                ${module.isPublished ? 'text-violet-900 group-hover:text-violet-600' : 'text-slate-500 group-hover:text-violet-600'}`}
+                                        >
+                                            {module.titre}
+                                        </h3>
+                                        <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed
+                                ${module.isPublished ? 'text-violet-600' : 'text-slate-400'}`}
+                                        >
+                                            {module.description || "Aucune description fournie pour ce module pédagogique."}
+                                        </p>
                                     </div>
                                 </div>
                             </Link>
@@ -188,11 +233,30 @@ export default function PedagogieAdultesPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <button onClick={() => ouvrirModalModification(module)} className="text-violet-600 hover:text-violet-700 font-semibold flex items-center gap-1 group/link">
+                                    {/* Bouton d’activation / désactivation stylisé */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // On définit d'abord l'ID sélectionné pour que handleActiveModule fonctionne
+                                            setSelectedModuleId(module.id);
+                                            // On appelle la fonction (pensez à l'adapter si nécessaire pour lire l'état)
+                                            handleActiveModule();
+                                        }}
+                                        className={`p-1.5 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm
+                                ${module.isPublished
+                                                ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-700'
+                                                : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700'
+                                            }`}
+                                        title={module.isPublished ? "Masquer le module (Brouillon)" : "Publier le module"}
+                                    >
+                                        {module.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+
+                                    <button onClick={() => ouvrirModalModification(module)} className="text-violet-600 hover:text-violet-700 font-semibold flex items-center gap-1 group/link cursor-pointer">
                                         <Pencil className="h-3.5 w-3.5" /> Modifier
                                     </button>
 
-                                    <button onClick={() => { setSelectedModuleId(module.id); setModalDeleteIsOpen(true); }} className="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1 group/link">
+                                    <button onClick={() => { setSelectedModuleId(module.id); setModalDeleteIsOpen(true); }} className="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1 group/link cursor-pointer">
                                         <Trash className="h-3.5 w-3.5" /> Supprimer
                                     </button>
                                 </div>

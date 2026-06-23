@@ -98,3 +98,26 @@ export async function supprimerModule(id: number) {
         return { success: false, error: "Une erreur est survenue lors de la suppression du module." };
     }
 }
+
+export async function activateModule(id: number, status: boolean) {
+    try {
+        const result = await prisma.module.update({
+            where: { id: id },
+            data: {
+                isPublished: status
+            },
+            include: {
+                _count: {
+                    select: { cours: true }
+                }
+            }
+        })
+
+        revalidatePath('/admin/pedagogie/adultes');
+
+        return { success: true, data: result };
+    } catch (error) {
+        console.error("Erreur Prisma (activateModule) :", error);
+        return { success: false, error: "Une erreur est survenue lors de l'activation du module." };
+    }
+}
