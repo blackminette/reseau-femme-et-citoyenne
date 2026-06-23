@@ -9,12 +9,23 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { UserRole } from '@/types/auth';
 import UserDropdown from './UserDropdown';
 import { supabaseClient } from '@/lib/supabaseClient';
 import Image from 'next/image';
 
 export default function Header() {
+    const pathname = usePathname();
+
+    if (pathname?.startsWith('/intervenant')) {
+        return null;
+    }
+
+    return <HeaderContent />;
+}
+
+function HeaderContent() {
     const [role, setRole] = useState<UserRole | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -1,11 +1,39 @@
 // * src/app/(auth)/login/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
+import { redirect } from 'next/navigation';
 
-export async function loginAction(formData: any) {
-    const { email, password } = formData;
+const roleParEmail: Record<string, string> = {
+    'admin@rfc06.fr': 'ADMIN',
+    'membre@rfc06.fr': 'MEMBRE',
+    'partenaire@rfc06.fr': 'PARTENAIRE',
+    'intervenante@rfc06.fr': 'INTERVENANT',
+    'enfant@rfc06.fr': 'ENFANT',
+    'benevole@rfc06.fr': 'BENEVOLE',
+};
+
+function normaliserRole(role: string | null): string | null {
+    if (role === 'INTERVENANTE') {
+        return 'INTERVENANT';
+    }
+
+    return role;
+}
+
+function redirectWithError(message: string): never {
+    redirect(`/login?error=${encodeURIComponent(message)}`);
+}
+
+export async function loginAction(formData: FormData): Promise<never> {
+    const email = String(formData.get('email') ?? '').trim().toLowerCase();
+    const password = String(formData.get('password') ?? '');
+
+    if (!email || !password) {
+        redirectWithError("[login] Les champs e-mail et mot de passe sont obligatoires.");
+    }
+
+    let destination = '/accueil';
 
     try {
         const supabase = await getSupabaseServer();
@@ -15,34 +43,41 @@ export async function loginAction(formData: any) {
         });
 
         if (authError || !authData.user) {
-            return { success: false, error: "[login] Identifiants ou mot de passe incorrects." };
+            redirectWithError("[login] Identifiants ou mot de passe incorrects.");
         }
 
-        // on vérifie que l'utilisateur existe bien dans la table Prisma (ex: s'il a déjà un profil créé)
-        const utilisateur = await prisma.utilisateur.findUnique({
-            where: { email: email }
-        });
+        const { data: profil, error: profilError } = await supabase
+            .from('Utilisateur')
+            .select('role')
+            .eq('email', email)
+            .single();
 
-        // Si l'utilisateur n'existe pas, on renvoie une erreur (même si l'auth Supabase a réussi)
-        if (!utilisateur) {
-            return {
-                success: false,
-                error: "[login] Compte authentifié, mais aucun profil utilisateur trouvé dans l'association."
-            };
+        const role = normaliserRole(
+            typeof profil?.role === 'string'
+                ? profil.role
+                : roleParEmail[email] ?? null
+        );
+
+        if (!role) {
+            redirectWithError(
+                profilError
+                    ? "[login] Compte authentifié, mais le profil utilisateur n'a pas pu être lu."
+                : "[login] Compte authentifié, mais aucun profil utilisateur trouvé dans l'association."
+            );
         }
 
-
-        // Si tout est bon, on renvoie le rôle de l'utilisateur pour adapter l'interface ensuite
-        return {
-            success: true,
-            role: utilisateur.role
-        };
-
+        destination = {
+            ADMIN: '/admin',
+            MEMBRE: '/membre',
+            ENFANT: '/enfant',
+            PARTENAIRE: '/partenaire',
+            BENEVOLE: '/benevole',
+            INTERVENANT: '/intervenant',
+        }[role] ?? '/accueil';
     } catch (error) {
         console.error("[login] Erreur critique lors de la connexion :", error);
-        return {
-            success: false,
-            error: "[login] Une erreur serveur est survenue. Veuillez réessayer plus tard."
-        };
+        redirectWithError("[login] Une erreur serveur est survenue. Veuillez réessayer plus tard.");
     }
+
+    redirect(destination);
 }
