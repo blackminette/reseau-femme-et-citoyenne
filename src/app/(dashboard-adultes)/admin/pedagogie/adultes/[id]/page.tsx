@@ -7,14 +7,12 @@ import { getModuleAndCours, creerCours, supprimerCours, changerOrdreCours } from
 import Modal from '@/components/Modal';
 import Link from 'next/link';
 import { ChevronRight, ArrowUp, ArrowDown, BrainCircuit, Trash2 } from 'lucide-react';
-import { NiveauPedagogique } from '@prisma/client';
 
 interface CoursInfo {
     id: number;
     titre: string;
     description: string | null;
     ordreDansModule: number;
-    niveauRequis: NiveauPedagogique;
     createdAt: Date;
 }
 
@@ -37,25 +35,6 @@ export default function AdminModulePage() {
     const params = useParams();
     const id = params.id as string;
     const moduleId = parseInt(id, 10);
-
-    const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
-        NIVEAU_1: {
-            label: 'Débutant',
-            classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        },
-        NIVEAU_2: {
-            label: 'Intermédiaire',
-            classes: 'bg-amber-50 text-amber-700 border-amber-200'
-        },
-        NIVEAU_3: {
-            label: 'Avancé',
-            classes: 'bg-rose-50 text-rose-700 border-rose-200'
-        },
-        ADULTE: {
-            label: 'Adulte',
-            classes: 'bg-violet-50 text-violet-700 border-violet-200'
-        }
-    };
 
     const trierLesCours = (coursListe: CoursInfo[]) => {
         return [...coursListe].sort((a, b) => a.ordreDansModule - b.ordreDansModule);
@@ -121,7 +100,7 @@ export default function AdminModulePage() {
             setIsModalDeleteOpen(false);
             setCoursId(null);
         } else {
-            setError("Une erreur est survenue.")
+            setError("Une erreur est survenue.");
         }
     };
 
@@ -199,17 +178,8 @@ export default function AdminModulePage() {
                                             {index + 1}. {cours.titre}
                                         </h3>
                                     </div>
-
-                                    {/* AFFICHAGE DU NIVEAU STYLISÉ */}
-                                    {cours.niveauRequis && (
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0 w-fit ${NIVEAU_STYLES[cours.niveauRequis]?.classes || 'bg-slate-50 text-slate-600 border-slate-200'
-                                            }`}>
-                                            {NIVEAU_STYLES[cours.niveauRequis]?.label || cours.niveauRequis}
-                                        </span>
-                                    )}
                                 </Link>
 
-                                {/* ZONE DE BOUTONS D'ACTION (Flèches d'ordre + Supprimer) */}
                                 <div className="flex items-center gap-1 relative z-10">
                                     <Link
                                         href={`/admin/pedagogie/adultes/${moduleId}/listeExercice/${cours.id}`}
@@ -218,7 +188,7 @@ export default function AdminModulePage() {
                                         <BrainCircuit className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors" />
                                         Exercices
                                     </Link>
-                                    {/* Bouton Monter (Masqué ou désactivé pour le tout premier cours) */}
+
                                     <button
                                         onClick={() => handleReordonner(cours.id, 'HAUT')}
                                         disabled={index === 0}
@@ -228,7 +198,6 @@ export default function AdminModulePage() {
                                         <ArrowUp className="w-4 h-4" />
                                     </button>
 
-                                    {/* Bouton Descendre (Masqué ou désactivé pour le tout dernier cours) */}
                                     <button
                                         onClick={() => handleReordonner(cours.id, 'BAS')}
                                         disabled={index === module.cours.length - 1}
@@ -238,10 +207,8 @@ export default function AdminModulePage() {
                                         <ArrowDown className="w-4 h-4" />
                                     </button>
 
-                                    {/* Séparateur visuel subtil */}
                                     <span className="w-[1px] h-4 bg-slate-200 mx-1"></span>
 
-                                    {/* Ton bouton supprimer d'origine */}
                                     <button
                                         onClick={() => {
                                             setCoursId(cours.id);

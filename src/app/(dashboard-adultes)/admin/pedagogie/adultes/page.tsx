@@ -1,6 +1,5 @@
-'use client';
-
 // * src/app/(dashboard-adultes)/admin/pedagogie/adultes/page.tsx
+'use client';
 
 /** Page pour choisir et rediriger vers le bon module pédagogique. */
 
@@ -9,16 +8,17 @@ import React, { useEffect, useState } from 'react';
 import { listerTousLesModules, creerModule, supprimerModule, modifierModule, activateModule } from './actions';
 import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/Modal';
+import { NiveauPedagogique } from '@prisma/client';
 
 interface ModuleAvecCompte {
     id: number;
     titre: string;
     description: string | null;
     isPublished: boolean;
-    createdAt: Date;
     _count: {
         cours: number;
     };
+    niveauRequis?: NiveauPedagogique;
 }
 
 export default function PedagogieAdultesPage() {
@@ -30,7 +30,30 @@ export default function PedagogieAdultesPage() {
     const [modalDeleteIsOpen, setModalDeleteIsOpen] = useState(false);
     const [modalEditIsOpen, setModalEditIsOpen] = useState(false);
 
-    const [formData, setFormData] = useState({ titre: '', description: '' });
+    const [formData, setFormData] = useState<{ titre: string; description: string; niveauRequis: NiveauPedagogique }>({
+        titre: '',
+        description: '',
+        niveauRequis: NiveauPedagogique.ADULTE
+    });
+
+    const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
+        NIVEAU_1: {
+            label: 'Débutant',
+            classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        },
+        NIVEAU_2: {
+            label: 'Intermédiaire',
+            classes: 'bg-amber-50 text-amber-700 border-amber-200'
+        },
+        NIVEAU_3: {
+            label: 'Avancé',
+            classes: 'bg-rose-50 text-rose-700 border-rose-200'
+        },
+        ADULTE: {
+            label: 'Adulte',
+            classes: 'bg-violet-50 text-violet-700 border-violet-200'
+        }
+    };
 
     useEffect(() => {
         async function fetchModules() {
@@ -49,7 +72,11 @@ export default function PedagogieAdultesPage() {
 
     const ouvrirModalModification = (module: ModuleAvecCompte) => {
         setSelectedModuleId(module.id);
-        setFormData({ titre: module.titre, description: module.description || '' });
+        setFormData({
+            titre: module.titre,
+            description: module.description || '',
+            niveauRequis: module.niveauRequis || NiveauPedagogique.ADULTE
+        });
         setModalEditIsOpen(true);
     };
 
@@ -61,8 +88,9 @@ export default function PedagogieAdultesPage() {
         const data = new FormData(form);
         const titre = (data.get('titre') as string) || '';
         const description = (data.get('description') as string) || '';
+        const niveauRequis = (data.get('niveauRequis') as NiveauPedagogique) || NiveauPedagogique.ADULTE;
 
-        const result = await creerModule({ titre, description });
+        const result = await creerModule({ titre, description, niveauRequis });
         if (result.success && result.data) {
             setModules(prev => [result.data as unknown as ModuleAvecCompte, ...prev]);
             setModalCreateIsOpen(false);
@@ -91,10 +119,15 @@ export default function PedagogieAdultesPage() {
         if (selectedModuleId === null) return;
         setError(null);
 
-        const result = await modifierModule({ id: selectedModuleId, titre: formData.titre, description: formData.description });
+        const result = await modifierModule({
+            id: selectedModuleId,
+            titre: formData.titre,
+            description: formData.description,
+            niveauRequis: formData.niveauRequis
+        });
         if (result.success && result.data) {
             setModalEditIsOpen(false);
-            setFormData({ titre: '', description: '' });
+            setFormData({ titre: '', description: '', niveauRequis: NiveauPedagogique.ADULTE });
             setSelectedModuleId(null);
             setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m));
         } else {
@@ -107,15 +140,15 @@ export default function PedagogieAdultesPage() {
         const selectedModule = modules.find(m => m.id === selectedModuleId);
         if (!selectedModule) return;
 
-        const newStatus = !selectedModule.isPublished
+        const newStatus = !selectedModule.isPublished;
 
-        const result = await activateModule(selectedModule.id, newStatus)
+        const result = await activateModule(selectedModule.id, newStatus);
         if (result.success) {
-            setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m))
+            setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m));
         } else {
             setError(result.error || "Une erreur est survenue.");
         }
-    }
+    };
 
     return (
         <div className="p-6 pl-8 pr-8 mx-auto space-y-8 animate-fade-in">
@@ -135,7 +168,7 @@ export default function PedagogieAdultesPage() {
 
                     <button
                         onClick={() => {
-                            setFormData({ titre: '', description: '' });
+                            setFormData({ titre: '', description: '', niveauRequis: NiveauPedagogique.ADULTE });
                             setModalCreateIsOpen(true);
                         }}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-md hover:bg-violet-700 transition-colors"
@@ -196,7 +229,12 @@ export default function PedagogieAdultesPage() {
                                 }`}
                         >
                             {/* Indicateur visuel de statut (Badge) */}
-                            <div className="absolute top-4 right-4 z-10">
+                            <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
+                                {module.niveauRequis && (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 w-fit ${NIVEAU_STYLES[module.niveauRequis]?.classes || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                        {NIVEAU_STYLES[module.niveauRequis]?.label || module.niveauRequis}
+                                    </span>
+                                )}
                                 {module.isPublished ? (
                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -233,13 +271,10 @@ export default function PedagogieAdultesPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    {/* Bouton d’activation / désactivation stylisé */}
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            // On définit d'abord l'ID sélectionné pour que handleActiveModule fonctionne
                                             setSelectedModuleId(module.id);
-                                            // On appelle la fonction (pensez à l'adapter si nécessaire pour lire l'état)
                                             handleActiveModule();
                                         }}
                                         className={`p-1.5 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm
@@ -277,6 +312,15 @@ export default function PedagogieAdultesPage() {
                             <label htmlFor="description" className="block text-sm font-medium text-violet-800">Description du module</label>
                             <textarea id="description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez la description du module" />
                         </div>
+                        <div>
+                            <label htmlFor="niveauRequis" className="block text-sm font-medium text-violet-800">Niveau requis</label>
+                            <select id="niveauRequis" name="niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500 bg-white">
+                                <option value={NiveauPedagogique.ADULTE}>Adulte</option>
+                                <option value={NiveauPedagogique.NIVEAU_1}>Débutant (Niveau 1)</option>
+                                <option value={NiveauPedagogique.NIVEAU_2}>Intermédiaire (Niveau 2)</option>
+                                <option value={NiveauPedagogique.NIVEAU_3}>Avancé (Niveau 3)</option>
+                            </select>
+                        </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button type="button" onClick={() => setModalCreateIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
                             <button type="submit" className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm">Créer</button>
@@ -305,6 +349,15 @@ export default function PedagogieAdultesPage() {
                         <div>
                             <label htmlFor="edit-description" className="block text-sm font-medium text-violet-800">Description du module</label>
                             <textarea id="edit-description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez la description du module" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-niveauRequis" className="block text-sm font-medium text-violet-800">Niveau requis</label>
+                            <select id="edit-niveauRequis" name="niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500 bg-white" value={formData.niveauRequis} onChange={e => setFormData({ ...formData, niveauRequis: e.target.value as NiveauPedagogique })} >
+                                <option value={NiveauPedagogique.ADULTE}>Adulte</option>
+                                <option value={NiveauPedagogique.NIVEAU_1}>Débutant (Niveau 1)</option>
+                                <option value={NiveauPedagogique.NIVEAU_2}>Intermédiaire (Niveau 2)</option>
+                                <option value={NiveauPedagogique.NIVEAU_3}>Avancé (Niveau 3)</option>
+                            </select>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button type="button" onClick={() => setModalEditIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
