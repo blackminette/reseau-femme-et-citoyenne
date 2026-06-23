@@ -93,6 +93,7 @@ model Module {
   titre        String
   description  String?
   public       PublicCible       @default(ADULTE)
+  isPublished  Boolean           @default(false)
   createdAt    DateTime          @default(now())
   cours        Cours[]
 }

@@ -99,8 +99,15 @@ async function main() {
     }
 
     await prisma.utilisateur.upsert({
-      where: { id: supabaseAuthId },
-      update: {},
+      // Recherche par l'email unique plutôt que par l'id Supabase
+      where: { email: user.email },
+      update: {
+        id: supabaseAuthId, // Met à jour l'id au cas où il aurait changé
+        nom: user.nom,
+        prenom: user.prenom,
+        role: user.role,
+        telephone: user.telephone,
+      },
       create: {
         id: supabaseAuthId,
         email: user.email,
