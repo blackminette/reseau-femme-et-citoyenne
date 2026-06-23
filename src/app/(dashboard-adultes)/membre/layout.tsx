@@ -1,12 +1,13 @@
-// * src/app/(dashboard-adultes)/(dashboard)/membre/layout.tsx
+// * src/app/(dashboard-adultes)/membre/layout.tsx
 
 import React from 'react';
 import MemberSideMenu from '@/components/MemberSideMenu';
+import MemberMobileNav from '@/components/MemberMobileNav';
 
 /**
- * Layout unique de l'espace membre. 
- * Il applique le menu fixe à gauche et injecte les pages à droite via {children}.
- * Utilise une marge fixe à gauche pour empêcher le contenu de se superposer sous le menu.
+ * Layout de l'espace membre.
+ * Même design responsive que l'espace enfant : sidebar classique sur bureau,
+ * barre supérieure mobile + drawer sur mobile.
  */
 
 export default function MembreLayout({
@@ -15,16 +16,19 @@ export default function MembreLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-violet-50 flex flex-col md:flex-row">
 
-            {/* Barre latérale fixe à gauche (Prend strictement 1/6 de la largeur) */}
-            <aside className="w-1/6 fixed inset-y-16 left-0 bg-white border-r border-slate-200 z-40 p-4">
+            {/* En-tête mobile (masqué sur bureau, affiché sur mobile) */}
+            <MemberMobileNav />
+
+            {/* Barre latérale sticky à gauche, sur toute la hauteur (masquée sur mobile, affichée sur bureau) */}
+            <aside className="hidden md:block sticky top-0 h-screen z-40 w-64 shrink-0 overflow-y-auto border-r border-violet-200 bg-white p-5">
                 <MemberSideMenu />
             </aside>
 
-            {/* Zone de droite décalée de force par une marge équivalente à la largeur du menu (1/6 = 16.666667%) */}
-            <main className="ml-[16.666667%] p-8">
-                <div className="max-w-5xl mx-auto">
+            {/* Zone de droite */}
+            <main className="flex-grow p-4 sm:p-6 md:p-8">
+                <div className="mx-auto max-w-6xl">
                     {children}
                 </div>
             </main>

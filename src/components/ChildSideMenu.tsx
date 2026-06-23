@@ -1,11 +1,11 @@
-// * src/components/MemberSideMenu.tsx
+// * src/components/ChildSideMenu.tsx
 'use client';
 
 /**
  * DESCRIPTION :
- * Barre latérale de l'espace membre.
- * Aligne le design sur la console admin : marque, navigation sectionnée avec
- * état actif (fond indigo + barre latérale), chevron au survol et déconnexion.
+ * Barre latérale de l'espace enfant.
+ * Même langage visuel que la sidebar membre/admin : marque, navigation sectionnée
+ * avec état actif (fond indigo + barre latérale), chevron au survol et déconnexion.
  */
 
 import React from 'react';
@@ -13,51 +13,43 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
     LayoutDashboard,
-    CalendarCheck,
-    CalendarPlus,
-    Users,
-    LifeBuoy,
-    ChevronRight,
-    LogOut,
     BookOpen,
     TrendingUp,
     Award,
+    ClipboardList,
+    Palette,
+    ChevronRight,
+    LogOut,
     type LucideIcon,
 } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
-// Navigation organisée en sections, comme la sidebar admin.
 const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: LucideIcon }[] }[] = [
     {
-        titre: "Vue d'ensemble",
-        liens: [{ href: '/membre', label: 'Tableau de bord', Icon: LayoutDashboard }],
+        titre: 'Mon espace',
+        liens: [{ href: '/enfant', label: 'Tableau de bord', Icon: LayoutDashboard }],
     },
     {
         titre: 'Apprendre',
         liens: [
-            { href: '/membre/modules', label: 'Mes modules', Icon: BookOpen },
-            { href: '/membre#progres', label: 'Mes progrès', Icon: TrendingUp },
-            { href: '/membre/badges', label: 'Mes badges', Icon: Award },
+            { href: '/enfant/modules', label: 'Mes modules', Icon: BookOpen },
+            { href: '/enfant#progres', label: 'Mes progrès', Icon: TrendingUp },
         ],
     },
     {
-        titre: 'Mes activités',
+        titre: 'Récompenses',
         liens: [
-            { href: '/membre/reservations', label: 'Mes réservations', Icon: CalendarCheck },
-            { href: '/membre/reserver', label: 'Réserver un atelier', Icon: CalendarPlus },
+            { href: '/enfant/badges', label: 'Mes badges', Icon: Award },
+            { href: '/enfant#resultats', label: 'Mes résultats', Icon: ClipboardList },
         ],
     },
     {
-        titre: 'Ma famille',
-        liens: [{ href: '/membre/enfants', label: 'Mes enfants', Icon: Users }],
-    },
-    {
-        titre: 'Aide',
-        liens: [{ href: '/contact', label: 'Contact', Icon: LifeBuoy }],
+        titre: 'Activités',
+        liens: [{ href: '/enfant/ateliers', label: 'Mes ateliers', Icon: Palette }],
     },
 ];
 
-export default function MemberSideMenu({ onClose }: { onClose?: () => void }) {
+export default function ChildSideMenu({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -73,11 +65,11 @@ export default function MemberSideMenu({ onClose }: { onClose?: () => void }) {
             {/* Marque */}
             <div className="mb-2 flex items-center gap-2.5 border-b border-violet-100 px-3 pb-4">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold text-white">
-                    M
+                    E
                 </div>
                 <div className="truncate">
-                    <h2 className="truncate text-sm font-bold leading-none text-violet-900">Espace Membre</h2>
-                    <span className="mt-0.5 block text-[10px] font-medium text-violet-500">Mon compte</span>
+                    <h2 className="truncate text-sm font-bold leading-none text-violet-900">Espace Enfant</h2>
+                    <span className="mt-0.5 block text-[10px] font-medium text-violet-500">Mon espace</span>
                 </div>
             </div>
 
@@ -92,7 +84,7 @@ export default function MemberSideMenu({ onClose }: { onClose?: () => void }) {
                             const isActive = pathname === href;
                             return (
                                 <Link
-                                    key={href}
+                                    key={label}
                                     href={href}
                                     onClick={onClose}
                                     className={`group relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
@@ -101,7 +93,6 @@ export default function MemberSideMenu({ onClose }: { onClose?: () => void }) {
                                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                     }`}
                                 >
-                                    {/* Barre latérale de l'onglet actif */}
                                     {isActive && (
                                         <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-md bg-indigo-600" />
                                     )}
@@ -130,7 +121,7 @@ export default function MemberSideMenu({ onClose }: { onClose?: () => void }) {
                     className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-violet-600 transition-all duration-200 hover:bg-amber-50 hover:text-amber-600"
                 >
                     <LogOut className="h-4 w-4 shrink-0 text-violet-500 transition-colors group-hover:text-amber-500" />
-                    <span className="truncate">Déconnexion</span>
+                    <span className="truncate">Se déconnecter</span>
                 </button>
             </div>
         </div>
