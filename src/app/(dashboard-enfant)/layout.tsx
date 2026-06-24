@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 import EnfantNavbar from '@/components/EnfantNavbar';
 import { deconnexionUtilisateur } from '@/app/auth/auth';
+import ChildMobileNav from '@/components/ChildMobileNav';
 
 export const metadata = {
     title: 'AtelierKids - Espace Enfant',
@@ -35,9 +36,14 @@ export default async function EnfantLayout({
 
     return (
         <div className="min-h-screen bg-[#f6f8fc] flex flex-col font-sans">
-            
-            {/* ─── BARRE DE NAVIGATION HORIZONTALE SUPÉRIEURE (HEADER) ─── */}
-            <header className="bg-white border-b border-slate-100 px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xs">
+
+            {/* ─── NAVIGATION MOBILE ─── */}
+            <div className="sticky top-0 z-50 md:hidden">
+                <ChildMobileNav />
+            </div>
+
+            {/* ─── BARRE DE NAVIGATION HORIZONTALE SUPÉRIEURE (DESKTOP) ─── */}
+            <header className="hidden bg-white border-b border-slate-100 px-6 py-3 md:flex items-center justify-between sticky top-0 z-50 shadow-xs">
                 
                 {/* Logo & Brand */}
                 <div className="flex items-center gap-2">

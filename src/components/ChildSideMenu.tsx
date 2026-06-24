@@ -81,7 +81,9 @@ export default function ChildSideMenu({ onClose }: { onClose?: () => void }) {
                             {section.titre}
                         </h3>
                         {section.liens.map(({ href, label, Icon }) => {
-                            const isActive = pathname === href;
+                            const isActive = href === '/enfant/modules'
+                                ? pathname.startsWith('/enfant/modules')
+                                : pathname === href;
                             return (
                                 <Link
                                     key={label}
