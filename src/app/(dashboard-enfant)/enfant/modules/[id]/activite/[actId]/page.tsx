@@ -245,14 +245,27 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             illustration: "👦"
         },
         exercice: {
-            titre: "Réponds brièvement aux questions sur le texte du voyage de Léo.",
-            type: 'input',
+            titre: "Relie chaque question à sa bonne réponse d'après le texte.",
+            type: 'match',
             data: {
-                questions: [
-                    { label: "1. Où Léo et sa famille vont-ils ?", key: "lieu", correct: ["montagne", "la montagne"], placeholder: "Ex: à la montagne" },
-                    { label: "2. Quel moyen de transport prennent-ils ?", key: "transport", correct: ["train", "le train"], placeholder: "Ex: le train" },
-                    { label: "3. Qu'observe Léo pendant sa randonnée ?", key: "observation", correct: ["fleurs", "papillons", "fleurs et papillons", "des fleurs", "des papillons"], placeholder: "Ex: des fleurs et des papillons" }
-                ]
+                left: [
+                    { id: 'l1', text: "Où vont Léo et sa famille ?" },
+                    { id: 'l2', text: "Quel transport prennent-ils ?" },
+                    { id: 'l3', text: "Où posent-ils leurs valises ?" },
+                    { id: 'l4', text: "Qu'observe Léo en chemin ?" }
+                ],
+                right: [
+                    { id: 'r2', text: "Le train." },
+                    { id: 'r1', text: "À la montagne." },
+                    { id: 'r4', text: "Des fleurs et des papillons." },
+                    { id: 'r3', text: "Dans un chalet confortable." }
+                ],
+                pairs: {
+                    'l1': 'r1',
+                    'l2': 'r2',
+                    'l3': 'r3',
+                    'l4': 'r4'
+                }
             }
         },
         quiz: [
