@@ -1,1 +1,1 @@
-// * src/app/(dashboard-adultes)/(dashboard)/benevole/accompagner/page.tsx
+// * src/app/(dashboard-adultes)/benevole/accompagner/page.tsx

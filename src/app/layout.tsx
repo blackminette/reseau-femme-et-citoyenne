@@ -2,6 +2,8 @@
 import React from 'react';
 import '@/app/globals.css';
 import Header from '@/components/Header';
+import AppLayoutWrapper from '@/components/AppLayoutWrapper';
+
 export const metadata = {
     title: 'Mon Projet Association',
     description: 'Application de gestion avec contrôle des rôles (RBAC)',
@@ -12,6 +14,7 @@ export const metadata = {
  * Header global conservé ; pas de Footer global → les dashboards n'ont pas de footer
  * et la vitrine garde son propre VitrineFooter via (vitrine)/layout.tsx.
  */
+
 export default function RootLayout({
     children,
 }: {
@@ -22,7 +25,10 @@ export default function RootLayout({
             <body className="antialiased bg-slate-100 text-slate-900 flex flex-col min-h-screen">
                 <Header />
                 <main className="grow flex flex-col">
-                    {children}
+                    {/* On passe par un wrapper client pour décider conditionnellement d'afficher le Footer */}
+                    <AppLayoutWrapper>
+                        {children}
+                    </AppLayoutWrapper>
                 </main>
             </body>
         </html>
