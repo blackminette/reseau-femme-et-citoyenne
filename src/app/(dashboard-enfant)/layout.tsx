@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 import EnfantNavbar from '@/components/EnfantNavbar';
+import { deconnexionUtilisateur } from '@/app/auth/auth';
 
 export const metadata = {
     title: 'AtelierKids - Espace Enfant',
@@ -70,14 +71,15 @@ export default async function EnfantLayout({
                         </div>
                     </div>
 
-                    <Link 
-                        href="/api/auth/signout" 
-                        prefetch={false}
-                        className="bg-[#eb5757] hover:bg-[#e04f4f] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5"
-                    >
-                        Déconnexion
-                        <LogOut className="h-3.5 w-3.5" />
-                    </Link>
+                    <form action={deconnexionUtilisateur}>
+                        <button
+                            type="submit"
+                            className="bg-[#eb5757] hover:bg-[#e04f4f] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                            Déconnexion
+                            <LogOut className="h-3.5 w-3.5" />
+                        </button>
+                    </form>
                 </div>
             </header>
 

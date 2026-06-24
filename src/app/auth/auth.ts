@@ -13,5 +13,5 @@ export async function deconnexionUtilisateur() {
         console.error("Erreur lors de la déconnexion Supabase:", error.message);
     }
 
-    redirect('/');
+    redirect('/login');
 }
