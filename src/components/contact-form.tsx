@@ -162,12 +162,20 @@ export default function ContactForm() {
 
 
                 {/* Politique prive */}
-                <p className="text-xs text-gray-500 mt-4 leading-relaxed">
-                    Je comprends que mes données seront conservées en toute sécurité conformément à la {' '}
-                    <a href="#" className="underline font-medium text-gray-900 hover:text-gray-700">
-                        politique de confidentialité
-                    </a>.
-                </p>
+                <div className="mt-4 flex items-start gap-2">
+                    <input 
+                        type="checkbox" 
+                        required 
+                        id="rgpd"
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-[#260936] focus:ring-[#260936]" 
+                    />
+                    <label htmlFor="rgpd" className="text-xs text-gray-500 leading-relaxed cursor-pointer select-none">
+                        Je comprends et j'accepte que mes données soient conservées en toute sécurité conformément à la{' '}
+                        <a href="/mentions-legales#confidentialite" className="underline font-medium text-gray-900 hover:text-gray-700">
+                            politique de confidentialité
+                        </a>.
+                    </label>
+                </div>
 
 
                 {/* Status du message */}
