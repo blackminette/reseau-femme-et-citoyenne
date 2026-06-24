@@ -12,6 +12,7 @@ function mapTitreToSlug(titre: string): string {
     if (t.includes('robotique') || t.includes('robot')) return 'robotique';
     if (t.includes('anglais')) return 'anglais';
     if (t.includes('civique') || t.includes('citoyen')) return 'civique';
+    if (t.includes('napoléon') || t.includes('napoleon')) return 'napoleon';
     if (t.includes('éco') || t.includes('eco')) return 'eco';
     return 'lecture'; // fallback
 }
@@ -682,7 +683,8 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
                 dbId: mod.id,
                 label: mod.titre,
                 description: mod.description || '',
-                progression: pct
+                progression: pct,
+                slug: mapTitreToSlug(mod.titre)
             });
         }
         return mapped;
