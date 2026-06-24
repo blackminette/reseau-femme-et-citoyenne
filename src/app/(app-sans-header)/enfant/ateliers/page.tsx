@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { ENFANT, ATELIERS_RESERVES, ATELIERS_CATALOGUE } from "@/lib/enfant-data";
 import EnfantHeader from "@/components/EnfantHeader";
+import IconBadge from "@/components/IconBadge";
 
 export const metadata = {
     title: "Mes ateliers",
@@ -34,9 +35,7 @@ export default function EnfantAteliersPage() {
 
             {/* ─── Stat : nombre d'ateliers réservés ─── */}
             <div className="mt-6 flex max-w-[220px] items-center gap-4 rounded-2xl border border-violet-200 bg-white p-5 shadow-xs">
-                <div className="rounded-xl bg-violet-50 p-3 text-violet-600">
-                    <Palette className="h-6 w-6" aria-hidden />
-                </div>
+                <IconBadge Icon={Palette} tone="pink" size="lg" />
                 <div>
                     <span className="text-2xl font-bold tracking-tight text-violet-950">{ATELIERS_RESERVES.length}</span>
                     <p className="text-sm font-medium text-violet-600">Ateliers réservés</p>
