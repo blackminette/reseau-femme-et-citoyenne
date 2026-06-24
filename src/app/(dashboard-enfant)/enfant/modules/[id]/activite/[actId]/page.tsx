@@ -6,94 +6,488 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
     ChevronLeft, Star, Trophy, Check, RotateCcw, 
-    Sparkles, Brush, Eraser, Trash2, BookOpen, AlertCircle,
-    HelpCircle
+    Sparkles, BookOpen, AlertCircle, HelpCircle, 
+    ArrowRight, CheckCircle2, XCircle, Info, MoveUp, MoveDown
 } from 'lucide-react';
 import { MODULES } from '@/lib/enfant-data';
 import { obtenirDetailsActiviteDepuisDB, sauvegarderResultatActivite, obtenirDetailsModuleDepuisDB } from '../../../actions';
 
-// Types de données
+// Types
 type Question = {
     q: string;
     options: string[];
-    answer: number; // Index de la bonne réponse
+    answer: number;
     explication: string;
 };
 
-type LeconSlide = {
-    titre: string;
-    texte: string;
-    imagePlaceholder: string; // Emoji de l'image
-    bgColor: string;
+type ModuleContent = {
+    titreGlobal: string;
+    description: string;
+    themeColor: string;
+    step1: {
+        titre: string;
+        soustitre: string;
+        texte: string;
+        emoji: string;
+        aRetenir: string;
+    };
+    step2: {
+        soustitre: string;
+        boxTitre: string;
+        texte: string;
+        emoji: string;
+        aRetenir: string[];
+        badges?: { label: string; emoji: string }[];
+        bulletList?: string[];
+    };
+    step3: {
+        soustitre: string;
+        texte: string;
+        pointsCles: string[];
+        bulles: string[];
+        illustration: string;
+        objectif?: string;
+    };
+    exercice: {
+        titre: string;
+        type: 'match' | 'order' | 'input' | 'sort';
+        data: any;
+    };
+    quiz: Question[];
 };
 
-// Base de données des leçons et quiz interactifs
-const LEÇONS_DATA: Record<string, LeconSlide[]> = {
-    l1: [
-        { titre: "Les voyelles joyeuses", texte: "Les lettres A, E, I, O, U, Y sont les voyelles ! Elles donnent de la voix aux mots. Par exemple : A comme 'Abeille' et O comme 'Ours'.", imagePlaceholder: "🐝 🐻", bgColor: "bg-emerald-50" },
-        { titre: "Les consonnes compagnes", texte: "Toutes les autres lettres sont des consonnes. Elles s'associent aux voyelles pour former des sons. B et A font 'BA' !", imagePlaceholder: "📚 ✏️", bgColor: "bg-teal-50" },
-        { titre: "La chanson de l'alphabet", texte: "Répète après nous : A, B, C, D, E, F, G... Tu connais maintenant le secret des mots !", imagePlaceholder: "🎵 ✨", bgColor: "bg-violet-50" }
-    ],
-    n1: [
-        { titre: "Découvrir la souris", texte: "La souris te permet de diriger le pointeur à l'écran. Fais un 'Clic gauche' pour choisir un élément, et un double-clic pour ouvrir un jeu !", imagePlaceholder: "🖱️ 🎯", bgColor: "bg-blue-50" },
-        { titre: "Apprivoiser le clavier", texte: "Le clavier sert à écrire des lettres et des chiffres. Utilise la touche 'Espace' pour faire des trous entre les mots, et 'Entrée' pour aller à la ligne.", imagePlaceholder: "⌨️ ✍️", bgColor: "bg-indigo-50" },
-        { titre: "Attention à ton écran !", texte: "Il est important de garder tes yeux à bonne distance de l'écran et de faire des pauses régulières pour jouer dehors !", imagePlaceholder: "🌳 🏃‍♂️", bgColor: "bg-sky-50" }
-    ],
-    r1: [
-        { titre: "C'est quoi un robot ?", texte: "Un robot est une machine intelligente qui peut faire des tâches toute seule. Il obéit aux instructions (le code) données par les humains !", imagePlaceholder: "🤖 🧠", bgColor: "bg-purple-50" },
-        { titre: "Les capteurs : les yeux du robot", texte: "Pour ne pas foncer dans les murs, le robot utilise des capteurs de distance ou de lumière. C'est comme ses yeux !", imagePlaceholder: "👀 📡", bgColor: "bg-pink-50" },
-        { titre: "Les moteurs : les jambes du robot", texte: "Pour bouger ses roues ou ses bras mécaniques, le robot utilise des petits moteurs électriques très précis.", imagePlaceholder: "⚙️ ⚡", bgColor: "bg-violet-50" }
-    ],
-    c1: [
-        { titre: "Le drapeau tricolore", texte: "Le drapeau français a trois couleurs verticales : le Bleu, le Blanc et le Rouge. Le blanc représente le roi historique, et le bleu et le rouge représentent la ville de Paris.", imagePlaceholder: "🇫🇷 🗼", bgColor: "bg-amber-50" },
-        { titre: "La devise républicaine", texte: "Notre devise est : 'Liberté, Égalité, Fraternité'. Cela veut dire que nous sommes tous libres, tous égaux face à la loi, et que nous devons nous entraider comme des frères et sœurs !", imagePlaceholder: "🤝 ❤️", bgColor: "bg-orange-50" },
-        { titre: "La Marianne et le 14 Juillet", texte: "Marianne est la dame qui représente la République. Le 14 Juillet, c'est la fête nationale avec les feux d'artifice !", imagePlaceholder: "🎆 🎇", bgColor: "bg-red-50" }
-    ],
-    e1: [
-        { titre: "Pourquoi trier les déchets ?", texte: "Trier permet de recycler nos déchets pour fabriquer de nouvelles choses sans polluer la Terre. C'est un super geste pour la planète !", imagePlaceholder: "♻️ 🌍", bgColor: "bg-emerald-50" },
-        { titre: "Le bac jaune", texte: "Dans le bac jaune, on jette les emballages en plastique, les boîtes de conserve en métal, et les cartons !", imagePlaceholder: "🟡 🥫", bgColor: "bg-yellow-50" },
-        { titre: "Le bac vert et le compost", texte: "Dans le bac vert, on dépose le verre (bouteilles, pots). Et les épluchures de fruits et légumes vont au compost pour nourrir les plantes !", imagePlaceholder: "🟢 🍎", bgColor: "bg-green-50" }
-    ]
-};
-
-const QUIZ_DATA: Record<string, Question[]> = {
-    l2: [
-        { q: "Quel mot contient le son 'OU' ?", options: ["Chocolat", "Poule", "Chapeau"], answer: 1, explication: "P-ou-le s'écrit avec 'OU', comme dans le mot rouge !" },
-        { q: "Quel mot contient le son 'CH' ?", options: ["Chien", "Maison", "Jardin"], answer: 0, explication: "Ch-ien commence par le son 'CH' !" },
-        { q: "Quel mot s'écrit avec la voyelle 'A' ?", options: ["Stylo", "Maman", "Fleur"], answer: 1, explication: "M-a-m-a-n contient deux fois la voyelle 'A' !" }
-    ],
-    n2: [
-        { q: "Que faire si un inconnu te parle sur Internet ?", options: ["Lui répondre gentiment", "Ignorer et le dire tout de suite à mes parents", "Lui donner mon nom complet"], answer: 1, explication: "Il ne faut jamais parler aux inconnus en ligne et toujours prévenir un adulte !" },
-        { q: "Ton mot de passe doit être...", options: ["Facile à deviner (ex: 12345)", "Secret pour tout le monde sauf mes parents", "Partagé avec mes meilleurs copains"], answer: 1, explication: "Un bon mot de passe doit rester secret pour protéger tes données !" },
-        { q: "Quelle règle est la meilleure pour les écrans ?", options: ["Y passer toute la soirée", "Faire des pauses et jouer dehors", "Ne jamais s'arrêter avant d'avoir fini"], answer: 1, explication: "Passer du temps dehors et faire des pauses est essentiel pour ta santé !" }
-    ],
-    r2: [
-        { q: "Pour faire avancer un robot vers l'avant, quelle flèche utiliser ?", options: ["La flèche Gauche", "La flèche Haut", "La flèche Droite"], answer: 1, explication: "La flèche du haut dirige le robot vers l'avant !" },
-        { q: "À quoi sert un capteur de distance sur un robot ?", options: ["À chanter des chansons", "À détecter les obstacles pour les éviter", "À faire clignoter ses lumières"], answer: 1, explication: "Le capteur mesure la distance pour éviter les collisions !" },
-        { q: "Qui donne l'intelligence et le programme au robot ?", options: ["Le robot lui-même", "Le programmeur humain", "Une prise électrique"], answer: 1, explication: "C'est l'humain qui écrit le code pour programmer le robot !" }
-    ],
-    a1: [
-        { q: "Quelle est la couleur du soleil en anglais ?", options: ["Red", "Blue", "Yellow"], answer: 2, explication: "Le soleil est jaune, ce qui se dit 'Yellow' en anglais !" },
-        { q: "Comment dit-on 'Vert' en anglais ?", options: ["Green", "Black", "Pink"], answer: 0, explication: "Vert se dit 'Green' !" },
-        { q: "Quelle couleur donne le mélange du 'Red' et du 'Blue' ?", options: ["Orange", "Purple", "White"], answer: 1, explication: "Rouge + Bleu donne du violet, qui se dit 'Purple' !" }
-    ],
-    c2: [
-        { q: "Quelle est la devise républicaine de la France ?", options: ["Liberté, Égalité, Fraternité", "Travail, Famille, Patrie", "Union, Paix, Progrès"], answer: 0, explication: "Notre devise nationale est Liberté, Égalité, Fraternité !" },
-        { q: "À l'école, que doit-on faire en priorité ?", options: ["Crier plus fort que le maître", "Respecter et écouter les autres", "Garder tous les jouets pour soi"], answer: 1, explication: "Le respect mutuel permet d'apprendre dans une bonne ambiance !" }
-    ],
-    e2: [
-        { q: "Pendant que je me brosse les dents, je dois...", options: ["Laisser couler l'eau", "Fermer le robinet d'eau", "Jouer avec la brosse à dents"], answer: 1, explication: "Fermer le robinet évite de gaspiller de précieux litres d'eau !" },
-        { q: "Quel déchet peut-on composter dans le jardin ?", options: ["Une canette de soda", "Une bouteille plastique", "Une épluchure de banane"], answer: 2, explication: "Les restes de fruits et légumes sont biodégradables et parfaits pour le compost !" }
-    ]
-};
-
-const EXERCICES_INSTRUCTIONS: Record<string, string> = {
-    l3: "Dessine Lulu le petit lapin en plein milieu d'une belle forêt verte !",
-    n3: "Dessine un grand écran d'ordinateur avec ton jeu vidéo ou site préféré à l'intérieur !",
-    r3: "Laisse parler ton imagination et dessine un robot du futur plein de boutons et d'antennes !",
-    a3: "Dessine le drapeau du Royaume-Uni (l'Union Jack) en bleu, blanc et rouge !",
-    c3: "Dessine le drapeau tricolore de la France (Bleu, Blanc, Rouge) planté devant la tour Eiffel !",
-    e3: "Dessine notre magnifique planète Terre entourée d'arbres, de fleurs et d'un grand soleil !"
+// Data pour chaque module
+const MODULES_ADVENTURES: Record<string, ModuleContent> = {
+    civique: {
+        titreGlobal: "Éducation civique",
+        description: "Vivre ensemble et comprendre le monde",
+        themeColor: "from-orange-400 to-amber-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Qu'est-ce que la citoyenneté ?",
+            texte: "Être citoyen, c'est faire partie d'une communauté (une ville, un pays, le monde) et participer à la vie en société. Chaque citoyen a des droits mais aussi des devoirs.",
+            emoji: "🏫 🤝 🇫🇷",
+            aRetenir: "La citoyenneté permet de vivre ensemble dans le respect de chacun."
+        },
+        step2: {
+            soustitre: "Observer. Lis attentivement le texte suivant.",
+            boxTitre: "Le rôle des citoyens",
+            texte: "Dans une démocratie, les citoyens ont des droits qui leur permettent de vivre libres et protégés. Ils ont aussi des devoirs qui aident à vivre ensemble dans le respect et la solidarité. Par exemple, ils doivent respecter les lois, payer leurs impôts, protéger l'environnement et participer à la vie de la communauté (école, quartier, ville...). Chacun peut donner son avis et voter pour choisir ses représentants.",
+            emoji: "🗳️ ✉️",
+            aRetenir: ["La citoyenneté, c'est participer à la vie en société et agir pour le bien commun."],
+            badges: [
+                { label: "Respecter les lois", emoji: "⚖️" },
+                { label: "Participer à la vie de la société", emoji: "👥" },
+                { label: "Protéger l'environnement", emoji: "🌍" }
+            ]
+        },
+        step3: {
+            soustitre: "Comprendre. Récapitulons !",
+            texte: "La citoyenneté repose sur des droits et des devoirs qui permettent de vivre ensemble dans le respect et la solidarité. Retenons les idées principales de la leçon.",
+            pointsCles: [
+                "Les citoyens ont des droits.",
+                "Ils ont aussi des devoirs.",
+                "Respecter les autres et les lois permet de bien vivre ensemble."
+            ],
+            bulles: [
+                "Quels sont les droits des citoyens ?",
+                "Quels sont leurs devoirs ?",
+                "Pourquoi est-il important de les respecter ?",
+                "Comment participer à la vie de la société ?"
+            ],
+            illustration: "🤔"
+        },
+        exercice: {
+            titre: "Relie chaque droit à son exemple.",
+            type: 'match',
+            data: {
+                left: [
+                    { id: 'l1', text: "Droit à l'éducation" },
+                    { id: 'l2', text: "Liberté d'expression" },
+                    { id: 'l3', text: "Droit à la santé" },
+                    { id: 'l4', text: "Droit à un environnement sain" }
+                ],
+                right: [
+                    { id: 'r2', text: "Dire ce que l'on pense sans être puni." },
+                    { id: 'r1', text: "Aller à l'école et apprendre." },
+                    { id: 'r4', text: "Vivre dans un endroit propre et non pollué." },
+                    { id: 'r3', text: "Être soigné quand on est malade." }
+                ],
+                pairs: {
+                    'l1': 'r1',
+                    'l2': 'r2',
+                    'l3': 'r3',
+                    'l4': 'r4'
+                }
+            }
+        },
+        quiz: [
+            { q: "Quel devoir aide à préserver la nature ?", options: ["Avoir le droit de s'exprimer.", "Respecter les lois.", "Protéger l'environnement.", "Choisir ses représentants."], answer: 2, explication: "Protéger l'environnement est un devoir citoyen crucial pour l'avenir de la planète." },
+            { q: "Quel symbole représente la République Française ?", options: ["La Tour Eiffel", "La Marianne", "Le coq uniquement", "Un château fort"], answer: 1, explication: "Marianne est la figure symbolique qui incarne la République Française et ses valeurs." },
+            { q: "Quelle est la devise nationale de la France ?", options: ["Union, Force, Courage", "Liberté, Égalité, Fraternité", "Paix, Progrès, Justice", "Travail, Famille, Patrie"], answer: 1, explication: "La devise officielle est 'Liberté, Égalité, Fraternité'." },
+            { q: "Que célèbre-t-on principalement lors de la fête nationale le 14 Juillet ?", options: ["Le début des vacances d'été", "La fête de la musique", "L'histoire républicaine et la fête de la Fédération", "La récolte du blé"], answer: 2, explication: "Le 14 Juillet célèbre l'union de la nation et les idéaux de la Révolution française." },
+            { q: "À quoi sert principalement le vote des citoyens ?", options: ["À payer ses impôts", "À choisir ses représentants", "À s'inscrire à l'école", "À gagner de l'argent"], answer: 1, explication: "Voter permet aux citoyens de choisir démocratiquement les personnes qui gèrent le pays." },
+            { q: "Qui a le droit de voter en France lors des élections nationales ?", options: ["Tous les enfants", "Seuls les présidents", "Tous les citoyens majeurs inscrits sur les listes électorales", "Tous les habitants du quartier"], answer: 2, explication: "Il faut être citoyen français, avoir 18 ans minimum et jouir de ses droits civiques." },
+            { q: "Respecter les autres à l'école est...", options: ["Optionnel", "Un droit", "Un devoir", "Une punition"], answer: 2, explication: "Le respect mutuel est un devoir fondamental pour garantir le vivre-ensemble." },
+            { q: "L'accès à l'école gratuite pour tous est garanti par...", options: ["Le droit à la santé", "Le droit à l'éducation", "Le droit de vote", "La liberté d'expression"], answer: 1, explication: "C'est le droit à l'éducation qui garantit à chaque enfant l'accès aux apprentissages." },
+            { q: "Dans quel ordre se trouvent les couleurs du drapeau français (de gauche à droite) ?", options: ["Rouge, Blanc, Bleu", "Bleu, Blanc, Rouge", "Vert, Blanc, Rouge", "Bleu, Rouge, Blanc"], answer: 1, explication: "Les trois bandes verticales sont ordonnées : Bleu, Blanc, puis Rouge." },
+            { q: "Que veut dire la valeur de la 'Fraternité' ?", options: ["Faire ce que l'on veut", "Être tous identiques", "S'entraider et se respecter comme des frères et sœurs", "Avoir plus de droits que de devoirs"], answer: 2, explication: "La fraternité est la solidarité et l'amitié entre tous les citoyens." }
+        ]
+    },
+    anglais: {
+        titreGlobal: "Anglais",
+        description: "Apprendre l'anglais en s'amusant 😜",
+        themeColor: "from-pink-400 to-rose-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Hello !",
+            texte: "L'anglais est parlé dans beaucoup de pays. Apprendre quelques mots nous aide à communiquer, à voyager et à nous faire de nouveaux amis !",
+            emoji: "🇬🇧 ✈️ 🤝",
+            aRetenir: "Apprendre une langue, c'est ouvrir son cœur et son esprit."
+        },
+        step2: {
+            soustitre: "Observer. Lis attentivement le texte suivant.",
+            boxTitre: "A day with Tom 🍃",
+            texte: "Hi! My name is Tom, I'm 10 years old. I live in London with my parents and my little sister, Lily. I go to school from Monday to Friday. My favorite subject is English! I like reading and sports. After school, I play football with my friends. On Saturdays, I help my mum at home and watch a movie. On Sunday, we go to the park as a family. I love my life!",
+            emoji: "✍️ 📖 ⚽",
+            aRetenir: [
+                "Tom parle de sa vie quotidienne.",
+                "Il utilise des mots simples pour décrire ses activités."
+            ]
+        },
+        step3: {
+            soustitre: "Comprendre. Récapitulons !",
+            texte: "Voici ce que nous avons appris de la présentation de Tom :",
+            pointsCles: [
+                "Hello / Hi : Dire bonjour",
+                "My name is... : Se présenter",
+                "I live in... : Dire où l'on habite",
+                "I like... : Parler de ses goûts",
+                "I play... : Parler de ses activités"
+            ],
+            bulles: [
+                "Let's practice now!"
+            ],
+            illustration: "👧",
+            objectif: "Mots clés:\nHello (bonjour)\nMy name is... (je m'appelle...)\nI live in... (j'habite à...)\nI like... (j'aime...)\nI play... (je joue...)"
+        },
+        exercice: {
+            titre: "Remets les phrases dans le bon ordre logique pour te présenter.",
+            type: 'order',
+            data: {
+                correctOrder: [
+                    "Hello !",
+                    "My name is Tom.",
+                    "I live in London.",
+                    "I play football.",
+                    "I love my life !"
+                ],
+                initialOrder: [
+                    "I play football.",
+                    "Hello !",
+                    "I love my life !",
+                    "My name is Tom.",
+                    "I live in London."
+                ]
+            }
+        },
+        quiz: [
+            { q: "What is Tom's favorite subject ?", options: ["Maths", "Science", "English", "History"], answer: 2, explication: "Tom dit : 'My favorite subject is English!'." },
+            { q: "How do you say 'Bonjour' in English ?", options: ["Goodbye", "Hello", "Thank you", "Please"], answer: 1, explication: "'Hello' ou 'Hi' veut dire 'Bonjour' en anglais." },
+            { q: "What color is 'Yellow' in French ?", options: ["Vert", "Rouge", "Bleu", "Jaune"], answer: 3, explication: "'Yellow' correspond à la couleur jaune." },
+            { q: "How old is Tom ?", options: ["8 years old", "10 years old", "12 years old", "9 years old"], answer: 1, explication: "Tom déclare : 'I'm 10 years old'." },
+            { q: "Where does Tom live ?", options: ["Paris", "New York", "London", "Sydney"], answer: 2, explication: "Tom dit : 'I live in London with my parents'." },
+            { q: "How do you say 'Vert' in English ?", options: ["Blue", "Green", "Red", "Black"], answer: 1, explication: "Vert se dit 'Green'." },
+            { q: "Which sport does Tom play after school ?", options: ["Basketball", "Tennis", "Football", "Rugby"], answer: 2, explication: "Tom dit : 'I play football with my friends'." },
+            { q: "On which day does Tom watch a movie ?", options: ["Monday", "Saturday", "Friday", "Sunday"], answer: 1, explication: "Il dit : 'On Saturdays, I help my mum and watch a movie'." },
+            { q: "How do you say 'S'il vous plaît' in English ?", options: ["Thank you", "Sorry", "Please", "Welcome"], answer: 2, explication: "S'il vous plaît se traduit par 'Please'." },
+            { q: "How do you say 'Merci' in English ?", options: ["Hello", "Excuse me", "Please", "Thank you"], answer: 3, explication: "Merci se traduit par 'Thank you'." }
+        ]
+    },
+    lecture: {
+        titreGlobal: "Lecture & compréhension",
+        description: "Un outil pour apprendre et grandir",
+        themeColor: "from-emerald-400 to-green-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Qu'est-ce que la lecture ?",
+            texte: "Lire, c'est comprendre des mots écrits pour découvrir des idées, des histoires ou des informations. Quand tu lis, ton cerveau imagine, comprend et apprend de nouvelles choses. La lecture t'aide à mieux comprendre le monde qui t'entoure !",
+            emoji: "📚 💡 🧠",
+            aRetenir: "Lire, c'est voyager et imaginer avec son cerveau."
+        },
+        step2: {
+            soustitre: "Observer. Lis attentivement le texte suivant.",
+            boxTitre: "Le voyage de Léo",
+            texte: "Léo se réveille tôt ce matin. Aujourd'hui, il part en voyage avec sa famille. Ils prennent le train pour aller à la montagne. Léo regarde par la fenêtre. Il voit des champs, des arbres et des rivières qui défilent. À l'arrivée, l'air est frais et pur. Ils posent leurs valises dans un chalet confortable. L'après-midi, Léo part en randonnée. Il voit des fleurs sauvages et des papillons colorés. Le soir, toute la famille se réunit autour d'un bon repas.",
+            emoji: "🚂 ⛰️ 🏡",
+            aRetenir: [
+                "Un texte raconte une histoire ou donne des informations.",
+                "Pour bien comprendre, il faut lire attentivement.",
+                "Observe les détails importants (qui, quoi, où, quand)."
+            ]
+        },
+        step3: {
+            soustitre: "Comprendre. Récapitulons !",
+            texte: "Bien comprendre un texte, c'est trouver les informations importantes et décoder le message de l'auteur.",
+            pointsCles: [
+                "Identifier les personnages (qui ?) et les lieux (où ?).",
+                "Repérer les actions principales (quoi ?) et le moment (quand ?).",
+                "Comprendre le message ou l'idée principale globale."
+            ],
+            bulles: [
+                "Qui ? Les personnages",
+                "Où ? Le lieu de l'histoire",
+                "Que se passe-t-il ? L'action",
+                "Pourquoi ? Le sens du texte"
+            ],
+            illustration: "👦"
+        },
+        exercice: {
+            titre: "Réponds brièvement aux questions sur le texte du voyage de Léo.",
+            type: 'input',
+            data: {
+                questions: [
+                    { label: "1. Où Léo et sa famille vont-ils ?", key: "lieu", correct: ["montagne", "la montagne"], placeholder: "Ex: à la montagne" },
+                    { label: "2. Quel moyen de transport prennent-ils ?", key: "transport", correct: ["train", "le train"], placeholder: "Ex: le train" },
+                    { label: "3. Qu'observe Léo pendant sa randonnée ?", key: "observation", correct: ["fleurs", "papillons", "fleurs et papillons", "des fleurs", "des papillons"], placeholder: "Ex: des fleurs et des papillons" }
+                ]
+            }
+        },
+        quiz: [
+            { q: "Quel est le message principal du texte ?", options: ["Léo part à la plage avec ses copains.", "Léo découvre la montagne et passe de bons moments avec sa famille.", "Léo reste à la maison pour jouer à la console.", "Léo va à l'école à pied."], answer: 1, explication: "L'histoire décrit le trajet et le séjour de Léo en famille à la montagne." },
+            { q: "Comment Léo et sa famille voyagent-ils ?", options: ["En voiture", "En train", "En avion", "À vélo"], answer: 1, explication: "Le texte indique : 'Ils prennent le train pour aller à la montagne'." },
+            { q: "Où s'installent-ils à leur arrivée ?", options: ["Dans un hôtel de luxe", "Sous une tente de camping", "Dans un chalet confortable", "Chez des amis"], answer: 2, explication: "Le texte précise : 'Ils posent leurs valises dans un chalet confortable'." },
+            { q: "Qu'est-ce que Léo observe en randonnée ?", options: ["Des voitures et des bus", "Des fleurs sauvages et des papillons colorés", "Des ours et des loups", "Des skieurs"], answer: 1, explication: "Il voit 'des fleurs sauvages et des papillons colorés'." },
+            { q: "À quel moment de la journée la famille se réunit-elle autour du repas ?", options: ["Le matin", "À midi", "À l'heure du goûter", "Le soir"], answer: 3, explication: "Le texte indique : 'Le soir, toute la famille se réunit autour d'un bon repas'." },
+            { q: "Que fait Léo pendant l'après-midi ?", options: ["Il dort", "Il fait ses devoirs", "Il part en randonnée", "Il nage dans un lac"], answer: 2, explication: "Le texte dit : 'L'après-midi, Léo part en randonnée'." },
+            { q: "Comment est décrit l'air à la montagne ?", options: ["Chaud et humide", "Frais et pur", "Pollué", "Sec et froid"], answer: 1, explication: "Il est écrit : 'À l'arrivée, l'air est frais et pur'." },
+            { q: "Quand Léo se réveille-t-il ce matin-là ?", options: ["Tard dans la matinée", "Tôt ce matin", "À midi", "Pendant l'après-midi"], answer: 1, explication: "Le texte commence par : 'Léo se réveille tôt ce matin'." },
+            { q: "Avec qui Léo part-il en voyage ?", options: ["Seul", "Avec ses copains de classe", "Avec sa famille", "Avec son chien"], answer: 2, explication: "Le texte indique : 'il part en voyage avec sa famille'." },
+            { q: "Pourquoi lit-on attentivement un texte ?", options: ["Pour finir le plus vite possible", "Pour bien comprendre l'histoire et retenir les détails importants", "Pour apprendre à dessiner", "Parce que c'est obligatoire uniquement"], answer: 1, explication: "Une lecture attentive permet de saisir le sens, la structure et les faits marquants du texte." }
+        ]
+    },
+    numerique: {
+        titreGlobal: "Numérique",
+        description: "Un outil pour apprendre et grandir",
+        themeColor: "from-blue-400 to-indigo-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Qu'est-ce que le numérique ?",
+            texte: "Le numérique regroupe tous les outils électroniques : ordinateurs, tablettes, smartphones, internet... Ces outils nous aident à apprendre, à communiquer, à créer et à mieux comprendre le monde.",
+            emoji: "💻 🖱️ 🌐",
+            aRetenir: "Le numérique est un outil puissant qui nous aide à apprendre et à progresser."
+        },
+        step2: {
+            soustitre: "Observer. Lis attentivement le texte suivant.",
+            boxTitre: "Le numérique, un outil d'apprentissage",
+            texte: "À l'école, le numérique nous permet d'accéder à beaucoup d'informations, de découvrir de nouveaux sujets et de réaliser des activités intéressantes. Il nous aide à comprendre grâce à des vidéos éducatives, des exercices interactifs et des documents en ligne. Il nous permet aussi de communiquer avec nos enseignants et nos camarades pour travailler ensemble. Utilisé avec raison et dans le bon contexte, le numérique devient un allié précieux pour réussir à l'école et dans la vie.",
+            emoji: "👩‍💻 📚",
+            aRetenir: ["Le numérique est un outil d'apprentissage pour comprendre, s'exercer, créer et collaborer."],
+            bulletList: [
+                "Rechercher des informations fiables",
+                "Comprendre des concepts avec des vidéos",
+                "S'exercer grâce à des quiz",
+                "Créer des exposés ou des dessins",
+                "Partager des projets scolaires"
+            ]
+        },
+        step3: {
+            soustitre: "Comprendre. Récapitulons !",
+            texte: "Le numérique est utile si nous l'utilisons correctement et de manière responsable.",
+            pointsCles: [
+                "Je m'en ser pour apprendre et faire des recherches utiles.",
+                "Je reste concentré et je limite mon temps d'écran.",
+                "Je vérifie toujours si la source des informations est sûre.",
+                "Je l'utilise avec respect pour communiquer avec les autres."
+            ],
+            bulles: [
+                "Apprendre intelligemment",
+                "Se protéger en ligne",
+                "Vérifier ses sources",
+                "Communiquer avec respect"
+            ],
+            illustration: "👍",
+            objectif: "Objectif : Utiliser le numérique intelligemment pour apprendre, progresser et devenir autonome."
+        },
+        exercice: {
+            titre: "Associe chaque situation à son bon usage.",
+            type: 'match',
+            data: {
+                left: [
+                    { id: 'l1', text: "Trouver des infos pour un exposé" },
+                    { id: 'l2', text: "Regarder une vidéo d'histoire" },
+                    { id: 'l3', text: "Envoyer ses devoirs par e-mail" },
+                    { id: 'l4', text: "Jouer en ligne pendant 4 heures" }
+                ],
+                right: [
+                    { id: 'r2', text: "S'informer et comprendre" },
+                    { id: 'r4', text: "Mauvaise utilisation / Risque d'abus" },
+                    { id: 'r1', text: "Rechercher et s'instruire" },
+                    { id: 'r3', text: "Communiquer et collaborer" }
+                ],
+                pairs: {
+                    'l1': 'r1',
+                    'l2': 'r2',
+                    'l3': 'r3',
+                    'l4': 'r4'
+                }
+            }
+        },
+        quiz: [
+            { q: "Quel est le meilleur usage du numérique ?", options: ["Regarder des vidéos sans but pendant des heures.", "Utiliser une application pour faire ses devoirs et apprendre.", "Jouer en ligne au lieu d'aller à l'école.", "Copier des informations sans vérifier la source."], answer: 1, explication: "Utiliser le numérique comme outil de soutien scolaire et d'apprentissage est le meilleur choix." },
+            { q: "Quel outil n'est pas un appareil numérique ?", options: ["Un smartphone", "Une tablette", "Un livre papier classique", "Un ordinateur portable"], answer: 2, explication: "Un livre papier est un support physique traditionnel, pas un appareil électronique numérique." },
+            { q: "À quoi sert principalement la souris d'un ordinateur ?", options: ["À écouter de la musique", "À diriger le pointeur à l'écran et cliquer", "À écrire des lettres", "À éteindre l'électricité"], answer: 1, explication: "La souris permet de naviguer visuellement et d'interagir par des clics sur l'écran." },
+            { q: "Quelle touche permet d'insérer un espace entre deux mots ?", options: ["La touche Entrée", "La touche Espace (la plus longue)", "La touche Majuscule", "La touche Suppr"], answer: 1, explication: "La grande barre d'espace sert à séparer les mots pour rendre le texte lisible." },
+            { q: "Que faire si un inconnu te parle sur Internet ?", options: ["Lui répondre gentiment", "Ignorer et le dire tout de suite à un adulte de confiance", "Lui donner ton adresse et ton école", "Lui envoyer une photo"], answer: 1, explication: "Il ne faut jamais communiquer avec des inconnus en ligne et toujours avertir ses parents." },
+            { q: "Ton mot de passe doit être...", options: ["Facile à deviner (ex: 1234)", "Secret pour tout le monde sauf mes parents", "Partagé avec tous mes copains", "Écrit sur mon cahier d'école visible de tous"], answer: 1, explication: "Un mot de passe doit rester secret pour protéger ton compte et tes données personnelles." },
+            { q: "Pourquoi faut-il faire des pauses régulières avec les écrans ?", options: ["Pour user la batterie", "Pour protéger ses yeux, son sommeil et rester actif", "Parce que l'ordinateur a besoin de dormir", "Pour faire de la place dans la chambre"], answer: 1, explication: "Les pauses évitent la fatigue visuelle et favorisent une bonne santé physique." },
+            { q: "Où peut-on trouver des vidéos éducatives fiables ?", options: ["Sur n'importe quel site de jeux vidéo", "Sur des plateformes ou sites scolaires recommandés par les enseignants", "Sur les réseaux sociaux sans filtre", "Dans les spams d'e-mails"], answer: 1, explication: "Il faut privilégier les sources scolaires et vérifiées pour apprendre en sécurité." },
+            { q: "Pour copier du texte à l'ordinateur, on utilise principalement...", options: ["Le haut-parleur", "La souris uniquement", "Le clavier", "L'imprimante"], answer: 2, explication: "Le clavier permet de saisir des caractères, des chiffres et de rédiger des textes." },
+            { q: "Le numérique est un allié précieux si...", options: ["On y passe toutes nos nuits", "On l'utilise avec modération, bon sens et pour s'instruire", "On ne lit plus aucun livre papier", "On refuse de parler aux gens en vrai"], answer: 1, explication: "L'équilibre et l'usage intelligent font du numérique un formidable outil d'apprentissage." }
+        ]
+    },
+    eco: {
+        titreGlobal: "Éco-citoyenneté",
+        description: "Agir aujourd'hui pour un monde meilleur",
+        themeColor: "from-teal-400 to-emerald-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Pourquoi protéger notre planète ?",
+            texte: "La Terre est notre maison. L'air que nous respirons, l'eau que nous buvons et la nature qui nous entoure sont précieux. Mais nos actions peuvent l'abîmer... ou la protéger ! Chaque geste compte pour un avenir plus propre et plus sain.",
+            emoji: "🌍 🌱 ☀️",
+            aRetenir: "Prendre soin de la planète, c'est prendre soin de nous tous !"
+        },
+        step2: {
+            soustitre: "Observer. Lis attentivement le texte suivant.",
+            boxTitre: "Une journée sans déchets 🍃",
+            texte: "Ce samedi, Emma et son frère Léo décident de relever un défi : produire le moins de déchets possible ! Ils prennent des sacs réutilisables pour faire les courses, choisissent des produits avec peu d'emballages, réparent leur jouet au lieu d'en acheter un nouveau et trient leurs déchets à la maison. Le soir, ils sont fiers : leur poubelle est presque vide ! Leurs petits gestes ont un grand impact sur la planète.",
+            emoji: "♻️ 🗑️ 🟢 🟡",
+            aRetenir: [
+                "Réduire, réutiliser, réparer et recycler sont des gestes utiles.",
+                "Agir chaque jour permet de protéger notre environnement."
+            ]
+        },
+        step3: {
+            soustitre: "Comprendre. Récapitulons !",
+            texte: "Pour être éco-citoyen, il suffit d'adopter des gestes simples et responsables au quotidien.",
+            pointsCles: [
+                "Réduire pour éviter de gaspiller l'eau, l'énergie et la nourriture.",
+                "Réutiliser pour donner une seconde vie aux objets au lieu de jeter.",
+                "Recycler en triant correctement nos emballages, papiers et verres.",
+                "Respecter la nature et tous les êtres vivants de la biodiversité."
+            ],
+            bulles: [
+                "Moins de déchets",
+                "Économiser l'eau",
+                "Protéger la nature",
+                "Se déplacer autrement",
+                "Économiser l'énergie"
+            ],
+            illustration: "🌳"
+        },
+        exercice: {
+            titre: "Trie les gestes en fonction de leur impact sur la planète.",
+            type: 'sort',
+            data: {
+                categories: [
+                    { id: 'eco', title: "Éco-citoyen 💚", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+                    { id: 'non-eco', title: "Non éco-citoyen ❌", bg: "bg-rose-50 text-rose-800 border-rose-200" }
+                ],
+                items: [
+                    { id: 'i1', text: "Trier ses déchets à la maison", category: 'eco' },
+                    { id: 'i2', text: "Jeter un emballage par terre", category: 'non-eco' },
+                    { id: 'i3', text: "Éteindre la lumière en sortant", category: 'eco' },
+                    { id: 'i4', text: "Utiliser une gourde réutilisable", category: 'eco' },
+                    { id: 'i5', text: "Laisser l'eau couler en se brossant les dents", category: 'non-eco' },
+                    { id: 'i6', text: "Prendre un sac plastique jetable à chaque course", category: 'non-eco' }
+                ]
+            }
+        },
+        quiz: [
+            { q: "Quel geste permet de réduire la pollution de l'air ?", options: ["Prendre une douche très longue.", "Aller à l'école à pied ou à vélo quand c'est possible.", "Laisser les appareils en veille toute la journée.", "Jeter des déchets dans les rivières."], answer: 1, explication: "Les transports doux comme le vélo ou la marche ne rejettent aucun gaz polluant dans l'atmosphère." },
+            { q: "Dans quelle poubelle doit-on jeter les emballages en plastique et en carton ?", options: ["La poubelle verte de verre", "Le bac jaune de tri", "Le composteur de jardin", "N'importe où"], answer: 1, explication: "Le bac jaune est réservé au recyclage du carton, du plastique et des métaux." },
+            { q: "Que doit-on faire pendant qu'on se brosse les dents ?", options: ["Laisser couler le robinet", "Fermer le robinet d'eau", "Laisser l'eau couler à moitié", "Prendre un bain en même temps"], answer: 1, explication: "Fermer le robinet évite de gaspiller plusieurs litres d'eau potable inutilement." },
+            { q: "Qu'est-ce qui est biodégradable et peut aller dans le composteur ?", options: ["Une bouteille en plastique", "Une épluchure de pomme ou de banane", "Une canette de soda", "Un jouet cassé"], answer: 1, explication: "Les déchets organiques de cuisine se dégradent naturellement et enrichissent la terre." },
+            { q: "Que font Emma et Léo pour faire leurs courses sans déchets ?", options: ["Ils achètent plein de sacs plastiques", "Ils utilisent des sacs réutilisables en tissu", "Ils ne font pas de courses", "Ils jettent les emballages dans le magasin"], answer: 1, explication: "Les sacs en tissu réutilisables évitent de fabriquer et jeter du plastique à usage unique." },
+            { q: "Quel bac de tri est spécialement réservé pour le verre (bouteilles, pots) ?", options: ["Le bac jaune", "Le conteneur à verre (souvent vert ou blanc)", "Le bac bleu des journaux", "Le bac de déchets ménagers"], answer: 1, explication: "Le verre doit être trié séparément dans les conteneurs prévus pour être fondu et recyclé à l'infini." },
+            { q: "Pourquoi recycle-t-on les emballages recyclables ?", options: ["Pour faire de la place", "Pour fabriquer de nouveaux objets sans puiser dans les ressources de la Terre", "Parce que c'est amusant", "Pour les brûler tous"], answer: 1, explication: "Le recyclage préserve les ressources naturelles en réutilisant la matière déjà produite." },
+            { q: "Que vaut-il mieux faire avec un jouet ou un objet légèrement cassé ?", options: ["Le jeter tout de suite à la poubelle", "Le réparer si c'est possible ou le donner pour pièces", "En racheter un identique immédiatement", "Le cacher sous son lit"], answer: 1, explication: "Réparer évite le gaspillage et limite la quantité de déchets générés." },
+            { q: "Éteindre la lumière en quittant une pièce permet d'économiser...", options: ["De l'eau", "De l'énergie électrique", "Du papier", "Du temps"], answer: 1, explication: "Éteindre les lumières inutiles évite de surconsommer de l'électricité." },
+            { q: "Qui a le rôle d'agir pour protéger la planète ?", options: ["Seulement les présidents", "Seulement les scientifiques", "Tout le monde ensemble par des gestes quotidiens", "Personne, elle se répare toute seule"], answer: 2, explication: "Chaque citoyen, petit ou grand, a le pouvoir d'agir positivement sur son environnement." }
+        ]
+    },
+    robotique: {
+        titreGlobal: "Robotique",
+        description: "Construire et programmer des machines",
+        themeColor: "from-purple-400 to-indigo-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Qu'est-ce qu'un robot ?",
+            texte: "Un robot est une machine automatique intelligente. Contrairement à un simple jouet, il possède des capteurs pour percevoir son environnement, un programme informatique pour réfléchir, et des moteurs pour agir et se déplacer !",
+            emoji: "🤖 🧠 ⚡",
+            aRetenir: "Un robot associe des capteurs, un programme et des moteurs."
+        },
+        step2: {
+            soustitre: "Observer. Regarde comment s'organise un robot.",
+            boxTitre: "Les 3 parties du robot",
+            texte: "Pour fonctionner, un robot s'appuie sur trois piliers :\n1. Les Capteurs (ses yeux et oreilles) pour détecter la lumière, le son ou la distance des obstacles.\n2. Le Contrôleur (son cerveau) qui lit les instructions du programme informatique et prend des décisions.\n3. Les Actionneurs (ses muscles) comme les petits moteurs électriques pour faire tourner ses roues ou bouger ses bras.",
+            emoji: "⚙️ 🔌 🤖",
+            aRetenir: ["Les capteurs mesurent, le contrôleur calcule, les moteurs agissent."],
+            badges: [
+                { label: "Capteur ultrason 📡", emoji: "📡" },
+                { label: "Carte contrôleur 🧠", emoji: "🔌" },
+                { label: "Moteur électrique ⚙️", emoji: "⚙️" }
+            ]
+        },
+        step3: {
+            soustitre: "Comprendre. Programmer un robot.",
+            texte: "Un robot ne pense pas tout seul ! Pour qu'il avance ou évite un obstacle, nous devons lui écrire une suite d'instructions claires : c'est le code informatique.",
+            pointsCles: [
+                "Un robot exécute fidèlement les instructions de son programme.",
+                "C'est l'humain qui définit le comportement du robot.",
+                "Une erreur de logique dans le code s'appelle un bug !"
+            ],
+            bulles: [
+                "Le robot obéit au code",
+                "Les humains programment",
+                "Attention aux bugs !",
+                "Tester et recommencer"
+            ],
+            illustration: "🤖"
+        },
+        exercice: {
+            titre: "Ordonne les blocs de code pour programmer le robot : il doit démarrer, avancer tout droit, puis s'arrêter s'il détecte un mur.",
+            type: 'order',
+            data: {
+                correctOrder: [
+                    "1. Démarrer le robot",
+                    "2. Avancer tout droit",
+                    "3. Si un obstacle est détecté à moins de 10cm",
+                    "4. Arrêter les moteurs",
+                    "5. Faire clignoter la LED rouge"
+                ],
+                initialOrder: [
+                    "4. Arrêter les moteurs",
+                    "1. Démarrer le robot",
+                    "5. Faire clignoter la LED rouge",
+                    "3. Si un obstacle est détecté à moins de 10cm",
+                    "2. Avancer tout droit"
+                ]
+            }
+        },
+        quiz: [
+            { q: "Quel composant permet au robot d'éviter un mur devant lui ?", options: ["La batterie", "Le capteur de distance", "La diode LED", "Le châssis métallique"], answer: 1, explication: "Le capteur de distance (ultrason ou infrarouge) mesure la proximité des obstacles." },
+            { q: "Quel élément joue le rôle du 'cerveau' d'un robot ?", options: ["Le moteur", "La carte de contrôle (microcontrôleur)", "La roue", "Le capteur"], answer: 1, explication: "C'est la carte de contrôle qui exécute le programme et coordonne le robot." },
+            { q: "Que font les actionneurs d'un robot ?", options: ["Ils réfléchissent", "Ils captent la lumière", "Ils produisent des actions physiques (mouvement, son, lumière)", "Ils alimentent en courant"], answer: 2, explication: "Les moteurs, haut-parleurs et LED sont des actionneurs qui font agir le robot." },
+            { q: "Qui donne l'intelligence et le comportement au robot ?", options: ["Le robot lui-même", "Le programmeur humain à travers son code", "L'usine de fabrication", "La prise électrique de recharge"], answer: 1, explication: "Le robot n'exécute que le programme écrit par un être humain." },
+            { q: "Comment qualifie-t-on une erreur dans un programme informatique ?", options: ["Un virus", "Un bug", "Une panne mécanique", "Un faux contact"], answer: 1, explication: "Un bug est une erreur de conception ou de syntaxe dans le code." },
+            { q: "Quelle flèche de programmation sert pour faire avancer le robot ?", options: ["La flèche vers le bas", "La flèche vers le haut", "La flèche gauche", "Le bouton stop"], answer: 1, explication: "La flèche pointant vers le haut symbolise le déplacement vers l'avant." },
+            { q: "Le robot a-t-il une conscience et des sentiments ?", options: ["Oui, comme nous", "Non, c'est uniquement une machine programmée", "Seulement quand il est connecté à internet", "Seulement s'il a des yeux dessinés"], answer: 1, explication: "Un robot est un automate sans émotion qui suit des calculs logiques." },
+            { q: "Pour mesurer la luminosité d'une pièce, le robot utilise...", options: ["Un capteur de lumière (photo-résistance)", "Un capteur de température", "Un moteur de précision", "Son antenne radio"], answer: 0, explication: "Les capteurs de lumière permettent de réagir à la clarté ou à l'obscurité." },
+            { q: "Quelle source d'énergie fait fonctionner la plupart des robots autonomes ?", options: ["De l'essence", "De l'eau", "Une batterie ou des piles électriques", "Le vent"], answer: 2, explication: "L'énergie électrique stockée dans des batteries alimente le cerveau et les moteurs." },
+            { q: "Programmer un robot, c'est...", options: ["Le repeindre d'une jolie couleur", "Lui donner une liste ordonnée d'instructions compréhensibles", "Le démonter pour voir l'intérieur", "L'acheter dans un magasin"], answer: 1, explication: "La programmation consiste à coder les consignes que la machine doit exécuter." }
+        ]
+    }
 };
 
 type PageParams = Promise<{ id: string; actId: string }>;
@@ -102,193 +496,234 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
     
-    const [displayModule, setDisplayModule] = useState<any>(null);
+    // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
+    const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
+    const content = MODULES_ADVENTURES[activeModuleId];
+
     const [loading, setLoading] = useState(true);
-    
-    // États communs
-    const [currentStep, setCurrentStep] = useState(0); // Index de slide ou question
-    const [isFinished, setIsFinished] = useState(false);
+    const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
     const [showConfetti, setShowConfetti] = useState(false);
 
-    // États dynamiques pour l'activité
-    const [slides, setSlides] = useState<LeconSlide[]>([]);
-    const [questions, setQuestions] = useState<Question[]>([]);
-    const [instruction, setInstruction] = useState<string>("");
-    const [activityType, setActivityType] = useState<'lecon' | 'quiz' | 'exercice' | null>(null);
+    // États pour l'Exercice Interactif
+    const [exerciceChecked, setExerciceChecked] = useState(false);
+    const [exerciceSuccess, setExerciceSuccess] = useState(false);
 
-    // États pour les Quiz
+    // --- États Exercice 'match' (Civique / Numérique) ---
+    const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+    const [matches, setMatches] = useState<Record<string, string>>({});
+
+    // --- États Exercice 'order' (Anglais / Robotique) ---
+    const [orderedItems, setOrderedItems] = useState<string[]>([]);
+
+    // --- États Exercice 'input' (Lecture) ---
+    const [inputAnswers, setInputAnswers] = useState<Record<string, string>>({});
+
+    // --- États Exercice 'sort' (Éco-citoyenneté) ---
+    const [sortedItems, setSortedItems] = useState<Record<string, string>>({}); // itemId -> categoryId
+    const [activeSortItemIndex, setActiveSortItemIndex] = useState(0);
+
+    // États pour le Quiz
+    const [quizIndex, setQuizIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [score, setScore] = useState(0);
     const [showExplanation, setShowExplanation] = useState(false);
 
-    const isLecon = activityType === 'lecon';
-    const isQuiz = activityType === 'quiz';
-    const isExercice = activityType === 'exercice';
-
-    const isMock = isNaN(Number(actId));
-
+    // Charger le module initial
     useEffect(() => {
-        if (!id || !actId) return;
-
-        async function loadData() {
-            setLoading(true);
-
-            if (isMock) {
-                setDisplayModule(MODULES.find((m) => m.id === id) || null);
-                setSlides(LEÇONS_DATA[actId] || []);
-                setQuestions(QUIZ_DATA[actId] || []);
-                setInstruction(EXERCICES_INSTRUCTIONS[actId] || "");
-                if (LEÇONS_DATA[actId] !== undefined) setActivityType('lecon');
-                else if (QUIZ_DATA[actId] !== undefined) setActivityType('quiz');
-                else if (EXERCICES_INSTRUCTIONS[actId] !== undefined) setActivityType('exercice');
-                setLoading(false);
-            } else {
-                try {
-                    // Charger le module
-                    const dbMod = await obtenirDetailsModuleDepuisDB(id);
-                    if (dbMod) {
-                        const staticMod = MODULES.find(m => m.id === dbMod.slug) || {
-                            id: id,
-                            label: dbMod.label,
-                            from: "#66bb6a",
-                            to: "#2e7d32"
-                        };
-                        setDisplayModule(staticMod);
-                    }
-
-                    // Charger l'exercice
-                    const actData = await obtenirDetailsActiviteDepuisDB(actId);
-                    if (actData) {
-                        if (actData.type === 'LECON') {
-                            setSlides(actData.contenu as LeconSlide[]);
-                            setActivityType('lecon');
-                        } else if (actData.type === 'QUIZ') {
-                            const qList = JSON.parse(actData.instructions);
-                            setQuestions(qList);
-                            setActivityType('quiz');
-                        } else if (actData.type === 'DESSIN') {
-                            setInstruction(actData.instructions);
-                            setActivityType('exercice');
-                        }
-                    }
-                } catch (e) {
-                    console.error("Erreur de chargement de l'activité depuis la BDD:", e);
-                }
-                setLoading(false);
-            }
+        if (!id) return;
+        
+        // Initialiser l'exercice en fonction du type
+        if (content.exercice.type === 'order') {
+            setOrderedItems([...content.exercice.data.initialOrder]);
         }
+        setLoading(false);
+    }, [id, activeModuleId]);
 
-        loadData();
-    }, [id, actId, isMock]);
-
-    // États pour le Canvas de dessin (Exercices)
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [brushColor, setBrushColor] = useState('#6d5ba8'); // Violet par défaut
-    const [brushSize, setBrushSize] = useState(5);
-    const [isEraser, setIsEraser] = useState(false);
-
-    // Déclencheur de confettis
+    // Lancer des confettis lors du résultat final
     useEffect(() => {
-        if (isFinished) {
+        if (stepIndex === 5) {
             setShowConfetti(true);
             const timer = setTimeout(() => setShowConfetti(false), 5000);
             return () => clearTimeout(timer);
         }
-    }, [isFinished]);
+    }, [stepIndex]);
 
-    // ─── Logique de Dessin (Canvas) ───
-    useEffect(() => {
-        if (!isExercice || !canvasRef.current) return;
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Remplir en blanc par défaut
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-    }, [isExercice]);
-
-    const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        setIsDrawing(true);
-        const coords = getEventCoords(e, canvas);
-        ctx.beginPath();
-        ctx.moveTo(coords.x, coords.y);
+    // ─── LOGIQUE EXERCICE : MATCH ───
+    const handleSelectLeft = (leftId: string) => {
+        if (exerciceChecked) return;
+        setSelectedLeft(leftId);
     };
 
-    const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-        if (!isDrawing) return;
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const coords = getEventCoords(e, canvas);
-        ctx.lineTo(coords.x, coords.y);
-        ctx.strokeStyle = isEraser ? '#ffffff' : brushColor;
-        ctx.lineWidth = brushSize;
-        ctx.stroke();
+    const handleSelectRight = (rightId: string) => {
+        if (exerciceChecked || !selectedLeft) return;
+        setMatches(prev => ({
+            ...prev,
+            [selectedLeft]: rightId
+        }));
+        setSelectedLeft(null);
     };
 
-    const stopDrawing = () => {
-        setIsDrawing(false);
+    const handleResetMatch = () => {
+        setMatches({});
+        setExerciceChecked(false);
+        setExerciceSuccess(false);
+        setSelectedLeft(null);
     };
 
-    const getEventCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
-        const rect = canvas.getBoundingClientRect();
-        if ('touches' in e) {
-            if (e.touches.length === 0) return { x: 0, y: 0 };
-            return {
-                x: e.touches[0].clientX - rect.left,
-                y: e.touches[0].clientY - rect.top
-            };
+    const verifyMatch = () => {
+        const expected = content.exercice.data.pairs;
+        const totalExpected = Object.keys(expected).length;
+        let correctCount = 0;
+
+        for (const [l, r] of Object.entries(expected)) {
+            if (matches[l] === r) correctCount++;
+        }
+
+        setExerciceSuccess(correctCount === totalExpected);
+        setExerciceChecked(true);
+    };
+
+    // ─── LOGIQUE EXERCICE : ORDER ───
+    const moveItem = (index: number, direction: 'up' | 'down') => {
+        if (exerciceChecked) return;
+        const newOrder = [...orderedItems];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= newOrder.length) return;
+
+        // Échange
+        const temp = newOrder[index];
+        newOrder[index] = newOrder[targetIndex];
+        newOrder[targetIndex] = temp;
+        setOrderedItems(newOrder);
+    };
+
+    const verifyOrder = () => {
+        const expected = content.exercice.data.correctOrder;
+        let isCorrect = true;
+        for (let i = 0; i < expected.length; i++) {
+            if (orderedItems[i] !== expected[i]) {
+                isCorrect = false;
+                break;
+            }
+        }
+        setExerciceSuccess(isCorrect);
+        setExerciceChecked(true);
+    };
+
+    const handleResetOrder = () => {
+        setOrderedItems([...content.exercice.data.initialOrder]);
+        setExerciceChecked(false);
+        setExerciceSuccess(false);
+    };
+
+    // ─── LOGIQUE EXERCICE : INPUT ───
+    const handleInputChange = (key: string, val: string) => {
+        if (exerciceChecked) return;
+        setInputAnswers(prev => ({
+            ...prev,
+            [key]: val
+        }));
+    };
+
+    const verifyInput = () => {
+        const questionsList = content.exercice.data.questions;
+        let allCorrect = true;
+
+        for (const q of questionsList) {
+            const userVal = (inputAnswers[q.key] || "").trim().toLowerCase();
+            // Vérifier si la réponse de l'utilisateur contient un des mots acceptés
+            const isMatch = q.correct.some((word: string) => userVal.includes(word.toLowerCase()));
+            if (!isMatch) {
+                allCorrect = false;
+            }
+        }
+
+        setExerciceSuccess(allCorrect);
+        setExerciceChecked(true);
+    };
+
+    const handleResetInput = () => {
+        setInputAnswers({});
+        setExerciceChecked(false);
+        setExerciceSuccess(false);
+    };
+
+    // ─── LOGIQUE EXERCICE : SORT ───
+    const handleSortItem = (categoryId: string) => {
+        if (exerciceChecked) return;
+        const items = content.exercice.data.items;
+        const currentItem = items[activeSortItemIndex];
+
+        setSortedItems(prev => ({
+            ...prev,
+            [currentItem.id]: categoryId
+        }));
+
+        if (activeSortItemIndex < items.length - 1) {
+            setActiveSortItemIndex(activeSortItemIndex + 1);
         } else {
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
+            // Tous triés, on vérifie
+            let allCorrect = true;
+            const updatedSorted: Record<string, string> = {
+                ...sortedItems,
+                [currentItem.id as string]: categoryId
             };
+            for (const item of items) {
+                if (updatedSorted[item.id as string] !== item.category) {
+                    allCorrect = false;
+                }
+            }
+            setExerciceSuccess(allCorrect);
+            setExerciceChecked(true);
         }
     };
 
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const handleResetSort = () => {
+        setSortedItems({});
+        setActiveSortItemIndex(0);
+        setExerciceChecked(false);
+        setExerciceSuccess(false);
     };
 
-    // ─── Enregistrement de l'activité ───
-    const handleSaveActivity = async () => {
-        let savedData = {};
-        let scoreToSave = 1;
-        if (isLecon) {
-            savedData = { completed: true };
-        } else if (isQuiz) {
-            savedData = { 
-                completed: true, 
-                score: `${score}/${questions.length}`,
-                parfait: score === questions.length
-            };
-            scoreToSave = score;
-        } else if (isExercice) {
-            savedData = { completed: true };
+    // ─── LOGIQUE QUIZ ───
+    const handleAnswerQuiz = (index: number) => {
+        if (selectedOption !== null) return;
+        setSelectedOption(index);
+        setShowExplanation(true);
+        if (index === content.quiz[quizIndex].answer) {
+            setScore(prev => prev + 1);
         }
+    };
 
+    const handleNextQuiz = () => {
+        setSelectedOption(null);
+        setShowExplanation(false);
+        if (quizIndex < content.quiz.length - 1) {
+            setQuizIndex(quizIndex + 1);
+        } else {
+            // Fin de l'aventure
+            setStepIndex(5);
+        }
+    };
+
+    // Enregistrer en BDD ou LocalStorage
+    const handleSaveAdventure = async () => {
+        const finalScoreString = `${score}/${content.quiz.length}`;
+        const isPerfect = score === content.quiz.length;
+
+        const savedData = { 
+            completed: true, 
+            score: finalScoreString,
+            parfait: isPerfect
+        };
+
+        // Sauvegarder pour l'enfant dans le localStorage
         localStorage.setItem(`rfc_enfant_act_${actId}`, JSON.stringify(savedData));
 
+        const isMock = isNaN(Number(actId));
         if (!isMock) {
             try {
-                await sauvegarderResultatActivite(actId, scoreToSave);
+                await sauvegarderResultatActivite(actId, score);
             } catch (err) {
                 console.error("Erreur de sauvegarde de l'activité sur la BDD:", err);
             }
@@ -297,330 +732,698 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         router.push(`/enfant/modules/${id}`);
     };
 
-    // ─── Logique Quiz ───
-    const handleAnswerQuiz = (index: number) => {
-        if (selectedOption !== null) return; // Empêcher de recliquer
-        setSelectedOption(index);
-        setShowExplanation(true);
-        if (index === questions[currentStep].answer) {
-            setScore(score + 1);
-        }
-    };
-
-    const handleNextQuiz = () => {
-        setSelectedOption(null);
-        setShowExplanation(false);
-        if (currentStep < questions.length - 1) {
-            setCurrentStep(currentStep + 1);
-        } else {
-            setIsFinished(true);
-        }
-    };
-
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center text-violet-900">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent"></div>
-                <p className="mt-4 text-violet-500">Chargement de ton activité...</p>
+                <p className="mt-4 text-violet-500">Chargement de ton aventure...</p>
             </div>
         );
     }
 
-    if (!displayModule) return null;
-
+    const steps = [
+        { label: "Leçon 1/3", desc: "Découvrir" },
+        { label: "Leçon 2/3", desc: "Observer" },
+        { label: "Leçon 3/3", desc: "Comprendre" },
+        { label: "Exercice", desc: "S'entraîner" },
+        { label: "Quiz", desc: "Se tester" }
+    ];
 
     return (
-        <div className="text-violet-900 max-w-3xl mx-auto pb-8 relative">
-            {/* ─── Confettis Emojis (Pure CSS/JS simple animation) ─── */}
+        <div className="text-violet-900 max-w-5xl mx-auto pb-12 px-4 relative">
+            {/* Confettis Emojis */}
             {showConfetti && (
                 <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
-                    <div className="absolute animate-bounce text-6xl">🎉 🥳 🌟 💫 🎈</div>
+                    <div className="absolute text-5xl md:text-7xl animate-bounce tracking-widest bg-white/20 backdrop-blur-xs rounded-2xl p-4 shadow-xl">
+                        🎉 🥳 🌟 💫 🎈 🏆
+                    </div>
                 </div>
             )}
 
-            {/* ─── Header de l'activité ─── */}
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-violet-100 pb-4 mb-6">
                 <Link 
                     href={`/enfant/modules/${id}`}
-                    className="inline-flex items-center gap-1 text-xs font-extrabold text-violet-600 hover:text-violet-900"
+                    className="inline-flex items-center gap-1 text-xs font-black text-violet-600 hover:text-violet-900"
                 >
-                    <ChevronLeft className="h-4 w-4" /> Quitter l'activité
+                    <ChevronLeft className="h-4 w-4" /> Quitter l'aventure
                 </Link>
-                <div className="text-sm font-bold text-violet-500 uppercase tracking-widest">
-                    {displayModule.label}
+                <div className="text-sm font-black text-violet-600 uppercase tracking-widest">
+                    {content.titreGlobal}
                 </div>
             </div>
 
-            {/* ─── 1. INTERFACE LEÇON ─── */}
-            {isLecon && !isFinished && (
-                <div className="rounded-3xl border border-violet-200 bg-white p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-600">
-                            <BookOpen className="h-4 w-4" /> Lecture Leçon
-                        </span>
-                        <span className="text-xs font-bold text-violet-400">Étape {currentStep + 1} / {slides.length}</span>
-                    </div>
-
-                    <div className={`rounded-2xl ${slides[currentStep].bgColor} p-8 flex flex-col items-center text-center shadow-inner min-h-[300px] justify-center transition-all duration-300`}>
-                        <div className="text-6xl mb-6 select-none animate-pulse">{slides[currentStep].imagePlaceholder}</div>
-                        <h2 className="text-xl font-black text-violet-950 mb-4">{slides[currentStep].titre}</h2>
-                        <p className="text-sm md:text-base leading-relaxed text-violet-800 max-w-md">{slides[currentStep].texte}</p>
-                    </div>
-
-                    <div className="mt-6 flex justify-between items-center gap-4">
-                        <button
-                            onClick={() => setCurrentStep(currentStep - 1)}
-                            disabled={currentStep === 0}
-                            className="rounded-xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            Précédent
-                        </button>
-                        {currentStep < slides.length - 1 ? (
-                            <button
-                                onClick={() => setCurrentStep(currentStep + 1)}
-                                className="rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-extrabold text-white hover:bg-violet-700 shadow-md"
-                            >
-                                Page suivante
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setIsFinished(true)}
-                                className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md flex items-center gap-1"
-                            >
-                                <Check className="h-4 w-4" /> Terminer la leçon !
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* ─── 2. INTERFACE QUIZ ─── */}
-            {isQuiz && !isFinished && (
-                <div className="rounded-3xl border border-violet-200 bg-white p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-extrabold text-violet-600">
-                            <HelpCircle className="h-4 w-4" /> Quiz Interactif
-                        </span>
-                        <span className="text-xs font-bold text-violet-400">Question {currentStep + 1} / {questions.length}</span>
-                    </div>
-
-                    <div className="p-4 bg-violet-50/50 rounded-2xl border border-violet-100/50 mb-6">
-                        <h2 className="text-base md:text-lg font-black text-violet-950 text-center leading-snug">
-                            {questions[currentStep].q}
-                        </h2>
-                    </div>
-
-                    <div className="grid gap-3">
-                        {questions[currentStep].options.map((option, index) => {
-                            const isCorrectAnswer = index === questions[currentStep].answer;
-                            const isSelected = selectedOption === index;
-                            
-                            let optionStyle = 'border-violet-200 hover:border-violet-400 hover:bg-violet-50/30';
-                            if (selectedOption !== null) {
-                                if (isCorrectAnswer) {
-                                    optionStyle = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
-                                } else if (isSelected) {
-                                    optionStyle = 'border-rose-500 bg-rose-50 text-rose-800';
-                                } else {
-                                    optionStyle = 'border-slate-100 bg-slate-50 opacity-40';
-                                }
-                            }
-
+            {/* Barre de navigation Timeline du haut (si pas au résultat final) */}
+            {stepIndex < 5 && (
+                <nav className="nav-timeline mb-8 bg-white border border-violet-100 rounded-2xl p-4 shadow-xs">
+                    <ul className="flex items-center justify-between md:justify-center gap-2 md:gap-12 text-center text-xs">
+                        {steps.map((st, i) => {
+                            const isActive = stepIndex === i;
+                            const isDone = stepIndex > i;
                             return (
-                                <button
-                                    key={index}
-                                    disabled={selectedOption !== null}
-                                    onClick={() => handleAnswerQuiz(index)}
-                                    className={`w-full text-left rounded-2xl border p-4 text-sm font-semibold transition-all flex items-center justify-between ${optionStyle}`}
-                                >
-                                    <span>{option}</span>
-                                    {selectedOption !== null && isCorrectAnswer && (
-                                        <Check className="h-5 w-5 text-emerald-600" />
+                                <li key={i} className="flex-1 md:flex-none flex items-center gap-2">
+                                    <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition-all ${
+                                            isActive 
+                                                ? 'bg-violet-600 text-white ring-4 ring-violet-100 scale-110' 
+                                                : isDone 
+                                                    ? 'bg-emerald-500 text-white' 
+                                                    : 'bg-slate-100 text-slate-400'
+                                        }`}>
+                                            {isDone ? <Check className="h-4 w-4" /> : i + 1}
+                                        </span>
+                                        <div className="hidden sm:block text-left">
+                                            <div className={`font-black ${isActive ? 'text-violet-900' : 'text-slate-500'}`}>{st.label}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">{st.desc}</div>
+                                        </div>
+                                    </div>
+                                    {i < steps.length - 1 && (
+                                        <span className="hidden md:inline text-slate-300 font-bold ml-6">→</span>
                                     )}
-                                </button>
+                                </li>
                             );
                         })}
-                    </div>
+                    </ul>
+                </nav>
+            )}
 
-                    {showExplanation && (
-                        <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-start gap-3">
-                            <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                            <div>
-                                <div className="text-xs font-bold text-amber-900">
-                                    {selectedOption === questions[currentStep].answer ? "Bien joué ! 🌟" : "Presque ! 😉"}
+            {/* CONTENU DE L'ÉTAPE */}
+            <main className="transition-all duration-300">
+                
+                {/* ── STEP 0 : LEÇON 1/3 (DÉCOUVRIR) ── */}
+                {stepIndex === 0 && (
+                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700">
+                                📖 Page 1/3 — Découvrir
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                            <div className="space-y-6">
+                                <h1 className="text-3xl font-black text-violet-950 leading-tight">
+                                    {content.step1.soustitre}
+                                </h1>
+                                <p className="text-base text-violet-800 leading-relaxed">
+                                    {content.step1.texte}
+                                </p>
+                                <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl">
+                                    <div className="flex gap-2">
+                                        <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
+                                        <div>
+                                            <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
+                                            <p className="text-xs text-amber-800 font-medium mt-1">{content.step1.aRetenir}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">{questions[currentStep].explication}</p>
+                            </div>
+                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-3xl p-12 flex items-center justify-center shadow-inner min-h-[300px]">
+                                <div className="text-7xl select-none animate-bounce">{content.step1.emoji}</div>
                             </div>
                         </div>
-                    )}
-
-                    {selectedOption !== null && (
-                        <div className="mt-6 flex justify-end">
+                        <div className="mt-8 flex justify-end">
                             <button
-                                onClick={handleNextQuiz}
-                                className="rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-extrabold text-white hover:bg-violet-700 shadow-md"
+                                onClick={() => setStepIndex(1)}
+                                className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md hover:shadow-lg transition-all"
                             >
-                                {currentStep < questions.length - 1 ? "Question suivante" : "Voir mes résultats"}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* ─── 3. INTERFACE EXERCICE (DESSIN CANVAS) ─── */}
-            {isExercice && !isFinished && (
-                <div className="rounded-3xl border border-violet-200 bg-white p-6 shadow-sm">
-                    <div className="flex items-center gap-2 mb-4 bg-purple-50 p-4 rounded-2xl border border-purple-100/50">
-                        <Sparkles className="h-5 w-5 text-purple-600 shrink-0" />
-                        <div>
-                            <div className="text-xs font-bold text-purple-950">Mission créative :</div>
-                            <p className="text-xs text-purple-800 leading-normal">{instruction}</p>
-                        </div>
-                    </div>
-
-                    {/* Canvas Container */}
-                    <div className="relative border-2 border-dashed border-violet-200 rounded-2xl overflow-hidden bg-white shadow-inner">
-                        <canvas
-                            ref={canvasRef}
-                            width={650}
-                            height={400}
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={stopDrawing}
-                            onMouseLeave={stopDrawing}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
-                            onTouchEnd={stopDrawing}
-                            className="w-full h-auto touch-none bg-white cursor-crosshair"
-                        />
-                    </div>
-
-                    {/* Boîte à outils de dessin */}
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-4 p-4 bg-violet-50/50 rounded-2xl border border-violet-100/50">
-                        {/* Palette de couleurs */}
-                        <div className="flex flex-wrap gap-2">
-                            {['#6d5ba8', '#29b6f6', '#ec407a', '#66bb6a', '#ff7043', '#f97c7c', '#000000'].map((color) => (
-                                <button
-                                    key={color}
-                                    onClick={() => {
-                                        setBrushColor(color);
-                                        setIsEraser(false);
-                                    }}
-                                    className={`h-7 w-7 rounded-full transition-transform ${brushColor === color && !isEraser ? 'scale-110 ring-2 ring-violet-400' : ''}`}
-                                    style={{ backgroundColor: color }}
-                                    title={color}
-                                />
-                            ))}
-                            {/* Gomme */}
-                            <button
-                                onClick={() => setIsEraser(true)}
-                                className={`flex h-7 w-7 items-center justify-center rounded-full bg-white border border-violet-200 text-violet-600 transition-transform ${isEraser ? 'scale-110 ring-2 ring-violet-400' : ''}`}
-                                title="Gomme"
-                            >
-                                <Eraser className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        {/* Taille de pinceau */}
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-semibold text-violet-600">Pinceau :</span>
-                            <input
-                                type="range"
-                                min={2}
-                                max={20}
-                                value={brushSize}
-                                onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                                className="w-24 accent-violet-600"
-                            />
-                            <span className="text-xs font-bold text-violet-700">{brushSize}px</span>
-                        </div>
-
-                        {/* Actions Canvas */}
-                        <div className="flex gap-2">
-                            <button
-                                onClick={clearCanvas}
-                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 transition-colors"
-                                title="Effacer tout le dessin"
-                            >
-                                <Trash2 className="h-4 w-4" />
+                                Suivant <ArrowRight className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
+                )}
 
-                    <div className="mt-6 flex justify-end gap-3">
-                        <button
-                            onClick={() => setIsFinished(true)}
-                            className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-2.5 text-xs font-black text-white hover:from-violet-700 hover:to-purple-700 shadow-md flex items-center gap-1.5"
-                        >
-                            <Check className="h-4 w-4" /> Enregistrer mon dessin !
-                        </button>
-                    </div>
-                </div>
-            )}
+                {/* ── STEP 1 : LEÇON 2/3 (OBSERVER) ── */}
+                {stepIndex === 1 && (
+                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700">
+                                📖 Page 2/3 — Observer
+                            </span>
+                        </div>
+                        
+                        <h2 className="text-lg font-black text-violet-600 mb-4">{content.step2.soustitre}</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                            {/* Box text style journal / feuille de cahier lignée */}
+                            <div className="bg-yellow-50/50 border border-yellow-200/50 rounded-2xl p-6 shadow-xs relative overflow-hidden flex flex-col justify-between">
+                                <div className="absolute top-0 bottom-0 left-8 w-px bg-rose-200" />
+                                <div className="pl-6 space-y-4 font-serif">
+                                    <h3 className="text-xl font-bold text-violet-900 border-b border-yellow-200 pb-2">{content.step2.boxTitre}</h3>
+                                    <p className="text-sm leading-8 text-slate-800 whitespace-pre-line">
+                                        {content.step2.texte}
+                                    </p>
+                                </div>
+                                <div className="mt-6 flex items-center justify-end text-3xl opacity-75">
+                                    {content.step2.emoji}
+                                </div>
+                            </div>
 
-            {/* ─── 4. INTERFACE DE SUCCÈS (FIN DE L'ACTIVITÉ) ─── */}
-            {isFinished && (
-                <div className="rounded-3xl border border-violet-200 bg-white p-8 shadow-sm text-center flex flex-col items-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-500 mb-6 border border-amber-200/50 shadow-inner">
-                        <Trophy className="h-8 w-8 animate-bounce" />
-                    </div>
+                            <div className="flex flex-col justify-between gap-6">
+                                {/* À retenir */}
+                                <div className="bg-violet-50 border border-violet-100 p-5 rounded-2xl">
+                                    <h4 className="text-xs font-black text-violet-800 uppercase tracking-widest flex items-center gap-1.5 mb-3">
+                                        <Star className="h-4 w-4 fill-violet-400 text-violet-400" /> À retenir
+                                    </h4>
+                                    <ul className="space-y-2">
+                                        {content.step2.aRetenir.map((a, idx) => (
+                                            <li key={idx} className="text-xs text-violet-950 font-semibold flex items-start gap-2">
+                                                <span className="text-violet-500 font-bold">•</span>
+                                                <span>{a}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
 
-                    <h2 className="text-2xl font-black text-violet-950 mb-2">Hourra ! Activité complétée !</h2>
-                    
-                    {isLecon && (
-                        <p className="text-sm text-violet-600 max-w-md mb-6 leading-relaxed">
-                            Félicitations, tu as lu toute la leçon ! Tu as acquis de nouvelles connaissances. Prêt à tester ton savoir sur l'exercice suivant ?
-                        </p>
-                    )}
+                                {/* Badges ou Bullet lists */}
+                                {content.step2.badges && (
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {content.step2.badges.map((b, idx) => (
+                                            <div key={idx} className="bg-white border border-violet-100 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-xs">
+                                                <span className="text-3xl mb-2">{b.emoji}</span>
+                                                <span className="text-[10px] font-black text-violet-900 leading-snug">{b.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
-                    {isQuiz && (
-                        <div className="mb-6">
-                            <p className="text-sm text-violet-600 max-w-md leading-relaxed mb-4">
-                                Tu as répondu à toutes les questions !
-                            </p>
-                            <div className="inline-flex flex-col items-center bg-violet-50 rounded-2xl px-6 py-4 border border-violet-100/50">
-                                <span className="text-xs font-bold text-violet-500 uppercase tracking-widest">Ton score final</span>
-                                <span className="text-3xl font-black text-violet-950 mt-1">{score} / {questions.length}</span>
-                                {score === questions.length ? (
-                                    <span className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1">
-                                        <Star className="h-3.5 w-3.5 fill-current text-amber-500" /> Score Parfait ! Magnifique !
-                                    </span>
-                                ) : (
-                                    <span className="text-xs font-semibold text-violet-600 mt-2">
-                                        Tu as fait du bon travail !
-                                    </span>
+                                {content.step2.bulletList && (
+                                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl space-y-2">
+                                        <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Outils clés :</h4>
+                                        {content.step2.bulletList.map((b, idx) => (
+                                            <div key={idx} className="text-xs font-bold text-violet-950 flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                                <span>{b}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    )}
 
-                    {isExercice && (
-                        <p className="text-sm text-violet-600 max-w-md mb-6 leading-relaxed">
-                            Ton dessin a été bien enregistré ! Tu as fait preuve d'une superbe créativité.
+                        <div className="mt-8 flex justify-between">
+                            <button
+                                onClick={() => setStepIndex(0)}
+                                className="rounded-2xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
+                            >
+                                Retour
+                            </button>
+                            <button
+                                onClick={() => setStepIndex(2)}
+                                className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md transition-all"
+                            >
+                                Suivant <ArrowRight className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STEP 2 : LEÇON 3/3 (COMPRENDRE) ── */}
+                {stepIndex === 2 && (
+                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700">
+                                📖 Page 3/3 — Comprendre
+                            </span>
+                        </div>
+                        
+                        <h2 className="text-lg font-black text-violet-600 mb-6">{content.step3.soustitre}</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                            <div className="space-y-6">
+                                <p className="text-sm text-violet-800 leading-relaxed font-semibold">{content.step3.texte}</p>
+                                
+                                <div className="bg-white border border-violet-100 rounded-2xl p-5 shadow-xs space-y-4">
+                                    <h4 className="text-xs font-black text-violet-800 uppercase tracking-widest">Points clés :</h4>
+                                    {content.step3.pointsCles.map((pt, idx) => (
+                                        <div key={idx} className="flex gap-3 items-start">
+                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                                <Check className="h-3 w-3" />
+                                            </span>
+                                            <p className="text-xs text-violet-950 font-bold leading-relaxed">{pt}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Bulles de pensée d'illustrations */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {content.step3.bulles.map((b, idx) => (
+                                        <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4 shadow-xs relative">
+                                            <span className="absolute -top-2 -left-2 text-xs">💬</span>
+                                            <p className="text-xs font-black text-violet-950 leading-relaxed">{b}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {content.step3.objectif && (
+                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex gap-3 items-center mt-4">
+                                        <span className="text-2xl">🎯</span>
+                                        <p className="text-xs font-extrabold text-emerald-800 whitespace-pre-line leading-relaxed">{content.step3.objectif}</p>
+                                    </div>
+                                )}
+                                
+                                <div className="text-center pt-4">
+                                    <span className="text-6xl animate-pulse inline-block">{content.step3.illustration}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex justify-between">
+                            <button
+                                onClick={() => setStepIndex(1)}
+                                className="rounded-2xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
+                            >
+                                Retour
+                            </button>
+                            <button
+                                onClick={() => setStepIndex(3)}
+                                className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 font-black text-white hover:bg-emerald-600 shadow-md transition-all animate-pulse"
+                            >
+                                Passer à l'exercice <ArrowRight className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STEP 3 : EXERCICE GUIDÉ ── */}
+                {stepIndex === 3 && (
+                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3.5 py-1 text-xs font-black text-white">
+                                ✏️ Exercice Guidé
+                            </span>
+                        </div>
+                        
+                        <h2 className="text-xl font-black text-violet-950 mb-6">{content.exercice.titre}</h2>
+
+                        {/* --- EXERCICE TYPE: MATCH --- */}
+                        {content.exercice.type === 'match' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-6">
+                                <div className="space-y-3">
+                                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Élément de gauche (clique pour sélectionner)</h4>
+                                    {content.exercice.data.left.map((item: any) => {
+                                        const isSelected = selectedLeft === item.id;
+                                        const matchedRightId = matches[item.id];
+                                        const matchedRight = content.exercice.data.right.find((r: any) => r.id === matchedRightId);
+                                        
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                disabled={exerciceChecked}
+                                                onClick={() => handleSelectLeft(item.id)}
+                                                className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs ${
+                                                    isSelected 
+                                                        ? 'border-violet-600 bg-violet-50 text-violet-900 shadow-sm'
+                                                        : matchedRightId
+                                                            ? 'border-emerald-200 bg-emerald-50/20 text-slate-800'
+                                                            : 'border-slate-100 bg-slate-50/50 text-slate-700 hover:border-slate-300'
+                                                }`}
+                                            >
+                                                <span>{item.text}</span>
+                                                {matchedRight && (
+                                                    <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-md font-black shrink-0 ml-2">
+                                                        Lié à : {matchedRight.text.substring(0, 15)}...
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Élément de droite (clique pour associer)</h4>
+                                    {content.exercice.data.right.map((item: any) => {
+                                        const isMatchTarget = Object.values(matches).includes(item.id);
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                disabled={exerciceChecked || !selectedLeft}
+                                                onClick={() => handleSelectRight(item.id)}
+                                                className={`w-full text-left p-4 rounded-xl border-2 transition-all font-semibold text-xs ${
+                                                    isMatchTarget
+                                                        ? 'border-emerald-300 bg-emerald-50/20 text-emerald-800 font-bold'
+                                                        : selectedLeft
+                                                            ? 'border-violet-200 hover:border-violet-400 bg-violet-50/10 text-slate-700'
+                                                            : 'border-slate-100 bg-slate-50/50 text-slate-400 cursor-not-allowed'
+                                                }`}
+                                            >
+                                                {item.text}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- EXERCICE TYPE: ORDER --- */}
+                        {content.exercice.type === 'order' && (
+                            <div className="space-y-3 my-6 max-w-2xl mx-auto">
+                                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Utilise les flèches pour déplacer les phrases dans le bon ordre</h4>
+                                {orderedItems.map((item: string, idx: number) => (
+                                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-xs">
+                                                {idx + 1}
+                                            </span>
+                                            <span className="text-xs font-bold text-violet-950">{item}</span>
+                                        </div>
+                                        <div className="flex gap-1.5">
+                                            <button 
+                                                disabled={exerciceChecked || idx === 0}
+                                                onClick={() => moveItem(idx, 'up')}
+                                                className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                                            >
+                                                <MoveUp className="h-3.5 w-3.5" />
+                                            </button>
+                                            <button 
+                                                disabled={exerciceChecked || idx === orderedItems.length - 1}
+                                                onClick={() => moveItem(idx, 'down')}
+                                                className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                                            >
+                                                <MoveDown className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* --- EXERCICE TYPE: INPUT --- */}
+                        {content.exercice.type === 'input' && (
+                            <div className="space-y-6 my-6 max-w-xl mx-auto">
+                                {content.exercice.data.questions.map((q: any, idx: number) => (
+                                    <div key={idx} className="space-y-2">
+                                        <label className="block text-xs font-black text-violet-900">{q.label}</label>
+                                        <input
+                                            type="text"
+                                            disabled={exerciceChecked}
+                                            placeholder={q.placeholder}
+                                            value={inputAnswers[q.key] || ""}
+                                            onChange={(e) => handleInputChange(q.key, e.target.value)}
+                                            className="w-full border border-violet-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-violet-500 outline-hidden font-bold"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* --- EXERCICE TYPE: SORT --- */}
+                        {content.exercice.type === 'sort' && (
+                            <div className="my-6 max-w-xl mx-auto">
+                                {activeSortItemIndex < content.exercice.data.items.length && !exerciceChecked ? (
+                                    <div className="text-center space-y-6 bg-slate-50 border border-slate-100 p-6 rounded-2xl mb-6">
+                                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Geste {activeSortItemIndex + 1} / {content.exercice.data.items.length}</h4>
+                                        <p className="text-lg font-black text-violet-950">
+                                            "{content.exercice.data.items[activeSortItemIndex].text}"
+                                        </p>
+                                        <div className="flex justify-center gap-4">
+                                            {content.exercice.data.categories.map((cat: any) => (
+                                                <button
+                                                    key={cat.id}
+                                                    onClick={() => handleSortItem(cat.id)}
+                                                    className={`px-5 py-3 rounded-xl border-2 font-black text-xs hover:scale-105 transition-all ${cat.bg}`}
+                                                >
+                                                    {cat.title}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center p-6 bg-slate-50 border border-slate-100 rounded-2xl my-4 text-xs font-bold text-violet-900">
+                                        Tous les gestes ont été classés. Clique sur Vérifier !
+                                    </div>
+                                )}
+
+                                {/* Résumé du tri */}
+                                <div className="grid grid-cols-2 gap-4 mt-6 text-left">
+                                    {content.exercice.data.categories.map((cat: any) => (
+                                        <div key={cat.id} className={`rounded-xl border p-4 ${cat.bg}`}>
+                                            <h5 className="font-black text-xs mb-3">{cat.title}</h5>
+                                            <ul className="space-y-1.5 text-[11px] font-bold">
+                                                {content.exercice.data.items.map((item: any) => {
+                                                    if (sortedItems[item.id] !== cat.id) return null;
+                                                    return (
+                                                        <li key={item.id} className="bg-white/80 px-2.5 py-1.5 rounded-lg border border-slate-100 flex items-center gap-1">
+                                                            <span>• {item.text}</span>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- RÉSULTAT EXERCICE --- */}
+                        {exerciceChecked && (
+                            <div className={`mt-6 p-5 rounded-2xl border flex items-start gap-3.5 ${
+                                exerciceSuccess 
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                                    : 'bg-rose-50 border-rose-200 text-rose-800'
+                            }`}>
+                                {exerciceSuccess ? (
+                                    <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
+                                ) : (
+                                    <XCircle className="h-6 w-6 text-rose-600 shrink-0 mt-0.5" />
+                                )}
+                                <div>
+                                    <h4 className="text-sm font-black uppercase">
+                                        {exerciceSuccess ? "Bravo ! C'est parfait !" : "Quelques erreurs ! Essaye encore."}
+                                    </h4>
+                                    <p className="text-xs font-semibold mt-1">
+                                        {exerciceSuccess 
+                                            ? "Tu as brillamment réussi l'exercice guidé. Tu es prêt pour l'étape du quiz !" 
+                                            : "Vérifie tes réponses, réinitialise l'exercice et tente à nouveau de trouver la bonne solution."}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mt-8 flex justify-between items-center">
+                            <button
+                                onClick={() => setStepIndex(2)}
+                                className="rounded-2xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
+                            >
+                                Retour
+                            </button>
+                            
+                            <div className="flex gap-3">
+                                {/* Bouton réinitialiser */}
+                                {exerciceChecked && !exerciceSuccess && (
+                                    <button
+                                        onClick={() => {
+                                            if (content.exercice.type === 'match') handleResetMatch();
+                                            else if (content.exercice.type === 'order') handleResetOrder();
+                                            else if (content.exercice.type === 'input') handleResetInput();
+                                            else if (content.exercice.type === 'sort') handleResetSort();
+                                        }}
+                                        className="flex items-center gap-1.5 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
+                                    >
+                                        <RotateCcw className="h-3.5 w-3.5" /> Recommencer
+                                    </button>
+                                )}
+
+                                {!exerciceChecked ? (
+                                    <button
+                                        onClick={() => {
+                                            if (content.exercice.type === 'match') verifyMatch();
+                                            else if (content.exercice.type === 'order') verifyOrder();
+                                            else if (content.exercice.type === 'input') verifyInput();
+                                            else if (content.exercice.type === 'sort') {
+                                                // Simuler clic si pas fini
+                                                const items = content.exercice.data.items;
+                                                if (activeSortItemIndex < items.length) {
+                                                    alert("Classe d'abord tous les éléments !");
+                                                } else {
+                                                    verifyInput();
+                                                }
+                                            }
+                                        }}
+                                        className="rounded-2xl bg-emerald-600 px-6 py-3 font-black text-white hover:bg-emerald-700 shadow-md"
+                                    >
+                                        Vérifier
+                                    </button>
+                                ) : (
+                                    <button
+                                        disabled={!exerciceSuccess}
+                                        onClick={() => setStepIndex(4)}
+                                        className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        Passer au Quiz <ArrowRight className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STEP 4 : QUIZ (10 QUESTIONS) ── */}
+                {stepIndex === 4 && (
+                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700 animate-pulse">
+                                ❓ Quiz final (10 Questions)
+                            </span>
+                            <span className="text-xs font-black text-violet-400">Question {quizIndex + 1} / {content.quiz.length}</span>
+                        </div>
+
+                        {/* Progression dans le quiz */}
+                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-6">
+                            <div 
+                                className="bg-violet-600 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${((quizIndex + 1) / content.quiz.length) * 100}%` }}
+                            />
+                        </div>
+
+                        <div className="p-6 bg-violet-50/50 rounded-2xl border border-violet-100/50 mb-6">
+                            <h2 className="text-base md:text-lg font-black text-violet-950 text-center leading-snug">
+                                {content.quiz[quizIndex].q}
+                            </h2>
+                        </div>
+
+                        <div className="grid gap-3 max-w-2xl mx-auto">
+                            {content.quiz[quizIndex].options.map((option, idx) => {
+                                const isCorrectAnswer = idx === content.quiz[quizIndex].answer;
+                                const isSelected = selectedOption === idx;
+                                
+                                let optionStyle = 'border-slate-200 hover:border-violet-400 hover:bg-violet-50/20';
+                                if (selectedOption !== null) {
+                                    if (isCorrectAnswer) {
+                                        optionStyle = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
+                                    } else if (isSelected) {
+                                        optionStyle = 'border-rose-500 bg-rose-50 text-rose-800';
+                                    } else {
+                                        optionStyle = 'border-slate-100 bg-slate-50 opacity-40';
+                                    }
+                                }
+
+                                return (
+                                    <button
+                                        key={idx}
+                                        disabled={selectedOption !== null}
+                                        onClick={() => handleAnswerQuiz(idx)}
+                                        className={`w-full text-left rounded-xl border p-4 text-xs font-bold transition-all flex items-center justify-between ${optionStyle}`}
+                                    >
+                                        <span>{option}</span>
+                                        {selectedOption !== null && isCorrectAnswer && (
+                                            <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 ml-2" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {showExplanation && (
+                            <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100 flex items-start gap-3 max-w-2xl mx-auto">
+                                <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <div className="text-xs font-black text-amber-900">
+                                        {selectedOption === content.quiz[quizIndex].answer ? "Bien joué ! 🌟" : "Presque ! 😉"}
+                                    </div>
+                                    <p className="text-xs text-amber-800 font-medium mt-1 leading-relaxed">
+                                        {content.quiz[quizIndex].explication}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mt-8 flex justify-end">
+                            {selectedOption !== null && (
+                                <button
+                                    onClick={handleNextQuiz}
+                                    className="flex items-center gap-1.5 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md transition-all"
+                                >
+                                    {quizIndex < content.quiz.length - 1 ? "Question Suivante" : "Terminer le Quiz !"} <ArrowRight className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STEP 5 : RESULTAT FINAL / BADGE ── */}
+                {stepIndex === 5 && (
+                    <div className="bg-white border border-violet-100 rounded-3xl p-8 md:p-12 text-center shadow-lg max-w-2xl mx-auto">
+                        <div className="flex justify-center mb-6">
+                            <div className="bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full p-6 shadow-md relative">
+                                <Trophy className="h-16 w-16 text-amber-300 animate-pulse" />
+                                <span className="absolute -top-2 -right-2 text-3xl">🤖</span>
+                            </div>
+                        </div>
+
+                        <h2 className="text-2xl md:text-3xl font-black text-violet-950 mb-2">
+                            {score >= 8 ? "Well done ! Félicitations !" : "Quiz Terminé !"}
+                        </h2>
+                        
+                        <p className="text-sm font-extrabold text-violet-600 mb-6 uppercase tracking-wider">
+                            Tu as réussi ton aventure {content.titreGlobal} !
                         </p>
-                    )}
 
-                    <div className="flex gap-4">
-                        {isQuiz && score < questions.length && (
+                        <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 mb-6 max-w-sm mx-auto">
+                            <span className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Ton score final</span>
+                            <span className="text-4xl md:text-5xl font-black text-emerald-600">
+                                {score} <span className="text-xl md:text-2xl text-slate-400">/ {content.quiz.length}</span>
+                            </span>
+                            <p className="text-xs font-semibold text-violet-950 mt-3">
+                                {score === 10 && "Excellent ! Un score parfait de champion ! 🌟"}
+                                {score >= 8 && score < 10 && "Super travail ! Tu as très bien compris la leçon ! 👏"}
+                                {score >= 5 && score < 8 && "Pas mal ! Tu peux relire la leçon pour faire encore mieux ! 👍"}
+                                {score < 5 && "Essaye de revoir la leçon pour améliorer ton score. Courage ! 💪"}
+                            </p>
+                        </div>
+
+                        {/* Étoiles d'évaluation */}
+                        <div className="flex justify-center gap-1.5 mb-8">
+                            {[1, 2, 3, 4, 5].map((starIdx) => {
+                                const starThreshold = starIdx * 2; // e.g. 5 stars = 10, 4 stars = 8
+                                const isGold = score >= starThreshold;
+                                return (
+                                    <Star 
+                                        key={starIdx}
+                                        className={`h-7 w-7 ${
+                                            isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-100'
+                                        }`}
+                                    />
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <button
                                 onClick={() => {
-                                    setCurrentStep(0);
+                                    setStepIndex(0);
                                     setScore(0);
+                                    setQuizIndex(0);
                                     setSelectedOption(null);
                                     setShowExplanation(false);
-                                    setIsFinished(false);
+                                    setExerciceChecked(false);
+                                    setExerciceSuccess(false);
                                 }}
-                                className="rounded-xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-50 flex items-center gap-1.5"
+                                className="rounded-2xl border border-violet-200 bg-white px-6 py-3 text-xs font-black text-violet-700 hover:bg-violet-50 transition-colors"
                             >
-                                <RotateCcw className="h-4 w-4" /> Recommencer le quiz
+                                <RotateCcw className="h-4 w-4 inline-block mr-1" /> Recommencer l'aventure
                             </button>
-                        )}
-                        <button
-                            onClick={handleSaveActivity}
-                            className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-2.5 text-xs font-black text-white hover:from-violet-700 hover:to-purple-700 shadow-md"
-                        >
-                            Enregistrer et continuer
-                        </button>
+                            <button
+                                onClick={handleSaveAdventure}
+                                className="rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-7 py-3 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md hover:shadow-lg transition-all"
+                            >
+                                Continuer l'aventure <ArrowRight className="h-4 w-4 inline-block ml-1" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+            </main>
+
+            {/* Bottom Timeline Indicator (si pas au résultat final) */}
+            {stepIndex < 5 && (
+                <div className="mt-8 border-t border-violet-100 pt-6 flex items-center justify-between text-xs font-bold text-violet-400">
+                    <div className="flex items-center gap-1.5">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-violet-100 text-[10px] font-black text-violet-700">📖</span>
+                        <span>{content.titreGlobal}</span>
+                    </div>
+                    <div>
+                        <span>Étape {stepIndex + 1} sur 5</span>
                     </div>
                 </div>
             )}
