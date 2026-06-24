@@ -152,7 +152,7 @@ export default function ContactForm() {
                     ) : (
                         <>
                             Envoyer le message
-                            <Send className="w-4 h-4 text-[#260936] transition-colors duration-300" />
+                            <Send className="w-4 h-4 text-white transition-colors duration-300" />
                         </>
                     )}
                 </button>

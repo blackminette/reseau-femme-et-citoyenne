@@ -1,8 +1,7 @@
 // * src/app/(vitrine)/ateliers/page.tsx
-import React from 'react';
 import Link from 'next/link';
 
-//! Simulation des données qui viendront plus tard de Prisma (à remplacer dès que l'API sera en place)
+
 const FAKE_ATELIERS = [
     {
         id: "1",
