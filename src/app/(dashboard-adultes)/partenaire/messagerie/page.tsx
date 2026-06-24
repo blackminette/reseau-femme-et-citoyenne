@@ -1,12 +1,18 @@
 'use client';
 // * src/app/(dashboard-adultes)/partenaire/messagerie/page.tsx
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { CONVERSATION, PARTENAIRE, type Message } from "@/lib/partenaire-data";
 
 export default function PartenaireMessageriePage() {
     const [messages, setMessages] = useState<Message[]>(CONVERSATION);
     const [texte, setTexte] = useState("");
+    const finDuFil = useRef<HTMLDivElement>(null);
+
+    // Fait défiler vers le dernier message à chaque nouveau message.
+    useEffect(() => {
+        finDuFil.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,6 +60,7 @@ export default function PartenaireMessageriePage() {
                         </div>
                     );
                 })}
+                <div ref={finDuFil} />
             </div>
 
             {/* Composer */}

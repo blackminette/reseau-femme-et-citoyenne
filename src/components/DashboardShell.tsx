@@ -1,6 +1,6 @@
 'use client';
 // * src/components/DashboardShell.tsx
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
@@ -23,11 +23,14 @@ type Props = {
 export default function DashboardShell({ sidebar, titre, sousHeader = false, children }: Props) {
     const [ouvert, setOuvert] = useState(false);
     const pathname = usePathname();
+    const [pathPrecedent, setPathPrecedent] = useState(pathname);
 
-    // Ferme le tiroir dès qu'on change de page.
-    useEffect(() => {
+    // Ferme le tiroir au changement de page (ajustement d'état pendant le rendu,
+    // recommandé par React plutôt qu'un useEffect).
+    if (pathname !== pathPrecedent) {
+        setPathPrecedent(pathname);
         setOuvert(false);
-    }, [pathname]);
+    }
 
     const top = sousHeader ? 'top-24' : 'top-0';
 

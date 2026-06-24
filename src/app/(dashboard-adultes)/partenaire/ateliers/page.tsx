@@ -1,20 +1,14 @@
 // * src/app/(dashboard-adultes)/partenaire/ateliers/page.tsx
 import Link from "next/link";
-import { CalendarDays, Clock, Users, CalendarPlus, ClipboardList } from "lucide-react";
+import { CalendarPlus, ClipboardList } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
+import DemandeCard from "@/components/DemandeCard";
 import { DEMANDES, type StatutDemande } from "@/lib/partenaire-data";
 
 export const metadata = {
     title: "Mes demandes",
     description: "Suivez l'état de toutes vos demandes de réservation d'atelier.",
-};
-
-// Couleur du badge selon le statut de la demande.
-const STATUT_STYLE: Record<StatutDemande, string> = {
-    "Validée": "bg-emerald-50 text-emerald-600",
-    "En attente": "bg-amber-50 text-amber-600",
-    "Refusée": "bg-rose-50 text-rose-600",
 };
 
 // Onglets de filtre : libellé affiché ↔ valeur URL ↔ statut filtré (null = toutes).
@@ -73,26 +67,8 @@ export default async function PartenaireAteliersPage({
             {/* ─── Liste des demandes ─── */}
             {demandes.length > 0 ? (
                 <div className="mt-6 grid gap-4">
-                    {demandes.map(({ id, atelier, Icon, date, creneau, beneficiaires, statut, demandeLe }) => (
-                        <article key={id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-violet-200 bg-white p-5 shadow-xs">
-                            <div className="flex items-center gap-4">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                                    <Icon className="h-5 w-5" aria-hidden />
-                                </div>
-                                <div className="space-y-1">
-                                    <h4 className="font-bold text-violet-950">{atelier}</h4>
-                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-violet-500">
-                                        <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" aria-hidden /> {date}</span>
-                                        <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4" aria-hidden /> {creneau}</span>
-                                        <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4" aria-hidden /> {beneficiaires} bénéficiaires</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-end gap-1.5">
-                                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUT_STYLE[statut]}`}>{statut}</span>
-                                <span className="text-[11px] text-violet-400">Demandé le {demandeLe}</span>
-                            </div>
-                        </article>
+                    {demandes.map((demande) => (
+                        <DemandeCard key={demande.id} demande={demande} />
                     ))}
                 </div>
             ) : (
