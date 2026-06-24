@@ -26,10 +26,6 @@ import { MEMBRE, ENFANTS_RATTACHES, ACTIVITES, RESERVATIONS, type Metriques } fr
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 
-export const metadata = {
-    title: "Mon espace membre",
-    description: "Suivez votre progression et celle de vos enfants, gérez vos réservations.",
-};
 
 // Grille des 6 métriques, réutilisée pour le membre et chaque enfant.
 function MetriquesGrid({ m }: { m: Metriques }) {

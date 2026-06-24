@@ -5,10 +5,6 @@ import { ENFANTS } from "@/lib/membre-data";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 
-export const metadata = {
-    title: "Mes enfants",
-    description: "Les enfants rattachés à votre compte.",
-};
 
 export default function MembreEnfantsPage() {
     return (

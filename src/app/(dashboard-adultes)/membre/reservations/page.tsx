@@ -6,10 +6,6 @@ import { CalendarPlus, CalendarDays, Clock, User } from "lucide-react";
 import { RESERVATIONS } from "@/lib/membre-data";
 import PageHeader from "@/components/PageHeader";
 
-export const metadata = {
-    title: "Mes réservations",
-    description: "Les ateliers que vous avez réservés, pour vous et vos enfants.",
-};
 
 // Couleur du badge selon le statut de la réservation.
 const STATUT_STYLE: Record<string, string> = {

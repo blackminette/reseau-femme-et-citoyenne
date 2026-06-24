@@ -1,8 +1,4 @@
 // * src/components/Footer.tsx
-'use client';
-
-import React from 'react';
-import { usePathname } from 'next/navigation';
 
 /**
  * Pied de page principal (Footer) affiché en bas du site.
@@ -12,24 +8,8 @@ import { usePathname } from 'next/navigation';
  */
 
 export default function Footer() {
-    const pathname = usePathname();
-
-    if (pathname?.startsWith('/enfant')) {
-        return null;
-    }
-
-    // Détermination de la marge à gauche pour éviter le chevauchement avec les menus latéraux fixes
-    let marginClass = '';
-    if (pathname) {
-        if (pathname.startsWith('/admin')) {
-            marginClass = 'ml-[16.666667%]';
-        } else if (pathname.startsWith('/membre') || pathname.startsWith('/enfant')) {
-            marginClass = 'ml-64';
-        }
-    }
-
     return (
-        <footer className={`border-t border-[#bc96e6]/30 bg-[#260936] px-6 py-12 text-sm text-[#eedeff] relative overflow-hidden transition-all duration-300 ${marginClass}`}>
+        <footer className="border-t border-[#bc96e6]/30 bg-[#260936] px-6 py-12 text-sm text-[#eedeff] relative overflow-hidden">
             {/* Décoration subtile en arrière-plan */}
             <div className="absolute top-0 left-0 w-64 h-64 bg-[#bc96e6]/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
 

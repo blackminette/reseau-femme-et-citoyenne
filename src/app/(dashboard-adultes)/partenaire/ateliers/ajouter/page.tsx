@@ -1,1 +1,10 @@
-// * src/app/(dashboard-adultes)/partenaire/ateliers/ajouter/page.tsx
+import React from 'react';
+
+export default function PartenaireAteliersAjouterPage() {
+    return (
+        <div className="p-6">
+            <h1 className="text-2xl font-bold text-violet-950">Créer un Atelier</h1>
+            <p className="text-slate-600 mt-2">Cette fonctionnalité est en cours de développement.</p>
+        </div>
+    );
+}
