@@ -84,7 +84,7 @@ export default async function EnfantLayout({
             </header>
 
             {/* ─── CORPS DE LA PAGE ─── */}
-            <main className="flex-grow p-4 sm:p-6 md:p-8">
+            <main className="flex-grow p-4 sm:p-6 md:p-8 pb-20 md:pb-8">
                 <div className="mx-auto max-w-7xl">
                     {children}
                 </div>
