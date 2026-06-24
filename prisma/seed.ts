@@ -1,14 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
+import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
 // Charge le fichier .env
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
 // Configure le pool de connexion PostgreSQL natif
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 
 // Initialise Prisma avec l'adaptateur exigé par la v7
@@ -96,8 +96,8 @@ async function main() {
       if (authError) {
         // Si l'utilisateur existe déjà sur Supabase Auth, on récupère simplement son UUID existant
         if (authError.message.includes('already exists') || authError.message.includes('email_exists')) {
-          const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-          const userExistant = listData?.users.find(u => u.email === user.email);
+          const { data: listData } = await supabaseAdmin.auth.admin.listUsers() as any;
+          const userExistant = (listData?.users || []).find((u: any) => u.email === user.email);
           
           if (!userExistant) {
             console.error(`❌ Impossible de récupérer l'UUID existant pour ${user.email}`);
