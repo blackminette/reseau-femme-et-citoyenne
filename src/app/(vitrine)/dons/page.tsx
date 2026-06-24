@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { enregistrerDon } from './actions';
 import { 
   Heart, 
   Link2, 
@@ -25,35 +24,6 @@ import {
 } from 'lucide-react';
 
 export default function DonsPage() {
-  // Form states
-  const [selectedAmount, setSelectedAmount] = useState<number | 'autre'>(50);
-  const [customAmount, setCustomAmount] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [message, setMessage] = useState<string>('');
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [showCheckoutIframe, setShowCheckoutIframe] = useState<boolean>(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  React.useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
-      if (e.data && e.data.height && iframeRef.current) {
-        iframeRef.current.style.height = `${e.data.height}px`;
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [showCheckoutIframe]);
-  
-  // Interactive state
-  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
-  const [submittedData, setSubmittedData] = useState<{
-    amount: number;
-    name: string;
-    email: string;
-    message: string;
-  } | null>(null);
-  
   // Video Modal State
   const [activeVideo, setActiveVideo] = useState<{
     title: string;
@@ -64,88 +34,8 @@ export default function DonsPage() {
   const formRef = useRef<HTMLDivElement>(null);
 
   // Helper to scroll to the form
-  const handleScrollToForm = (amount?: number | 'autre') => {
-    if (amount !== undefined) {
-      setSelectedAmount(amount);
-      if (amount === 'autre') {
-        setCustomAmount('');
-      }
-    }
+  const handleScrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
-  // Get current donation amount value
-  const getCurrentAmount = (): number => {
-    if (selectedAmount === 'autre') {
-      const parsed = parseFloat(customAmount);
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    return selectedAmount;
-  };
-
-  // Get impact description based on amount
-  const getImpactDescription = (amount: number): string => {
-    if (amount <= 0) return "une contribution précieuse aux projets de l'association";
-    if (amount < 10) return "des fournitures pour un atelier créatif (peinture, papier, ciseaux)";
-    if (amount < 25) return "du matériel de qualité pour une activité manuelle complète (peinture, pinceaux, feuilles, accessoires)";
-    if (amount < 50) return "la participation d'un enfant à un atelier éducatif et culturel";
-    if (amount < 100) return "l'initiation informatique pour plusieurs enfants lors d'un atelier numérique";
-    return "le soutien à l'organisation d'un projet collectif citoyen ou culturel majeur";
-  };
-
-  // Form submission handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const finalAmount = getCurrentAmount();
-    if (finalAmount <= 0) {
-      alert("Veuillez sélectionner ou saisir un montant valide supérieur à 0 €.");
-      return;
-    }
-    if (!name.trim()) {
-      alert("Veuillez saisir votre nom et prénom.");
-      return;
-    }
-    if (!email.trim() || !email.includes('@')) {
-      alert("Veuillez saisir une adresse email valide.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await enregistrerDon({
-        amount: finalAmount,
-        name,
-        email,
-        message
-      });
-
-      if (res.success) {
-        setSubmittedData({
-          amount: finalAmount,
-          name,
-          email,
-          message
-        });
-        setShowCheckoutIframe(true);
-      } else {
-        alert(res.error || "Une erreur est survenue.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Une erreur inattendue est survenue.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Close success modal and reset form
-  const handleCloseModal = () => {
-    setShowSuccessModal(false);
-    setName('');
-    setEmail('');
-    setMessage('');
-    setCustomAmount('');
-    setSelectedAmount(50);
   };
 
   return (
@@ -681,167 +571,30 @@ export default function DonsPage() {
             </div>
           </div>
 
-          {/* Right Column: Make a Donation Form */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-8 shadow-xl border border-purple-900/5 text-left">
-            <div className="mb-8">
+          {/* Right Column: Embedded HelloAsso Iframe */}
+          <div className="lg:col-span-7 bg-white rounded-3xl p-8 shadow-xl border border-purple-900/5 text-left flex flex-col">
+            <div className="mb-6">
               <h2 className="text-3xl font-black text-[#260936] tracking-tight">
                 Faire un don
               </h2>
+              <p className="text-slate-500 mt-1 font-light text-sm">
+                Soutenez nos projets directement en complétant le formulaire sécurisé HelloAsso ci-dessous.
+              </p>
             </div>
 
-            {showCheckoutIframe ? (
-              <div className="space-y-6 text-left animate-fadeIn">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#260936]">Finalisez votre don</h3>
-                    <p className="text-sm text-slate-500">
-                      Montant choisi : <span className="font-bold text-purple-700">{getCurrentAmount()} €</span>
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCheckoutIframe(false)}
-                    className="px-4 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition"
-                  >
-                    Modifier le montant
-                  </button>
-                </div>
-                
-                <iframe
-                  ref={iframeRef}
-                  id="haWidget"
-                  allowTransparency={true}
-                  scrolling="auto"
-                  src={`https://www.helloasso.com/associations/reseau-femme-et-citoyenne-06/formulaires/1/widget?amount=${getCurrentAmount()}`}
-                  style={{ width: '100%', height: '750px', border: 'none' }}
-                  className="rounded-2xl border border-slate-100 shadow-sm"
-                ></iframe>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Amount Selection Bubbles */}
-                <div className="space-y-3">
-                  <label className="text-sm font-bold text-slate-700 block">
-                    Montant du don
-                  </label>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {[5, 10, 25, 50, 100].map((amount) => {
-                      const isActive = selectedAmount === amount;
-                      return (
-                        <button
-                          key={amount}
-                          type="button"
-                          onClick={() => {
-                            setSelectedAmount(amount);
-                            setCustomAmount('');
-                          }}
-                          className={`py-3 px-2 rounded-xl text-sm font-black border transition-all duration-200 text-center cursor-pointer ${
-                            isActive 
-                              ? 'bg-[#260936] text-white border-[#260936] shadow-md scale-105' 
-                              : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          {amount} €
-                        </button>
-                      );
-                    })}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedAmount('autre')}
-                      className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-black border transition-all duration-200 text-center cursor-pointer ${
-                        selectedAmount === 'autre'
-                          ? 'bg-[#260936] text-white border-[#260936] shadow-md scale-105'
-                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      Autre
-                    </button>
-                  </div>
+            <iframe
+              id="haWidget"
+              allowTransparency={true}
+              scrolling="auto"
+              src="https://www.helloasso.com/associations/reseau-femme-et-citoyenne-06/formulaires/1/widget"
+              style={{ width: '100%', height: '750px', border: 'none' }}
+              className="rounded-2xl border border-slate-100 shadow-sm"
+            ></iframe>
 
-                  {selectedAmount === 'autre' && (
-                    <div className="pt-2 animate-slideDown">
-                      <div className="relative rounded-xl overflow-hidden shadow-sm">
-                        <input
-                          type="number"
-                          min="1"
-                          placeholder="Saisissez un autre montant"
-                          value={customAmount}
-                          onChange={(e) => setCustomAmount(e.target.value)}
-                          className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
-                        />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                          €
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form fields */}
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <label htmlFor="name" className="text-sm font-bold text-slate-700 block mb-2">
-                      Nom et Prénom
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      required
-                      placeholder="Jean Dupont"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="text-sm font-bold text-slate-700 block mb-2">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      placeholder="exemple@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="text-sm font-bold text-slate-700 block mb-2">
-                      Message (facultatif)
-                    </label>
-                    <textarea
-                      id="message"
-                      rows={4}
-                      placeholder="Laissez-nous un message si vous le souhaitez..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm resize-none"
-                    ></textarea>
-                  </div>
-                </div>
-
-                {/* Submit Button & Lock badge */}
-                <div className="space-y-4 pt-4">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-4 bg-[#260936] hover:bg-[#3a1250] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
-                    {submitting ? "Enregistrement du don..." : "Je soutiens l'association"}
-                  </button>
-
-                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Paiement 100% sécurisé via HelloAsso</span>
-                  </div>
-                </div>
-              </form>
-            )}
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-400 mt-6">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Paiement 100% sécurisé via HelloAsso</span>
+            </div>
           </div>
 
         </div>
@@ -872,53 +625,6 @@ export default function DonsPage() {
           </div>
         </div>
       </section>
-
-      {/* Success Modal */}
-      {showSuccessModal && submittedData && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl relative border border-purple-100 text-center animate-scaleUp">
-            <button 
-              onClick={handleCloseModal}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-              <CheckCircle className="w-10 h-10" />
-            </div>
-
-            <h3 className="text-2xl font-black text-[#260936] mb-3">
-              Merci pour votre générosité !
-            </h3>
-            
-            <p className="text-slate-600 text-sm leading-relaxed mb-6 font-light">
-              Votre don de <strong className="text-purple-900 font-extrabold text-lg">{submittedData.amount} €</strong> a bien été simulé avec succès. Ce geste permettra de financer :
-              <span className="block mt-2 font-semibold text-emerald-800 bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-100 text-xs">
-                {getImpactDescription(submittedData.amount)}
-              </span>
-            </p>
-
-            <div className="bg-slate-50 rounded-2xl p-4 mb-6 text-left text-xs text-slate-500 space-y-2 border border-slate-100">
-              <div className="flex justify-between"><span className="font-semibold text-slate-700">Donateur :</span> <span>{submittedData.name}</span></div>
-              <div className="flex justify-between"><span className="font-semibold text-slate-700">Email :</span> <span>{submittedData.email}</span></div>
-              {submittedData.message && (
-                <div className="pt-2 border-t border-slate-200/50">
-                  <span className="font-semibold text-slate-700 block mb-1">Votre message :</span>
-                  <p className="italic text-slate-600 bg-white p-2 rounded-lg border border-slate-100">{submittedData.message}</p>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={handleCloseModal}
-              className="w-full py-3 bg-[#260936] hover:bg-[#3a1250] text-white font-bold rounded-xl transition duration-300 cursor-pointer"
-            >
-              Fermer
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Video Modal (Mock Video Player) */}
       {activeVideo && (
