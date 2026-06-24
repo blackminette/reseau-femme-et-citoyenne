@@ -1,14 +1,14 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/actions.ts
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/actions.ts
 'use server'
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { PublicCible, NiveauPedagogique } from '@prisma/client';
+import { NiveauPedagogique, Parcours } from '@prisma/client';
 
-export async function listerTousLesModules() {
+export async function listerTousLesModules(parcours: Parcours) {
     try {
         const modules = await prisma.module.findMany({
-            where: { public: "ADULTE" as PublicCible },
+            where: { parcours: { has: parcours } },
             orderBy: {
                 createdAt: 'desc',
             },
@@ -18,6 +18,7 @@ export async function listerTousLesModules() {
                 description: true,
                 isPublished: true,
                 niveauRequis: true,
+                parcours: true,
                 _count: {
                     select: { cours: true }
                 }
@@ -31,18 +32,26 @@ export async function listerTousLesModules() {
     }
 }
 
-export async function creerModule(formData: { titre: string; description: string; niveauRequis?: NiveauPedagogique }) {
+export async function creerModule(
+    formData: { titre: string; description: string; niveauRequis?: NiveauPedagogique },
+    parcours: Parcours,
+    nomParcours: string
+) {
     try {
         if (!formData.titre || !formData.titre.trim()) {
             return { success: false, error: "Le titre du module est obligatoire." };
         }
 
+        const parcoursAdultes: Parcours[] = [Parcours.NUMERIQUE_ADULTE, Parcours.ORAL];
+        const publicCible = parcoursAdultes.includes(parcours) ? 'ADULTE' : 'ENFANT';
+
         const nouveauModule = await prisma.module.create({
             data: {
                 titre: formData.titre.trim(),
-                description: formData.description.trim() || null,
-                public: "ADULTE" as PublicCible,
-                niveauRequis: formData.niveauRequis || NiveauPedagogique.ADULTE,
+                description: formData.description?.trim() || null,
+                public: publicCible,
+                niveauRequis: formData.niveauRequis || NiveauPedagogique.NIVEAU_1,
+                parcours: [parcours]
             },
             include: {
                 _count: {
@@ -51,7 +60,7 @@ export async function creerModule(formData: { titre: string; description: string
             }
         });
 
-        revalidatePath('/admin/pedagogie/adultes');
+        revalidatePath(`/admin/pedagogie/${nomParcours}`);
 
         return { success: true, data: nouveauModule };
     } catch (error) {
@@ -60,7 +69,10 @@ export async function creerModule(formData: { titre: string; description: string
     }
 }
 
-export async function modifierModule(formData: { id: number; titre: string; description: string; niveauRequis?: NiveauPedagogique }) {
+export async function modifierModule(
+    formData: { id: number; titre: string; description: string; niveauRequis?: NiveauPedagogique },
+    nomParcours: string
+) {
     try {
         if (!formData.titre || !formData.titre.trim()) {
             return { success: false, error: "Le titre du module est obligatoire." };
@@ -72,7 +84,7 @@ export async function modifierModule(formData: { id: number; titre: string; desc
             },
             data: {
                 titre: formData.titre.trim(),
-                description: formData.description.trim() || null,
+                description: formData.description?.trim() || null,
                 niveauRequis: formData.niveauRequis,
             },
             include: {
@@ -82,22 +94,22 @@ export async function modifierModule(formData: { id: number; titre: string; desc
             }
         });
 
-        revalidatePath('/admin/pedagogie/adultes');
+        revalidatePath(`/admin/pedagogie/${nomParcours}`);
 
-        return { success: true, data: moduleModifie }
+        return { success: true, data: moduleModifie };
     } catch (error) {
         console.error("Erreur Prisma (modifierModule) :", error);
-        return { success: false, error: "Une erreur est survenue lors de la modification du module." }
+        return { success: false, error: "Une erreur est survenue lors de la modification du module." };
     }
 }
 
-export async function supprimerModule(id: number) {
+export async function supprimerModule(id: number, nomParcours: string) {
     try {
         await prisma.module.delete({
             where: { id: id },
         });
 
-        revalidatePath('/admin/pedagogie/adultes');
+        revalidatePath(`/admin/pedagogie/${nomParcours}`);
 
         return { success: true };
     } catch (error) {
@@ -106,7 +118,7 @@ export async function supprimerModule(id: number) {
     }
 }
 
-export async function activateModule(id: number, status: boolean) {
+export async function activateModule(id: number, status: boolean, nomParcours: string) {
     try {
         const result = await prisma.module.update({
             where: { id: id },
@@ -118,9 +130,9 @@ export async function activateModule(id: number, status: boolean) {
                     select: { cours: true }
                 }
             }
-        })
+        });
 
-        revalidatePath('/admin/pedagogie/adultes');
+        revalidatePath(`/admin/pedagogie/${nomParcours}`);
 
         return { success: true, data: result };
     } catch (error) {
