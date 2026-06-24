@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/page.tsx
 'use client';
 
 /** Page pour choisir et rediriger vers le bon module pédagogique. */
@@ -9,6 +9,7 @@ import { listerTousLesModules, creerModule, supprimerModule, modifierModule, act
 import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/Modal';
 import { NiveauPedagogique } from '@prisma/client';
+import { useParams } from 'next/navigation';
 
 interface ModuleAvecCompte {
     id: number;
@@ -35,6 +36,10 @@ export default function PedagogieAdultesPage() {
         description: '',
         niveauRequis: NiveauPedagogique.ADULTE
     });
+
+    const params = useParams()
+
+    const nomParcours = params.nomParcours as string;
 
     const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
         NIVEAU_1: {
@@ -247,7 +252,7 @@ export default function PedagogieAdultesPage() {
                                 )}
                             </div>
 
-                            <Link href={`/admin/pedagogie/adultes/${module.id}`} className="pr-16">
+                            <Link href={`/admin/pedagogie/${nomParcours}/module/${module.id}`} className="pr-16">
                                 <div className="space-y-3">
                                     <div>
                                         <h3 className={`font-bold text-base tracking-tight transition-colors

@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/listeExercice/[coursIdExercice]/exercice/[exerciceId]/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/listeExercice/[coursIdExercice]/exercice/[exerciceId]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -47,6 +47,7 @@ export default function AdminModifieExercicePage() {
     const moduleId = parseInt(params.id as string, 10);
     const coursId = parseInt(params.coursIdExercice as string, 10);
     const exerciceId = parseInt(params.exerciceId as string, 10);
+    const nomParcours = params.nomParcours as string;
 
     useEffect(() => {
         const handleGetExercice = async () => {
@@ -115,7 +116,7 @@ export default function AdminModifieExercicePage() {
 
         setExercice(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
 
-        const result = await modifierContenuExercice(exercice.id, nouveauContenu, moduleId);
+        const result = await modifierContenuExercice(exercice.id, nouveauContenu, moduleId, nomParcours);
         if (!result.success) {
             setError(result.error || "Impossible de sauvegarder les modifications.");
         }
@@ -140,7 +141,7 @@ export default function AdminModifieExercicePage() {
         };
 
         setExercice(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
-        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId);
+        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId, nomParcours);
     };
 
     const handleCreate = async () => {
@@ -170,7 +171,7 @@ export default function AdminModifieExercicePage() {
         setExercice(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
         setCurrentPageIndex(nouveauContenu.length - 1);
 
-        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId);
+        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId, nomParcours);
     };
 
     const handleDelete = async () => {
@@ -186,7 +187,7 @@ export default function AdminModifieExercicePage() {
         setExercice(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
         setCurrentPageIndex(Math.max(0, nouveauContenu.length - 1));
 
-        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId);
+        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId, nomParcours);
     };
 
     const handleReordonner = async (numeroPage: number, direction: 'HAUT' | 'BAS') => {
@@ -207,7 +208,7 @@ export default function AdminModifieExercicePage() {
         else if (currentPageIndex === nouvelIndex) setCurrentPageIndex(findIndexActuel);
 
         setExercice(prev => prev ? { ...prev, contenu: contenuReindexe } : null);
-        await modifierContenuExercice(exercice.id, contenuReindexe, moduleId);
+        await modifierContenuExercice(exercice.id, contenuReindexe, moduleId, nomParcours);
     };
 
     const handleSupprimerOption = async (optionIndex: number) => {
@@ -236,7 +237,7 @@ export default function AdminModifieExercicePage() {
         };
 
         setExercice(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
-        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId);
+        await modifierContenuExercice(exercice.id, nouveauContenu, moduleId, nomParcours);
     };
 
     const handleImageOptionChange = async (optionIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -540,7 +541,7 @@ export default function AdminModifieExercicePage() {
         <div className="p-6 space-y-6">
             {/* Fil d'Ariane & Titre */}
             <div className="flex flex-col space-y-4">
-                <Link href={`/admin/pedagogie/adultes/${moduleId}/listeExercice/${coursId}`} className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit">
+                <Link href={`/admin/pedagogie/${nomParcours}/module/${moduleId}/listeExercice/${coursId}`} className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit">
                     <ChevronRight className="h-3 w-3 rotate-180" /> Retour aux exercices
                 </Link>
 
@@ -556,7 +557,7 @@ export default function AdminModifieExercicePage() {
                                     setIsEditingTitre(false);
                                     if (editTitre.trim() && editTitre !== exercice.titre) {
                                         setExercice(prev => prev ? { ...prev, titre: editTitre } : null);
-                                        await modifierTitreExercice(exercice.id, editTitre, moduleId);
+                                        await modifierTitreExercice(exercice.id, editTitre, moduleId, nomParcours);
                                     }
                                 }}
                                 onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}

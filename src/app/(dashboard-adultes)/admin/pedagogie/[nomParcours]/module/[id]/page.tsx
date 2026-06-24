@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -33,6 +33,7 @@ export default function AdminModulePage() {
     const [coursId, setCoursId] = useState<number | null>(null);
 
     const params = useParams();
+    const nomParcours = params.nomParcours as string;
     const id = params.id as string;
     const moduleId = parseInt(id, 10);
 
@@ -68,7 +69,7 @@ export default function AdminModulePage() {
         const data = new FormData(form);
         const titre = data.get('titre') as string;
 
-        const result = await creerCours(moduleId, { titre });
+        const result = await creerCours(moduleId, { titre }, nomParcours);
         if (result.success && result.data) {
             setModule(prev => {
                 if (!prev) return null;
@@ -88,7 +89,7 @@ export default function AdminModulePage() {
         if (coursId === null) return;
         setError(null);
 
-        const result = await supprimerCours(coursId);
+        const result = await supprimerCours(coursId, nomParcours);
         if (result.success) {
             setModule(prev => {
                 if (!prev) return null;
@@ -108,7 +109,7 @@ export default function AdminModulePage() {
         if (!module) return;
         setError(null);
 
-        const result = await changerOrdreCours(coursId, direction, moduleId);
+        const result = await changerOrdreCours(coursId, direction, moduleId, nomParcours);
 
         if (result.success && result.data) {
             const result = await getModuleAndCours(moduleId);
@@ -132,7 +133,7 @@ export default function AdminModulePage() {
         <div className="p-6 space-y-6">
             <div className="flex flex-col space-y-4 mb-6">
                 <Link
-                    href="/admin/pedagogie/adultes"
+                    href={`/admin/pedagogie/${nomParcours}`}
                     className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
                 >
                     <ChevronRight className="h-3 w-3 rotate-180" />
@@ -170,7 +171,7 @@ export default function AdminModulePage() {
                                 className="bg-white border border-violet-200 rounded-xl shadow-sm flex items-center justify-between gap-2 hover:border-violet-300 hover:shadow-md transition-all group pr-3"
                             >
                                 <Link
-                                    href={`/admin/pedagogie/adultes/${moduleId}/cours/${cours.id}`}
+                                    href={`/admin/pedagogie/${nomParcours}/module/${moduleId}/cours/${cours.id}`}
                                     className="flex-1 min-w-0 p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                                 >
                                     <div className="min-w-0">
@@ -182,7 +183,7 @@ export default function AdminModulePage() {
 
                                 <div className="flex items-center gap-1 relative z-10">
                                     <Link
-                                        href={`/admin/pedagogie/adultes/${moduleId}/listeExercice/${cours.id}`}
+                                        href={`/admin/pedagogie/${nomParcours}/module/${moduleId}/listeExercice/${cours.id}`}
                                         className="inline-flex items-center gap-1.5 py-1.5 px-3 text-sm font-medium text-slate-600 hover:text-violet-700 hover:bg-violet-50 rounded-xl transition-all active:scale-95"
                                     >
                                         <BrainCircuit className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors" />

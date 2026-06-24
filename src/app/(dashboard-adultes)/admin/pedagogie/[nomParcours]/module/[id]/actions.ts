@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/actions.ts
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/actions.ts
 'use server';
 
 import React from 'react';
@@ -24,7 +24,7 @@ export async function getModuleAndCours(id: number) {
     }
 }
 
-export async function creerCours(id: number, formData: { titre: string }) {
+export async function creerCours(id: number, formData: { titre: string }, nomParcours: string) {
     try {
         if (!formData.titre || !formData.titre.trim()) {
             return { success: false, error: "Le titre du cours est obligatoire." };
@@ -45,7 +45,7 @@ export async function creerCours(id: number, formData: { titre: string }) {
             }
         })
 
-        revalidatePath(`/admin/pedagogie/adultes/${id}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${id}`);
 
         return { success: true, data: result }
     } catch (error) {
@@ -53,13 +53,13 @@ export async function creerCours(id: number, formData: { titre: string }) {
     }
 }
 
-export async function supprimerCours(id: number) {
+export async function supprimerCours(id: number, nomParcours: string) {
     try {
         const result = await prisma.cours.delete({
             where: { id: id }
         })
 
-        revalidatePath(`/admin/pedagogie/adultes/${id}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${id}`);
 
         return { success: true }
     } catch (error) {
@@ -67,7 +67,7 @@ export async function supprimerCours(id: number) {
     }
 }
 
-export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BAS', moduleId: number) {
+export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BAS', moduleId: number, nomParcours: string) {
     try {
         const coursActuel = await prisma.cours.findUnique({ where: { id: coursId } });
         if (!coursActuel) return { success: false, error: "Cours introuvable" };
@@ -91,7 +91,7 @@ export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BA
             prisma.cours.update({ where: { id: coursVoisin.id }, data: { ordreDansModule: coursActuel.ordreDansModule } })
         ]);
 
-        revalidatePath(`/admin/pedagogie/adultes/${moduleId}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${moduleId}`);
 
         return { success: true, data: true };
     } catch (error) {

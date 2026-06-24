@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/listeExercice/[coursIdExercice]/actions.ts
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/listeExercice/[coursIdExercice]/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
@@ -17,7 +17,7 @@ export async function getListeExercice(coursId: number) {
     }
 }
 
-export async function creerExercice(coursId: number, data: { titre: string, type: string, ordre: number }, moduleId: number) {
+export async function creerExercice(coursId: number, data: { titre: string, type: string, ordre: number }, moduleId: number, nomParcours: string) {
     try {
         if (!coursId || isNaN(coursId)) {
             return { success: false, error: "L'identifiant du cours est invalide ou manquant." };
@@ -33,7 +33,7 @@ export async function creerExercice(coursId: number, data: { titre: string, type
             }
         });
 
-        const path = `/admin/pedagogie/adultes/${moduleId}/listeExercice/${coursId}`;
+        const path = `/admin/pedagogie/${nomParcours}/module/${moduleId}/listeExercice/${coursId}`;
         console.log("Revalidation du chemin :", path);
         revalidatePath(path, 'page');
 
@@ -44,7 +44,7 @@ export async function creerExercice(coursId: number, data: { titre: string, type
     }
 }
 
-export async function supprimerExercice(exerciceId: number, coursId: number, moduleId: number) {
+export async function supprimerExercice(exerciceId: number, coursId: number, moduleId: number, nomParcours: string) {
     try {
         if (!exerciceId || isNaN(exerciceId)) {
             return { success: false, error: "L'identifiant de l'exercice est invalide ou manquant." };
@@ -68,7 +68,8 @@ export async function changerOrdreExercice(
     exerciceId: number,
     direction: 'HAUT' | 'BAS',
     coursId: number,
-    moduleId: number
+    moduleId: number,
+    nomParcours: string
 ) {
     try {
         const exerciceActuel = await prisma.exercice.findUnique({ where: { id: exerciceId } });

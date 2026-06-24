@@ -1,8 +1,8 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/cours/[cpursId]/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/cours/[coursId]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { getCours, modifierTitreCours, modifierContenuCours } from './actions';
@@ -44,6 +44,7 @@ export default function AdminModifieCoursPage() {
 
     const moduleId = parseInt(params.id as string, 10);
     const coursId = parseInt(params.coursId as string, 10);
+    const nomParcours = params.nomParcours as string;
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -104,7 +105,7 @@ export default function AdminModifieCoursPage() {
 
         setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
 
-        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId, nomParcours);
         if (!result.success) {
             setError(result.error || "Impossible de sauvegarder les modifications de la page.");
         }
@@ -128,7 +129,7 @@ export default function AdminModifieCoursPage() {
         const nouvelIndex = nouveauContenu.length - 1;
         setCurrentPageIndex(nouvelIndex);
 
-        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId, nomParcours);
         if (!result.success) {
             setError(result.error || "Erreur lors de la création de la page en base de données.");
         }
@@ -152,7 +153,7 @@ export default function AdminModifieCoursPage() {
         setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
         setCurrentPageIndex(nouvelIndex);
 
-        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId, nomParcours);
         if (!result.success) {
             setError(result.error || "Erreur lors de la suppression de la page en base de données.");
         }
@@ -196,7 +197,7 @@ export default function AdminModifieCoursPage() {
         setCours(prev => prev ? { ...prev, contenu: contenuReindexe } : null);
 
         // mettre à jour côté BDD
-        const result = await modifierContenuCours(cours.id, contenuReindexe, moduleId);
+        const result = await modifierContenuCours(cours.id, contenuReindexe, moduleId, nomParcours);
         if (!result.success) {
             setError(result.error || "Erreur lors de la réorganisation des pages en base de données.");
         }
@@ -291,7 +292,7 @@ export default function AdminModifieCoursPage() {
         <div className="p-6 space-y-6">
             <div className="flex flex-col space-y-4 mb-6">
                 <Link
-                    href={`/admin/pedagogie/adultes/${moduleId}`}
+                    href={`/admin/pedagogie/${nomParcours}/module/${moduleId}`}
                     className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
                 >
                     <ChevronRight className="h-3 w-3 rotate-180" />
@@ -312,7 +313,7 @@ export default function AdminModifieCoursPage() {
                                     setIsEditingTitre(false);
                                     if (editTitre.trim() && editTitre !== cours.titre) {
                                         setCours(prev => prev ? { ...prev, titre: editTitre } : null);
-                                        const result = await modifierTitreCours(cours.id, editTitre, moduleId);
+                                        const result = await modifierTitreCours(cours.id, editTitre, moduleId, nomParcours);
                                         if (!result.success) { setError("Une erreur est survenue."); }
                                     } else {
                                         setEditTitre(cours.titre);
