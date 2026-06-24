@@ -500,6 +500,9 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
     const content = MODULES_ADVENTURES[activeModuleId];
 
+    const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${activeModuleId}_decouvrir.png`;
+    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${activeModuleId}_observer.png`;
+
     const [loading, setLoading] = useState(true);
     const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
     const [showConfetti, setShowConfetti] = useState(false);
@@ -836,8 +839,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-3xl p-12 flex items-center justify-center shadow-inner min-h-[300px]">
-                                <div className="text-7xl select-none animate-bounce">{content.step1.emoji}</div>
+                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] overflow-hidden">
+                                <img 
+                                    src={step1ImagePath} 
+                                    alt={content.step1.soustitre} 
+                                    className="max-h-[280px] object-contain rounded-2xl hover:scale-105 transition-transform duration-500"
+                                />
                             </div>
                         </div>
                         <div className="mt-8 flex justify-end">
@@ -872,8 +879,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         {content.step2.texte}
                                     </p>
                                 </div>
-                                <div className="mt-6 flex items-center justify-end text-3xl opacity-75">
-                                    {content.step2.emoji}
+                                <div className="mt-4 flex justify-center overflow-hidden rounded-xl border border-yellow-200/30">
+                                    <img 
+                                        src={step2ImagePath} 
+                                        alt={content.step2.boxTitre} 
+                                        className="max-h-[160px] object-contain rounded-xl hover:scale-105 transition-transform duration-500"
+                                    />
                                 </div>
                             </div>
 
@@ -1276,42 +1287,58 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             />
                         </div>
 
-                        <div className="p-6 bg-violet-50/50 rounded-2xl border border-violet-100/50 mb-6">
-                            <h2 className="text-base md:text-lg font-black text-violet-950 text-center leading-snug">
-                                {content.quiz[quizIndex].q}
-                            </h2>
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start max-w-4xl mx-auto">
+                            <div className="md:col-span-2 space-y-6">
+                                <div className="p-6 bg-violet-50/50 rounded-2xl border border-violet-100/50">
+                                    <h2 className="text-base md:text-lg font-black text-violet-950 text-center leading-snug">
+                                        {content.quiz[quizIndex].q}
+                                    </h2>
+                                </div>
 
-                        <div className="grid gap-3 max-w-2xl mx-auto">
-                            {content.quiz[quizIndex].options.map((option, idx) => {
-                                const isCorrectAnswer = idx === content.quiz[quizIndex].answer;
-                                const isSelected = selectedOption === idx;
-                                
-                                let optionStyle = 'border-slate-200 hover:border-violet-400 hover:bg-violet-50/20';
-                                if (selectedOption !== null) {
-                                    if (isCorrectAnswer) {
-                                        optionStyle = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
-                                    } else if (isSelected) {
-                                        optionStyle = 'border-rose-500 bg-rose-50 text-rose-800';
-                                    } else {
-                                        optionStyle = 'border-slate-100 bg-slate-50 opacity-40';
-                                    }
-                                }
+                                <div className="grid gap-3">
+                                    {content.quiz[quizIndex].options.map((option, idx) => {
+                                        const isCorrectAnswer = idx === content.quiz[quizIndex].answer;
+                                        const isSelected = selectedOption === idx;
+                                        
+                                        let optionStyle = 'border-slate-200 hover:border-violet-400 hover:bg-violet-50/20';
+                                        if (selectedOption !== null) {
+                                            if (isCorrectAnswer) {
+                                                optionStyle = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
+                                            } else if (isSelected) {
+                                                optionStyle = 'border-rose-500 bg-rose-50 text-rose-800';
+                                            } else {
+                                                optionStyle = 'border-slate-100 bg-slate-50 opacity-40';
+                                            }
+                                        }
 
-                                return (
-                                    <button
-                                        key={idx}
-                                        disabled={selectedOption !== null}
-                                        onClick={() => handleAnswerQuiz(idx)}
-                                        className={`w-full text-left rounded-xl border p-4 text-xs font-bold transition-all flex items-center justify-between ${optionStyle}`}
-                                    >
-                                        <span>{option}</span>
-                                        {selectedOption !== null && isCorrectAnswer && (
-                                            <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 ml-2" />
-                                        )}
-                                    </button>
-                                );
-                            })}
+                                        return (
+                                            <button
+                                                key={idx}
+                                                disabled={selectedOption !== null}
+                                                onClick={() => handleAnswerQuiz(idx)}
+                                                className={`w-full text-left rounded-xl border p-4 text-xs font-bold transition-all flex items-center justify-between ${optionStyle}`}
+                                            >
+                                                <span>{option}</span>
+                                                {selectedOption !== null && isCorrectAnswer && (
+                                                    <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 ml-2" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner">
+                                <img 
+                                    src="/images/enfants/quiz_robot.png" 
+                                    alt="Robot assistant" 
+                                    className="max-h-[200px] object-contain animate-bounce"
+                                    style={{ animationDuration: '3s' }}
+                                />
+                                <span className="text-[10px] font-black text-violet-500 mt-4 uppercase tracking-widest bg-white border border-violet-100 px-3 py-1 rounded-full shadow-xs">
+                                    Besoin d'aide ?
+                                </span>
+                            </div>
                         </div>
 
                         {showExplanation && (
@@ -1345,10 +1372,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 {stepIndex === 5 && (
                     <div className="bg-white border border-violet-100 rounded-3xl p-8 md:p-12 text-center shadow-lg max-w-2xl mx-auto">
                         <div className="flex justify-center mb-6">
-                            <div className="bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full p-6 shadow-md relative">
-                                <Trophy className="h-16 w-16 text-amber-300 animate-pulse" />
-                                <span className="absolute -top-2 -right-2 text-3xl">🤖</span>
-                            </div>
+                            <img 
+                                src="/images/enfants/result_robot.png" 
+                                alt="Félicitations !" 
+                                className="max-h-[200px] object-contain animate-bounce"
+                                style={{ animationDuration: '4s' }}
+                            />
                         </div>
 
                         <h2 className="text-2xl md:text-3xl font-black text-violet-950 mb-2">
