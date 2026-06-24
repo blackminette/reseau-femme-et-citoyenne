@@ -32,16 +32,19 @@ export async function enregistrerDon(data: {
             });
         }
 
-        // Créer l'enregistrement de don
+        // Créer l'enregistrement de don initialisé à 'PENDING'
         const don = await prisma.don.create({
             data: {
                 montant: amount,
                 utilisateurId: user.id,
-                statut: 'COMPLETED'
+                statut: 'PENDING'
             }
         });
 
-        return { success: true, donId: don.id };
+        // URL officielle HelloAsso avec paramètres pré-remplis
+        const redirectUrl = `https://www.helloasso.com/associations/reseau-femme-et-citoyenne-06/formulaires/1?amount=${amount}`;
+
+        return { success: true, donId: don.id, redirectUrl };
     } catch (error) {
         console.error("Erreur lors de l'enregistrement du don:", error);
         return { success: false, error: "Impossible d'enregistrer le don. Veuillez réessayer." };

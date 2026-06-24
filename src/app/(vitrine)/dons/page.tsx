@@ -108,6 +108,9 @@ export default function DonsPage() {
       });
 
       if (res.success) {
+        if (res.redirectUrl) {
+          window.open(res.redirectUrl, '_blank');
+        }
         setSubmittedData({
           amount: finalAmount,
           name,
