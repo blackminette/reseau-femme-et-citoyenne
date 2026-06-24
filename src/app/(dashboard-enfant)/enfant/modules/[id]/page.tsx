@@ -131,41 +131,11 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                 } else {
                     const dbMod = await obtenirDetailsModuleDepuisDB(id);
                     if (dbMod) {
+                        const hydratedActivities = hydrateSequentialActivities(dbMod.activites as Activite[]);
+                        const completedCount = hydratedActivities.filter((activity) => activity.statut === 'termine').length;
                         setDbModule(dbMod);
-                        
-                        // Enrichir les statuts des leçons (lues en local)
-                        const enrichedActivites = dbMod.activites.map((act: any) => {
-                            if (act.type === 'lecon') {
-                                const localData = localStorage.getItem(`rfc_enfant_act_${act.id}`);
-                                if (localData) {
-                                    try {
-                                        const parsed = JSON.parse(localData);
-                                        if (parsed.completed) {
-                                            return { ...act, statut: 'termine', score: '1/1', parfait: true };
-                                        }
-                                    } catch (e) {
-                                        console.error(e);
-                                    }
-                                }
-                            }
-                            return act;
-                        });
-
-                        // Déterminer l'état (tout déverrouillé pour l'exploration libre)
-                        const finalActivites = enrichedActivites.map((act: any) => {
-                            if (act.statut === 'termine') {
-                                return act;
-                            }
-                            return { ...act, statut: 'a_faire' };
-                        });
-
-                        // Re-calculer la progression globale
-                        const completedCount = finalActivites.filter((a: any) => a.statut === 'termine').length;
-                        const total = finalActivites.length;
-                        const newProgression = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-
-                        setActivites(finalActivites);
-                        setProgression(newProgression);
+                        setActivites(hydratedActivities);
+                        setProgression(Math.max(dbMod.progression, Math.round((completedCount / hydratedActivities.length) * 100)));
                     } else {
                         const fallbackActivites = getMockActivitesForModule(id);
                         if (fallbackActivites.length > 0) {
@@ -411,8 +381,18 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
                     <div className="relative min-h-[320px] lg:min-h-full p-4 sm:p-6">
                         <div className="absolute inset-4 sm:inset-6 rounded-[30px] bg-gradient-to-br from-[#f9ecd6] via-[#f4dcc0] to-[#d98b54]" />
+                        <div className="pointer-events-none absolute -top-3 right-2 z-0 hidden w-[62%] opacity-[0.32] blur-[0.2px] sm:block">
+                            <Image
+                                src="/images/enfants/napoleon-watermark.svg"
+                                alt=""
+                                width={720}
+                                height={640}
+                                aria-hidden
+                                className="h-auto w-full select-none"
+                            />
+                        </div>
 
-                        <div className="absolute left-6 top-6 right-[32%] bottom-[24%] overflow-hidden rounded-[26px] border border-white/70 shadow-[0_18px_40px_rgba(92,54,18,0.18)]">
+                        <div className="absolute left-6 top-6 right-[32%] bottom-[24%] z-10 overflow-hidden rounded-[26px] border border-white/70 shadow-[0_18px_40px_rgba(92,54,18,0.18)]">
                             <Image
                                 src="/images/enfants/napoleon-study.webp"
                                 alt="Napoléon dans son étude"
@@ -424,7 +404,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             />
                         </div>
 
-                        <div className="absolute right-6 top-10 bottom-10 w-[42%] overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_50px_rgba(92,54,18,0.22)] rotate-2">
+                        <div className="absolute right-6 top-10 bottom-10 z-10 w-[42%] overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_50px_rgba(92,54,18,0.22)] rotate-2">
                             <Image
                                 src="/images/enfants/napoleon-crossing-alps.jpg"
                                 alt="Napoléon traversant les Alpes"
@@ -434,7 +414,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             />
                         </div>
 
-                        <div className="absolute left-10 bottom-8 w-[58%] rounded-2xl border border-white/70 bg-white/88 p-3 shadow-[0_10px_24px_rgba(92,54,18,0.12)] backdrop-blur-sm">
+                        <div className="absolute left-10 bottom-8 z-10 w-[58%] rounded-2xl border border-white/70 bg-white/88 p-3 shadow-[0_10px_24px_rgba(92,54,18,0.12)] backdrop-blur-sm">
                             <div className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-700">Repères historiques</div>
                             <div className="mt-1 text-sm font-bold text-slate-900">Deux regards sur Napoléon</div>
                             <p className="mt-0.5 text-[11px] leading-4 text-slate-600">
