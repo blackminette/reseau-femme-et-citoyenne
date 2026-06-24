@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
     ChevronLeft, Star, Trophy, Check, RotateCcw, 
-    Sparkles, BookOpen, AlertCircle, HelpCircle, 
-    ArrowRight, CheckCircle2, XCircle, Info, MoveUp, MoveDown
+    Sparkles, BookOpen, HelpCircle, 
+    ArrowRight, CheckCircle2, XCircle, MoveUp, MoveDown
 } from 'lucide-react';
 import { MODULES } from '@/lib/enfant-data';
 import { obtenirDetailsActiviteDepuisDB, sauvegarderResultatActivite, obtenirDetailsModuleDepuisDB } from '../../../actions';
@@ -61,7 +61,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
     civique: {
         titreGlobal: "Éducation civique",
         description: "Vivre ensemble et comprendre le monde",
-        themeColor: "from-orange-400 to-amber-600",
+        themeColor: "from-amber-400 to-orange-500",
         step1: {
             titre: "Découvrir",
             soustitre: "Qu'est-ce que la citoyenneté ?",
@@ -70,7 +70,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             aRetenir: "La citoyenneté permet de vivre ensemble dans le respect de chacun."
         },
         step2: {
-            soustitre: "Observer. Lis attentivement le texte suivant.",
+            soustitre: "Lis attentivement le texte suivant.",
             boxTitre: "Le rôle des citoyens",
             texte: "Dans une démocratie, les citoyens ont des droits qui leur permettent de vivre libres et protégés. Ils ont aussi des devoirs qui aident à vivre ensemble dans le respect et la solidarité. Par exemple, ils doivent respecter les lois, payer leurs impôts, protéger l'environnement et participer à la vie de la communauté (école, quartier, ville...). Chacun peut donner son avis et voter pour choisir ses représentants.",
             emoji: "🗳️ ✉️",
@@ -82,7 +82,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             ]
         },
         step3: {
-            soustitre: "Comprendre. Récapitulons !",
+            soustitre: "Récapitulons !",
             texte: "La citoyenneté repose sur des droits et des devoirs qui permettent de vivre ensemble dans le respect et la solidarité. Retenons les idées principales de la leçon.",
             pointsCles: [
                 "Les citoyens ont des droits.",
@@ -146,7 +146,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             aRetenir: "Apprendre une langue, c'est ouvrir son cœur et son esprit."
         },
         step2: {
-            soustitre: "Observer. Lis attentivement le texte suivant.",
+            soustitre: "Lis attentivement le texte suivant.",
             boxTitre: "A day with Tom 🍃",
             texte: "Hi! My name is Tom, I'm 10 years old. I live in London with my parents and my little sister, Lily. I go to school from Monday to Friday. My favorite subject is English! I like reading and sports. After school, I play football with my friends. On Saturdays, I help my mum at home and watch a movie. On Sunday, we go to the park as a family. I love my life!",
             emoji: "✍️ 📖 ⚽",
@@ -156,7 +156,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             ]
         },
         step3: {
-            soustitre: "Comprendre. Récapitulons !",
+            soustitre: "Récapitulons !",
             texte: "Voici ce que nous avons appris de la présentation de Tom :",
             pointsCles: [
                 "Hello / Hi : Dire bonjour",
@@ -216,7 +216,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             aRetenir: "Lire, c'est voyager et imaginer avec son cerveau."
         },
         step2: {
-            soustitre: "Observer. Lis attentivement le texte suivant.",
+            soustitre: "Lis attentivement le texte suivant.",
             boxTitre: "Le voyage de Léo",
             texte: "Léo se réveille tôt ce matin. Aujourd'hui, il part en voyage avec sa famille. Ils prennent le train pour aller à la montagne. Léo regarde par la fenêtre. Il voit des champs, des arbres et des rivières qui défilent. À l'arrivée, l'air est frais et pur. Ils posent leurs valises dans un chalet confortable. L'après-midi, Léo part en randonnée. Il voit des fleurs sauvages et des papillons colorés. Le soir, toute la famille se réunit autour d'un bon repas.",
             emoji: "🚂 ⛰️ 🏡",
@@ -227,7 +227,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             ]
         },
         step3: {
-            soustitre: "Comprendre. Récapitulons !",
+            soustitre: "Récapitulons !",
             texte: "Bien comprendre un texte, c'est trouver les informations importantes et décoder le message de l'auteur.",
             pointsCles: [
                 "Identifier les personnages (qui ?) et les lieux (où ?).",
@@ -278,7 +278,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             aRetenir: "Le numérique est un outil puissant qui nous aide à apprendre et à progresser."
         },
         step2: {
-            soustitre: "Observer. Lis attentivement le texte suivant.",
+            soustitre: "Lis attentivement le texte suivant.",
             boxTitre: "Le numérique, un outil d'apprentissage",
             texte: "À l'école, le numérique nous permet d'accéder à beaucoup d'informations, de découvrir de nouveaux sujets et de réaliser des activités intéressantes. Il nous aide à comprendre grâce à des vidéos éducatives, des exercices interactifs et des documents en ligne. Il nous permet aussi de communiquer avec nos enseignants et nos camarades pour travailler ensemble. Utilisé avec raison et dans le bon contexte, le numérique devient un allié précieux pour réussir à l'école et dans la vie.",
             emoji: "👩‍💻 📚",
@@ -292,10 +292,10 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             ]
         },
         step3: {
-            soustitre: "Comprendre. Récapitulons !",
+            soustitre: "Récapitulons !",
             texte: "Le numérique est utile si nous l'utilisons correctement et de manière responsable.",
             pointsCles: [
-                "Je m'en ser pour apprendre et faire des recherches utiles.",
+                "Je m'en sers pour apprendre et faire des recherches utiles.",
                 "Je reste concentré et je limite mon temps d'écran.",
                 "Je vérifie toujours si la source des informations est sûre.",
                 "Je l'utilise avec respect pour communiquer avec les autres."
@@ -307,7 +307,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
                 "Communiquer avec respect"
             ],
             illustration: "👍",
-            objectif: "Objectif : Utiliser le numérique intelligemment pour apprendre, progresser et devenir autonome."
+            objectif: "Objectif : Utiliser le numérique intelligemment pour apprendre, progresser et de venir autonome."
         },
         exercice: {
             titre: "Associe chaque situation à son bon usage.",
@@ -358,7 +358,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             aRetenir: "Prendre soin de la planète, c'est prendre soin de nous tous !"
         },
         step2: {
-            soustitre: "Observer. Lis attentivement le texte suivant.",
+            soustitre: "Lis attentivement le texte suivant.",
             boxTitre: "Une journée sans déchets 🍃",
             texte: "Ce samedi, Emma et son frère Léo décident de relever un défi : produire le moins de déchets possible ! Ils prennent des sacs réutilisables pour faire les courses, choisissent des produits avec peu d'emballages, réparent leur jouet au lieu d'en acheter un nouveau et trient leurs déchets à la maison. Le soir, ils sont fiers : leur poubelle est presque vide ! Leurs petits gestes ont un grand impact sur la planète.",
             emoji: "♻️ 🗑️ 🟢 🟡",
@@ -368,7 +368,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             ]
         },
         step3: {
-            soustitre: "Comprendre. Récapitulons !",
+            soustitre: "Récapitulons !",
             texte: "Pour être éco-citoyen, il suffit d'adopter des gestes simples et responsables au quotidien.",
             pointsCles: [
                 "Réduire pour éviter de gaspiller l'eau, l'énergie et la nourriture.",
@@ -428,7 +428,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             aRetenir: "Un robot associe des capteurs, un programme et des moteurs."
         },
         step2: {
-            soustitre: "Observer. Regarde comment s'organise un robot.",
+            soustitre: "Regarde comment s'organise un robot.",
             boxTitre: "Les 3 parties du robot",
             texte: "Pour fonctionner, un robot s'appuie sur trois piliers :\n1. Les Capteurs (ses yeux et oreilles) pour détecter la lumière, le son ou la distance des obstacles.\n2. Le Contrôleur (son cerveau) qui lit les instructions du programme informatique et prend des décisions.\n3. Les Actionneurs (ses muscles) comme les petits moteurs électriques pour faire tourner ses roues ou bouger ses bras.",
             emoji: "⚙️ 🔌 🤖",
@@ -440,7 +440,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             ]
         },
         step3: {
-            soustitre: "Comprendre. Programmer un robot.",
+            soustitre: "Programmer un robot.",
             texte: "Un robot ne pense pas tout seul ! Pour qu'il avance ou évite un obstacle, nous devons lui écrire une suite d'instructions claires : c'est le code informatique.",
             pointsCles: [
                 "Un robot exécute fidèlement les instructions de son programme.",
@@ -496,7 +496,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
     
-    // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
+    // Dédetermination du module ID de l'aventure (sert à cibler le bon contenu statique)
     const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
     const content = MODULES_ADVENTURES[activeModuleId];
 
@@ -752,8 +752,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         { label: "Quiz", desc: "Se tester" }
     ];
 
+    // Trouver les métadonnées statiques du module actuel
+    const staticModInfo = MODULES.find(m => m.id === id) || { from: "#6d5ba8", to: "#5b4a98" };
+
     return (
-        <div className="text-violet-900 max-w-5xl mx-auto pb-12 px-4 relative">
+        <div className="text-violet-900 max-w-6xl mx-auto pb-12 px-4 relative">
             {/* Confettis Emojis */}
             {showConfetti && (
                 <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
@@ -763,140 +766,132 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 </div>
             )}
 
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-violet-100 pb-4 mb-6">
-                <Link 
-                    href={`/enfant/modules/${id}`}
-                    className="inline-flex items-center gap-1 text-xs font-black text-violet-600 hover:text-violet-900"
-                >
-                    <ChevronLeft className="h-4 w-4" /> Quitter l'aventure
-                </Link>
-                <div className="text-sm font-black text-violet-600 uppercase tracking-widest">
-                    {content.titreGlobal}
-                </div>
-            </div>
-
-            {/* Barre de navigation Timeline du haut (si pas au résultat final) */}
-            {stepIndex < 5 && (
-                <nav className="nav-timeline mb-8 bg-white border border-violet-100 rounded-2xl p-4 shadow-xs">
-                    <ul className="flex items-center justify-between md:justify-center gap-2 md:gap-12 text-center text-xs">
-                        {steps.map((st, i) => {
-                            const isActive = stepIndex === i;
-                            const isDone = stepIndex > i;
-                            return (
-                                <li key={i} className="flex-1 md:flex-none flex items-center gap-2">
-                                    <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition-all ${
-                                            isActive 
-                                                ? 'bg-violet-600 text-white ring-4 ring-violet-100 scale-110' 
-                                                : isDone 
-                                                    ? 'bg-emerald-500 text-white' 
-                                                    : 'bg-slate-100 text-slate-400'
-                                        }`}>
-                                            {isDone ? <Check className="h-4 w-4" /> : i + 1}
-                                        </span>
-                                        <div className="hidden sm:block text-left">
-                                            <div className={`font-black ${isActive ? 'text-violet-900' : 'text-slate-500'}`}>{st.label}</div>
-                                            <div className="text-[10px] text-slate-400 font-medium">{st.desc}</div>
-                                        </div>
-                                    </div>
-                                    {i < steps.length - 1 && (
-                                        <span className="hidden md:inline text-slate-300 font-bold ml-6">→</span>
-                                    )}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
-            )}
-
-            {/* CONTENU DE L'ÉTAPE */}
-            <main className="transition-all duration-300">
+            {/* ─── CARTE PRINCIPALE GÉANTE (CONTIENT TOUT LE MODULE) ─── */}
+            <div className="bg-white border border-slate-100 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 flex flex-col justify-between min-h-[580px]">
                 
-                {/* ── STEP 0 : LEÇON 1/3 (DÉCOUVRIR) ── */}
-                {stepIndex === 0 && (
-                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
-                        <div className="flex items-center justify-between mb-6">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700">
-                                📖 Page 1/3 — Découvrir
-                            </span>
+                {/* 1. Header de la carte : Titre à gauche, Timeline à droite */}
+                <div className="border-b border-slate-100 pb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    
+                    {/* Module Info */}
+                    <div className="flex items-center gap-3">
+                        <div 
+                            className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-lg font-bold"
+                            style={{ backgroundImage: `linear-gradient(135deg, ${staticModInfo.from}, ${staticModInfo.to})` }}
+                        >
+                            📚
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                            <div className="space-y-6">
-                                <h1 className="text-3xl font-black text-violet-950 leading-tight">
-                                    {content.step1.soustitre}
-                                </h1>
-                                <p className="text-base text-violet-800 leading-relaxed">
-                                    {content.step1.texte}
-                                </p>
-                                <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl">
-                                    <div className="flex gap-2">
-                                        <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
-                                        <div>
-                                            <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
-                                            <p className="text-xs text-amber-800 font-medium mt-1">{content.step1.aRetenir}</p>
+                        <div>
+                            <h2 className="text-base font-black text-slate-800 leading-none">{content.titreGlobal}</h2>
+                            <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wide">{content.description}</p>
+                        </div>
+                    </div>
+
+                    {/* Timeline horizontale intégrée dans le header de la carte */}
+                    {stepIndex < 5 && (
+                        <nav className="flex items-center gap-1 md:gap-3 text-[10px]">
+                            {steps.map((st, i) => {
+                                const isActive = stepIndex === i;
+                                const isDone = stepIndex > i;
+                                return (
+                                    <React.Fragment key={i}>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black transition-all ${
+                                                isActive 
+                                                    ? 'bg-violet-600 text-white ring-4 ring-violet-100 scale-105' 
+                                                    : isDone 
+                                                        ? 'bg-emerald-500 text-white' 
+                                                        : 'bg-slate-100 text-slate-400'
+                                            }`}>
+                                                {isDone ? <Check className="h-3 w-3" /> : i + 1}
+                                            </span>
+                                            <span className={`font-black hidden sm:inline ${isActive ? 'text-violet-900' : 'text-slate-400'}`}>
+                                                {st.label}
+                                            </span>
                                         </div>
+                                        {i < steps.length - 1 && (
+                                            <span className="text-slate-200 font-bold ml-1">─</span>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </nav>
+                    )}
+                </div>
+
+                {/* 2. Corps de la carte : Changement en fonction du stepIndex */}
+                <div className="flex-grow flex flex-col justify-center py-6">
+                    
+                    {/* ── STEP 0 : LEÇON 1/3 (DÉCOUVRIR) ── */}
+                    {stepIndex === 0 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Side Content */}
+                            <div className="space-y-6 flex flex-col justify-between h-full">
+                                <div className="space-y-4">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest">
+                                        Leçon 1/3
+                                    </span>
+                                    <h1 className="text-2xl md:text-3xl font-black text-violet-950 leading-tight">
+                                        {content.step1.soustitre}
+                                    </h1>
+                                    <p className="text-sm md:text-base text-violet-850 leading-relaxed font-medium">
+                                        {content.step1.texte}
+                                    </p>
+                                </div>
+
+                                <div className="bg-amber-50 border border-amber-100/50 p-4 rounded-2xl flex items-start gap-3 mt-4">
+                                    <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
+                                        <p className="text-xs text-amber-800 font-bold mt-0.5">{content.step1.aRetenir}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] overflow-hidden">
+
+                            {/* Right Side Illustration */}
+                            <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
                                 <img 
                                     src={step1ImagePath} 
                                     alt={content.step1.soustitre} 
-                                    className="max-h-[280px] object-contain rounded-2xl hover:scale-105 transition-transform duration-500"
+                                    className="max-h-[260px] object-contain rounded-2xl hover:scale-102 transition-transform duration-500"
                                 />
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-end">
-                            <button
-                                onClick={() => setStepIndex(1)}
-                                className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md hover:shadow-lg transition-all"
-                            >
-                                Suivant <ArrowRight className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                    )}
 
-                {/* ── STEP 1 : LEÇON 2/3 (OBSERVER) ── */}
-                {stepIndex === 1 && (
-                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
-                        <div className="flex items-center justify-between mb-6">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700">
-                                📖 Page 2/3 — Observer
-                            </span>
-                        </div>
-                        
-                        <h2 className="text-lg font-black text-violet-600 mb-4">{content.step2.soustitre}</h2>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-                            {/* Box text style journal / feuille de cahier lignée */}
-                            <div className="bg-yellow-50/50 border border-yellow-200/50 rounded-2xl p-6 shadow-xs relative overflow-hidden flex flex-col justify-between">
+                    {/* ── STEP 1 : LEÇON 2/3 (OBSERVER) ── */}
+                    {stepIndex === 1 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Side: Cahier ligné */}
+                            <div className="bg-yellow-50/40 border border-yellow-100 rounded-3xl p-6 shadow-xs relative overflow-hidden min-h-[280px] flex flex-col justify-between">
                                 <div className="absolute top-0 bottom-0 left-8 w-px bg-rose-200" />
-                                <div className="pl-6 space-y-4 font-serif">
-                                    <h3 className="text-xl font-bold text-violet-900 border-b border-yellow-200 pb-2">{content.step2.boxTitre}</h3>
-                                    <p className="text-sm leading-8 text-slate-800 whitespace-pre-line">
+                                <div className="pl-6 space-y-3 font-serif">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-0.5 text-[9px] font-black text-violet-700 uppercase tracking-widest font-sans">
+                                        Leçon 2/3
+                                    </span>
+                                    <h3 className="text-lg font-bold text-violet-900 border-b border-yellow-200 pb-1">{content.step2.boxTitre}</h3>
+                                    <p className="text-xs leading-6 text-slate-800 whitespace-pre-line font-medium">
                                         {content.step2.texte}
                                     </p>
                                 </div>
-                                <div className="mt-4 flex justify-center overflow-hidden rounded-xl border border-yellow-200/30">
+                            </div>
+
+                            {/* Right Side: Image + À retenir */}
+                            <div className="flex flex-col gap-5 justify-between h-full">
+                                <div className="bg-violet-50/40 border border-violet-100 rounded-3xl p-5 flex items-center justify-center shadow-inner min-h-[160px] max-h-[200px] overflow-hidden">
                                     <img 
                                         src={step2ImagePath} 
                                         alt={content.step2.boxTitre} 
-                                        className="max-h-[160px] object-contain rounded-xl hover:scale-105 transition-transform duration-500"
+                                        className="max-h-[150px] object-contain rounded-xl"
                                     />
                                 </div>
-                            </div>
 
-                            <div className="flex flex-col justify-between gap-6">
-                                {/* À retenir */}
                                 <div className="bg-violet-50 border border-violet-100 p-5 rounded-2xl">
-                                    <h4 className="text-xs font-black text-violet-800 uppercase tracking-widest flex items-center gap-1.5 mb-3">
+                                    <h4 className="text-[10px] font-black text-violet-800 uppercase tracking-widest flex items-center gap-1.5 mb-2">
                                         <Star className="h-4 w-4 fill-violet-400 text-violet-400" /> À retenir
                                     </h4>
-                                    <ul className="space-y-2">
+                                    <ul className="space-y-1.5 text-xs text-violet-950 font-bold">
                                         {content.step2.aRetenir.map((a, idx) => (
-                                            <li key={idx} className="text-xs text-violet-950 font-semibold flex items-start gap-2">
+                                            <li key={idx} className="flex items-start gap-2">
                                                 <span className="text-violet-500 font-bold">•</span>
                                                 <span>{a}</span>
                                             </li>
@@ -904,398 +899,290 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     </ul>
                                 </div>
 
-                                {/* Badges ou Bullet lists */}
+                                {/* Badges ou Bullet list facultatifs */}
                                 {content.step2.badges && (
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-3 gap-2">
                                         {content.step2.badges.map((b, idx) => (
-                                            <div key={idx} className="bg-white border border-violet-100 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-xs">
-                                                <span className="text-3xl mb-2">{b.emoji}</span>
-                                                <span className="text-[10px] font-black text-violet-900 leading-snug">{b.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {content.step2.bulletList && (
-                                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl space-y-2">
-                                        <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Outils clés :</h4>
-                                        {content.step2.bulletList.map((b, idx) => (
-                                            <div key={idx} className="text-xs font-bold text-violet-950 flex items-center gap-2">
-                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                                <span>{b}</span>
+                                            <div key={idx} className="bg-white border border-slate-100 rounded-xl p-2.5 flex flex-col items-center justify-center text-center shadow-xs">
+                                                <span className="text-2xl mb-1">{b.emoji}</span>
+                                                <span className="text-[9px] font-black text-violet-900 leading-tight">{b.label}</span>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
                         </div>
+                    )}
 
-                        <div className="mt-8 flex justify-between">
-                            <button
-                                onClick={() => setStepIndex(0)}
-                                className="rounded-2xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
-                            >
-                                Retour
-                            </button>
-                            <button
-                                onClick={() => setStepIndex(2)}
-                                className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md transition-all"
-                            >
-                                Suivant <ArrowRight className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* ── STEP 2 : LEÇON 3/3 (COMPRENDRE) ── */}
-                {stepIndex === 2 && (
-                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
-                        <div className="flex items-center justify-between mb-6">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700">
-                                📖 Page 3/3 — Comprendre
-                            </span>
-                        </div>
-                        
-                        <h2 className="text-lg font-black text-violet-600 mb-6">{content.step3.soustitre}</h2>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                            <div className="space-y-6">
-                                <p className="text-sm text-violet-800 leading-relaxed font-semibold">{content.step3.texte}</p>
+                    {/* ── STEP 2 : LEÇON 3/3 (COMPRENDRE) ── */}
+                    {stepIndex === 2 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Side: Points Clés */}
+                            <div className="space-y-6 flex flex-col justify-between h-full">
+                                <div className="space-y-3">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest">
+                                        Leçon 3/3
+                                    </span>
+                                    <h2 className="text-xl md:text-2xl font-black text-violet-950 leading-tight">
+                                        Comprendre
+                                    </h2>
+                                    <p className="text-xs text-violet-800 leading-relaxed font-bold">{content.step3.texte}</p>
+                                </div>
                                 
-                                <div className="bg-white border border-violet-100 rounded-2xl p-5 shadow-xs space-y-4">
-                                    <h4 className="text-xs font-black text-violet-800 uppercase tracking-widest">Points clés :</h4>
+                                <div className="bg-white border border-violet-100 rounded-2xl p-5 shadow-xs space-y-3">
+                                    <h4 className="text-[10px] font-black text-violet-800 uppercase tracking-widest">Points clés :</h4>
                                     {content.step3.pointsCles.map((pt, idx) => (
-                                        <div key={idx} className="flex gap-3 items-start">
+                                        <div key={idx} className="flex gap-2.5 items-start">
                                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                                                 <Check className="h-3 w-3" />
                                             </span>
-                                            <p className="text-xs text-violet-950 font-bold leading-relaxed">{pt}</p>
+                                            <p className="text-xs text-violet-950 font-bold leading-normal">{pt}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
+                            {/* Right Side: thought bubbles + image */}
                             <div className="space-y-4">
-                                {/* Bulles de pensée d'illustrations */}
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-2 gap-2">
                                     {content.step3.bulles.map((b, idx) => (
-                                        <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4 shadow-xs relative">
+                                        <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
                                             <span className="absolute -top-2 -left-2 text-xs">💬</span>
-                                            <p className="text-xs font-black text-violet-950 leading-relaxed">{b}</p>
+                                            <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
                                         </div>
                                     ))}
                                 </div>
 
                                 {content.step3.objectif && (
-                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex gap-3 items-center mt-4">
-                                        <span className="text-2xl">🎯</span>
-                                        <p className="text-xs font-extrabold text-emerald-800 whitespace-pre-line leading-relaxed">{content.step3.objectif}</p>
+                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
+                                        <span className="text-xl">🎯</span>
+                                        <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
                                     </div>
                                 )}
                                 
-                                <div className="text-center pt-4">
-                                    <span className="text-6xl animate-pulse inline-block">{content.step3.illustration}</span>
+                                <div className="text-center pt-2">
+                                    <span className="text-5xl animate-pulse inline-block">{content.step3.illustration}</span>
                                 </div>
                             </div>
                         </div>
+                    )}
 
-                        <div className="mt-8 flex justify-between">
-                            <button
-                                onClick={() => setStepIndex(1)}
-                                className="rounded-2xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
-                            >
-                                Retour
-                            </button>
-                            <button
-                                onClick={() => setStepIndex(3)}
-                                className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 font-black text-white hover:bg-emerald-600 shadow-md transition-all animate-pulse"
-                            >
-                                Passer à l'exercice <ArrowRight className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                    {/* ── STEP 3 : EXERCICE GUIDÉ ── */}
+                    {stepIndex === 3 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            {/* Left Side Interaction */}
+                            <div className="lg:col-span-8 space-y-4">
+                                {/* Match Exercise */}
+                                {content.exercice.type === 'match' && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            {content.exercice.data.left.map((item: any) => {
+                                                const isSelected = selectedLeft === item.id;
+                                                const matchedRightId = matches[item.id];
+                                                const matchedRight = content.exercice.data.right.find((r: any) => r.id === matchedRightId);
+                                                
+                                                return (
+                                                    <button
+                                                        key={item.id}
+                                                        disabled={exerciceChecked}
+                                                        onClick={() => handleSelectLeft(item.id)}
+                                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs ${
+                                                            isSelected 
+                                                                ? 'border-violet-600 bg-violet-50 text-violet-900 shadow-sm'
+                                                                : matchedRightId
+                                                                    ? 'border-emerald-200 bg-emerald-50/20 text-slate-800'
+                                                                    : 'border-slate-100 bg-slate-50/50 text-slate-700 hover:border-slate-300'
+                                                        }`}
+                                                    >
+                                                        <span>{item.text}</span>
+                                                        {matchedRight && (
+                                                            <span className="text-[9px] bg-emerald-500 text-white px-2 py-0.5 rounded-md font-black shrink-0 ml-2">
+                                                                Lié !
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
 
-                {/* ── STEP 3 : EXERCICE GUIDÉ ── */}
-                {stepIndex === 3 && (
-                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3.5 py-1 text-xs font-black text-white">
-                                ✏️ Exercice Guidé
-                            </span>
-                        </div>
-                        
-                        <h2 className="text-xl font-black text-violet-950 mb-6">{content.exercice.titre}</h2>
+                                        <div className="space-y-2">
+                                            {content.exercice.data.right.map((item: any) => {
+                                                const isMatchTarget = Object.values(matches).includes(item.id);
+                                                return (
+                                                    <button
+                                                        key={item.id}
+                                                        disabled={exerciceChecked || !selectedLeft}
+                                                        onClick={() => handleSelectRight(item.id)}
+                                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all font-semibold text-xs ${
+                                                            isMatchTarget
+                                                                ? 'border-emerald-300 bg-emerald-50/20 text-emerald-800 font-bold'
+                                                                : selectedLeft
+                                                                    ? 'border-violet-200 hover:border-violet-400 bg-violet-50/10 text-slate-700'
+                                                                    : 'border-slate-100 bg-slate-50/50 text-slate-400 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        {item.text}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
-                        {/* --- EXERCICE TYPE: MATCH --- */}
-                        {content.exercice.type === 'match' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-6">
-                                <div className="space-y-3">
-                                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Élément de gauche (clique pour sélectionner)</h4>
-                                    {content.exercice.data.left.map((item: any) => {
-                                        const isSelected = selectedLeft === item.id;
-                                        const matchedRightId = matches[item.id];
-                                        const matchedRight = content.exercice.data.right.find((r: any) => r.id === matchedRightId);
-                                        
-                                        return (
-                                            <button
-                                                key={item.id}
-                                                disabled={exerciceChecked}
-                                                onClick={() => handleSelectLeft(item.id)}
-                                                className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs ${
-                                                    isSelected 
-                                                        ? 'border-violet-600 bg-violet-50 text-violet-900 shadow-sm'
-                                                        : matchedRightId
-                                                            ? 'border-emerald-200 bg-emerald-50/20 text-slate-800'
-                                                            : 'border-slate-100 bg-slate-50/50 text-slate-700 hover:border-slate-300'
-                                                }`}
-                                            >
-                                                <span>{item.text}</span>
-                                                {matchedRight && (
-                                                    <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-md font-black shrink-0 ml-2">
-                                                        Lié à : {matchedRight.text.substring(0, 15)}...
+                                {/* Order Exercise */}
+                                {content.exercice.type === 'order' && (
+                                    <div className="space-y-2 max-w-xl">
+                                        {orderedItems.map((item: string, idx: number) => (
+                                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-3 text-xs font-bold">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-[10px]">
+                                                        {idx + 1}
                                                     </span>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="space-y-3">
-                                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Élément de droite (clique pour associer)</h4>
-                                    {content.exercice.data.right.map((item: any) => {
-                                        const isMatchTarget = Object.values(matches).includes(item.id);
-                                        return (
-                                            <button
-                                                key={item.id}
-                                                disabled={exerciceChecked || !selectedLeft}
-                                                onClick={() => handleSelectRight(item.id)}
-                                                className={`w-full text-left p-4 rounded-xl border-2 transition-all font-semibold text-xs ${
-                                                    isMatchTarget
-                                                        ? 'border-emerald-300 bg-emerald-50/20 text-emerald-800 font-bold'
-                                                        : selectedLeft
-                                                            ? 'border-violet-200 hover:border-violet-400 bg-violet-50/10 text-slate-700'
-                                                            : 'border-slate-100 bg-slate-50/50 text-slate-400 cursor-not-allowed'
-                                                }`}
-                                            >
-                                                {item.text}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* --- EXERCICE TYPE: ORDER --- */}
-                        {content.exercice.type === 'order' && (
-                            <div className="space-y-3 my-6 max-w-2xl mx-auto">
-                                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Utilise les flèches pour déplacer les phrases dans le bon ordre</h4>
-                                {orderedItems.map((item: string, idx: number) => (
-                                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-xs">
-                                                {idx + 1}
-                                            </span>
-                                            <span className="text-xs font-bold text-violet-950">{item}</span>
-                                        </div>
-                                        <div className="flex gap-1.5">
-                                            <button 
-                                                disabled={exerciceChecked || idx === 0}
-                                                onClick={() => moveItem(idx, 'up')}
-                                                className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
-                                            >
-                                                <MoveUp className="h-3.5 w-3.5" />
-                                            </button>
-                                            <button 
-                                                disabled={exerciceChecked || idx === orderedItems.length - 1}
-                                                onClick={() => moveItem(idx, 'down')}
-                                                className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
-                                            >
-                                                <MoveDown className="h-3.5 w-3.5" />
-                                            </button>
-                                        </div>
+                                                    <span className="text-slate-800">{item}</span>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button 
+                                                        disabled={exerciceChecked || idx === 0}
+                                                        onClick={() => moveItem(idx, 'up')}
+                                                        className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                                                    >
+                                                        <MoveUp className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button 
+                                                        disabled={exerciceChecked || idx === orderedItems.length - 1}
+                                                        onClick={() => moveItem(idx, 'down')}
+                                                        className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                                                    >
+                                                        <MoveDown className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                )}
 
-                        {/* --- EXERCICE TYPE: INPUT --- */}
-                        {content.exercice.type === 'input' && (
-                            <div className="space-y-6 my-6 max-w-xl mx-auto">
-                                {content.exercice.data.questions.map((q: any, idx: number) => (
-                                    <div key={idx} className="space-y-2">
-                                        <label className="block text-xs font-black text-violet-900">{q.label}</label>
-                                        <input
-                                            type="text"
-                                            disabled={exerciceChecked}
-                                            placeholder={q.placeholder}
-                                            value={inputAnswers[q.key] || ""}
-                                            onChange={(e) => handleInputChange(q.key, e.target.value)}
-                                            className="w-full border border-violet-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-violet-500 outline-hidden font-bold"
-                                        />
+                                {/* Input Exercise */}
+                                {content.exercice.type === 'input' && (
+                                    <div className="space-y-4 max-w-xl">
+                                        {content.exercice.data.questions.map((q: any, idx: number) => (
+                                            <div key={idx} className="space-y-1">
+                                                <label className="block text-xs font-black text-violet-900">{q.label}</label>
+                                                <input
+                                                    type="text"
+                                                    disabled={exerciceChecked}
+                                                    placeholder={q.placeholder}
+                                                    value={inputAnswers[q.key] || ""}
+                                                    onChange={(e) => handleInputChange(q.key, e.target.value)}
+                                                    className="w-full border border-violet-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 outline-hidden font-bold"
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                )}
 
-                        {/* --- EXERCICE TYPE: SORT --- */}
-                        {content.exercice.type === 'sort' && (
-                            <div className="my-6 max-w-xl mx-auto">
-                                {activeSortItemIndex < content.exercice.data.items.length && !exerciceChecked ? (
-                                    <div className="text-center space-y-6 bg-slate-50 border border-slate-100 p-6 rounded-2xl mb-6">
-                                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Geste {activeSortItemIndex + 1} / {content.exercice.data.items.length}</h4>
-                                        <p className="text-lg font-black text-violet-950">
-                                            "{content.exercice.data.items[activeSortItemIndex].text}"
-                                        </p>
-                                        <div className="flex justify-center gap-4">
+                                {/* Sort Exercise */}
+                                {content.exercice.type === 'sort' && (
+                                    <div className="max-w-xl">
+                                        {activeSortItemIndex < content.exercice.data.items.length && !exerciceChecked ? (
+                                            <div className="text-center space-y-4 bg-slate-50 border border-slate-100 p-5 rounded-2xl mb-4">
+                                                <p className="text-base font-black text-violet-950">
+                                                    "{content.exercice.data.items[activeSortItemIndex].text}"
+                                                </p>
+                                                <div className="flex justify-center gap-3">
+                                                    {content.exercice.data.categories.map((cat: any) => (
+                                                        <button
+                                                            key={cat.id}
+                                                            onClick={() => handleSortItem(cat.id)}
+                                                            className={`px-4 py-2.5 rounded-xl border-2 font-black text-xs hover:scale-102 transition-all ${cat.bg}`}
+                                                        >
+                                                            {cat.title}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl mb-4 text-xs font-bold text-violet-900">
+                                                Tous les gestes ont été classés. Clique sur Vérifier !
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-3 text-left">
                                             {content.exercice.data.categories.map((cat: any) => (
-                                                <button
-                                                    key={cat.id}
-                                                    onClick={() => handleSortItem(cat.id)}
-                                                    className={`px-5 py-3 rounded-xl border-2 font-black text-xs hover:scale-105 transition-all ${cat.bg}`}
-                                                >
-                                                    {cat.title}
-                                                </button>
+                                                <div key={cat.id} className={`rounded-xl border p-3 ${cat.bg}`}>
+                                                    <h5 className="font-black text-[10px] mb-2">{cat.title}</h5>
+                                                    <ul className="space-y-1 text-[10px] font-bold">
+                                                        {content.exercice.data.items.map((item: any) => {
+                                                            if (sortedItems[item.id] !== cat.id) return null;
+                                                            return (
+                                                                <li key={item.id} className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
+                                                                    • {item.text}
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
-                                ) : (
-                                    <div className="text-center p-6 bg-slate-50 border border-slate-100 rounded-2xl my-4 text-xs font-bold text-violet-900">
-                                        Tous les gestes ont été classés. Clique sur Vérifier !
+                                )}
+
+                                {/* RÉSULTAT EXERCICE */}
+                                {exerciceChecked && (
+                                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                                        exerciceSuccess 
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                                            : 'bg-rose-50 border-rose-200 text-rose-800'
+                                    }`}>
+                                        {exerciceSuccess ? (
+                                            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                                        ) : (
+                                            <XCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                                        )}
+                                        <div>
+                                            <h4 className="text-xs font-black uppercase">
+                                                {exerciceSuccess ? "C'est parfait !" : "Quelques erreurs !"}
+                                            </h4>
+                                            <p className="text-[10px] font-semibold mt-0.5">
+                                                {exerciceSuccess 
+                                                    ? "Tu as réussi l'exercice guidé. Tu es prêt pour l'étape du quiz !" 
+                                                    : "Recommence pour trouver la bonne solution."}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
+                            </div>
 
-                                {/* Résumé du tri */}
-                                <div className="grid grid-cols-2 gap-4 mt-6 text-left">
-                                    {content.exercice.data.categories.map((cat: any) => (
-                                        <div key={cat.id} className={`rounded-xl border p-4 ${cat.bg}`}>
-                                            <h5 className="font-black text-xs mb-3">{cat.title}</h5>
-                                            <ul className="space-y-1.5 text-[11px] font-bold">
-                                                {content.exercice.data.items.map((item: any) => {
-                                                    if (sortedItems[item.id] !== cat.id) return null;
-                                                    return (
-                                                        <li key={item.id} className="bg-white/80 px-2.5 py-1.5 rounded-lg border border-slate-100 flex items-center gap-1">
-                                                            <span>• {item.text}</span>
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                        </div>
-                                    ))}
+                            {/* Right Side Decoration */}
+                            <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/20 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px] overflow-hidden">
+                                <img 
+                                    src="/images/enfants/exercice_generic.png" 
+                                    alt="Activité" 
+                                    className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── STEP 4 : QUIZ (10 QUESTIONS) ── */}
+                    {stepIndex === 4 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center max-w-4xl mx-auto">
+                            {/* Left Side: Questions */}
+                            <div className="lg:col-span-8 space-y-4">
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                                    <div 
+                                        className="bg-violet-600 h-full rounded-full transition-all duration-300"
+                                        style={{ width: `${((quizIndex + 1) / content.quiz.length) * 100}%` }}
+                                    />
                                 </div>
-                            </div>
-                        )}
 
-                        {/* --- RÉSULTAT EXERCICE --- */}
-                        {exerciceChecked && (
-                            <div className={`mt-6 p-5 rounded-2xl border flex items-start gap-3.5 ${
-                                exerciceSuccess 
-                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-                                    : 'bg-rose-50 border-rose-200 text-rose-800'
-                            }`}>
-                                {exerciceSuccess ? (
-                                    <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
-                                ) : (
-                                    <XCircle className="h-6 w-6 text-rose-600 shrink-0 mt-0.5" />
-                                )}
-                                <div>
-                                    <h4 className="text-sm font-black uppercase">
-                                        {exerciceSuccess ? "Bravo ! C'est parfait !" : "Quelques erreurs ! Essaye encore."}
-                                    </h4>
-                                    <p className="text-xs font-semibold mt-1">
-                                        {exerciceSuccess 
-                                            ? "Tu as brillamment réussi l'exercice guidé. Tu es prêt pour l'étape du quiz !" 
-                                            : "Vérifie tes réponses, réinitialise l'exercice et tente à nouveau de trouver la bonne solution."}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="mt-8 flex justify-between items-center">
-                            <button
-                                onClick={() => setStepIndex(2)}
-                                className="rounded-2xl border border-violet-200 bg-white px-5 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
-                            >
-                                Retour
-                            </button>
-                            
-                            <div className="flex gap-3">
-                                {/* Bouton réinitialiser */}
-                                {exerciceChecked && !exerciceSuccess && (
-                                    <button
-                                        onClick={() => {
-                                            if (content.exercice.type === 'match') handleResetMatch();
-                                            else if (content.exercice.type === 'order') handleResetOrder();
-                                            else if (content.exercice.type === 'input') handleResetInput();
-                                            else if (content.exercice.type === 'sort') handleResetSort();
-                                        }}
-                                        className="flex items-center gap-1.5 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-xs font-black text-violet-700 hover:bg-violet-50"
-                                    >
-                                        <RotateCcw className="h-3.5 w-3.5" /> Recommencer
-                                    </button>
-                                )}
-
-                                {!exerciceChecked ? (
-                                    <button
-                                        onClick={() => {
-                                            if (content.exercice.type === 'match') verifyMatch();
-                                            else if (content.exercice.type === 'order') verifyOrder();
-                                            else if (content.exercice.type === 'input') verifyInput();
-                                            else if (content.exercice.type === 'sort') {
-                                                // Simuler clic si pas fini
-                                                const items = content.exercice.data.items;
-                                                if (activeSortItemIndex < items.length) {
-                                                    alert("Classe d'abord tous les éléments !");
-                                                } else {
-                                                    verifyInput();
-                                                }
-                                            }
-                                        }}
-                                        className="rounded-2xl bg-emerald-600 px-6 py-3 font-black text-white hover:bg-emerald-700 shadow-md"
-                                    >
-                                        Vérifier
-                                    </button>
-                                ) : (
-                                    <button
-                                        disabled={!exerciceSuccess}
-                                        onClick={() => setStepIndex(4)}
-                                        className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                                    >
-                                        Passer au Quiz <ArrowRight className="h-4 w-4" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* ── STEP 4 : QUIZ (10 QUESTIONS) ── */}
-                {stepIndex === 4 && (
-                    <div className="bg-white border border-violet-100 rounded-3xl p-6 md:p-8 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-xs font-black text-violet-700 animate-pulse">
-                                ❓ Quiz final (10 Questions)
-                            </span>
-                            <span className="text-xs font-black text-violet-400">Question {quizIndex + 1} / {content.quiz.length}</span>
-                        </div>
-
-                        {/* Progression dans le quiz */}
-                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-6">
-                            <div 
-                                className="bg-violet-600 h-full rounded-full transition-all duration-300"
-                                style={{ width: `${((quizIndex + 1) / content.quiz.length) * 100}%` }}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start max-w-4xl mx-auto">
-                            <div className="md:col-span-2 space-y-6">
-                                <div className="p-6 bg-violet-50/50 rounded-2xl border border-violet-100/50">
-                                    <h2 className="text-base md:text-lg font-black text-violet-950 text-center leading-snug">
+                                <div className="p-5 bg-violet-50/50 rounded-2xl border border-violet-100/50">
+                                    <h2 className="text-xs font-black text-violet-500 uppercase tracking-widest mb-1.5">Question {quizIndex + 1} sur {content.quiz.length}</h2>
+                                    <h3 className="text-sm md:text-base font-black text-violet-950 leading-snug">
                                         {content.quiz[quizIndex].q}
-                                    </h2>
+                                    </h3>
                                 </div>
 
-                                <div className="grid gap-3">
+                                <div className="grid gap-2">
                                     {content.quiz[quizIndex].options.map((option, idx) => {
                                         const isCorrectAnswer = idx === content.quiz[quizIndex].answer;
                                         const isSelected = selectedOption === idx;
@@ -1316,108 +1203,198 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                                 key={idx}
                                                 disabled={selectedOption !== null}
                                                 onClick={() => handleAnswerQuiz(idx)}
-                                                className={`w-full text-left rounded-xl border p-4 text-xs font-bold transition-all flex items-center justify-between ${optionStyle}`}
+                                                className={`w-full text-left rounded-xl border p-3.5 text-xs font-bold transition-all flex items-center justify-between ${optionStyle}`}
                                             >
                                                 <span>{option}</span>
                                                 {selectedOption !== null && isCorrectAnswer && (
-                                                    <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 ml-2" />
+                                                    <Check className="h-4 w-4 text-emerald-600 shrink-0 ml-2" />
                                                 )}
                                             </button>
                                         );
                                     })}
                                 </div>
+
+                                {showExplanation && (
+                                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100 flex items-start gap-2.5">
+                                        <Sparkles className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-[10px] font-black text-amber-900">
+                                                {selectedOption === content.quiz[quizIndex].answer ? "Bien joué ! 🌟" : "Presque ! 😉"}
+                                            </div>
+                                            <p className="text-xs text-amber-800 font-semibold mt-0.5 leading-relaxed">
+                                                {content.quiz[quizIndex].explication}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner">
+                            {/* Right Side: Robot helper */}
+                            <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px]">
                                 <img 
                                     src="/images/enfants/quiz_robot.png" 
                                     alt="Robot assistant" 
-                                    className="max-h-[200px] object-contain animate-bounce"
+                                    className="max-h-[160px] object-contain animate-bounce"
                                     style={{ animationDuration: '3s' }}
                                 />
-                                <span className="text-[10px] font-black text-violet-500 mt-4 uppercase tracking-widest bg-white border border-violet-100 px-3 py-1 rounded-full shadow-xs">
-                                    Besoin d'aide ?
+                                <span className="text-[9px] font-black text-violet-500 mt-3 uppercase tracking-widest bg-white border border-violet-100 px-3 py-1 rounded-full shadow-xs">
+                                    Aide Robot 🤖
                                 </span>
                             </div>
                         </div>
+                    )}
 
-                        {showExplanation && (
-                            <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100 flex items-start gap-3 max-w-2xl mx-auto">
-                                <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                                <div>
-                                    <div className="text-xs font-black text-amber-900">
-                                        {selectedOption === content.quiz[quizIndex].answer ? "Bien joué ! 🌟" : "Presque ! 😉"}
-                                    </div>
-                                    <p className="text-xs text-amber-800 font-medium mt-1 leading-relaxed">
-                                        {content.quiz[quizIndex].explication}
-                                    </p>
-                                </div>
+                    {/* ── STEP 5 : RESULTAT FINAL / BADGE ── */}
+                    {stepIndex === 5 && (
+                        <div className="text-center max-w-xl mx-auto space-y-6">
+                            <div className="flex justify-center">
+                                <img 
+                                    src="/images/enfants/result_robot.png" 
+                                    alt="Félicitations !" 
+                                    className="max-h-[180px] object-contain animate-bounce"
+                                    style={{ animationDuration: '4s' }}
+                                />
                             </div>
-                        )}
 
-                        <div className="mt-8 flex justify-end">
-                            {selectedOption !== null && (
+                            <div className="space-y-1.5">
+                                <h2 className="text-2xl md:text-3xl font-black text-violet-950">
+                                    {score >= 8 ? "Well done ! Félicitations !" : "Quiz Terminé !"}
+                                </h2>
+                                <p className="text-xs font-black text-violet-600 uppercase tracking-widest">
+                                    Tu as réussi ton aventure {content.titreGlobal} !
+                                </p>
+                            </div>
+
+                            <div className="bg-slate-50/60 rounded-2xl border border-slate-100 p-5 max-w-sm mx-auto shadow-xs">
+                                <span className="block text-[9px] font-black uppercase text-slate-400 tracking-widest">Ton score final</span>
+                                <span className="text-3xl md:text-4xl font-black text-emerald-600">
+                                    {score} <span className="text-lg text-slate-400">/ {content.quiz.length}</span>
+                                </span>
+                                <p className="text-[11px] font-bold text-violet-950 mt-2">
+                                    {score === 10 && "Excellent ! Un score parfait de champion ! 🌟"}
+                                    {score >= 8 && score < 10 && "Super travail ! Tu as très bien compris ! 👏"}
+                                    {score >= 5 && score < 8 && "Pas mal ! Revois la leçon pour faire encore mieux ! 👍"}
+                                    {score < 5 && "Recommence l'aventure pour améliorer ton score. Courage ! 💪"}
+                                </p>
+                            </div>
+
+                            {/* Étoiles d'évaluation */}
+                            <div className="flex justify-center gap-1">
+                                {[1, 2, 3, 4, 5].map((starIdx) => {
+                                    const starThreshold = starIdx * 2;
+                                    const isGold = score >= starThreshold;
+                                    return (
+                                        <Star 
+                                            key={starIdx}
+                                            className={`h-6 w-6 ${
+                                                isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-100'
+                                            }`}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* 3. Pied de la carte (Footer) : Navigation interne sous les colonnes */}
+                <div className="border-t border-slate-100 pt-5 flex items-center justify-between">
+                    {/* Bouton Retour (interne au wizard) */}
+                    {stepIndex > 0 && stepIndex < 5 ? (
+                        <button
+                            onClick={() => {
+                                if (stepIndex === 4 && quizIndex > 0) {
+                                    setQuizIndex(quizIndex - 1);
+                                    setSelectedOption(null);
+                                    setShowExplanation(false);
+                                } else {
+                                    setStepIndex(stepIndex - 1);
+                                }
+                            }}
+                            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 shadow-xs transition-all"
+                        >
+                            ← Retour
+                        </button>
+                    ) : (
+                        <Link 
+                            href={`/enfant/modules/${id}`}
+                            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 shadow-xs transition-all"
+                        >
+                            ← Quitter
+                        </Link>
+                    )}
+
+                    {/* Pagination Dots (uniquement pour les leçons 1/3, 2/3, 3/3) */}
+                    {stepIndex < 3 && (
+                        <div className="flex gap-2">
+                            {[0, 1, 2].map((dotIdx) => (
                                 <button
-                                    onClick={handleNextQuiz}
-                                    className="flex items-center gap-1.5 rounded-2xl bg-violet-600 px-6 py-3 font-black text-white hover:bg-violet-700 shadow-md transition-all"
+                                    key={dotIdx}
+                                    onClick={() => setStepIndex(dotIdx)}
+                                    className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                                        stepIndex === dotIdx ? 'bg-violet-600 w-6' : 'bg-slate-200'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Bouton Suivant ou Sauvegarder */}
+                    {stepIndex < 3 ? (
+                        <button
+                            onClick={() => setStepIndex(stepIndex + 1)}
+                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all"
+                        >
+                            {stepIndex === 2 ? "Passer à l'exercice" : "Suivant"} →
+                        </button>
+                    ) : stepIndex === 3 ? (
+                        <div className="flex gap-2">
+                            {exerciceChecked && !exerciceSuccess && (
+                                <button
+                                    onClick={() => {
+                                        if (content.exercice.type === 'match') handleResetMatch();
+                                        else if (content.exercice.type === 'order') handleResetOrder();
+                                        else if (content.exercice.type === 'input') handleResetInput();
+                                        else if (content.exercice.type === 'sort') handleResetSort();
+                                    }}
+                                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50"
                                 >
-                                    {quizIndex < content.quiz.length - 1 ? "Question Suivante" : "Terminer le Quiz !"} <ArrowRight className="h-4 w-4" />
+                                    <RotateCcw className="h-3.5 w-3.5" /> Recommencer
+                                </button>
+                            )}
+                            
+                            {!exerciceChecked ? (
+                                <button
+                                    onClick={() => {
+                                        if (content.exercice.type === 'match') verifyMatch();
+                                        else if (content.exercice.type === 'order') verifyOrder();
+                                        else if (content.exercice.type === 'input') verifyInput();
+                                        else if (content.exercice.type === 'sort') verifyInput(); // triggers check
+                                    }}
+                                    className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-black text-white hover:bg-emerald-700 shadow-md"
+                                >
+                                    Vérifier
+                                </button>
+                            ) : (
+                                <button
+                                    disabled={!exerciceSuccess}
+                                    onClick={() => setStepIndex(4)}
+                                    className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                >
+                                    Passer au Quiz →
                                 </button>
                             )}
                         </div>
-                    </div>
-                )}
-
-                {/* ── STEP 5 : RESULTAT FINAL / BADGE ── */}
-                {stepIndex === 5 && (
-                    <div className="bg-white border border-violet-100 rounded-3xl p-8 md:p-12 text-center shadow-lg max-w-2xl mx-auto">
-                        <div className="flex justify-center mb-6">
-                            <img 
-                                src="/images/enfants/result_robot.png" 
-                                alt="Félicitations !" 
-                                className="max-h-[200px] object-contain animate-bounce"
-                                style={{ animationDuration: '4s' }}
-                            />
-                        </div>
-
-                        <h2 className="text-2xl md:text-3xl font-black text-violet-950 mb-2">
-                            {score >= 8 ? "Well done ! Félicitations !" : "Quiz Terminé !"}
-                        </h2>
-                        
-                        <p className="text-sm font-extrabold text-violet-600 mb-6 uppercase tracking-wider">
-                            Tu as réussi ton aventure {content.titreGlobal} !
-                        </p>
-
-                        <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 mb-6 max-w-sm mx-auto">
-                            <span className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Ton score final</span>
-                            <span className="text-4xl md:text-5xl font-black text-emerald-600">
-                                {score} <span className="text-xl md:text-2xl text-slate-400">/ {content.quiz.length}</span>
-                            </span>
-                            <p className="text-xs font-semibold text-violet-950 mt-3">
-                                {score === 10 && "Excellent ! Un score parfait de champion ! 🌟"}
-                                {score >= 8 && score < 10 && "Super travail ! Tu as très bien compris la leçon ! 👏"}
-                                {score >= 5 && score < 8 && "Pas mal ! Tu peux relire la leçon pour faire encore mieux ! 👍"}
-                                {score < 5 && "Essaye de revoir la leçon pour améliorer ton score. Courage ! 💪"}
-                            </p>
-                        </div>
-
-                        {/* Étoiles d'évaluation */}
-                        <div className="flex justify-center gap-1.5 mb-8">
-                            {[1, 2, 3, 4, 5].map((starIdx) => {
-                                const starThreshold = starIdx * 2; // e.g. 5 stars = 10, 4 stars = 8
-                                const isGold = score >= starThreshold;
-                                return (
-                                    <Star 
-                                        key={starIdx}
-                                        className={`h-7 w-7 ${
-                                            isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-100'
-                                        }`}
-                                    />
-                                );
-                            })}
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    ) : stepIndex === 4 ? (
+                        <button
+                            disabled={selectedOption === null}
+                            onClick={handleNextQuiz}
+                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            {quizIndex < content.quiz.length - 1 ? "Suivant" : "Terminer"} →
+                        </button>
+                    ) : (
+                        <div className="flex gap-2">
                             <button
                                 onClick={() => {
                                     setStepIndex(0);
@@ -1428,34 +1405,41 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     setExerciceChecked(false);
                                     setExerciceSuccess(false);
                                 }}
-                                className="rounded-2xl border border-violet-200 bg-white px-6 py-3 text-xs font-black text-violet-700 hover:bg-violet-50 transition-colors"
+                                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-colors"
                             >
-                                <RotateCcw className="h-4 w-4 inline-block mr-1" /> Recommencer l'aventure
+                                <RotateCcw className="h-4 w-4 inline-block mr-1" /> Recommencer
                             </button>
                             <button
                                 onClick={handleSaveAdventure}
-                                className="rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-7 py-3 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md hover:shadow-lg transition-all"
+                                className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md transition-all"
                             >
-                                Continuer l'aventure <ArrowRight className="h-4 w-4 inline-block ml-1" />
+                                Continuer l'aventure →
                             </button>
                         </div>
-                    </div>
-                )}
-
-            </main>
-
-            {/* Bottom Timeline Indicator (si pas au résultat final) */}
-            {stepIndex < 5 && (
-                <div className="mt-8 border-t border-violet-100 pt-6 flex items-center justify-between text-xs font-bold text-violet-400">
-                    <div className="flex items-center gap-1.5">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-violet-100 text-[10px] font-black text-violet-700">📖</span>
-                        <span>{content.titreGlobal}</span>
-                    </div>
-                    <div>
-                        <span>Étape {stepIndex + 1} sur 5</span>
-                    </div>
+                    )}
                 </div>
-            )}
+            </div>
+
+            {/* ─── TIMELINE DE NAVIGATION HORIZONTALE COMPLÈTE EN BAS (HORS DE LA CARTE) ─── */}
+            <div className="mt-8 border border-slate-100 bg-white rounded-2xl p-4 flex items-center justify-between shadow-xs max-w-md mx-auto text-[10px] font-bold text-slate-400">
+                <div className="flex items-center gap-1">
+                    <span className="text-violet-600">📚</span>
+                    <span className="text-slate-800 font-extrabold">{content.titreGlobal}</span>
+                </div>
+                <div className="flex items-center gap-1 text-[11px]">
+                    <span className="text-indigo-600 font-black">Leçon 1/3</span>
+                    <span className="text-slate-200">→</span>
+                    <span>Leçon 2/3</span>
+                    <span className="text-slate-200">→</span>
+                    <span>Leçon 3/3</span>
+                    <span className="text-slate-200">→</span>
+                    <span>Exercice</span>
+                    <span className="text-slate-200">→</span>
+                    <span>Quiz</span>
+                    <span className="text-slate-200">→</span>
+                    <span>Résultat</span>
+                </div>
+            </div>
         </div>
     );
 }
