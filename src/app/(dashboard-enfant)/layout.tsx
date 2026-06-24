@@ -39,10 +39,9 @@ export default async function EnfantLayout({
             <header className="bg-white border-b border-slate-100 px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xs">
                 
                 {/* Logo & Brand */}
-                <div className="flex items-center gap-3">
-                    <div className="bg-[#0b132b] text-white px-3 py-1.5 rounded-[12px] font-black text-[10px] flex items-center gap-1.5 shadow-sm">
-                        <span className="uppercase tracking-wider opacity-75">Vitrine</span>
-                        <span className="font-extrabold text-indigo-400 text-[11px]">RFC 06</span>
+                <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700 font-black text-sm">
+                        AK
                     </div>
                     <div>
                         <h1 className="text-sm font-black text-indigo-950 leading-none">AtelierKids</h1>

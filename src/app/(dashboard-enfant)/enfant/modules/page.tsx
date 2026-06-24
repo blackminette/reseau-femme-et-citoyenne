@@ -13,13 +13,13 @@ export const metadata = {
     description: 'Découvre tous tes modules et progresse à ton rythme !',
 };
 
-const METADATA_MAP: Record<string, { Icon: LucideIcon; from: string; to: string }> = {
-    lecture: { Icon: BookOpen, from: "#66bb6a", to: "#2e7d32" },
-    numerique: { Icon: Laptop, from: "#42a5f5", to: "#0d47a1" },
-    robotique: { Icon: Cpu, from: "#9b8cff", to: "#6d5ba8" },
-    anglais: { Icon: Languages, from: "#ec407a", to: "#880e4f" },
-    civique: { Icon: Landmark, from: "#ffa726", to: "#e65100" },
-    eco: { Icon: Leaf, from: "#26a69a", to: "#00695c" },
+const METADATA_MAP: Record<string, { Icon: LucideIcon; from: string; to: string; img: string }> = {
+    lecture: { Icon: BookOpen, from: "#66bb6a", to: "#2e7d32", img: "/images/enfants/lecture_decouvrir.png" },
+    numerique: { Icon: Laptop, from: "#42a5f5", to: "#0d47a1", img: "/images/enfants/numerique_decouvrir.png" },
+    robotique: { Icon: Cpu, from: "#9b8cff", to: "#6d5ba8", img: "/images/enfants/quiz_robot.png" },
+    anglais: { Icon: Languages, from: "#ec407a", to: "#880e4f", img: "/images/enfants/anglais_decouvrir.png" },
+    civique: { Icon: Landmark, from: "#ffa726", to: "#e65100", img: "/images/enfants/civique_decouvrir.png" },
+    eco: { Icon: Leaf, from: "#26a69a", to: "#00695c", img: "/images/enfants/eco_decouvrir.png" },
 };
 
 export default async function EnfantModulesPage() {
@@ -29,17 +29,25 @@ export default async function EnfantModulesPage() {
     const enfant = profile || MOCK_ENFANT;
     const listModules = modulesRes && modulesRes.modules && modulesRes.modules.length > 0 
         ? modulesRes.modules.map(mod => {
-            const meta = METADATA_MAP[mod.slug] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98" };
+            const slug = mod.slug || 'lecture';
+            const meta = METADATA_MAP[slug] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98", img: "/images/enfants/lecture_decouvrir.png" };
             return {
                 id: mod.id,
                 label: mod.label,
                 Icon: meta.Icon,
                 progression: mod.progression,
                 from: meta.from,
-                to: meta.to
+                to: meta.to,
+                img: meta.img
             };
           })
-        : MOCK_MODULES;
+        : MOCK_MODULES.map(mod => {
+            const meta = METADATA_MAP[mod.id] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98", img: "/images/enfants/lecture_decouvrir.png" };
+            return {
+                ...mod,
+                img: meta.img
+            };
+        });
 
     return (
         <div className="text-violet-900">
@@ -81,34 +89,48 @@ export default async function EnfantModulesPage() {
 
             {/* ─── Liste des modules en grille ─── */}
             <section className="mt-8 mb-6">
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {listModules.map(({ id, label, Icon, progression, from, to }) => (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {listModules.map(({ id, label, Icon, progression, from, to, img }) => (
                         <Link
                             key={id}
                             href={`/enfant/modules/${id}`}
-                            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl p-6 text-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-violet-300"
-                            style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}
+                            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-300"
                         >
-                            {/* Éléments décoratifs en arrière-plan */}
-                            <div className="absolute right-0 top-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-white/5 transition-transform duration-500 group-hover:scale-150" />
-                            
-                            <div className="relative z-10">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                                    <Icon className="h-6 w-6" aria-hidden />
+                            {/* Illustration Top area with module gradient background */}
+                            <div 
+                                className="h-44 flex items-center justify-center relative overflow-hidden transition-all group-hover:opacity-95"
+                                style={{ backgroundImage: `linear-gradient(135deg, ${from}dd, ${to}dd)` }}
+                            >
+                                <div className="absolute top-3 left-3 h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white flex backdrop-blur-xs">
+                                    <Icon className="h-4 w-4" />
                                 </div>
-                                <h3 className="mt-4 text-lg font-extrabold leading-tight tracking-wide">{label}</h3>
+                                <img 
+                                    src={img} 
+                                    alt={label} 
+                                    className="max-h-[120px] object-contain transition-transform duration-500 group-hover:scale-110"
+                                />
                             </div>
 
-                            <div className="relative z-10 mt-8">
-                                <div className="flex items-center justify-between text-xs font-bold opacity-90">
-                                    <span>Progression</span>
-                                    <span>{progression}%</span>
+                            {/* Label & Progress */}
+                            <div className="p-5 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-base font-extrabold leading-tight text-violet-950 tracking-wide">{label}</h3>
                                 </div>
-                                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/25">
-                                    <div 
-                                        className="h-full rounded-full bg-white transition-all duration-500" 
-                                        style={{ width: `${progression}%` }} 
-                                    />
+
+                                <div className="mt-6">
+                                    <div className="flex items-center justify-between text-xs font-bold text-violet-500">
+                                        <span>Progression</span>
+                                        <span>{progression}%</span>
+                                    </div>
+                                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                        <div 
+                                            className="h-full rounded-full transition-all duration-500" 
+                                            style={{ 
+                                                width: `${progression}%`,
+                                                backgroundImage: `linear-gradient(90deg, ${from}, ${to})`
+                                            }} 
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </Link>
