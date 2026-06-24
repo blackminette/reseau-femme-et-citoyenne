@@ -42,12 +42,15 @@ export default function ContactForm() {
                 }),
             });
 
+            const data = await response.json();
 
             if (response.ok) {
-                setStatus({ submitting: false, success: 'Message envoyé avec succès !' as any, error: null });
+              // On utilise le message de succès dynamique envoyé par le backend
+                setStatus({ submitting: false, success: data.message || "Message envoyé avec succès !", error: null });
                 setFormData({ name: '', email: '', subject: '', message: '' });
             } else {
-                throw new Error("Une erreur est survenue lors de l'envoi.");
+                // Si le serveur renvoie une erreur (ex: status 400), on extrait son propre message d'erreur
+                throw new Error(data.error || "Une erreur est survenue lors de l'envoi.");
             }
         } catch (err: any) {
             setStatus({ submitting: false, success: null, error: err.message });
@@ -104,9 +107,9 @@ export default function ContactForm() {
                         value={formData.subject}
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black transition appearance-none">
-                        <option value="General Inquiry">General Inquiry</option>
-                        <option value="Support">Support / Technical</option>
-                        <option value="Partnership">Partnership</option>
+                        <option value="General Inquiry">General</option>
+                        <option value="Support">Support / Technique</option>
+                        <option value="Partnership">Partenariat</option>
                         <option value="Autre">Autre</option>
                     </select>
 
