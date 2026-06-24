@@ -90,6 +90,13 @@ export async function middleware(request: NextRequest) {
         }
 
         // Redirige de force l'utilisateur vers son propre espace s'il s'est trompé d'URL
+        if (userRole === 'ENFANT') {
+            if (!pathname.startsWith('/enfant') && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && pathname !== '/favicon.ico') {
+                url.pathname = '/enfant';
+                return NextResponse.redirect(url);
+            }
+        }
+
         if (isPrivateRoute) {
             if (userRole === 'PARTENAIRE' && !pathname.startsWith('/partenaire')) {
                 url.pathname = '/partenaire';
@@ -105,10 +112,6 @@ export async function middleware(request: NextRequest) {
             }
             if (userRole === 'MEMBRE' && !pathname.startsWith('/membre')) {
                 url.pathname = '/membre';
-                return NextResponse.redirect(url);
-            }
-            if (userRole === 'ENFANT' && !pathname.startsWith('/enfant')) {
-                url.pathname = '/enfant';
                 return NextResponse.redirect(url);
             }
             if (userRole === 'ADMIN' && !pathname.startsWith('/admin')) {
