@@ -426,6 +426,7 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
     } catch (e) {
         console.error("Erreur obtenirDetailsActiviteDepuisDB:", e);
         return null;
+    }
 }
 
 // Action to save activity result
