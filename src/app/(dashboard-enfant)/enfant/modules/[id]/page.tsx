@@ -65,6 +65,44 @@ function getMockActivitesForModule(id: string): Activite[] {
     ];
 }
 
+function isActivityCompleted(actId: string): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    try {
+        const raw = window.localStorage.getItem(`rfc_enfant_act_${actId}`);
+        if (!raw) {
+            return false;
+        }
+
+        const parsed = JSON.parse(raw);
+        return Boolean(parsed?.completed);
+    } catch {
+        return false;
+    }
+}
+
+function hydrateSequentialActivities(activities: Activite[]): Activite[] {
+    let unlockedNext = false;
+
+    return activities.map((activity) => {
+        const completed = isActivityCompleted(activity.id);
+
+        if (completed) {
+            unlockedNext = true;
+            return { ...activity, statut: 'termine' as const };
+        }
+
+        if (!unlockedNext) {
+            unlockedNext = true;
+            return { ...activity, statut: 'a_faire' as const };
+        }
+
+        return { ...activity, statut: 'verrouille' as const };
+    });
+}
+
 export default function EnfantModuleDetailPage({ params }: { params: Params }) {
     const { id } = use(params);
     const [activites, setActivites] = useState<Activite[]>([]);
@@ -131,8 +169,10 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     } else {
                         const fallbackActivites = getMockActivitesForModule(id);
                         if (fallbackActivites.length > 0) {
-                            setActivites(fallbackActivites);
-                            setProgression(0);
+                            const hydratedActivities = hydrateSequentialActivities(fallbackActivites);
+                            const completedCount = hydratedActivities.filter((activity) => activity.statut === 'termine').length;
+                            setActivites(hydratedActivities);
+                            setProgression(Math.round((completedCount / hydratedActivities.length) * 100));
                         }
                     }
                 }
@@ -379,7 +419,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                                 fill
                                 priority
                                 className="object-cover"
-                                style={{ objectPosition: '50% 34%' }}
+                                style={{ objectPosition: '50% 15%' }}
                                 sizes="(min-width: 1024px) 28vw, 100vw"
                             />
                         </div>
