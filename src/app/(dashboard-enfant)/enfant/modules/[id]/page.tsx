@@ -53,12 +53,48 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     const mods = await obtenirModulesDuParcours(id);
                     setModulesList(mods);
                 } else {
-                    // Charger le module et ses exercices
                     const dbMod = await obtenirDetailsModuleDepuisDB(id);
                     if (dbMod) {
                         setDbModule(dbMod);
-                        setActivites(dbMod.activites as Activite[]);
-                        setProgression(dbMod.progression);
+                        
+                        // Enrichir les statuts des leçons (lues en local)
+                        const enrichedActivites = dbMod.activites.map((act: any) => {
+                            if (act.type === 'lecon') {
+                                const localData = localStorage.getItem(`rfc_enfant_act_${act.id}`);
+                                if (localData) {
+                                    try {
+                                        const parsed = JSON.parse(localData);
+                                        if (parsed.completed) {
+                                            return { ...act, statut: 'termine', score: '1/1', parfait: true };
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                    }
+                                }
+                            }
+                            return act;
+                        });
+
+                        // Re-calculer séquentiellement l'état 'a_faire'
+                        let unlockedNext = false;
+                        const finalActivites = enrichedActivites.map((act: any) => {
+                            if (act.statut === 'termine') {
+                                return act;
+                            }
+                            if (!unlockedNext) {
+                                unlockedNext = true;
+                                return { ...act, statut: 'a_faire' };
+                            }
+                            return { ...act, statut: 'verrouille' };
+                        });
+
+                        // Re-calculer la progression globale
+                        const completedCount = finalActivites.filter((a: any) => a.statut === 'termine').length;
+                        const total = finalActivites.length;
+                        const newProgression = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+
+                        setActivites(finalActivites);
+                        setProgression(newProgression);
                     }
                 }
             } catch (err) {

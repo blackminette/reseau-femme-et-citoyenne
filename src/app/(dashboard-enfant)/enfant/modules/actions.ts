@@ -8,10 +8,10 @@ import { getSupabaseServer } from '@/lib/supabase';
 function mapTitreToSlug(titre: string): string {
     const t = titre.toLowerCase();
     if (t.includes('lecture')) return 'lecture';
-    if (t.includes('numérique') || t.includes('numerique')) return 'numerique';
-    if (t.includes('robotique')) return 'robotique';
+    if (t.includes('numérique') || t.includes('numerique') || t.includes('scratch') || t.includes('code') || t.includes('web') || t.includes('html')) return 'numerique';
+    if (t.includes('robotique') || t.includes('robot')) return 'robotique';
     if (t.includes('anglais')) return 'anglais';
-    if (t.includes('civique')) return 'civique';
+    if (t.includes('civique') || t.includes('citoyen')) return 'civique';
     if (t.includes('éco') || t.includes('eco')) return 'eco';
     return 'lecture'; // fallback
 }
@@ -269,8 +269,21 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
         let completedCount = 0;
 
         for (const crs of dbModule.cours) {
+            // 1. Ajouter le cours (la leçon) elle-même comme activité !
+            const coursKey = `cours_${crs.id}`;
+            activites.push({
+                id: coursKey,
+                titre: crs.titre,
+                description: "Découvre et apprends les notions clés de cette leçon !",
+                type: 'lecon',
+                statut: 'verrouille',
+                score: undefined,
+                parfait: false,
+                dbCoursId: crs.id
+            });
+
+            // 2. Ajouter les exercices associés à ce cours
             for (const ex of crs.exercices) {
-                
                 const scoreRecord = await prisma.scoreQuiz.findFirst({
                     where: {
                         etudiantId: studentId,
@@ -287,7 +300,10 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
                 let scoreString = undefined;
                 let parfait = false;
 
-                if (scoreRecord && ex.type === 'QUIZ') {
+                const lowerType = ex.type.toUpperCase();
+                const isQuizType = lowerType === 'QUIZ' || lowerType === 'QCM' || lowerType === 'VRAI_FAUX';
+
+                if (scoreRecord && isQuizType) {
                     try {
                         const questions = JSON.parse(ex.instructions);
                         scoreString = `${scoreRecord.score}/${questions.length}`;
@@ -300,11 +316,19 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
                     parfait = true;
                 }
 
+                let actType: 'lecon' | 'quiz' | 'exercice' = 'exercice';
+                if (isQuizType) {
+                    actType = 'quiz';
+                }
+
+                const descStr = ex.instructions || "";
+                const isInstructionJson = descStr.startsWith('[') || descStr.startsWith('{');
+
                 activites.push({
                     id: ex.id.toString(),
                     titre: ex.titre,
-                    description: ex.instructions.startsWith('[') ? "Réponds aux questions pour tester tes connaissances !" : ex.instructions,
-                    type: ex.type.toLowerCase() as 'lecon' | 'quiz' | 'exercice',
+                    description: isInstructionJson ? "Réponds aux questions pour tester tes connaissances !" : descStr,
+                    type: actType,
                     statut: (isTermine ? 'termine' : 'verrouille') as 'termine' | 'a_faire' | 'verrouille',
                     score: scoreString,
                     parfait: parfait,
@@ -348,6 +372,22 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
 // Action to get details of a specific activity
 export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
     try {
+        if (exerciceIdStr.startsWith('cours_')) {
+            const coursId = parseInt(exerciceIdStr.replace('cours_', ''));
+            const cours = await prisma.cours.findUnique({
+                where: { id: coursId }
+            });
+            if (!cours) return null;
+            return {
+                id: exerciceIdStr,
+                dbId: cours.id,
+                titre: cours.titre,
+                instructions: "Lis attentivement le cours !",
+                type: "LECON",
+                contenu: cours.contenu ? (typeof cours.contenu === 'string' ? JSON.parse(cours.contenu) : cours.contenu) : []
+            };
+        }
+
         const parsedId = parseInt(exerciceIdStr);
         let exercice = null;
 
@@ -366,18 +406,26 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
 
         const cours = exercice.cours;
 
+        let mappedType = exercice.type.toUpperCase();
+        if (mappedType === 'QCM' || mappedType === 'VRAI_FAUX') {
+            mappedType = 'QUIZ';
+        } else if (mappedType === 'IMAGES_ORDRE') {
+            mappedType = 'ORDER';
+        } else if (mappedType === 'RELIE') {
+            mappedType = 'MATCH';
+        }
+
         return {
             id: exercice.id.toString(),
             dbId: exercice.id,
             titre: exercice.titre,
             instructions: exercice.instructions,
-            type: exercice.type, // 'LECON', 'QUIZ', 'DESSIN'
+            type: mappedType, // 'LECON', 'QUIZ', 'MATCH', 'ORDER', 'DESSIN'
             contenu: cours?.contenu ? (typeof cours.contenu === 'string' ? JSON.parse(cours.contenu) : cours.contenu) : []
         };
     } catch (e) {
         console.error("Erreur obtenirDetailsActiviteDepuisDB:", e);
         return null;
-    }
 }
 
 // Action to save activity result
