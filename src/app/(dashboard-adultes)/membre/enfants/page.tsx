@@ -1,8 +1,9 @@
-// * src/app/(dashboard-adultes)/membre/enfants/page.tsx
-import React from "react";
-import Link from "next/link";
+'use client';
+
 import { UserPlus, CalendarDays, Plus } from "lucide-react";
 import { ENFANTS } from "@/lib/membre-data";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata = {
     title: "Mes enfants",
@@ -13,37 +14,21 @@ export default function MembreEnfantsPage() {
     return (
         <div className="text-violet-900">
 
-            {/* En-tête : titre à gauche, bouton "Ajouter" à droite */}
-            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-violet-200 pb-5">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-bold tracking-tight text-violet-950">Mes enfants</h1>
-                    <p className="text-sm text-violet-600">Les enfants rattachés à votre compte.</p>
-                </div>
-                <Link
-                    href="/membre/enfants/ajouter"
-                    className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
-                >
-                    <UserPlus className="h-4 w-4" aria-hidden /> Ajouter un enfant
-                </Link>
-            </div>
+            <PageHeader
+                titre="Mes enfants"
+                sousTitre="Les enfants rattachés à votre compte."
+                action={{ href: "/membre/enfants/ajouter", label: "Ajouter un enfant", Icon: UserPlus }}
+            />
 
             {/* Liste des enfants (ou état vide) */}
             {ENFANTS.length === 0 ? (
-                <div className="mt-6 max-w-5xl rounded-2xl border-2 border-dashed border-violet-200 bg-white p-10 text-center shadow-xs">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                        <UserPlus className="h-8 w-8" aria-hidden />
-                    </div>
-                    <h2 className="mt-5 text-xl font-bold text-violet-950">Aucun enfant rattaché</h2>
-                    <p className="mx-auto mt-2 max-w-md text-sm text-violet-600">
-                        Ajoutez un enfant pour suivre sa progression et l&apos;inscrire à des ateliers.
-                    </p>
-                    <Link
-                        href="/membre/enfants/ajouter"
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
-                    >
-                        <Plus className="h-4 w-4" aria-hidden /> Ajouter un enfant
-                    </Link>
-                </div>
+                <EmptyState
+                    className="mt-6"
+                    Icon={UserPlus}
+                    titre="Aucun enfant rattaché"
+                    texte="Ajoutez un enfant pour suivre sa progression et l'inscrire à des ateliers."
+                    action={{ href: "/membre/enfants/ajouter", label: "Ajouter un enfant", Icon: Plus }}
+                />
             ) : (
                 <div className="mt-6 grid max-w-5xl gap-4 sm:grid-cols-2">
                     {ENFANTS.map(({ id, prenom, naissance, initiales, couleur }) => (

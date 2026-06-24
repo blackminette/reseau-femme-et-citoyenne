@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/(dashboard)/membre/layout.tsx
+// * src/app/(dashboard-adultes)/membre/layout.tsx
 
 import React from 'react';
 import MemberSideMenu from '@/components/MemberSideMenu';
@@ -15,16 +15,15 @@ export default function MembreLayout({
     children: React.ReactNode;
 }) {
     return (
-        // Conteneur principal (fond violet, aligné sur la console admin)
-        <div className="min-h-screen bg-violet-50 flex flex-row">
+        <div className="min-h-screen bg-slate-50">
 
-            {/* Barre latérale sticky à gauche, sous le header global, jusqu'en bas */}
-            <aside className="sticky top-[116px] h-[calc(100vh-116px)] z-40 w-64 shrink-0 overflow-y-auto border-r border-violet-200 bg-white p-5">
+            {/* Barre latérale fixe à gauche, sous le header global (h-16), jusqu'en bas */}
+            <aside className="fixed top-16 bottom-0 left-0 z-40 w-64 overflow-y-auto border-r border-violet-200 bg-white p-5">
                 <MemberSideMenu />
             </aside>
 
-            {/* Zone de droite */}
-            <main className="flex-1 p-8">
+            {/* Zone de droite décalée de la largeur du menu (w-64 = 16rem) */}
+            <main className="ml-64 p-8">
                 <div className="mx-auto max-w-6xl">
                     {children}
                 </div>

@@ -1,5 +1,3 @@
-// * src/app/(vitrine)/actualites/page.tsx
-import React from 'react';
 import { obtenirActualitesVitrine } from '@/lib/actualites';
 
 export default async function ActualitesPage() {

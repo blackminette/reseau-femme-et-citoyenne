@@ -1,8 +1,10 @@
-// * src/app/(dashboard-adultes)/membre/reservations/page.tsx
+// * src/app/(app-avec-header)/(dashboard)/membre/reservations/page.tsx
+'use client';
+
 import React from 'react';
-import Link from "next/link";
 import { CalendarPlus, CalendarDays, Clock, User } from "lucide-react";
 import { RESERVATIONS } from "@/lib/membre-data";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata = {
     title: "Mes réservations",
@@ -16,23 +18,20 @@ const STATUT_STYLE: Record<string, string> = {
     "Annulée": "bg-rose-50 text-rose-600",
 };
 
+/**
+ * Page listant les réservations d'ateliers associatifs publics pour les enfants rattachés au compte parent.
+ * Accessible uniquement pour le rôle 'MEMBRE'.
+ */
+
 export default function MembreReservationsPage() {
     return (
         <div className="text-violet-900">
 
-            {/* En-tête : titre à gauche, bouton "Réserver" à droite */}
-            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-violet-200 pb-5">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-bold tracking-tight text-violet-950">Mes réservations</h1>
-                    <p className="text-sm text-violet-600">Les ateliers que vous avez réservés, pour vous et vos enfants.</p>
-                </div>
-                <Link
-                    href="/membre/reserver"
-                    className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
-                >
-                    <CalendarPlus className="h-4 w-4" aria-hidden /> Réserver un atelier
-                </Link>
-            </div>
+            <PageHeader
+                titre="Mes réservations"
+                sousTitre="Les ateliers que vous avez réservés, pour vous et vos enfants."
+                action={{ href: "/membre/reserver", label: "Réserver un atelier", Icon: CalendarPlus }}
+            />
 
             {/* Liste des réservations (ou message si vide) */}
             {RESERVATIONS.length === 0 ? (
