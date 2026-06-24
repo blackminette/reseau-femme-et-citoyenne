@@ -1,4 +1,4 @@
-import { NiveauPedagogique, PrismaClient } from '@prisma/client';
+import { NiveauPedagogique, PrismaClient, Parcours } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import * as dotenv from 'dotenv';
@@ -99,10 +99,9 @@ async function main() {
     }
 
     await prisma.utilisateur.upsert({
-      // Recherche par l'email unique plutôt que par l'id Supabase
       where: { email: user.email },
       update: {
-        id: supabaseAuthId, // Met à jour l'id au cas où il aurait changé
+        id: supabaseAuthId,
         nom: user.nom,
         prenom: user.prenom,
         role: user.role,
@@ -144,6 +143,7 @@ async function main() {
       titre: 'Bases du Code (Adultes)',
       description: 'Découvrir les concepts fondamentaux de la programmation algorithmique.',
       public: 'ADULTE' as const,
+      parcours: ['NUMERIQUE_ADULTE'] as Parcours[],
       cours: [
         {
           titre: 'Introduction aux variables',
@@ -169,7 +169,6 @@ async function main() {
               imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=600"
             }
           ],
-          // Injection des exercices spécifiques à ce cours
           exercices: [
             {
               titre: "Quiz : Les types de variables",
@@ -227,6 +226,7 @@ async function main() {
       titre: 'Développement Web (Adultes)',
       description: 'Créer ses premières pages web dynamiques et responsives.',
       public: 'ADULTE' as const,
+      parcours: ['NUMERIQUE_ADULTE'] as Parcours[],
       cours: [
         { titre: 'Structure et sémantique HTML5', ordreDansModule: 1, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] },
         { titre: 'Mise en page moderne avec CSS Grid et Flexbox', ordreDansModule: 2, niveauRequis: NiveauPedagogique.ADULTE, contenu: [] }
@@ -236,6 +236,7 @@ async function main() {
       titre: 'Initiation à Scratch (Enfants)',
       description: 'Apprendre à programmer de manière ludique avec des blocs colorés.',
       public: 'ENFANT' as const,
+      parcours: ['NUMERIQUE'] as Parcours[],
       cours: [
         { titre: 'Découverte de l\'interface et du lutin', ordreDansModule: 1, niveauRequis: NiveauPedagogique.NIVEAU_1, contenu: [] },
         { titre: 'Faire bouger et animer son premier personnage', ordreDansModule: 2, niveauRequis: NiveauPedagogique.NIVEAU_2, contenu: [] },
@@ -246,6 +247,7 @@ async function main() {
       titre: 'Robotique Ludique (Enfants)',
       description: 'Découvrir la logique des capteurs et des moteurs pas à pas.',
       public: 'ENFANT' as const,
+      parcours: ['ROBOTIQUE'] as Parcours[],
       cours: [
         { titre: 'Qu\'est-ce qu\'un robot ?', ordreDansModule: 1, niveauRequis: NiveauPedagogique.NIVEAU_1, contenu: [] },
         { titre: 'Programmer des déplacements simples', ordreDansModule: 2, niveauRequis: NiveauPedagogique.NIVEAU_2, contenu: [] }
@@ -258,15 +260,14 @@ async function main() {
       data: {
         titre: item.titre,
         description: item.description,
-        public: item.public
+        public: item.public,
+        parcours: item.parcours
       }
     });
 
     for (const coursItem of item.cours) {
-      // Préparation de la structure de création du cours
       const extraData: any = {};
 
-      // Si le cours contient des exercices décrits ci-dessus, on les ajoute à la transaction de création
       if ('exercices' in coursItem && coursItem.exercices) {
         extraData.exercices = {
           create: coursItem.exercices
@@ -281,7 +282,7 @@ async function main() {
           contenu: coursItem.contenu ? coursItem.contenu : [],
           moduleId: moduleCree.id,
           ordreDansModule: coursItem.ordreDansModule,
-          ...extraData // Injecte les exercices de manière transparente
+          ...extraData
         }
       });
     }
