@@ -22,9 +22,8 @@ export default function RootLayout({
     return (
         <html lang="fr">
             <body className="antialiased bg-slate-100 text-slate-900 flex flex-col min-h-screen">
-                <Header />
                 <main className="grow flex flex-col">
-                    {/* On passe par un wrapper client pour décider conditionnellement d'afficher le Footer */}
+                    {/* On passe par un wrapper client pour décider conditionnellement d'afficher le Header/Footer */}
                     <AppLayoutWrapper>
                         {children}
                     </AppLayoutWrapper>
