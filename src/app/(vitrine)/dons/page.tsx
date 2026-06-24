@@ -32,6 +32,18 @@ export default function DonsPage() {
   const [email, setEmail] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [showCheckoutIframe, setShowCheckoutIframe] = useState<boolean>(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  React.useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.height && iframeRef.current) {
+        iframeRef.current.style.height = `${e.data.height}px`;
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [showCheckoutIframe]);
   
   // Interactive state
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
@@ -108,16 +120,13 @@ export default function DonsPage() {
       });
 
       if (res.success) {
-        if (res.redirectUrl) {
-          window.open(res.redirectUrl, '_blank');
-        }
         setSubmittedData({
           amount: finalAmount,
           name,
           email,
           message
         });
-        setShowSuccessModal(true);
+        setShowCheckoutIframe(true);
       } else {
         alert(res.error || "Une erreur est survenue.");
       }
@@ -678,144 +687,161 @@ export default function DonsPage() {
               <h2 className="text-3xl font-black text-[#260936] tracking-tight">
                 Faire un don
               </h2>
-              <p className="text-slate-500 mt-1 font-light">
-                Choisissez votre montant et complétez le formulaire.
-              </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Amount Selection Bubbles */}
-              <div className="space-y-3">
-                <label className="text-sm font-bold text-slate-700 block">
-                  Montant du don
-                </label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {[5, 10, 25, 50, 100].map((amount) => {
-                    const isActive = selectedAmount === amount;
-                    return (
-                      <button
-                        key={amount}
-                        type="button"
-                        onClick={() => {
-                          setSelectedAmount(amount);
-                          setCustomAmount('');
-                        }}
-                        className={`py-3 px-2 rounded-xl text-sm font-black border transition-all duration-200 text-center cursor-pointer ${
-                          isActive 
-                            ? 'bg-[#260936] text-white border-[#260936] shadow-md scale-105' 
-                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {amount} €
-                      </button>
-                    );
-                  })}
+            {showCheckoutIframe ? (
+              <div className="space-y-6 text-left animate-fadeIn">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-[#260936]">Finalisez votre don</h3>
+                    <p className="text-sm text-slate-500">
+                      Montant choisi : <span className="font-bold text-purple-700">{getCurrentAmount()} €</span>
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedAmount('autre')}
-                    className={`py-3 px-2 rounded-xl text-sm font-bold border transition-all duration-200 text-center cursor-pointer ${
-                      selectedAmount === 'autre'
-                        ? 'bg-[#260936] text-white border-[#260936] shadow-md scale-105'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
+                    onClick={() => setShowCheckoutIframe(false)}
+                    className="px-4 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition"
                   >
-                    Autre
+                    Modifier le montant
                   </button>
                 </div>
-
-                {/* Custom Amount Input field */}
-                {selectedAmount === 'autre' && (
-                  <div className="pt-2 animate-fadeIn relative">
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Indiquez le montant de votre choix"
-                      value={customAmount}
-                      onChange={(e) => setCustomAmount(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm font-bold pr-12"
-                    />
-                    <div className="absolute right-4 top-[17px] text-slate-500 font-bold text-sm pointer-events-none">
-                      €
-                    </div>
+                
+                <iframe
+                  ref={iframeRef}
+                  id="haWidget"
+                  allowTransparency={true}
+                  scrolling="auto"
+                  src={`https://www.helloasso.com/associations/reseau-femme-et-citoyenne-06/formulaires/1/widget?amount=${getCurrentAmount()}`}
+                  style={{ width: '100%', height: '750px', border: 'none' }}
+                  className="rounded-2xl border border-slate-100 shadow-sm"
+                ></iframe>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Amount Selection Bubbles */}
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-slate-700 block">
+                    Montant du don
+                  </label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {[5, 10, 25, 50, 100].map((amount) => {
+                      const isActive = selectedAmount === amount;
+                      return (
+                        <button
+                          key={amount}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAmount(amount);
+                            setCustomAmount('');
+                          }}
+                          className={`py-3 px-2 rounded-xl text-sm font-black border transition-all duration-200 text-center cursor-pointer ${
+                            isActive 
+                              ? 'bg-[#260936] text-white border-[#260936] shadow-md scale-105' 
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          {amount} €
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAmount('autre')}
+                      className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-black border transition-all duration-200 text-center cursor-pointer ${
+                        selectedAmount === 'autre'
+                          ? 'bg-[#260936] text-white border-[#260936] shadow-md scale-105'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      Autre
+                    </button>
                   </div>
-                )}
-              </div>
 
-              {/* Dynamic Impact Reminder */}
-              {getCurrentAmount() > 0 && (
-                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs flex items-center gap-2.5">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="font-medium">
-                    Grâce à votre don de <strong className="font-extrabold">{getCurrentAmount()} €</strong>, vous financez : {getImpactDescription(getCurrentAmount())}.
-                  </span>
-                </div>
-              )}
-
-              {/* Text Fields */}
-              <div className="space-y-4 pt-2">
-                <div>
-                  <label htmlFor="fullName" className="text-sm font-bold text-slate-700 block mb-2">
-                    Nom et prénom
-                  </label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    required
-                    placeholder="Ex: Marie Dupont"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
-                  />
+                  {selectedAmount === 'autre' && (
+                    <div className="pt-2 animate-slideDown">
+                      <div className="relative rounded-xl overflow-hidden shadow-sm">
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Saisissez un autre montant"
+                          value={customAmount}
+                          onChange={(e) => setCustomAmount(e.target.value)}
+                          className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                          €
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <label htmlFor="email" className="text-sm font-bold text-slate-700 block mb-2">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    placeholder="exemple@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
-                  />
+                {/* Form fields */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <div>
+                    <label htmlFor="name" className="text-sm font-bold text-slate-700 block mb-2">
+                      Nom et Prénom
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      required
+                      placeholder="Jean Dupont"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="text-sm font-bold text-slate-700 block mb-2">
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      placeholder="exemple@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="text-sm font-bold text-slate-700 block mb-2">
+                      Message (facultatif)
+                    </label>
+                    <textarea
+                      id="message"
+                      rows={4}
+                      placeholder="Laissez-nous un message si vous le souhaitez..."
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm resize-none"
+                    ></textarea>
+                  </div>
                 </div>
 
-                <div>
-                  <label htmlFor="message" className="text-sm font-bold text-slate-700 block mb-2">
-                    Message (facultatif)
-                  </label>
-                  <textarea
-                    id="message"
-                    rows={4}
-                    placeholder="Laissez-nous un message si vous le souhaitez..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition text-sm resize-none"
-                  ></textarea>
-                </div>
-              </div>
+                {/* Submit Button & Lock badge */}
+                <div className="space-y-4 pt-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-4 bg-[#260936] hover:bg-[#3a1250] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+                    {submitting ? "Enregistrement du don..." : "Je soutiens l'association"}
+                  </button>
 
-              {/* Submit Button & Lock badge */}
-              <div className="space-y-4 pt-4">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-4 bg-[#260936] hover:bg-[#3a1250] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
-                  {submitting ? "Enregistrement du don..." : "Je soutiens l'association"}
-                </button>
-
-                <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Paiement 100% sécurisé</span>
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Paiement 100% sécurisé via HelloAsso</span>
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
 
         </div>
