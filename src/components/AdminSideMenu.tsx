@@ -5,6 +5,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { deconnexionUtilisateur } from '@/app/auth/auth';
 import {
     LayoutDashboard,
     Users,
@@ -13,7 +14,7 @@ import {
     Inbox,
     ClipboardCheck,
     ChevronRight,
-    FileText,
+    LogOut
 } from 'lucide-react';
 
 interface SidebarLinkProps {
@@ -27,17 +28,22 @@ function SidebarLink({ href, label, icon, badge }: SidebarLinkProps) {
     const pathname = usePathname();
     const isActive = pathname === href;
 
-    return (
-        <Link
-            href={href}
-            className={`group w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 flex items-center justify-between relative ${isActive
+    // Composant interne pour factoriser le style des liens et gérer l'état actif
+    const SidebarLink = ({ href, label, icon, badge }: SidebarLinkProps) => {
+        const isActive = pathname === href;
+
+        return (
+            <Link
+                href={href}
+                className={`group w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 flex items-center justify-between relative ${isActive
                     ? 'bg-indigo-50 text-indigo-600 font-semibold'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-        >
-            {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 bg-indigo-600 rounded-r-md" />
-            )}
+                    }`}
+            >
+                {/* Indicateur de bordure gauche pour l'onglet actif */}
+                {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 bg-indigo-600 rounded-r-md" />
+                )}
 
             <div className="flex items-center gap-3">
                 <span className={`transition-colors duration-200 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'
@@ -63,6 +69,16 @@ function SidebarLink({ href, label, icon, badge }: SidebarLinkProps) {
 export default function AdminSideMenu() {
     return (
         <div className="w-full flex flex-col gap-6 select-none">
+
+            <div className="px-3 py-2 border-b border-violet-100 pb-4 mb-2 flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    A
+                </div>
+                <div className="truncate">
+                    <h2 className="text-sm font-bold text-violet-900 leading-none truncate">Console Admin</h2>
+                    <span className="text-[10px] font-medium text-violet-500 mt-0.5 block">Gestion Espace</span>
+                </div>
+            </div>
 
             {/* SECTION 1 : VUE D'ENSEMBLE */}
             <div className="flex flex-col gap-1 w-full">
@@ -122,6 +138,17 @@ export default function AdminSideMenu() {
                 />
             </div>
 
+            <div className="pt-4 border-t border-violet-100 mt-auto">
+                <form action={deconnexionUtilisateur}>
+                    <button
+                        type="submit"
+                        className="w-full px-3 py-2.5 text-sm font-medium text-violet-600 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all duration-200 flex items-center gap-3 group text-left"
+                    >
+                        <LogOut className="h-4 w-4 text-violet-500 group-hover:text-amber-500 transition-colors shrink-0" />
+                        <span className="truncate">Déconnexion</span>
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }

@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/(dashboard)/admin/reservations/actions.ts
+// * src/app/(dashboard-adultes)/admin/reservations/actions.ts
 'use server';
 
 import { prisma } from "@/lib/prisma"; // Ajuste le chemin si nécessaire
@@ -20,9 +20,6 @@ export interface ReservationFormatee {
     statut: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
 }
 
-/**
- * Récupère toutes les réservations avec les informations tuteur/enfant calculées dynamiquement.
- */
 export async function recupererToutesLesReservations(): Promise<ActionResponse<ReservationFormatee[]>> {
     try {
         const reservations = await prisma.reservation.findMany({
@@ -44,7 +41,6 @@ export async function recupererToutesLesReservations(): Promise<ActionResponse<R
             let membreNom = `${u.prenom} ${u.nom}`;
             let enfantNom: string | undefined = undefined;
 
-            // Si l'utilisateur inscrit a un tuteur, alors u est l'enfant, et le tuteur est le membre principal
             if (u.tuteur) {
                 membreNom = `${u.tuteur.prenom} ${u.tuteur.nom}`;
                 enfantNom = `${u.prenom} ${u.nom}`;
@@ -55,7 +51,6 @@ export async function recupererToutesLesReservations(): Promise<ActionResponse<R
                 membreNom,
                 enfantNom,
                 atelierNom: res.atelier.titre,
-                // Utilisation des vraies dates de l'Atelier
                 dateAtelier: res.atelier.dateDebut.toISOString().split('T')[0],
                 heureAtelier: res.atelier.dateDebut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
                 statut: res.statut as 'PENDING' | 'CONFIRMED' | 'CANCELLED'
@@ -69,9 +64,6 @@ export async function recupererToutesLesReservations(): Promise<ActionResponse<R
     }
 }
 
-/**
- * Récupère les compteurs de statistiques globales pour les réservations
- */
 export async function recupererStatsReservations(): Promise<ActionResponse<{ total: number; enAttente: number; aujourdhui: number }>> {
     try {
         const debutAujourdhui = new Date();
@@ -103,9 +95,6 @@ export async function recupererStatsReservations(): Promise<ActionResponse<{ tot
     }
 }
 
-/**
- * Met à jour le statut d'une réservation (PENDING -> CONFIRMED / CANCELLED)
- */
 export async function changerStatutReservation(
     id: string,
     nouveauStatut: 'CONFIRMED' | 'CANCELLED' | 'PENDING'

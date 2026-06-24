@@ -1,1 +1,1 @@
-// * src/app/(dashboard-adultes)/(dashboard)/partenaire/ateliers/ajouter/page.tsx
+// * src/app/(dashboard-adultes)/partenaire/ateliers/ajouter/page.tsx

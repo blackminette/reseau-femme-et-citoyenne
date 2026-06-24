@@ -1,3 +1,4 @@
+// * src/app/(vitrine)/page.tsx
 export default function Accueil() {
     return (
         <div className="bg-[#eedeff] pb-16 grow">

@@ -1,24 +1,24 @@
-// * src/app/(dashboard-adultes)/(dashboard)/admin/pedagogie/adultes/page.tsx
-
+// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/page.tsx
 'use client';
 
 /** Page pour choisir et rediriger vers le bon module pédagogique. */
 
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { listerTousLesModules, creerModule, supprimerModule } from './actions';
-import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle } from 'lucide-react';
+import { listerTousLesModules, creerModule, supprimerModule, modifierModule, activateModule } from './actions';
+import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/Modal';
+import { NiveauPedagogique } from '@prisma/client';
 
 interface ModuleAvecCompte {
     id: number;
     titre: string;
     description: string | null;
-    niveauRequis: string;
-    createdAt: Date;
+    isPublished: boolean;
     _count: {
         cours: number;
     };
+    niveauRequis?: NiveauPedagogique;
 }
 
 export default function PedagogieAdultesPage() {
@@ -28,6 +28,32 @@ export default function PedagogieAdultesPage() {
     const [error, setError] = useState<string | null>(null);
     const [modalCreateIsOpen, setModalCreateIsOpen] = useState(false);
     const [modalDeleteIsOpen, setModalDeleteIsOpen] = useState(false);
+    const [modalEditIsOpen, setModalEditIsOpen] = useState(false);
+
+    const [formData, setFormData] = useState<{ titre: string; description: string; niveauRequis: NiveauPedagogique }>({
+        titre: '',
+        description: '',
+        niveauRequis: NiveauPedagogique.ADULTE
+    });
+
+    const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
+        NIVEAU_1: {
+            label: 'Débutant',
+            classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        },
+        NIVEAU_2: {
+            label: 'Intermédiaire',
+            classes: 'bg-amber-50 text-amber-700 border-amber-200'
+        },
+        NIVEAU_3: {
+            label: 'Avancé',
+            classes: 'bg-rose-50 text-rose-700 border-rose-200'
+        },
+        ADULTE: {
+            label: 'Adulte',
+            classes: 'bg-violet-50 text-violet-700 border-violet-200'
+        }
+    };
 
     useEffect(() => {
         async function fetchModules() {
@@ -44,28 +70,27 @@ export default function PedagogieAdultesPage() {
         fetchModules();
     }, []);
 
-    // Helper pour styliser dynamiquement les badges de niveau
-    const getBadgeColor = (niveau: string) => {
-        switch (niveau) {
-            case 'NIVEAU_1':
-                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            case 'NIVEAU_2':
-                return 'bg-blue-50 text-blue-700 border-blue-200';
-            case 'NIVEAU_3':
-                return 'bg-amber-50 text-amber-700 border-amber-200';
-            default:
-                return 'bg-slate-50 text-slate-700 border-slate-200';
-        }
+    const ouvrirModalModification = (module: ModuleAvecCompte) => {
+        setSelectedModuleId(module.id);
+        setFormData({
+            titre: module.titre,
+            description: module.description || '',
+            niveauRequis: module.niveauRequis || NiveauPedagogique.ADULTE
+        });
+        setModalEditIsOpen(true);
     };
 
-    const handleCreateModule = async () => {
-        // Récupérer les données du formulaire
-        const form = document.getElementById('create-module-form') as HTMLFormElement;
-        const formData = new FormData(form);
-        const titre = formData.get('titre') as string;
-        const description = formData.get('description') as string;
+    const handleCreateModule = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError(null);
 
-        const result = await creerModule({ titre, description });
+        const form = e.currentTarget;
+        const data = new FormData(form);
+        const titre = (data.get('titre') as string) || '';
+        const description = (data.get('description') as string) || '';
+        const niveauRequis = (data.get('niveauRequis') as NiveauPedagogique) || NiveauPedagogique.ADULTE;
+
+        const result = await creerModule({ titre, description, niveauRequis });
         if (result.success && result.data) {
             setModules(prev => [result.data as unknown as ModuleAvecCompte, ...prev]);
             setModalCreateIsOpen(false);
@@ -75,204 +100,272 @@ export default function PedagogieAdultesPage() {
         }
     };
 
-    const handleDeleteModule = async (id: number) => {
-        const result = await supprimerModule(id);
+    const handleDeleteModule = async () => {
+        if (selectedModuleId === null) return;
+        setError(null);
+
+        const result = await supprimerModule(selectedModuleId);
         if (result.success) {
-            setModules(prev => prev.filter(module => module.id !== id));
+            setModules(prev => prev.filter(m => m.id !== selectedModuleId));
             setModalDeleteIsOpen(false);
+            setSelectedModuleId(null);
+        } else {
+            setError(result.error || "Une erreur est survenue.");
+        }
+    };
+
+    const handleModifierModule = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (selectedModuleId === null) return;
+        setError(null);
+
+        const result = await modifierModule({
+            id: selectedModuleId,
+            titre: formData.titre,
+            description: formData.description,
+            niveauRequis: formData.niveauRequis
+        });
+        if (result.success && result.data) {
+            setModalEditIsOpen(false);
+            setFormData({ titre: '', description: '', niveauRequis: NiveauPedagogique.ADULTE });
+            setSelectedModuleId(null);
+            setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m));
+        } else {
+            setError(result.error || "Une erreur est survenue.");
+        }
+    };
+
+    const handleActiveModule = async () => {
+        if (selectedModuleId === null) return;
+        const selectedModule = modules.find(m => m.id === selectedModuleId);
+        if (!selectedModule) return;
+
+        const newStatus = !selectedModule.isPublished;
+
+        const result = await activateModule(selectedModule.id, newStatus);
+        if (result.success) {
+            setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m));
         } else {
             setError(result.error || "Une erreur est survenue.");
         }
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-8 animate-fade-in">
+        <div className="p-6 pl-8 pr-8 mx-auto space-y-8 animate-fade-in">
+            <div className="flex flex-col">
+                <Link href="/admin/pedagogie" className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1">
+                    <ChevronRight className="h-3 w-3 rotate-180" />
+                    Retour à la pédagogie
+                </Link>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-violet-100 pb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-violet-950 tracking-tight flex items-center gap-2">
+                            <GraduationCap className="h-6 w-6 text-violet-600" />
+                            Modules pédagogiques pour adultes
+                        </h1>
+                        <p className="text-sm text-violet-600 mt-1">Gérez les modules d'apprentissage.</p>
+                    </div>
 
-            {/* EN-TÊTE DE LA PAGE */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        <GraduationCap className="h-6 w-6 text-indigo-600" />
-                        Pédagogie Adultes
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Gérez les modules d'apprentissage, organisez l'ordre des cours et supervisez les exercices.
-                    </p>
+                    <button
+                        onClick={() => {
+                            setFormData({ titre: '', description: '', niveauRequis: NiveauPedagogique.ADULTE });
+                            setModalCreateIsOpen(true);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-md hover:bg-violet-700 transition-colors"
+                    >
+                        <FolderPlus className="h-4 w-4" />
+                        Nouveau Module
+                    </button>
                 </div>
-
-                {/* Bouton d'action pour la création */}
-                <button
-                    onClick={() => setModalCreateIsOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
-                >
-                    <FolderPlus className="h-4 w-4" />
-                    Nouveau Module
-                </button>
             </div>
 
-            {/* GESTION DE L'ERREUR */}
             {error && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-700 text-sm">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-700 text-sm">
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <span>{error}</span>
                 </div>
             )}
 
-            {/* ÉTAT DE CHARGEMENT (SKELETONS) */}
             {isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((n) => (
-                        <div key={n} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
-                            <div className="h-5 bg-slate-100 rounded-md w-1/3 animate-pulse" />
+                    {[1, 2, 3].map(n => (
+                        <div key={n} className="bg-white border border-violet-200 rounded-2xl p-5 space-y-4 shadow-sm">
+                            <div className="h-5 bg-violet-100 rounded-md w-1/3 animate-pulse" />
                             <div className="space-y-2">
-                                <div className="h-6 bg-slate-200 rounded-md w-3/4 animate-pulse" />
-                                <div className="h-4 bg-slate-100 rounded-md w-full animate-pulse" />
+                                <div className="h-6 bg-violet-200 rounded-md w-3/4 animate-pulse" />
+                                <div className="h-4 bg-violet-100 rounded-md w-full animate-pulse" />
                             </div>
-                            <div className="pt-4 border-t border-slate-50 flex justify-between">
-                                <div className="h-4 bg-slate-100 rounded-md w-1/4 animate-pulse" />
-                                <div className="h-4 bg-slate-200 rounded-md w-1/3 animate-pulse" />
+                            <div className="pt-4 border-t border-violet-50 flex justify-between">
+                                <div className="h-4 bg-violet-100 rounded-md w-1/4 animate-pulse" />
+                                <div className="h-4 bg-violet-200 rounded-md w-1/3 animate-pulse" />
                             </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* ÉTAT VIDE */}
             {!isLoading && !error && modules.length === 0 && (
-                <div className="text-center py-16 bg-white border border-dashed border-slate-200 rounded-2xl p-8 max-w-md mx-auto">
-                    <div className="h-12 w-12 bg-slate-50 text-slate-400 flex items-center justify-center rounded-xl mx-auto mb-4">
+                <div className="text-center py-16 bg-white border border-dashed border-violet-200 rounded-2xl p-8 max-w-md mx-auto">
+                    <div className="h-12 w-12 bg-violet-50 text-violet-500 flex items-center justify-center rounded-xl mx-auto mb-4">
                         <BookOpen className="h-6 w-6" />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900">Aucun module pédagogique</h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                        Commencez par créer votre premier module thématique pour y ajouter des chapitres et des exercices.
-                    </p>
-                    <button
-                        onClick={() => setModalCreateIsOpen(true)}
-                        className="mt-4 inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 gap-1"
-                    >
+                    <h3 className="text-sm font-semibold text-violet-950">Aucun module pédagogique</h3>
+                    <p className="text-xs text-violet-600 mt-1 max-w-xs mx-auto">Commencez par créer votre premier module thématique pour y ajouter des chapitres et des exercices.</p>
+                    <button onClick={() => setModalCreateIsOpen(true)} className="mt-4 inline-flex items-center text-xs font-semibold text-violet-600 hover:text-violet-700 gap-1">
                         Créer le premier module <ChevronRight className="h-3 w-3" />
                     </button>
                 </div>
             )}
 
-            {/* AFFICHAGE DE LA GRILLE DE MODULES */}
             {!isLoading && !error && modules.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {modules.map((module) => (
+                    {modules.map(module => (
                         <div
                             key={module.id}
-                            className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md hover:shadow-slate-100 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative"
+                            className={`group bg-white border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative
+                    ${module.isPublished
+                                    ? 'border-violet-200 hover:shadow-md hover:shadow-violet-100'
+                                    : 'border-slate-200 border-dashed bg-slate-50/50 opacity-85 hover:opacity-100'
+                                }`}
                         >
-                            <div className="space-y-3">
-                                {/* Titre & Description */}
-                                <div>
-                                    <h3 className="font-bold text-slate-800 text-base tracking-tight group-hover:text-indigo-600 transition-colors">
-                                        {module.titre}
-                                    </h3>
-                                    <p className="text-slate-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">
-                                        {module.description || "Aucune description fournie pour ce module pédagogique."}
-                                    </p>
-                                </div>
+                            {/* Indicateur visuel de statut (Badge) */}
+                            <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
+                                {module.niveauRequis && (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 w-fit ${NIVEAU_STYLES[module.niveauRequis]?.classes || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                        {NIVEAU_STYLES[module.niveauRequis]?.label || module.niveauRequis}
+                                    </span>
+                                )}
+                                {module.isPublished ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Publié
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">
+                                        Brouillon
+                                    </span>
+                                )}
                             </div>
 
-                            {/* Bas de carte */}
-                            <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-2 py-1 rounded-md">
-                                    <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+                            <Link href={`/admin/pedagogie/adultes/${module.id}`} className="pr-16">
+                                <div className="space-y-3">
+                                    <div>
+                                        <h3 className={`font-bold text-base tracking-tight transition-colors
+                                ${module.isPublished ? 'text-violet-900 group-hover:text-violet-600' : 'text-slate-500 group-hover:text-violet-600'}`}
+                                        >
+                                            {module.titre}
+                                        </h3>
+                                        <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed
+                                ${module.isPublished ? 'text-violet-600' : 'text-slate-400'}`}
+                                        >
+                                            {module.description || "Aucune description fournie pour ce module pédagogique."}
+                                        </p>
+                                    </div>
+                                </div>
+                            </Link>
+
+                            <div className="mt-5 pt-4 border-t border-violet-100 flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1.5 text-violet-700 font-medium bg-violet-50 px-2 py-1 rounded-md">
+                                    <BookOpen className="h-3.5 w-3.5 text-violet-500" />
                                     <span>{module._count.cours} {module._count.cours > 1 ? 'cours' : 'cours'}</span>
                                 </div>
 
-                                <button
-                                    onClick={() => { setModalDeleteIsOpen(true); setSelectedModuleId(module.id); }}
-                                    className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-0.5 group/link"
-                                >
-                                    Supprimer
-                                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/link:translate-x-0.5" />
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedModuleId(module.id);
+                                            handleActiveModule();
+                                        }}
+                                        className={`p-1.5 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm
+                                ${module.isPublished
+                                                ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-700'
+                                                : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700'
+                                            }`}
+                                        title={module.isPublished ? "Masquer le module (Brouillon)" : "Publier le module"}
+                                    >
+                                        {module.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+
+                                    <button onClick={() => ouvrirModalModification(module)} className="text-violet-600 hover:text-violet-700 font-semibold flex items-center gap-1 group/link cursor-pointer">
+                                        <Pencil className="h-3.5 w-3.5" /> Modifier
+                                    </button>
+
+                                    <button onClick={() => { setSelectedModuleId(module.id); setModalDeleteIsOpen(true); }} className="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1 group/link cursor-pointer">
+                                        <Trash className="h-3.5 w-3.5" /> Supprimer
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* MODAL DE CRÉATION */}
-            <Modal
-                isOpen={modalCreateIsOpen}
-                onClose={() => setModalCreateIsOpen(false)}
-                title="Créer un nouveau module pédagogique"
-            >
+            <Modal isOpen={modalCreateIsOpen} onClose={() => setModalCreateIsOpen(false)} title="Créer un nouveau module pédagogique">
                 <div className="bg-white p-6 rounded-lg">
-                    <form id="create-module-form" className="space-y-4">
+                    <form onSubmit={handleCreateModule} className="space-y-4">
                         <div>
-                            <label htmlFor="titre" className="block text-sm font-medium text-slate-700">
-                                Titre du module <span className="text-rose-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="titre"
-                                name="titre"
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="Entrez le titre du module"
-                            />
+                            <label htmlFor="titre" className="block text-sm font-medium text-violet-800">Titre du module <span className="text-amber-500">*</span></label>
+                            <input type="text" id="titre" name="titre" required className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez le titre du module" />
                         </div>
                         <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-slate-700">
-                                Description du module
-                            </label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                rows={3}
-                                className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="Entrez la description du module"
-                            />
+                            <label htmlFor="description" className="block text-sm font-medium text-violet-800">Description du module</label>
+                            <textarea id="description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez la description du module" />
+                        </div>
+                        <div>
+                            <label htmlFor="niveauRequis" className="block text-sm font-medium text-violet-800">Niveau requis</label>
+                            <select id="niveauRequis" name="niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500 bg-white">
+                                <option value={NiveauPedagogique.ADULTE}>Adulte</option>
+                                <option value={NiveauPedagogique.NIVEAU_1}>Débutant (Niveau 1)</option>
+                                <option value={NiveauPedagogique.NIVEAU_2}>Intermédiaire (Niveau 2)</option>
+                                <option value={NiveauPedagogique.NIVEAU_3}>Avancé (Niveau 3)</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button type="button" onClick={() => setModalCreateIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
+                            <button type="submit" className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm">Créer</button>
                         </div>
                     </form>
-                    <div className="flex justify-end gap-3 mt-4">
-                        <button
-                            onClick={() => setModalCreateIsOpen(false)}
-                            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={() => { handleCreateModule(); }}
-                            className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-md"
-                        >
-                            Créer
-                        </button>
-                    </div>
                 </div>
             </Modal>
 
-            {/* MODAL DE SUPPRESSION */}
-            <Modal
-                isOpen={modalDeleteIsOpen}
-                onClose={() => setModalDeleteIsOpen(false)}
-                title="Confirmer la suppression"
-            >
+            <Modal isOpen={modalDeleteIsOpen} onClose={() => setModalDeleteIsOpen(false)} title="Confirmer la suppression">
                 <div className="bg-white p-6 rounded-lg">
-                    <p className="text-slate-700">
-                        Êtes-vous sûr de vouloir supprimer ce module ?
-                    </p>
-                    <div className="flex justify-end gap-3 mt-4">
-                        <button
-                            onClick={() => setModalDeleteIsOpen(false)}
-                            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={() => { handleDeleteModule(selectedModuleId!); }}
-                            className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 font-medium rounded-md"
-                        >
-                            Supprimer
-                        </button>
+                    <p className="text-violet-800 text-sm">Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.</p>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <button type="button" onClick={() => setModalDeleteIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
+                        <button type="button" onClick={handleDeleteModule} className="px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 font-medium rounded-md text-sm">Supprimer</button>
                     </div>
                 </div>
             </Modal>
 
+            <Modal isOpen={modalEditIsOpen} onClose={() => setModalEditIsOpen(false)} title="Modifier un module pédagogique">
+                <div className="bg-white p-6 rounded-lg">
+                    <form onSubmit={handleModifierModule} className="space-y-4">
+                        <div>
+                            <label htmlFor="edit-titre" className="block text-sm font-medium text-violet-800">Titre du module <span className="text-amber-500">*</span></label>
+                            <input type="text" id="edit-titre" name="titre" required className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez le titre du module" value={formData.titre} onChange={e => setFormData({ ...formData, titre: e.target.value })} />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-description" className="block text-sm font-medium text-violet-800">Description du module</label>
+                            <textarea id="edit-description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez la description du module" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-niveauRequis" className="block text-sm font-medium text-violet-800">Niveau requis</label>
+                            <select id="edit-niveauRequis" name="niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500 bg-white" value={formData.niveauRequis} onChange={e => setFormData({ ...formData, niveauRequis: e.target.value as NiveauPedagogique })} >
+                                <option value={NiveauPedagogique.ADULTE}>Adulte</option>
+                                <option value={NiveauPedagogique.NIVEAU_1}>Débutant (Niveau 1)</option>
+                                <option value={NiveauPedagogique.NIVEAU_2}>Intermédiaire (Niveau 2)</option>
+                                <option value={NiveauPedagogique.NIVEAU_3}>Avancé (Niveau 3)</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button type="button" onClick={() => setModalEditIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
+                            <button type="submit" className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
         </div>
     );
 }

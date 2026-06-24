@@ -1,1 +1,1 @@
-// * src/app/(dashboard-adultes)/(dashboard)/partenaire/messagerie/page.tsx
+// * src/app/(dashboard-adultes)/partenaire/messagerie/page.tsx

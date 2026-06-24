@@ -1,1 +1,1 @@
-// * src/app/(dashboard-adultes)/(dashboard)/intervenant/creneaux/page.tsx
+// * src/app/(dashboard-adultes)/intervenant/creneaux/page.tsx

@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     const pathname = url.pathname;
 
     // Détection des routes privées (/admin, /membre...)
-    const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin'];
+    const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin', '/benevole'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
     // Si non connecté et tente d'aller sur une page privée -> Redirection /login
@@ -113,6 +113,10 @@ export async function middleware(request: NextRequest) {
             }
             if (userRole === 'ADMIN' && !pathname.startsWith('/admin')) {
                 url.pathname = '/admin';
+                return NextResponse.redirect(url);
+            }
+            if (userRole === 'BENEVOLE' && !pathname.startsWith('/benevole')) {
+                url.pathname = '/benevole';
                 return NextResponse.redirect(url);
             }
         }

@@ -1,0 +1,623 @@
+// * src/app/(dashboard-adultes)/admin/pedagogie/enfants/[id]/cours/[coursId]/page.tsx
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { getCours, modifierInfosCours, modifierContenuCours } from './actions';
+import Modal from '@/components/Modal';
+import { supabaseClient } from '@/lib/supabaseClient';
+
+interface PageCours {
+    numeroPage: number;
+    titre: string;
+    texteExplicatif: string;
+    imageUrl: string | null;
+}
+
+interface CoursInfo {
+    id: number;
+    titre: string;
+    ordreDansModule: number;
+    contenu: PageCours[];
+    niveauRequis: string;
+    createdAt: Date;
+}
+
+const NIVEAUX_OPTIONS = ['NIVEAU_1', 'NIVEAU_2', 'NIVEAU_3'];
+const NIVEAUX_LABELS: Record<string, string> = {
+    NIVEAU_1: 'Niveau 1 (Débutant)',
+    NIVEAU_2: 'Niveau 2 (Intermédiaire)',
+    NIVEAU_3: 'Niveau 3 (Avancé)',
+};
+
+export default function AdminModifieCoursPage() {
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [cours, setCours] = useState<CoursInfo | null>(null);
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    const [isEditingTitre, setIsEditingTitre] = useState(false);
+    const [editTitre, setEditTitre] = useState(cours?.titre || "");
+    const [editNiveau, setEditNiveau] = useState(cours?.niveauRequis || "NIVEAU_1"); // <-- État pour le niveau du formulaire
+
+    const [isEditingPageTitre, setIsEditingPageTitre] = useState(false);
+    const [isEditingPageTexte, setIsEditingPageTexte] = useState(false);
+    const [editPageTitre, setEditPageTitre] = useState("");
+    const [editPageTexte, setEditPageTexte] = useState("");
+
+    const params = useParams();
+
+    const moduleId = parseInt(params.id as string, 10);
+    const coursId = parseInt(params.coursId as string, 10);
+
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const handleGetCours = async () => {
+            if (!coursId) return;
+            setError(null);
+            setIsLoading(true);
+
+            const result = await getCours(coursId);
+            if (result.success && result.data) {
+                const coursData = result.data as any;
+                let contenuPages: PageCours[] = [];
+
+                try {
+                    contenuPages = typeof coursData.contenu === 'string'
+                        ? JSON.parse(coursData.contenu)
+                        : (coursData.contenu || []);
+                } catch (e) {
+                    contenuPages = [];
+                }
+
+                setCours({
+                    ...coursData,
+                    contenu: contenuPages
+                });
+            } else {
+                setError(result.error || "Impossible de charger le cours.");
+            }
+            setIsLoading(false);
+        };
+
+        handleGetCours();
+    }, [coursId]);
+
+    // Met à jour les champs d'édition dès qu'on change de page (Suivant/Précédent/Nouvelle page)
+    useEffect(() => {
+        if (cours) {
+            setEditTitre(cours.titre);
+            setEditNiveau(cours.niveauRequis || "NIVEAU_1");
+            const currentPage = cours.contenu[currentPageIndex];
+            if (currentPage) {
+                setEditPageTitre(currentPage.titre);
+                setEditPageTexte(currentPage.texteExplicatif);
+            }
+        }
+    }, [cours, currentPageIndex]);
+
+    const handleSauvegarderInfosCours = async (nouveauTitre: string, nouveauNiveau: string) => {
+        if (!cours) return;
+
+        setCours(prev => prev ? { ...prev, titre: nouveauTitre, niveauRequis: nouveauNiveau } : null);
+
+        const result = await modifierInfosCours(cours.id, nouveauTitre, nouveauNiveau as any, moduleId);
+        if (!result.success) {
+            setError("Une erreur est survenue lors de la modification des informations du cours.");
+        }
+        setIsEditingTitre(false);
+    };
+
+    // Fonction globale pour sauvegarder le JSON complet après modification inline
+    const handleSauvegarderPage = async (cle: 'titre' | 'texteExplicatif' | 'imageUrl', nouvelleValeur: string) => {
+        if (!cours) return;
+
+        const nouveauContenu = [...cours.contenu];
+
+        nouveauContenu[currentPageIndex] = {
+            ...nouveauContenu[currentPageIndex],
+            [cle]: nouvelleValeur
+        };
+
+        setCours(prev => prev ? { ...prev, contenido: nouveauContenu } : null);
+
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        if (!result.success) {
+            setError(result.error || "Impossible de sauvegarder les modifications de la page.");
+        }
+    };
+
+    // Ajout d'une nouvelle page dans le tableau JSON + Sauvegarde BDD
+    const handleCreate = async () => {
+        if (!cours) return;
+
+        const nouvellePage: PageCours = {
+            numeroPage: cours.contenu.length + 1,
+            titre: `Nouvelle Page ${cours.contenu.length + 1}`,
+            texteExplicatif: "Écrivez le contenu explicatif de votre slide ici...",
+            imageUrl: null
+        };
+
+        const nouveauContenu = [...cours.contenu, nouvellePage];
+
+        setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
+
+        const nouvelIndex = nouveauContenu.length - 1;
+        setCurrentPageIndex(nouvelIndex);
+
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        if (!result.success) {
+            setError(result.error || "Erreur lors de la création de la page en base de données.");
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!cours || cours.contenu.length === 0) return;
+
+        const confirmer = confirm("Êtes-vous sûr de vouloir supprimer cette page ? Cette action est irréversible.");
+        if (!confirmer) return;
+
+        const contenuFiltre = cours.contenu.filter((_, index) => index !== currentPageIndex);
+
+        const nouveauContenu = contenuFiltre.map((page, index) => ({
+            ...page,
+            numeroPage: index + 1
+        }));
+
+        const nouvelIndex = Math.max(0, Math.min(currentPageIndex, nouveauContenu.length - 1));
+
+        setCours(prev => prev ? { ...prev, contenu: nouveauContenu } : null);
+        setCurrentPageIndex(nouvelIndex);
+
+        const result = await modifierContenuCours(cours.id, nouveauContenu, moduleId);
+        if (!result.success) {
+            setError(result.error || "Erreur lors de la suppression de la page en base de données.");
+        }
+    };
+
+    const handleReordonner = async (numeroPage: number, direction: 'HAUT' | 'BAS') => {
+        if (!cours) return;
+        setError(null);
+
+        // trouver le bon index
+        const indexActuel = cours.contenu.findIndex(p => p.numeroPage === numeroPage);
+        if (indexActuel === -1) return;
+
+        // calculer le nouvel index
+        const nouvelIndex = direction === 'HAUT' ? indexActuel - 1 : indexActuel + 1;
+
+        // sécurité
+        if (nouvelIndex < 0 || nouvelIndex >= cours.contenu.length) return;
+
+        // intervertir les index
+        const nouveauContenu = [...cours.contenu];
+        [nouveauContenu[indexActuel], nouveauContenu[nouvelIndex]] = [
+            nouveauContenu[nouvelIndex],
+            nouveauContenu[indexActuel]
+        ];
+
+        // réindexer les pages
+        const contenuReindexe = nouveauContenu.map((page, idx) => ({
+            ...page,
+            numeroPage: idx + 1
+        }));
+
+        // mettre à jour l'index de la page affiché si besoin
+        if (currentPageIndex === indexActuel) {
+            setCurrentPageIndex(nouvelIndex);
+        } else if (currentPageIndex === nouvelIndex) {
+            setCurrentPageIndex(indexActuel);
+        }
+
+        // mettre à jour côté client
+        setCours(prev => prev ? { ...prev, contenu: contenuReindexe } : null);
+
+        // mettre à jour côté BDD
+        const result = await modifierContenuCours(cours.id, contenuReindexe, moduleId);
+        if (!result.success) {
+            setError(result.error || "Erreur lors de la réorganisation des pages en base de données.");
+        }
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !cours) return;
+
+        try {
+            setIsUploadingImage(true);
+            setError(null);
+
+            // générer un nom unique
+            const extension = file.name.split('.').pop();
+            const nomFichier = `cours-${cours.id}-page-${currentPageIndex + 1}-${Date.now()}.${extension}`;
+
+            // envoyer le fichier vers supabase
+            const { data, error: uploadError } = await supabaseClient.storage
+                .from('cours-image')
+                .upload(nomFichier, file, {
+                    cacheControl: '3600',
+                    upsert: true // écrase si le fichier existe déjà
+                });
+
+            if (uploadError) throw uploadError;
+
+            // récupérer l'URL publique de l'image
+            const { data: { publicUrl } } = supabaseClient.storage
+                .from('cours-image')
+                .getPublicUrl(nomFichier);
+
+            // si la page avait déjà une image, on la supprimer de Supabase pour ne pas encombrer le stockage
+            const ancienneImageUrl = cours.contenu[currentPageIndex]?.imageUrl;
+            if (ancienneImageUrl) {
+                // extraire le nom du fichier depuis l'ancienne URL
+                const ancienNomFichier = ancienneImageUrl.split('/').pop();
+                if (ancienNomFichier) {
+                    await supabaseClient.storage.from('cours-image').remove([ancienNomFichier]);
+                }
+            }
+
+            // sauvegarder la vraie URL publique dans le JSON et en BDD
+            await handleSauvegarderPage('imageUrl', publicUrl);
+
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || "Erreur lors du téléversement de l'image.");
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const handleSupprimerImage = async () => {
+        if (!cours) return;
+
+        const ancienneImageUrl = cours.contenu[currentPageIndex]?.imageUrl;
+        if (!ancienneImageUrl) return;
+
+        try {
+            setIsUploadingImage(true);
+
+            // supprimer le fichier physiquement du Storage Supabase
+            const nomFichier = ancienneImageUrl.split('/').pop();
+            if (nomFichier) {
+                const { error: deleteError } = await supabaseClient.storage
+                    .from('cours-image')
+                    .remove([nomFichier]);
+
+                if (deleteError) throw deleteError;
+            }
+
+            // mettre à jour le JSON en BDD pour vider le champ
+            await handleSauvegarderPage('imageUrl', null as any);
+
+        } catch (err: any) {
+            setError("Erreur lors de la suppression du fichier sur le serveur.");
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    if (isLoading) {
+        return <div className="p-6 text-sm text-violet-600">Chargement du cours...</div>;
+    }
+
+    if (error || !cours) {
+        return <div className="p-6 text-amber-600">{error || "Cours introuvable."}</div>;
+    }
+
+    return (
+        <div className="p-6 space-y-6">
+            <div className="flex flex-col space-y-4 mb-6">
+                <Link
+                    href={`/admin/pedagogie/enfants/${moduleId}`}
+                    className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
+                >
+                    <ChevronRight className="h-3 w-3 rotate-180" />
+                    Retour au module
+                </Link>
+
+                <div className="space-y-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">
+                        Cours #{cours.ordreDansModule}
+                    </span>
+
+                    {isEditingTitre ? (
+                        <div className="flex flex-col gap-3 p-4 border border-violet-200 rounded-lg bg-violet-50/50 max-w-xl">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-violet-900">Titre du cours</label>
+                                <input
+                                    type="text"
+                                    value={editTitre}
+                                    onChange={(e) => setEditTitre(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSauvegarderInfosCours(editTitre, editNiveau);
+                                        if (e.key === 'Escape') { setEditTitre(cours.titre); setEditNiveau(cours.niveauRequis); setIsEditingTitre(false); }
+                                    }}
+                                    autoFocus
+                                    className="text-lg font-bold text-violet-950 border-b border-violet-400 bg-white focus:outline-none p-1.5 rounded"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-violet-900">Niveau requis</label>
+                                <select
+                                    value={editNiveau}
+                                    onChange={(e) => setEditNiveau(e.target.value)}
+                                    className="p-1.5 border border-violet-300 rounded bg-white text-sm text-violet-950 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                >
+                                    {NIVEAUX_OPTIONS.map((niv) => (
+                                        <option key={niv} value={niv}>
+                                            {NIVEAUX_LABELS[niv] || niv}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 mt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => { setEditTitre(cours.titre); setEditNiveau(cours.niveauRequis); setIsEditingTitre(false); }}
+                                    className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSauvegarderInfosCours(editTitre, editNiveau)}
+                                    className="px-3 py-1 text-xs bg-violet-600 text-white rounded font-medium hover:bg-violet-700 transition-colors shadow-sm"
+                                >
+                                    Valider
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            onClick={() => setIsEditingTitre(true)}
+                            className="flex flex-col gap-1 group cursor-pointer w-fit"
+                        >
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-bold tracking-tight text-violet-950 group-hover:text-violet-700 transition-colors">
+                                    {cours.titre}
+                                </h1>
+                                <Pencil className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors shrink-0" />
+                            </div>
+                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded w-fit">
+                                {NIVEAUX_LABELS[cours.niveauRequis] || cours.niveauRequis || 'Aucun niveau requis'}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Section Affichage du contenu JSON */}
+            <div className="border-t border-violet-100 pt-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-violet-900">Contenu pédagogique du cours</h2>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-violet-200/60 shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Modifier l'ordre
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-red-200 shadow-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Supprimer la page
+                        </button>
+                        <button
+                            onClick={handleCreate}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-violet-200/60 shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Ajouter une page
+                        </button>
+                    </div>
+                </div>
+
+                {cours.contenu && cours.contenu.length > 0 ? (
+                    <div className="space-y-6">
+                        {(() => {
+                            const page = cours.contenu[currentPageIndex];
+                            if (!page) return null;
+
+                            return (
+                                <div className="bg-white border border-violet-200 rounded-xl shadow-sm p-6 space-y-4 min-h-[350px] flex flex-col justify-between">
+                                    <div>
+                                        {/* Header de la Page (Modifiable au clic) */}
+                                        <div className="flex items-center justify-between border-b border-violet-50 pb-3 mb-4">
+                                            {isEditingPageTitre ? (
+                                                <div className="flex items-center gap-2 w-full max-w-xl">
+                                                    <input
+                                                        type="text"
+                                                        value={editPageTitre}
+                                                        onChange={(e) => setEditPageTitre(e.target.value)}
+                                                        onBlur={() => {
+                                                            setIsEditingPageTitre(false);
+                                                            if (editPageTitre.trim() && editPageTitre !== page.titre) {
+                                                                handleSauvegarderPage('titre', editPageTitre);
+                                                            } else {
+                                                                setEditPageTitre(page.titre);
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') e.currentTarget.blur();
+                                                            if (e.key === 'Escape') { setEditPageTitre(page.titre); setIsEditingPageTitre(false); }
+                                                        }}
+                                                        autoFocus
+                                                        className="font-bold text-violet-950 text-base border-b border-violet-400 bg-transparent focus:outline-none w-full"
+                                                    />
+                                                    <span className="text-xs text-slate-400 italic shrink-0">(Entrée pour valider)</span>
+                                                </div>
+                                            ) : (
+                                                <h3
+                                                    onClick={() => setIsEditingPageTitre(true)}
+                                                    className="font-bold text-violet-950 text-base flex items-center gap-2 group cursor-pointer hover:text-violet-700 transition-colors"
+                                                >
+                                                    Page {page.numeroPage || currentPageIndex + 1} : {page.titre}
+                                                    <Pencil className="w-3.5 h-3.5 text-slate-300 group-hover:text-violet-500 transition-colors" />
+                                                </h3>
+                                            )}
+                                            <span className="px-2 py-1 bg-violet-50 text-violet-700 text-xs font-medium rounded-md">
+                                                Slide vue unique
+                                            </span>
+                                        </div>
+
+                                        {/* Contenu texte et image de la Page */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+                                            {/* Texte explicatif (Modifiable au clic) */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block">Texte explicatif :</label>
+                                                {isEditingPageTexte ? (
+                                                    <div className="space-y-1">
+                                                        <textarea
+                                                            value={editPageTexte}
+                                                            onChange={(e) => setEditPageTexte(e.target.value)}
+                                                            onBlur={() => {
+                                                                setIsEditingPageTexte(false);
+                                                                if (editPageTexte !== page.texteExplicatif) {
+                                                                    handleSauvegarderPage('texteExplicatif', editPageTexte);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                    e.preventDefault();
+                                                                    e.currentTarget.blur();
+                                                                }
+                                                            }}
+                                                            autoFocus
+                                                            rows={6}
+                                                            className="w-full text-sm text-slate-700 leading-relaxed p-2 border border-violet-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500 whitespace-pre-line"
+                                                        />
+                                                        <span className="text-xs text-slate-400 italic block">(Cliquez en dehors ou pressez Entrée pour valider. Shift+Entrée pour sauter une ligne)</span>
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        onClick={() => setIsEditingPageTexte(true)}
+                                                        className="text-sm text-slate-700 leading-relaxed whitespace-pre-line border border-transparent hover:border-dashed hover:border-violet-300 hover:bg-violet-50/20 p-2 rounded-lg cursor-pointer transition-all group relative min-h-[100px]"
+                                                    >
+                                                        <Pencil className="w-4 h-4 text-slate-400 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        {page.texteExplicatif || <span className="text-slate-400 italic">Aucun texte pour le moment. Cliquez pour en ajouter un.</span>}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Image de la page */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block">
+                                                    Illustration :
+                                                </label>
+
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleImageChange}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+
+                                                {page.imageUrl ? (
+                                                    <div className="relative border border-slate-100 rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center max-h-64 group">
+                                                        <img
+                                                            src={page.imageUrl}
+                                                            alt={page.titre}
+                                                            className="object-contain w-full h-full max-h-64 transition-opacity group-hover:opacity-40"
+                                                        />
+
+                                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => fileInputRef.current?.click()}
+                                                                disabled={isUploadingImage}
+                                                                className="px-3 py-1.5 bg-white text-violet-700 font-medium text-xs rounded-lg shadow-md hover:bg-violet-50 transition-all flex items-center gap-1"
+                                                            >
+                                                                <Pencil className="w-3 h-3" /> Changer
+                                                            </button>
+                                                            <button
+                                                                onClick={handleSupprimerImage}
+                                                                disabled={isUploadingImage}
+                                                                className="px-3 py-1.5 bg-red-600 text-white font-medium text-xs rounded-lg shadow-md hover:bg-red-700 transition-all flex items-center gap-1"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" /> Supprimer
+                                                            </button>
+                                                        </div>
+
+                                                        {isUploadingImage && (
+                                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-xs text-violet-600 font-medium animate-pulse">
+                                                                Téléversement...
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        disabled={isUploadingImage}
+                                                        className="w-full border-2 border-dashed border-slate-200 hover:border-violet-400 hover:bg-violet-50/30 rounded-lg p-6 flex flex-col items-center justify-center text-center h-40 transition-all cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isUploadingImage ? (
+                                                            <span className="text-xs text-violet-600 font-medium animate-pulse">Envoi en cours...</span>
+                                                        ) : (
+                                                            <>
+                                                                <div className="p-2 bg-slate-100 rounded-full text-slate-400 group-hover:bg-violet-100 group-hover:text-violet-600 transition-all mb-2">
+                                                                    <Plus className="w-4 h-4" />
+                                                                </div>
+                                                                <span className="text-xs font-semibold text-slate-500 group-hover:text-violet-700 transition-colors">
+                                                                    Ajouter une illustration
+                                                                </span>
+                                                                <span className="text-[11px] text-slate-400 mt-0.5">
+                                                                    PNG, JPG jusqu'à 4Mo
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Barre de navigation */}
+                        <div className="flex items-center justify-between bg-violet-50 border border-violet-100 rounded-xl p-4 shadow-sm">
+                            <button
+                                onClick={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
+                                disabled={currentPageIndex === 0}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-violet-200 rounded-lg text-sm font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed transition-all shadow-sm"
+                            >
+                                <MoveLeft className="h-3 w-3" />
+                                Précédent
+                            </button>
+
+                            <div className="text-sm font-semibold text-violet-950 bg-violet-100/80 px-4 py-1.5 rounded-full">
+                                Page <span className="text-amber-600">{currentPageIndex + 1}</span> sur {cours.contenu.length}
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPageIndex(prev => Math.min(cours.contenu.length - 1, prev + 1))}
+                                disabled={currentPageIndex === cours.contenu.length - 1}
+                                className="flex items-center gap-2 px-4 py-2 bg-violet-600 rounded-lg text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-40 disabled:hover:bg-violet-600 disabled:cursor-not-allowed transition-all shadow-sm"
+                            >
+                                Suivant
+                                <MoveRight className="h-3 w-3" />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12 border border-dashed border-violet-200 rounded-xl bg-violet-50/20">
+                        <span className="text-sm text-slate-500">Aucune page dans ce cours. Cliquez sur "Ajouter une page".</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
