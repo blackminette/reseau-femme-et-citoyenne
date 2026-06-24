@@ -1,4 +1,3 @@
-// * src/app/(dashboard-enfant)/enfant/page.tsx
 // * src/app/(app-sans-header)/enfant/page.tsx
 import { ENFANT, MODULES, BADGES, DERNIER_BADGE, RESULTATS, ACTIVITE } from "@/lib/enfant-data";
 import EnfantHeader from "@/components/EnfantHeader";
