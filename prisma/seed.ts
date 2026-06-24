@@ -5,6 +5,9 @@ import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
 dotenv.config({ path: '.env.local' });
+if (!process.env.DATABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  dotenv.config({ path: '.env' });
+}
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -72,6 +75,10 @@ async function main() {
   let idIntervenante = '';
 
   for (const user of utilisateursDeTest) {
+    if (!supabaseAdmin) {
+      continue;
+    }
+
     let supabaseAuthId: string;
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -289,7 +296,85 @@ async function main() {
     console.log(`📦 Module [${item.public}] "${item.titre}" créé avec ${item.cours.length} cours associés.`);
   }
 
-  console.log('✅ Seeding terminé avec succès et prêt pour le login local !');
+  const actualitesDeTest = [
+    {
+      titre: 'Label "Association Engagée" renouvelé pour 2025',
+      tag: 'EVENT',
+      datePublication: new Date('2025-04-03T12:00:00.000Z'),
+      extrait:
+        'Pour la troisième année consécutive, la Ville de Nice renouvelle notre label qui récompense notre engagement auprès des familles.',
+      ctaLabel: 'Lire la suite',
+      ctaHref: '/ateliers',
+      ordre: 1,
+      estPublic: true,
+    },
+    {
+      titre: 'Nouveau : ateliers jardinage et permaculture',
+      tag: 'ATELIER',
+      datePublication: new Date('2025-03-20T12:00:00.000Z'),
+      extrait:
+        'À partir d’avril, nous proposons des ateliers de jardinage urbain pour initier les enfants à la permaculture et au respect de la nature.',
+      ctaLabel: 'Réserver',
+      ctaHref: '/ateliers',
+      ordre: 2,
+      estPublic: true,
+    },
+    {
+      titre: 'Le spectacle de Noël : un franc succès !',
+      tag: 'SPECTACLE',
+      datePublication: new Date('2025-01-10T12:00:00.000Z'),
+      extrait:
+        'Plus de 200 personnes ont assisté au spectacle de théâtre de décembre. Les enfants ont présenté une pièce écrite par eux-mêmes.',
+      ctaLabel: 'Voir les vidéos',
+      ctaHref: '/actualites',
+      ordre: 3,
+      estPublic: true,
+    },
+    {
+      titre: 'Des actions construites avec les partenaires locaux',
+      tag: 'VIE ASSOCIATIVE',
+      datePublication: new Date('2026-05-28T12:00:00.000Z'),
+      extrait:
+        'L’association continue de structurer ses contenus et ses actions pour proposer des repères clairs, utiles et accessibles à tous.',
+      ctaLabel: 'Découvrir',
+      ctaHref: '/contact',
+      ordre: 4,
+      estPublic: true,
+    },
+  ];
+
+  for (const actualite of actualitesDeTest) {
+    await prisma.actualite.upsert({
+      where: { id: actualite.ordre },
+      update: {
+        titre: actualite.titre,
+        tag: actualite.tag,
+        datePublication: actualite.datePublication,
+        extrait: actualite.extrait,
+        ctaLabel: actualite.ctaLabel,
+        ctaHref: actualite.ctaHref,
+        ordre: actualite.ordre,
+        estPublic: actualite.estPublic,
+      },
+      create: {
+        id: actualite.ordre,
+        titre: actualite.titre,
+        tag: actualite.tag,
+        datePublication: actualite.datePublication,
+        extrait: actualite.extrait,
+        ctaLabel: actualite.ctaLabel,
+        ctaHref: actualite.ctaHref,
+        ordre: actualite.ordre,
+        estPublic: actualite.estPublic,
+      },
+    });
+  }
+
+  if (supabaseAdmin) {
+    console.log('✅ Seeding terminé avec succès et prêt pour le login local !');
+  } else {
+    console.log('✅ Seeding terminé avec succès pour la base Prisma. La synchronisation Auth Supabase est désactivée.');
+  }
 }
 
 main()

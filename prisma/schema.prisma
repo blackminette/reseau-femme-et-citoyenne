@@ -180,6 +180,20 @@ model Temoignage {
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }
 
+model Actualite {
+  id              Int      @id @default(autoincrement())
+  titre           String
+  tag             String
+  datePublication DateTime
+  extrait         String
+  ctaLabel        String   @default("Lire la suite")
+  ctaHref         String   @default("/ateliers")
+  ordre           Int      @default(1)
+  estPublic       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model MessageContact {
   id            Int          @id @default(autoincrement())
   nom           String
