@@ -138,9 +138,9 @@ export default async function EnfantDashboard() {
                 </div>
             </section>
 
-            {/* ─── Mes modules ─── */}
+            {/* ─── Mes parcours ─── */}
             <section id="modules" className="mt-8 scroll-mt-6">
-                <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes modules</h3>
+                <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes parcours</h3>
                 <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
                     {listModules.map(({ id, label, Icon, progression, from, to }) => (
                         <Link

@@ -8,7 +8,11 @@ import {
     Star, Sparkles, BookOpen
 } from 'lucide-react';
 import { ENFANT, MODULES } from '@/lib/enfant-data';
-import { obtenirProfilEnfant, obtenirDetailsModuleDepuisDB } from '../actions';
+import { 
+    obtenirProfilEnfant, 
+    obtenirDetailsModuleDepuisDB, 
+    obtenirModulesDuParcours 
+} from '../actions';
 
 // Types d'activités
 type Activite = {
@@ -21,34 +25,6 @@ type Activite = {
     parfait?: boolean;
 };
 
-// Dictionnaire des activités par module (défini au niveau client pour modifications dynamiques)
-const INITIAL_ACTIVITES_MOCK: Record<string, Activite[]> = {
-    lecture: [
-        { id: 'l1', titre: "L'alphabet et ses mystères", description: "Apprends à reconnaître les lettres et associe-les à des animaux rigolos !", type: 'lecon', statut: 'a_faire' },
-        { id: 'l2', titre: "Quiz — Les sons complexes", description: "Trouve les mots qui contiennent des sons comme 'OU', 'AN' ou 'CH'.", type: 'quiz', statut: 'verrouille' },
-    ],
-    numerique: [
-        { id: 'n1', titre: "Leçon : Souris et clavier n'ont plus de secret", description: "Découvre les fonctions principales de ton ordinateur.", type: 'lecon', statut: 'a_faire' },
-        { id: 'n2', titre: "Quiz : Les bons réflexes sur Internet", description: "Apprends à naviguer en toute sécurité en évitant les pièges courants.", type: 'quiz', statut: 'verrouille' },
-    ],
-    robotique: [
-        { id: 'r1', titre: "Leçon : Qu'est-ce qu'un robot ?", description: "Découvre comment fonctionne un robot et fais la différence avec un simple jouet.", type: 'lecon', statut: 'a_faire' },
-        { id: 'r2', titre: "Quiz : Les capteurs du robot", description: "Sais-tu comment le robot voit et bouge ? Fais le test !", type: 'quiz', statut: 'verrouille' },
-    ],
-    anglais: [
-        { id: 'a1', titre: "Quiz : Les couleurs en anglais", description: "Yellow, green, red... Associe chaque couleur à son mot anglais.", type: 'quiz', statut: 'a_faire' },
-        { id: 'a2', titre: "Leçon : Les mots magiques", description: "Apprends les formules de politesse de base : Hello, Please, Thank you.", type: 'lecon', statut: 'verrouille' },
-    ],
-    civique: [
-        { id: 'c1', titre: "Leçon : Les symboles de la République", description: "Le drapeau, la Marianne et la Marseillaise : découvre leur histoire.", type: 'lecon', statut: 'a_faire' },
-        { id: 'c2', titre: "Quiz : La vie en société", description: "Pourquoi avons-nous des règles et comment nous aident-elles à mieux vivre ensemble ?", type: 'quiz', statut: 'verrouille' },
-    ],
-    eco: [
-        { id: 'e1', titre: "Leçon : Le grand jeu du tri sélectif", description: "Apprends dans quelle poubelle jeter le plastique, le carton et le verre.", type: 'lecon', statut: 'a_faire' },
-        { id: 'e2', titre: "Quiz : Les bons éco-gestes", description: "Fais la chasse au gaspillage à la maison avec ce quiz interactif.", type: 'quiz', statut: 'verrouille' },
-    ],
-};
-
 type Params = Promise<{ id: string }>;
 
 export default function EnfantModuleDetailPage({ params }: { params: Params }) {
@@ -56,8 +32,11 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
     const [activites, setActivites] = useState<Activite[]>([]);
     const [progression, setProgression] = useState(0);
     const [dbModule, setDbModule] = useState<any>(null);
+    const [modulesList, setModulesList] = useState<any[]>([]);
     const [enfant, setEnfant] = useState<any>(ENFANT);
     const [loading, setLoading] = useState(true);
+
+    const isParcours = ['lecture', 'numerique', 'robotique', 'anglais', 'civique', 'eco'].includes(id);
 
     useEffect(() => {
         if (!id) return;
@@ -69,61 +48,29 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                 const prof = await obtenirProfilEnfant();
                 if (prof) setEnfant(prof);
 
-                // Charger le module et ses exercices
-                const dbMod = await obtenirDetailsModuleDepuisDB(id);
-                if (dbMod) {
-                    setDbModule(dbMod);
-                    setActivites(dbMod.activites as Activite[]);
-                    setProgression(dbMod.progression);
-                    setLoading(false);
-                    return;
+                if (isParcours) {
+                    // Charger les modules du parcours
+                    const mods = await obtenirModulesDuParcours(id);
+                    setModulesList(mods);
+                } else {
+                    // Charger le module et ses exercices
+                    const dbMod = await obtenirDetailsModuleDepuisDB(id);
+                    if (dbMod) {
+                        setDbModule(dbMod);
+                        setActivites(dbMod.activites as Activite[]);
+                        setProgression(dbMod.progression);
+                    }
                 }
             } catch (err) {
                 console.error("Erreur de chargement du module/profil depuis le serveur :", err);
             }
-
-            // Fallback aux mocks statiques et localStorage
-            const baseActivites = INITIAL_ACTIVITES_MOCK[id] || [];
-            let updatedActivites: Activite[] = [...baseActivites];
-            let completedCount = 0;
-
-            updatedActivites = updatedActivites.map((act) => {
-                const savedState = localStorage.getItem(`rfc_enfant_act_${act.id}`);
-                if (savedState) {
-                    const data = JSON.parse(savedState);
-                    completedCount++;
-                    return {
-                        ...act,
-                        statut: 'termine',
-                        score: data.score || undefined,
-                        parfait: data.parfait || false
-                    };
-                }
-                return act;
-            });
-
-            let unlockedNext = false;
-            updatedActivites = updatedActivites.map((act) => {
-                if (act.statut === 'termine') return act;
-                if (!unlockedNext) {
-                    unlockedNext = true;
-                    return { ...act, statut: 'a_faire' };
-                }
-                return { ...act, statut: 'verrouille' };
-            });
-
-            const total = updatedActivites.length;
-            const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-            
-            setActivites(updatedActivites);
-            setProgression(pct);
             setLoading(false);
         }
 
         loadData();
-    }, [id]);
+    }, [id, isParcours]);
 
-    // Récupération des informations statiques du module (pour l'icône et les dégradés)
+    // Récupération des informations statiques du module/parcours
     const currentModule = MODULES.find((m) => m.id === id) || 
         (dbModule ? MODULES.find((m) => m.id === dbModule.slug) : null);
 
@@ -151,6 +98,112 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
         );
     }
 
+    // ─── RENDU CAS A : C'est une page Parcours (qui liste ses modules) ───
+    if (isParcours) {
+        const meta = MODULES.find((m) => m.id === id) || {
+            label: id.toUpperCase(),
+            Icon: BookOpen,
+            from: "#6d5ba8",
+            to: "#5b4a98"
+        };
+
+        return (
+            <div className="text-violet-900">
+                {/* Bouton Retour */}
+                <div className="mb-4">
+                    <Link 
+                        href="/enfant/modules" 
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-bold text-violet-700 shadow-xs hover:bg-violet-50 hover:text-violet-900 transition-colors"
+                    >
+                        <ChevronLeft className="h-4 w-4" /> Retour aux parcours
+                    </Link>
+                </div>
+
+                {/* Barre du haut */}
+                <div className="flex flex-wrap items-center justify-between gap-5 mt-2">
+                    <div>
+                        <h1 className="flex items-center gap-2.5 text-[26px] font-extrabold tracking-tight text-violet-950">
+                            <span 
+                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+                                style={{ backgroundImage: `linear-gradient(135deg, ${meta.from}, ${meta.to})` }}
+                            >
+                                <meta.Icon className="h-5 w-5" aria-hidden />
+                            </span>
+                            Parcours : {meta.label}
+                        </h1>
+                        <p className="text-[13px] text-violet-600">Choisis un module pour commencer à apprendre et t'exercer !</p>
+                    </div>
+
+                    {/* Badge Enfant */}
+                    <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
+                            {enfant.initiales}
+                        </div>
+                        <div className="leading-tight">
+                            <div className="text-[13px] font-bold text-violet-950">{enfant.prenom} {enfant.nom}</div>
+                            <div className="text-[11px] text-violet-500">{enfant.age} ans</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Liste des modules sous ce parcours */}
+                <section className="mt-8 mb-6">
+                    {modulesList.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {modulesList.map((mod) => (
+                                <Link
+                                    key={mod.id}
+                                    href={`/enfant/modules/${mod.id}`}
+                                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-300"
+                                >
+                                    <div 
+                                        className="h-32 flex items-center justify-center relative overflow-hidden transition-all group-hover:opacity-95"
+                                        style={{ backgroundImage: `linear-gradient(135deg, ${meta.from}dd, ${meta.to}dd)` }}
+                                    >
+                                        <div className="absolute top-3 left-3 h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white flex backdrop-blur-xs">
+                                            <meta.Icon className="h-4 w-4" />
+                                        </div>
+                                        <span className="text-3xl font-extrabold text-white/90">M{mod.dbId || mod.id}</span>
+                                    </div>
+
+                                    <div className="p-5 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <h3 className="text-base font-extrabold leading-tight text-violet-950 tracking-wide">{mod.label}</h3>
+                                            <p className="mt-1.5 text-xs text-violet-500 line-clamp-2">{mod.description}</p>
+                                        </div>
+
+                                        <div className="mt-6">
+                                            <div className="flex items-center justify-between text-xs font-bold text-violet-500">
+                                                <span>Progression</span>
+                                                <span>{mod.progression}%</span>
+                                            </div>
+                                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                                <div 
+                                                    className="h-full rounded-full transition-all duration-500" 
+                                                    style={{ 
+                                                        width: `${mod.progression}%`,
+                                                        backgroundImage: `linear-gradient(90deg, ${meta.from}, ${meta.to})`
+                                                    }} 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-violet-100 rounded-2xl p-8">
+                            <meta.Icon className="h-12 w-12 text-violet-300 animate-pulse mb-3" />
+                            <h4 className="text-sm font-bold text-violet-900">Aucun module disponible</h4>
+                            <p className="text-xs text-violet-500 max-w-sm mt-1">Reviens plus tard ! Les modules de ce parcours seront bientôt publiés par l'équipe pédagogique.</p>
+                        </div>
+                    )}
+                </section>
+            </div>
+        );
+    }
+
+    // ─── RENDU CAS B : C'est une page Module (qui liste ses exercices/quiz) ───
     if (!displayModule) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center text-violet-900">
@@ -171,10 +224,10 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
             {/* ─── Bouton Retour ─── */}
             <div className="mb-4">
                 <Link 
-                    href="/enfant/modules" 
+                    href={dbModule?.slug ? `/enfant/modules/${dbModule.slug}` : "/enfant/modules"} 
                     className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-bold text-violet-700 shadow-xs hover:bg-violet-50 hover:text-violet-900 transition-colors"
                 >
-                    <ChevronLeft className="h-4 w-4" /> Retour aux modules
+                    <ChevronLeft className="h-4 w-4" /> Retour au parcours
                 </Link>
             </div>
 
@@ -276,7 +329,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                                     <div>
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
-                                                {act.type === 'lecon' ? '📖 Leçon' : act.type === 'quiz' ? '❓ Quiz' : '✏️ Exercice de dessin'}
+                                                {act.type === 'lecon' ? '📖 Leçon' : act.type === 'quiz' ? '❓ Quiz' : '✏️ Exercice'}
                                             </span>
                                             {act.score && (
                                                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${act.parfait ? 'bg-emerald-50 text-emerald-600' : 'bg-violet-50 text-violet-600'}`}>

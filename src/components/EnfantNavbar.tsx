@@ -17,7 +17,7 @@ export default function EnfantNavbar() {
         },
         {
             href: '/enfant/modules',
-            label: 'Mes modules',
+            label: 'Mes parcours',
             Icon: List,
             active: pathname.startsWith('/enfant/modules')
         },

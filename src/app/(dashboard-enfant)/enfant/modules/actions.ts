@@ -58,15 +58,14 @@ export async function obtenirProfilEnfant() {
 
         // Calcule progression globale sur tous les modules enfants
         const modules = await prisma.module.findMany({
-            where: { public: 'ENFANT' },
+            where: {
+                public: 'ENFANT',
+                isPublished: true
+            },
             include: {
                 cours: {
                     include: {
-                        compositions: {
-                            include: {
-                                exercice: true
-                            }
-                        }
+                        exercices: true
                     }
                 }
             }
@@ -77,8 +76,8 @@ export async function obtenirProfilEnfant() {
 
         for (const mod of modules) {
             for (const crs of mod.cours) {
-                for (const comp of crs.compositions) {
-                    exercicesIds.add(comp.exerciceId);
+                for (const ex of crs.exercices) {
+                    exercicesIds.add(ex.id);
                 }
             }
         }
@@ -160,15 +159,14 @@ export async function obtenirModulesDepuisDB() {
         const studentId = await obtenirEtudiantId();
 
         const modules = await prisma.module.findMany({
-            where: { public: 'ENFANT' },
+            where: {
+                public: 'ENFANT',
+                isPublished: true
+            },
             include: {
                 cours: {
                     include: {
-                        compositions: {
-                            include: {
-                                exercice: true
-                            }
-                        }
+                        exercices: true
                     }
                 }
             }
@@ -183,8 +181,8 @@ export async function obtenirModulesDepuisDB() {
         for (const mod of modules) {
             const exercicesIds = new Set<number>();
             for (const crs of mod.cours) {
-                for (const comp of crs.compositions) {
-                    exercicesIds.add(comp.exerciceId);
+                for (const ex of crs.exercices) {
+                    exercicesIds.add(ex.id);
                 }
             }
 
@@ -237,11 +235,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
                     cours: {
                         orderBy: { ordreDansModule: 'asc' },
                         include: {
-                            compositions: {
-                                include: {
-                                    exercice: true
-                                }
-                            }
+                            exercices: true
                         }
                     }
                 }
@@ -250,16 +244,15 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
 
         if (!dbModule) {
             const allModules = await prisma.module.findMany({
-                where: { public: 'ENFANT' },
+                where: {
+                    public: 'ENFANT',
+                    isPublished: true
+                },
                 include: {
                     cours: {
                         orderBy: { ordreDansModule: 'asc' },
                         include: {
-                            compositions: {
-                                include: {
-                                    exercice: true
-                                }
-                            }
+                            exercices: true
                         }
                     }
                 }
@@ -276,8 +269,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
         let completedCount = 0;
 
         for (const crs of dbModule.cours) {
-            for (const comp of crs.compositions) {
-                const ex = comp.exercice;
+            for (const ex of crs.exercices) {
                 
                 const scoreRecord = await prisma.scoreQuiz.findFirst({
                     where: {
@@ -363,11 +355,7 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
             exercice = await prisma.exercice.findUnique({
                 where: { id: parsedId },
                 include: {
-                    compositions: {
-                        include: {
-                            cours: true
-                        }
-                    }
+                    cours: true
                 }
             });
         }
@@ -376,8 +364,7 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
             return null;
         }
 
-        const composition = exercice.compositions[0];
-        const cours = composition?.cours;
+        const cours = exercice.cours;
 
         return {
             id: exercice.id.toString(),
@@ -442,13 +429,9 @@ export async function obtenirActiviteRecente() {
             include: {
                 exercice: {
                     include: {
-                        compositions: {
+                        cours: {
                             include: {
-                                cours: {
-                                    include: {
-                                        module: true
-                                    }
-                                }
+                                module: true
                             }
                         }
                     }
@@ -460,8 +443,7 @@ export async function obtenirActiviteRecente() {
 
         return scores.map(s => {
             const ex = s.exercice;
-            const comp = ex.compositions[0];
-            const modTitre = comp?.cours?.module?.titre || "Module";
+            const modTitre = ex?.cours?.module?.titre || "Module";
             let scoreStr = "1/1";
             let parfait = true;
 
@@ -488,6 +470,161 @@ export async function obtenirActiviteRecente() {
         });
     } catch (e) {
         console.error("Erreur obtenirActiviteRecente:", e);
+        return [];
+    }
+}
+
+// Action to get cumulative stats for the 6 Parcours
+export async function obtenirParcoursStats() {
+    try {
+        const studentId = await obtenirEtudiantId();
+
+        const modules = await prisma.module.findMany({
+            where: {
+                public: 'ENFANT',
+                isPublished: true
+            },
+            include: {
+                cours: {
+                    include: {
+                        exercices: true
+                    }
+                }
+            }
+        });
+
+        const parcoursExercices: Record<string, Set<number>> = {
+            lecture: new Set(),
+            numerique: new Set(),
+            robotique: new Set(),
+            anglais: new Set(),
+            civique: new Set(),
+            eco: new Set()
+        };
+
+        const ENUM_TO_SLUG: Record<string, string> = {
+            COMPREHENSION_LECTURE: 'lecture',
+            NUMERIQUE: 'numerique',
+            ROBOTIQUE: 'robotique',
+            ANGLAIS: 'anglais',
+            EDUCATION_CIVIQUE: 'civique',
+            ECO_CITOYENNETE: 'eco'
+        };
+
+        for (const mod of modules) {
+            for (const enumVal of mod.parcours) {
+                const slug = ENUM_TO_SLUG[enumVal];
+                if (slug) {
+                    for (const crs of mod.cours) {
+                        for (const ex of crs.exercices) {
+                            parcoursExercices[slug].add(ex.id);
+                        }
+                    }
+                }
+            }
+        }
+
+        const stats: Record<string, number> = {};
+
+        for (const [slug, exIds] of Object.entries(parcoursExercices)) {
+            const total = exIds.size;
+            let completed = 0;
+
+            if (total > 0) {
+                const scores = await prisma.scoreQuiz.findMany({
+                    where: {
+                        etudiantId: studentId,
+                        exerciceId: { in: Array.from(exIds) }
+                    }
+                });
+                completed = new Set(scores.map(s => s.exerciceId)).size;
+            }
+
+            stats[slug] = total > 0 ? Math.round((completed / total) * 100) : 0;
+        }
+
+        return stats;
+    } catch (e) {
+        console.error("Erreur obtenirParcoursStats:", e);
+        return {
+            lecture: 0,
+            numerique: 0,
+            robotique: 0,
+            anglais: 0,
+            civique: 0,
+            eco: 0
+        };
+    }
+}
+
+// Action to get all published modules belonging to a Parcours
+export async function obtenirModulesDuParcours(parcoursSlug: string) {
+    try {
+        const studentId = await obtenirEtudiantId();
+        
+        let targetEnum: any = null;
+        const slug = parcoursSlug.toLowerCase();
+        if (slug === 'lecture') targetEnum = 'COMPREHENSION_LECTURE';
+        else if (slug === 'numerique') targetEnum = 'NUMERIQUE';
+        else if (slug === 'robotique') targetEnum = 'ROBOTIQUE';
+        else if (slug === 'anglais') targetEnum = 'ANGLAIS';
+        else if (slug === 'civique') targetEnum = 'EDUCATION_CIVIQUE';
+        else if (slug === 'eco') targetEnum = 'ECO_CITOYENNETE';
+
+        if (!targetEnum) return [];
+
+        const modules = await prisma.module.findMany({
+            where: {
+                public: 'ENFANT',
+                isPublished: true,
+                parcours: {
+                    has: targetEnum
+                }
+            },
+            include: {
+                cours: {
+                    include: {
+                        exercices: true
+                    }
+                }
+            }
+        });
+
+        const mapped = [];
+        for (const mod of modules) {
+            const exercicesIds = new Set<number>();
+            for (const crs of mod.cours) {
+                for (const ex of crs.exercices) {
+                    exercicesIds.add(ex.id);
+                }
+            }
+
+            const total = exercicesIds.size;
+            let completed = 0;
+
+            if (total > 0) {
+                const scores = await prisma.scoreQuiz.findMany({
+                    where: {
+                        etudiantId: studentId,
+                        exerciceId: { in: Array.from(exercicesIds) }
+                    }
+                });
+                completed = new Set(scores.map(s => s.exerciceId)).size;
+            }
+
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            mapped.push({
+                id: mod.id.toString(),
+                dbId: mod.id,
+                label: mod.titre,
+                description: mod.description || '',
+                progression: pct
+            });
+        }
+        return mapped;
+    } catch (e) {
+        console.error("Erreur obtenirModulesDuParcours:", e);
         return [];
     }
 }

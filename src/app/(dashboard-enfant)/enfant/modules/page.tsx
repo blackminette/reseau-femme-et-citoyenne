@@ -6,48 +6,39 @@ import {
     Sparkles, Trophy, type LucideIcon 
 } from 'lucide-react';
 import { ENFANT as MOCK_ENFANT, MODULES as MOCK_MODULES } from '@/lib/enfant-data';
-import { obtenirProfilEnfant, obtenirModulesDepuisDB } from './actions';
+import { obtenirProfilEnfant, obtenirParcoursStats } from './actions';
 
 export const metadata = {
-    title: 'Mes modules - Espace Enfant',
-    description: 'Découvre tous tes modules et progresse à ton rythme !',
+    title: 'Mes parcours - Espace Enfant',
+    description: 'Découvre tous tes parcours et progresse à ton rythme !',
 };
 
-const METADATA_MAP: Record<string, { Icon: LucideIcon; from: string; to: string; img: string }> = {
-    lecture: { Icon: BookOpen, from: "#66bb6a", to: "#2e7d32", img: "/images/enfants/lecture_decouvrir.png" },
-    numerique: { Icon: Laptop, from: "#42a5f5", to: "#0d47a1", img: "/images/enfants/numerique_decouvrir.png" },
-    robotique: { Icon: Cpu, from: "#9b8cff", to: "#6d5ba8", img: "/images/enfants/quiz_robot.png" },
-    anglais: { Icon: Languages, from: "#ec407a", to: "#880e4f", img: "/images/enfants/anglais_decouvrir.png" },
-    civique: { Icon: Landmark, from: "#ffa726", to: "#e65100", img: "/images/enfants/civique_decouvrir.png" },
-    eco: { Icon: Leaf, from: "#26a69a", to: "#00695c", img: "/images/enfants/eco_decouvrir.png" },
+const METADATA_MAP: Record<string, { Icon: LucideIcon; from: string; to: string; img: string; label: string }> = {
+    lecture: { label: "Lecture & compréhension", Icon: BookOpen, from: "#66bb6a", to: "#2e7d32", img: "/images/enfants/lecture_decouvrir.png" },
+    numerique: { label: "Numérique", Icon: Laptop, from: "#42a5f5", to: "#0d47a1", img: "/images/enfants/numerique_decouvrir.png" },
+    robotique: { label: "Robotique", Icon: Cpu, from: "#9b8cff", to: "#6d5ba8", img: "/images/enfants/quiz_robot.png" },
+    anglais: { label: "Anglais", Icon: Languages, from: "#ec407a", to: "#880e4f", img: "/images/enfants/anglais_decouvrir.png" },
+    civique: { label: "Éducation civique", Icon: Landmark, from: "#ffa726", to: "#e65100", img: "/images/enfants/civique_decouvrir.png" },
+    eco: { label: "Éco-citoyenneté", Icon: Leaf, from: "#26a69a", to: "#00695c", img: "/images/enfants/eco_decouvrir.png" },
 };
 
 export default async function EnfantModulesPage() {
     const profile = await obtenirProfilEnfant();
-    const modulesRes = await obtenirModulesDepuisDB();
+    const stats = await obtenirParcoursStats();
 
     const enfant = profile || MOCK_ENFANT;
-    const listModules = modulesRes && modulesRes.modules && modulesRes.modules.length > 0 
-        ? modulesRes.modules.map(mod => {
-            const slug = mod.slug || 'lecture';
-            const meta = METADATA_MAP[slug] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98", img: "/images/enfants/lecture_decouvrir.png" };
-            return {
-                id: mod.id,
-                label: mod.label,
-                Icon: meta.Icon,
-                progression: mod.progression,
-                from: meta.from,
-                to: meta.to,
-                img: meta.img
-            };
-          })
-        : MOCK_MODULES.map(mod => {
-            const meta = METADATA_MAP[mod.id] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98", img: "/images/enfants/lecture_decouvrir.png" };
-            return {
-                ...mod,
-                img: meta.img
-            };
-        });
+    
+    const listModules = Object.entries(METADATA_MAP).map(([slug, meta]) => {
+        return {
+            id: slug,
+            label: meta.label,
+            Icon: meta.Icon,
+            progression: stats[slug] || 0,
+            from: meta.from,
+            to: meta.to,
+            img: meta.img
+        };
+    });
 
     return (
         <div className="text-violet-900">
@@ -55,9 +46,9 @@ export default async function EnfantModulesPage() {
             <div className="flex flex-wrap items-center justify-between gap-5">
                 <div>
                     <h1 className="flex items-center gap-2 text-[26px] font-bold tracking-tight text-violet-950">
-                        <BookOpen className="h-6 w-6 text-violet-600" aria-hidden /> Mes modules
+                        <BookOpen className="h-6 w-6 text-violet-600" aria-hidden /> Mes parcours
                     </h1>
-                    <p className="text-[13px] text-violet-600">Choisis une matière pour t'amuser, faire des exercices et gagner des badges !</p>
+                    <p className="text-[13px] text-violet-600">Choisis un parcours pour t'amuser, faire des exercices et gagner des badges !</p>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
@@ -79,7 +70,7 @@ export default async function EnfantModulesPage() {
                         <Sparkles className="h-5 w-5 text-amber-300 animate-pulse" aria-hidden /> Prêt(e) pour une nouvelle aventure ?
                     </h2>
                     <p className="text-sm opacity-90 leading-relaxed">
-                        Chaque module te propose des quiz interactifs et des leçons amusantes. Termine-les pour obtenir un score de 100% et débloquer des récompenses uniques !
+                        Chaque parcours te propose des quiz interactifs et des leçons amusantes. Termine-les pour obtenir un score de 100% et débloquer des récompenses uniques !
                     </p>
                     <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1.5 text-xs font-semibold">
                         <Trophy className="h-4 w-4 text-amber-300" aria-hidden /> Tu as déjà validé {enfant.progression}% de ton parcours !
@@ -87,7 +78,7 @@ export default async function EnfantModulesPage() {
                 </div>
             </section>
 
-            {/* ─── Liste des modules en grille ─── */}
+            {/* ─── Liste des parcours en grille ─── */}
             <section className="mt-8 mb-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {listModules.map(({ id, label, Icon, progression, from, to, img }) => (
