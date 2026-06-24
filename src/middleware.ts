@@ -4,15 +4,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Route sur laquelle le middleware s'applique (toutes les routes privées)
+// Route sur laquelle le middleware s'applique (toutes les routes sauf fichiers statiques et API)
 export const config = {
     matcher: [
-        '/membre/:path*',
-        '/admin/:path*',
-        '/enfant/:path*',
-        '/intervenant/:path*',
-        '/benevole/:path*',
-        '/partenaire/:path*',
+        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp).*)',
     ],
 };
 

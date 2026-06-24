@@ -1,6 +1,4 @@
-﻿import React from 'react';
-import VitrineHeader from '@/components/vitrine/VitrineHeader';
-import VitrineFooter from '@/components/vitrine/VitrineFooter';
+import React from 'react';
 
 export default function VitrineLayout({
     children,
@@ -8,10 +6,8 @@ export default function VitrineLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex min-h-screen flex-col bg-neutral-300 text-black">
-            <VitrineHeader />
+        <div className="flex min-h-screen flex-col bg-[#eedeff] text-[#2b1459]">
             <main className="flex-1">{children}</main>
-            <VitrineFooter />
         </div>
     );
 }
