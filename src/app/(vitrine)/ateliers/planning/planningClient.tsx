@@ -19,16 +19,14 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
   const router = useRouter();
 
   useEffect(() => {
-    // 1. On récupère la date d'aujourd'hui (Dynamique !)
     const aujourdhui = new Date();
-    // Optionnel : on remet à minuit pile pour nettoyer les comparaisons de temps
     aujourdhui.setHours(0, 0, 0, 0);
-    
     setCurrentDate(aujourdhui);
   }, []);
 
   if (!currentDate) return <div className="p-12 text-center text-purple-600 font-bold">Chargement du planning...</div>;
 
+  // Modifié ici : Next.js ignore le dossier (vitrine) dans l'URL !
   const handleRedirection = () => {
     router.push('/ateliers/reservation');
   };
@@ -41,18 +39,15 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
     { label: '16h30 – 18h', startHour: 16 }
   ];
 
-  // 2. Calcul automatique du lundi de la semaine en cours
   const diff = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
   const monday = new Date(currentDate);
   monday.setDate(currentDate.getDate() - diff);
   monday.setHours(0, 0, 0, 0);
   
-  // Calcul du samedi de la semaine en cours
   const saturday = new Date(monday);
   saturday.setDate(monday.getDate() + 5);
   saturday.setHours(23, 59, 59, 999);
 
-  // Génération des 6 jours de la semaine (Lundi à Samedi)
   const weekDays = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
@@ -66,7 +61,6 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
     });
   };
 
-  // Filtrage et tri de tous les ateliers de la semaine en cours (Tablette et Mobile)
   const ateliersDeLaSemaine = initialAteliers
     .filter((a) => {
       const dDebut = new Date(a.dateDebut);
@@ -98,7 +92,7 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
         </div>
       </div>
 
-      {/* 2. TITRE DE LA SEMAINE DYNAMIQUE */}
+      {/* 2. TITRE DE LA SEMAINE */}
       <section className="max-w-7xl mx-auto px-4 pt-10 md:pt-16 pb-6 md:pb-8 text-center">
         <h2 className="text-2xl md:text-4xl font-black text-[#503d96] tracking-tight">
           Semaine du {monday.getDate()} au {saturday.getDate()} {monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
@@ -112,14 +106,14 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
       {/* 3. PLANNING RESPONSIVE */}
       <section className="max-w-7xl mx-auto px-4">
         
-        {/* VERSION A : DESKTOP */}
-        <div className="hidden lg:block bg-[#8b7fe7] p-6 rounded-[24px] shadow-lg">
+        {/* VERSION A : CLASSIQUE DESKTOP */}
+        <div className="hidden lg:block bg-[#8b7fe7]/50 backdrop-blur-sm p-6 rounded-[24px] shadow-lg border border-[#8b7fe7]/20">
           <div className="grid grid-cols-7 gap-3 mb-4 text-center">
-            <div className="bg-[#6b5ec2] text-[#dfd3f7] text-[11px] font-extrabold py-2.5 rounded-xl uppercase tracking-wider">
+            <div className="bg-[#6b5ec2]/90 text-[#dfd3f7] text-[11px] font-extrabold py-2.5 rounded-xl uppercase tracking-wider">
               HORAIRES
             </div>
             {daysOfWeekLabels.map((day) => (
-              <div key={day} className="bg-[#6b5ec2] text-[#dfd3f7] text-[11px] font-extrabold py-2.5 rounded-xl uppercase tracking-wider">
+              <div key={day} className="bg-[#6b5ec2]/90 text-[#dfd3f7] text-[11px] font-extrabold py-2.5 rounded-xl uppercase tracking-wider">
                 {day}
               </div>
             ))}
@@ -135,7 +129,7 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
                 const items = getAteliersForDateAndSlot(wDate, slot.startHour);
                 
                 if (items.length === 0) {
-                  return <div key={idx} className="rounded-2xl bg-[#8b7fe7]/40 min-h-[110px]" />;
+                  return <div key={idx} className="rounded-2xl bg-white/15 border border-white/10 min-h-[110px]" />;
                 }
 
                 const atelier = items[0];

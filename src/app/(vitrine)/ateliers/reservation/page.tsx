@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // 1. Import du routeur
+import { useRouter } from 'next/navigation';
 
 interface AtelierProps {
   id: number;
@@ -11,7 +11,7 @@ interface AtelierProps {
 }
 
 export default function ReservationClient({ initialAteliers }: { initialAteliers: AtelierProps[] }) {
-  const router = useRouter(); // 2. Initialisation du routeur
+  const router = useRouter();
 
   const ateliers = initialAteliers?.length > 0 ? initialAteliers : [
     { id: 1, titre: "Peinture libre", description: "Description courte de l'atelier.", ageText: "4 – 12 ans" },
@@ -24,17 +24,16 @@ export default function ReservationClient({ initialAteliers }: { initialAteliers
     nom: '',
     email: '',
     telephone: '',
-    atelier: '',
+    atelierId: '', // Remplacé par atelierId pour correspondre aux identifiants uniques
   });
 
-  // 3. Fonction pour rediriger vers la page contact
   const handleContactRedirection = () => {
-    router.push('/contact'); // Modifie ce chemin si ton dossier contact est placé ailleurs
+    router.push('/contact'); // S'adapte si (vitrine) est utilisé
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Formulaire soumis :', formData);
+    console.log('Formulaire soumis avec succès :', formData);
   };
 
   return (
@@ -50,9 +49,8 @@ export default function ReservationClient({ initialAteliers }: { initialAteliers
             Réserver un atelier
           </h1>
           <p className="text-sm md:text-lg text-[#f0eaff] font-medium max-w-xl">
-            Deux colonnes sur tablette : ateliers à gauche, formulaire à droite.
+            Sélectionnez un atelier à gauche ou remplissez directement le formulaire à droite.
           </p>
-          {/* 4. Ajout du clic sur le bouton Nous contacter */}
           <button 
             onClick={handleContactRedirection}
             className="mt-6 px-6 py-2.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/40 hover:bg-white/30 transition"
@@ -62,7 +60,7 @@ export default function ReservationClient({ initialAteliers }: { initialAteliers
         </div>
       </div>
 
-      {/* 2. ZONE PRINCIPALE COMPOSÉE DES 3 VERSIONS ADAPTATIVES */}
+      {/* 2. ZONE PRINCIPALE */}
       <main className="max-w-6xl mx-auto px-4 pt-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           
@@ -76,7 +74,12 @@ export default function ReservationClient({ initialAteliers }: { initialAteliers
               {ateliers.map((atelier) => (
                 <div 
                   key={atelier.id}
-                  className="bg-white rounded-2xl p-6 shadow-sm border border-purple-100/60 transition hover:shadow-md cursor-pointer"
+                  onClick={() => setFormData({ ...formData, atelierId: atelier.id.toString() })}
+                  className={`bg-white rounded-2xl p-6 shadow-sm border transition hover:shadow-md cursor-pointer ${
+                    formData.atelierId === atelier.id.toString() 
+                      ? 'border-[#8b7fe7] ring-2 ring-[#8b7fe7]/20 bg-purple-50/20' 
+                      : 'border-purple-100/60'
+                  }`}
                 >
                   <h3 className="text-gray-800 font-bold text-lg leading-snug">
                     {atelier.titre}
@@ -147,13 +150,13 @@ export default function ReservationClient({ initialAteliers }: { initialAteliers
                   </label>
                   <select
                     className="w-full bg-[#fbf9fe] border border-purple-100/80 rounded-xl px-4 py-3 text-sm text-gray-600 focus:outline-none focus:border-[#8b7fe7] transition appearance-none"
-                    value={formData.atelier}
-                    onChange={(e) => setFormData({ ...formData, atelier: e.target.value })}
+                    value={formData.atelierId}
+                    onChange={(e) => setFormData({ ...formData, atelierId: e.target.value })}
                     required
                   >
                     <option value="">Choisir un atelier</option>
                     {ateliers.map((a) => (
-                      <option key={a.id} value={a.titre}>{a.titre}</option>
+                      <option key={a.id} value={a.id.toString()}>{a.titre}</option>
                     ))}
                   </select>
                 </div>
