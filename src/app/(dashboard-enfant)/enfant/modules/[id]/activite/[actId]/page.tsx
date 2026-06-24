@@ -30,6 +30,8 @@ type ModuleContent = {
         texte: string;
         emoji: string;
         aRetenir: string;
+        exempleText?: string;
+        exempleImage?: string;
     };
     step2: {
         soustitre: string;
@@ -254,7 +256,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             }
         },
         quiz: [
-            { q: "Quel est le message principal du texte ?", options: ["Léo part à la plage avec ses copains.", "Léo découvre la montagne et passe de bons moments avec sa famille.", "Léo reste à la maison pour jouer à la console.", "Léo va à l'école à pied."], answer: 1, explication: "L'histoire décrit le trajet et le séjour de Léo en famille à la montagne." },
+            { q: "Quel message principal du texte ?", options: ["Léo part à la plage avec ses copains.", "Léo découvre la montagne et passe de bons moments avec sa famille.", "Léo reste à la maison pour jouer à la console.", "Léo va à l'école à pied."], answer: 1, explication: "L'histoire décrit le trajet et le séjour de Léo en famille à la montagne." },
             { q: "Comment Léo et sa famille voyagent-ils ?", options: ["En voiture", "En train", "En avion", "À vélo"], answer: 1, explication: "Le texte indique : 'Ils prennent le train pour aller à la montagne'." },
             { q: "Où s'installent-ils à leur arrivée ?", options: ["Dans un hôtel de luxe", "Sous une tente de camping", "Dans un chalet confortable", "Chez des amis"], answer: 2, explication: "Le texte précise : 'Ils posent leurs valises dans un chalet confortable'." },
             { q: "Qu'est-ce que Léo observe en randonnée ?", options: ["Des voitures et des bus", "Des fleurs sauvages et des papillons colorés", "Des ours et des loups", "Des skieurs"], answer: 1, explication: "Il voit 'des fleurs sauvages et des papillons colorés'." },
@@ -307,7 +309,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
                 "Communiquer avec respect"
             ],
             illustration: "👍",
-            objectif: "Objectif : Utiliser le numérique intelligemment pour apprendre, progresser et de venir autonome."
+            objectif: "Objectif : Utiliser le numérique intelligemment pour apprendre, progresser et devenir autonome."
         },
         exercice: {
             titre: "Associe chaque situation à son bon usage.",
@@ -423,29 +425,26 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
         step1: {
             titre: "Découvrir",
             soustitre: "Qu'est-ce qu'un robot ?",
-            texte: "Un robot est une machine automatique intelligente. Contrairement à un simple jouet, il possède des capteurs pour percevoir son environnement, un programme informatique pour réfléchir, et des moteurs pour agir et se déplacer !",
+            texte: "Un robot est une machine qui peut effectuer des actions toute seule ou avec des consignes.",
             emoji: "🤖 🧠 ⚡",
-            aRetenir: "Un robot associe des capteurs, un programme et des moteurs."
+            aRetenir: "Un robot associe des capteurs, un programme et des moteurs.",
+            exempleText: "Un aspirateur robot nettoie ta chambre automatiquement.",
+            exempleImage: "/images/enfants/vacuum_robot.png"
         },
         step2: {
-            soustitre: "Regarde comment s'organise un robot.",
-            boxTitre: "Les 3 parties du robot",
-            texte: "Pour fonctionner, un robot s'appuie sur trois piliers :\n1. Les Capteurs (ses yeux et oreilles) pour détecter la lumière, le son ou la distance des obstacles.\n2. Le Contrôleur (son cerveau) qui lit les instructions du programme informatique et prend des décisions.\n3. Les Actionneurs (ses muscles) comme les petits moteurs électriques pour faire tourner ses roues ou bouger ses bras.",
+            soustitre: "Comment fonctionne un robot ?",
+            boxTitre: "Le fonctionnement",
+            texte: "Un robot reçoit une information, la traite, puis agit.",
             emoji: "⚙️ 🔌 🤖",
-            aRetenir: ["Les capteurs mesurent, le contrôleur calcule, les moteurs agissent."],
-            badges: [
-                { label: "Capteur ultrason 📡", emoji: "📡" },
-                { label: "Carte contrôleur 🧠", emoji: "🔌" },
-                { label: "Moteur électrique ⚙️", emoji: "⚙️" }
-            ]
+            aRetenir: ["Un robot suit toujours une séquence : recevoir -> traiter -> agir."]
         },
         step3: {
-            soustitre: "Programmer un robot.",
-            texte: "Un robot ne pense pas tout seul ! Pour qu'il avance ou évite un obstacle, nous devons lui écrire une suite d'instructions claires : c'est le code informatique.",
+            soustitre: "Récapitulons !",
+            texte: "Un robot est composé de différentes parties qui travaillent ensemble.",
             pointsCles: [
-                "Un robot exécute fidèlement les instructions de son programme.",
-                "C'est l'humain qui définit le comportement du robot.",
-                "Une erreur de logique dans le code s'appelle un bug !"
+                "Le robot reçoit une information.",
+                "Il traite cette information.",
+                "Il agit en conséquence."
             ],
             bulles: [
                 "Le robot obéit au code",
@@ -456,26 +455,23 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             illustration: "🤖"
         },
         exercice: {
-            titre: "Ordonne les blocs de code pour programmer le robot : il doit démarrer, avancer tout droit, puis s'arrêter s'il détecte un mur.",
+            titre: "Remets les étapes dans l'ordre",
             type: 'order',
             data: {
                 correctOrder: [
-                    "1. Démarrer le robot",
-                    "2. Avancer tout droit",
-                    "3. Si un obstacle est détecté à moins de 10cm",
-                    "4. Arrêter les moteurs",
-                    "5. Faire clignoter la LED rouge"
+                    "👁️ Il reçoit une information.",
+                    "💻 Il traite l'information.",
+                    "⚙️ Il agit."
                 ],
                 initialOrder: [
-                    "4. Arrêter les moteurs",
-                    "1. Démarrer le robot",
-                    "5. Faire clignoter la LED rouge",
-                    "3. Si un obstacle est détecté à moins de 10cm",
-                    "2. Avancer tout droit"
+                    "⚙️ Il agit.",
+                    "👁️ Il reçoit une information.",
+                    "💻 Il traite l'information."
                 ]
             }
         },
         quiz: [
+            { q: "Quelle est la première étape quand un robot fonctionne ?", options: ["Il agit.", "Il traite l'information.", "Il reçoit une information."], answer: 2, explication: "Le robot commence par acquérir des informations par ses capteurs (recevoir), puis les traite dans son unité de contrôle avant de commander les moteurs pour agir." },
             { q: "Quel composant permet au robot d'éviter un mur devant lui ?", options: ["La batterie", "Le capteur de distance", "La diode LED", "Le châssis métallique"], answer: 1, explication: "Le capteur de distance (ultrason ou infrarouge) mesure la proximité des obstacles." },
             { q: "Quel élément joue le rôle du 'cerveau' d'un robot ?", options: ["Le moteur", "La carte de contrôle (microcontrôleur)", "La roue", "Le capteur"], answer: 1, explication: "C'est la carte de contrôle qui exécute le programme et coordonne le robot." },
             { q: "Que font les actionneurs d'un robot ?", options: ["Ils réfléchissent", "Ils captent la lumière", "Ils produisent des actions physiques (mouvement, son, lumière)", "Ils alimentent en courant"], answer: 2, explication: "Les moteurs, haut-parleurs et LED sont des actionneurs qui font agir le robot." },
@@ -484,8 +480,7 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             { q: "Quelle flèche de programmation sert pour faire avancer le robot ?", options: ["La flèche vers le bas", "La flèche vers le haut", "La flèche gauche", "Le bouton stop"], answer: 1, explication: "La flèche pointant vers le haut symbolise le déplacement vers l'avant." },
             { q: "Le robot a-t-il une conscience et des sentiments ?", options: ["Oui, comme nous", "Non, c'est uniquement une machine programmée", "Seulement quand il est connecté à internet", "Seulement s'il a des yeux dessinés"], answer: 1, explication: "Un robot est un automate sans émotion qui suit des calculs logiques." },
             { q: "Pour mesurer la luminosité d'une pièce, le robot utilise...", options: ["Un capteur de lumière (photo-résistance)", "Un capteur de température", "Un moteur de précision", "Son antenne radio"], answer: 0, explication: "Les capteurs de lumière permettent de réagir à la clarté ou à l'obscurité." },
-            { q: "Quelle source d'énergie fait fonctionner la plupart des robots autonomes ?", options: ["De l'essence", "De l'eau", "Une batterie ou des piles électriques", "Le vent"], answer: 2, explication: "L'énergie électrique stockée dans des batteries alimente le cerveau et les moteurs." },
-            { q: "Programmer un robot, c'est...", options: ["Le repeindre d'une jolie couleur", "Lui donner une liste ordonnée d'instructions compréhensibles", "Le démonter pour voir l'intérieur", "L'acheter dans un magasin"], answer: 1, explication: "La programmation consiste à coder les consignes que la machine doit exécuter." }
+            { q: "Quelle source d'énergie fait fonctionner la plupart des robots autonomes ?", options: ["De l'essence", "De l'eau", "Une batterie ou des piles électriques", "Le vent"], answer: 2, explication: "L'énergie électrique stockée dans des batteries alimente le cerveau et les moteurs." }
         ]
     }
 };
@@ -496,12 +491,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
     
-    // Dédetermination du module ID de l'aventure (sert à cibler le bon contenu statique)
+    // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
     const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
     const content = MODULES_ADVENTURES[activeModuleId];
 
     const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${activeModuleId}_decouvrir.png`;
-    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${activeModuleId}_observer.png`;
+    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/robotic_arm.png' : `/images/enfants/${activeModuleId}_observer.png`;
 
     const [loading, setLoading] = useState(true);
     const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
@@ -838,13 +833,26 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     </p>
                                 </div>
 
-                                <div className="bg-amber-50 border border-amber-100/50 p-4 rounded-2xl flex items-start gap-3 mt-4">
-                                    <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
-                                    <div>
-                                        <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
-                                        <p className="text-xs text-amber-800 font-bold mt-0.5">{content.step1.aRetenir}</p>
+                                {/* Exemple Box (si spécifié, ex: aspirateur robot pour la robotique) */}
+                                {content.step1.exempleText ? (
+                                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between gap-4 mt-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] font-black text-violet-700 uppercase tracking-widest block">Exemple</span>
+                                            <p className="text-xs text-slate-700 font-bold leading-normal">{content.step1.exempleText}</p>
+                                        </div>
+                                        {content.step1.exempleImage && (
+                                            <img src={content.step1.exempleImage} alt="Exemple" className="h-14 w-14 object-contain rounded-lg shrink-0" />
+                                        )}
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="bg-amber-50 border border-amber-100/50 p-4 rounded-2xl flex items-start gap-3 mt-4">
+                                        <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
+                                            <p className="text-xs text-amber-800 font-bold mt-0.5">{content.step1.aRetenir}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right Side Illustration */}
@@ -873,6 +881,24 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         {content.step2.texte}
                                     </p>
                                 </div>
+
+                                {/* Ligne de diagramme horizontal spécifique pour le fonctionnement du robot */}
+                                {activeModuleId === 'robotique' && (
+                                    <div className="pl-6 mt-4 grid grid-cols-3 gap-2 border-t border-yellow-200/50 pt-4 text-center font-sans">
+                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
+                                            <span className="text-xl mb-1">👁️</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">1. Il reçoit une info</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
+                                            <span className="text-xl mb-1">💻</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">2. Il traite l'info</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
+                                            <span className="text-xl mb-1">⚙️</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">3. Il agit</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right Side: Image + À retenir */}
@@ -881,7 +907,8 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     <img 
                                         src={step2ImagePath} 
                                         alt={content.step2.boxTitre} 
-                                        className="max-h-[150px] object-contain rounded-xl"
+                                        className="max-h-[150px] object-contain rounded-xl animate-pulse"
+                                        style={{ animationDuration: '3s' }}
                                     />
                                 </div>
 
@@ -942,27 +969,55 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 </div>
                             </div>
 
-                            {/* Right Side: thought bubbles + image */}
+                            {/* Right Side: thought bubbles + image OR Robot labels diagram */}
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {content.step3.bulles.map((b, idx) => (
-                                        <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
-                                            <span className="absolute -top-2 -left-2 text-xs">💬</span>
-                                            <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
+                                {activeModuleId === 'robotique' ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-violet-50/20 border border-violet-100 rounded-3xl p-5 shadow-inner">
+                                        <div className="flex justify-center">
+                                            <img 
+                                                src="/images/enfants/quiz_robot.png" 
+                                                alt="Robot parts" 
+                                                className="max-h-[180px] object-contain"
+                                            />
                                         </div>
-                                    ))}
-                                </div>
-
-                                {content.step3.objectif && (
-                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
-                                        <span className="text-xl">🎯</span>
-                                        <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
+                                        <div className="space-y-2">
+                                            <div className="bg-emerald-50 border-l-4 border-emerald-400 p-2 rounded-r-lg">
+                                                <h5 className="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Capteurs</h5>
+                                                <p className="text-[8px] text-emerald-700 font-bold leading-tight">Ils perçoivent le monde.</p>
+                                            </div>
+                                            <div className="bg-orange-50 border-l-4 border-orange-400 p-2 rounded-r-lg">
+                                                <h5 className="text-[9px] font-black text-orange-800 uppercase tracking-widest">Unité de contrôle</h5>
+                                                <p className="text-[8px] text-orange-700 font-bold leading-tight">Elle réfléchit et prend des décisions.</p>
+                                            </div>
+                                            <div className="bg-blue-50 border-l-4 border-blue-400 p-2 rounded-r-lg">
+                                                <h5 className="text-[9px] font-black text-blue-800 uppercase tracking-widest">Actionneurs</h5>
+                                                <p className="text-[8px] text-blue-700 font-bold leading-tight">Ils réalisent des actions.</p>
+                                            </div>
+                                        </div>
                                     </div>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {content.step3.bulles.map((b, idx) => (
+                                                <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
+                                                    <span className="absolute -top-2 -left-2 text-xs">💬</span>
+                                                    <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {content.step3.objectif && (
+                                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
+                                                <span className="text-xl">🎯</span>
+                                                <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="text-center pt-2">
+                                            <span className="text-5xl animate-pulse inline-block">{content.step3.illustration}</span>
+                                        </div>
+                                    </>
                                 )}
-                                
-                                <div className="text-center pt-2">
-                                    <span className="text-5xl animate-pulse inline-block">{content.step3.illustration}</span>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -1154,11 +1209,24 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
                             {/* Right Side Decoration */}
                             <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/20 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px] overflow-hidden">
-                                <img 
-                                    src="/images/enfants/exercice_generic.png" 
-                                    alt="Activité" 
-                                    className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
-                                />
+                                {activeModuleId === 'robotique' ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <img 
+                                            src="/images/enfants/exercice_generic.png" 
+                                            alt="Activité robotique" 
+                                            className="max-h-[160px] object-contain rounded-2xl"
+                                        />
+                                        <div className="mt-4 bg-white border border-violet-100 px-3 py-1.5 rounded-2xl text-[10px] font-black text-violet-700 shadow-xs">
+                                            Quel est le bon ordre ? 🤔
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <img 
+                                        src="/images/enfants/exercice_generic.png" 
+                                        alt="Activité" 
+                                        className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
+                                    />
+                                )}
                             </div>
                         </div>
                     )}
@@ -1421,23 +1489,45 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
             </div>
 
             {/* ─── TIMELINE DE NAVIGATION HORIZONTALE COMPLÈTE EN BAS (HORS DE LA CARTE) ─── */}
-            <div className="mt-8 border border-slate-100 bg-white rounded-2xl p-4 flex items-center justify-between shadow-xs max-w-md mx-auto text-[10px] font-bold text-slate-400">
-                <div className="flex items-center gap-1">
-                    <span className="text-violet-600">📚</span>
-                    <span className="text-slate-800 font-extrabold">{content.titreGlobal}</span>
+            <div className="mt-8 border border-slate-100 bg-white rounded-2xl p-4 flex flex-wrap items-center justify-center gap-2 md:gap-4 shadow-sm max-w-4xl mx-auto text-xs font-bold text-slate-400">
+                {/* Module title with robot/theme icon */}
+                <div className="flex items-center gap-2 text-slate-800 font-black">
+                    <span className="text-base">🤖</span>
+                    <span>{content.titreGlobal}</span>
+                    <span className="text-slate-300 ml-1 font-normal">&gt;</span>
                 </div>
-                <div className="flex items-center gap-1 text-[11px]">
-                    <span className="text-indigo-600 font-black">Leçon 1/3</span>
-                    <span className="text-slate-200">→</span>
-                    <span>Leçon 2/3</span>
-                    <span className="text-slate-200">→</span>
-                    <span>Leçon 3/3</span>
-                    <span className="text-slate-200">→</span>
-                    <span>Exercice</span>
-                    <span className="text-slate-200">→</span>
-                    <span>Quiz</span>
-                    <span className="text-slate-200">→</span>
-                    <span>Résultat</span>
+
+                {/* Steps List */}
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[11px]">
+                    {[
+                        { idx: 0, label: "Leçon 1/3", icon: "📖" },
+                        { idx: 1, label: "Leçon 2/3", icon: "🔍" },
+                        { idx: 2, label: "Leçon 3/3", icon: "💡" },
+                        { idx: 3, label: "Exercice", icon: "🎮" },
+                        { idx: 4, label: "Quiz", icon: "🎯" },
+                        { idx: 5, label: "Résultat", icon: "🏆" }
+                    ].map((step, sIdx) => {
+                        const isActive = stepIndex === step.idx;
+                        const isCompleted = stepIndex > step.idx;
+
+                        return (
+                            <React.Fragment key={step.idx}>
+                                {sIdx > 0 && <span className="text-slate-300">→</span>}
+                                <div 
+                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
+                                        isActive 
+                                            ? 'text-indigo-600 bg-indigo-50 font-black scale-105' 
+                                            : isCompleted 
+                                                ? 'text-slate-700 font-bold' 
+                                                : 'text-slate-350 opacity-60'
+                                    }`}
+                                >
+                                    <span>{step.icon}</span>
+                                    <span>{step.label}</span>
+                                </div>
+                            </React.Fragment>
+                        );
+                    })}
                 </div>
             </div>
         </div>

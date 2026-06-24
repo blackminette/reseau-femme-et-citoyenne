@@ -1,9 +1,9 @@
-// * src/app/(dashboard-enfant)/layout.tsx
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, TrendingUp, Home } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
+import EnfantNavbar from '@/components/EnfantNavbar';
 
 export const metadata = {
     title: 'AtelierKids - Espace Enfant',
@@ -40,56 +40,44 @@ export default async function EnfantLayout({
                 
                 {/* Logo & Brand */}
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#0b132b] text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm">
-                        <span className="text-[10px] uppercase font-black tracking-wider opacity-75">Vitrine</span>
-                        <span className="font-extrabold text-indigo-400 text-xs">RFC 06</span>
+                    <div className="bg-[#0b132b] text-white px-3 py-1.5 rounded-[12px] font-black text-[10px] flex items-center gap-1.5 shadow-sm">
+                        <span className="uppercase tracking-wider opacity-75">Vitrine</span>
+                        <span className="font-extrabold text-indigo-400 text-[11px]">RFC 06</span>
                     </div>
                     <div>
                         <h1 className="text-sm font-black text-indigo-950 leading-none">AtelierKids</h1>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 block">Plateforme Pédagogique</span>
+                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 block">Plateforme Pédagogique</span>
                     </div>
                 </div>
 
                 {/* Tabs Menu Central (calqué sur la maquette) */}
-                <nav className="flex items-center gap-2 md:gap-4">
-                    <Link 
-                        href="/enfant" 
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-slate-500 hover:text-violet-600 rounded-xl hover:bg-slate-50 transition-all"
-                    >
-                        <Home className="h-4 w-4" /> Accueil
-                    </Link>
-                    <Link 
-                        href="/enfant/modules" 
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-slate-500 hover:text-violet-600 rounded-xl hover:bg-slate-50 transition-all"
-                    >
-                        <BookOpen className="h-4 w-4" /> Mes modules
-                    </Link>
-                    <Link 
-                        href="/enfant#progres" 
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-slate-500 hover:text-violet-600 rounded-xl hover:bg-slate-50 transition-all"
-                    >
-                        <TrendingUp className="h-4 w-4" /> Mes progrès
-                    </Link>
-                </nav>
+                <EnfantNavbar />
 
                 {/* Profil utilisateur & bouton Déconnexion */}
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 border border-orange-200">
-                            👦
+                        <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-violet-100 shadow-xs">
+                            <img 
+                                src="https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4" 
+                                alt="Avatar"
+                                className="h-full w-full object-cover"
+                            />
                         </div>
-                        <div className="text-left hidden sm:block">
-                            <div className="text-[9px] text-slate-400 font-bold leading-none">Bonjour !</div>
-                            <div className="text-xs font-extrabold text-slate-800 mt-0.5">{childName}</div>
+                        <div className="text-left hidden sm:block leading-tight">
+                            <div className="text-[9px] text-slate-400 font-bold">Bonjour !</div>
+                            <div className="text-xs font-extrabold text-slate-800 flex items-center gap-0.5">
+                                {childName} <span className="text-[10px] text-slate-400">▼</span>
+                            </div>
                         </div>
                     </div>
 
                     <Link 
                         href="/api/auth/signout" 
                         prefetch={false}
-                        className="bg-[#e63946] hover:bg-[#d90429] text-white px-4 py-2 rounded-xl text-xs font-black shadow-xs hover:shadow-md transition-all"
+                        className="bg-[#eb5757] hover:bg-[#e04f4f] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5"
                     >
                         Déconnexion
+                        <LogOut className="h-3.5 w-3.5" />
                     </Link>
                 </div>
             </header>
