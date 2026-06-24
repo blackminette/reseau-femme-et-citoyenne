@@ -55,12 +55,12 @@ export default function EnfantBadgesPage() {
 
             {/* ─── Grille des badges ─── */}
             <section className="mt-8 mb-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {BADGES.map(({ label, Icon, desc, obtenu, progress }) => {
+                {BADGES.map(({ label, emoji, desc, obtenu, progress }) => {
                     const progPct = progress ? Math.round((progress.cur / progress.max) * 100) : 0;
                     return (
                         <div
                             key={label}
-                            className={`relative flex flex-col items-center overflow-hidden rounded-2xl border-2 p-6 text-center shadow-xs ${
+                            className={`group relative flex flex-col items-center overflow-hidden rounded-2xl border-2 p-6 text-center shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                                 obtenu ? "border-violet-300 bg-gradient-to-b from-white to-violet-50" : "border-violet-100 bg-white"
                             }`}
                         >
@@ -71,8 +71,8 @@ export default function EnfantBadgesPage() {
                                 </div>
                             )}
 
-                            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${obtenu ? "bg-amber-50 text-amber-500" : "bg-slate-50 text-slate-300"}`}>
-                                <Icon className="h-8 w-8" aria-hidden />
+                            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-4xl leading-none transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6 ${obtenu ? "bg-amber-50" : "bg-slate-50 opacity-40 grayscale"}`} aria-hidden>
+                                {emoji}
                             </div>
 
                             <div className={`mt-3 text-[17px] font-extrabold ${obtenu ? "text-violet-950" : "text-slate-500"}`}>{label}</div>
