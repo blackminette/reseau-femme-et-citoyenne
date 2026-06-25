@@ -4,15 +4,15 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-    ChevronLeft, Play, CheckCircle, Lock, Trophy, 
+import {
+    ChevronLeft, Play, CheckCircle, Lock, Trophy,
     Star, Sparkles, BookOpen
 } from 'lucide-react';
 import { ENFANT, MODULES } from '@/lib/enfant-data';
-import { 
-    obtenirProfilEnfant, 
-    obtenirDetailsModuleDepuisDB, 
-    obtenirModulesDuParcours 
+import {
+    obtenirProfilEnfant,
+    obtenirDetailsModuleDepuisDB,
+    obtenirModulesDuParcours
 } from '../actions';
 
 // Types d'activités
@@ -116,7 +116,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
     useEffect(() => {
         if (!id) return;
-        
+
         async function loadData() {
             setLoading(true);
             try {
@@ -156,7 +156,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
     }, [id, isParcours]);
 
     // Récupération des informations statiques du module/parcours
-    const currentModule = MODULES.find((m) => m.id === id) || 
+    const currentModule = MODULES.find((m) => m.id === id) ||
         (dbModule ? MODULES.find((m) => m.id === dbModule.slug) : null);
 
     const fallbackModule = {
@@ -196,8 +196,8 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
             <div className="text-violet-900">
                 {/* Bouton Retour */}
                 <div className="mb-4">
-                    <Link 
-                        href="/enfant/modules" 
+                    <Link
+                        href="/enfant/modules"
                         className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-bold text-violet-700 shadow-xs hover:bg-violet-50 hover:text-violet-900 transition-colors"
                     >
                         <ChevronLeft className="h-4 w-4" /> Retour aux parcours
@@ -205,16 +205,26 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                 </div>
 
                 {/* Barre du haut */}
-                <div className="flex flex-wrap items-center justify-between gap-5 mt-2">
-                    <div>
+                <div className="relative mt-2 flex flex-wrap items-center justify-between gap-5">
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block sm:w-32 md:w-40">
+                        <Image
+                            src="/images/enfants/napoleon-watermark-final.png"
+                            alt=""
+                            width={720}
+                            height={640}
+                            aria-hidden
+                            className="h-auto w-full select-none opacity-35 blur-[0.1px]"
+                        />
+                    </div>
+                    <div className="relative z-10">
                         <h1 className="flex items-center gap-2.5 text-[26px] font-extrabold tracking-tight text-violet-950">
-                            <span 
+                            <span
                                 className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
                                 style={{ backgroundImage: `linear-gradient(135deg, ${meta.from}, ${meta.to})` }}
                             >
                                 <meta.Icon className="h-5 w-5" aria-hidden />
                             </span>
-                            Parcours : {meta.label}
+                            <span className="whitespace-nowrap">Parcours : {meta.label}</span>
                         </h1>
                         <p className="text-[13px] text-violet-600">Choisis un module pour commencer à apprendre et t&apos;exercer !</p>
                     </div>
@@ -241,7 +251,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                                     href={`/enfant/modules/${mod.slug || mod.id}`}
                                     className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-300"
                                 >
-                                    <div 
+                                    <div
                                         className="h-32 flex items-center justify-center relative overflow-hidden transition-all group-hover:opacity-95"
                                         style={{ backgroundImage: `linear-gradient(135deg, ${meta.from}dd, ${meta.to}dd)` }}
                                     >
@@ -265,12 +275,12 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                                                 <span>{mod.progression}%</span>
                                             </div>
                                             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                                                <div 
-                                                    className="h-full rounded-full transition-all duration-500" 
-                                                    style={{ 
+                                                <div
+                                                    className="h-full rounded-full transition-all duration-500"
+                                                    style={{
                                                         width: `${mod.progression}%`,
                                                         backgroundImage: `linear-gradient(90deg, ${meta.from}, ${meta.to})`
-                                                    }} 
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -296,8 +306,8 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
             <div className="flex flex-col items-center justify-center py-20 text-center text-violet-900">
                 <h2 className="text-2xl font-bold">Oups ! Ce module n&apos;existe pas.</h2>
                 <p className="mt-2 text-violet-500">Retourne à la liste pour choisir une autre activité.</p>
-                <Link 
-                    href="/enfant/modules" 
+                <Link
+                    href="/enfant/modules"
                     className="mt-6 flex items-center gap-2 rounded-full bg-violet-600 px-6 py-2.5 font-semibold text-white shadow-md hover:bg-violet-700"
                 >
                     <ChevronLeft className="h-5 w-5" /> Retourner aux modules
@@ -310,8 +320,8 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
         <div className="text-violet-900">
             {/* ─── Bouton Retour ─── */}
             <div className="mb-4">
-                <Link 
-                    href={dbModule?.slug ? `/enfant/modules/${dbModule.slug}` : "/enfant/modules"} 
+                <Link
+                    href={dbModule?.slug ? `/enfant/modules/${dbModule.slug}` : "/enfant/modules"}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-bold text-violet-700 shadow-xs hover:bg-violet-50 hover:text-violet-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4" /> Retour au parcours
@@ -319,22 +329,35 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
             </div>
 
             {/* ─── Barre du haut : titre du module + chip enfant ─── */}
-            <div className="flex flex-wrap items-center justify-between gap-5 mt-2">
-                <div>
-                    <h1 className="flex items-center gap-2.5 text-[26px] font-extrabold tracking-tight text-violet-950">
-                        <span 
-                            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
-                            style={{ backgroundImage: `linear-gradient(135deg, ${displayModule.from}, ${displayModule.to})` }}
-                        >
-                            <displayModule.Icon className="h-5 w-5" aria-hidden />
-                        </span>
-                        {displayModule.label}
-                    </h1>
-                    <p className="text-[13px] text-violet-600">Progresse étape par étape en complétant les activités ci-dessous.</p>
+            <div className="relative mt-2 flex flex-wrap items-center justify-between gap-5">
+<div className="pointer-events-none absolute right-[10px] top-[85px] block h-[140px] w-[185px] overflow-visible opacity-45 sm:right-[40px] sm:top-[65px] sm:h-[160px] sm:w-[210px] sm:opacity-55 md:right-[90px] md:top-[-85px] md:h-[190px] md:w-[250px] lg:right-[260px] lg:top-[-20px] lg:h-[220px] lg:w-[300px] lg:opacity-65 xl:right-[470px] xl:top-[-45px] xl:h-[240px] xl:w-[330px] 2xl:right-[520px] 2xl:top-[-50px] 2xl:h-[260px] 2xl:w-[350px]">
+                                    <Image
+                        src="/images/enfants/napoleon-watermark-final.png"
+                        alt=""
+                        width={720}
+                        height={640}
+                        aria-hidden
+                        className="h-full w-full select-none object-contain opacity-78"
+                    />
                 </div>
-                
+
+                <div className="flex flex-1 items-start gap-4 min-w-0">
+                    <div className="min-w-0">
+                        <h1 className="flex items-center gap-2.5 text-[26px] font-extrabold tracking-tight text-violet-950">
+                            <span
+                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+                                style={{ backgroundImage: `linear-gradient(135deg, ${displayModule.from}, ${displayModule.to})` }}
+                            >
+                                <displayModule.Icon className="h-5 w-5" aria-hidden />
+                            </span>
+                            <span className="truncate">{displayModule.label}</span>
+                        </h1>
+                        <p className="text-[13px] text-violet-600">Progresse étape par étape en complétant les activités ci-dessous.</p>
+                    </div>
+                </div>
+
                 {/* Badge Enfant */}
-                <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
+                <div className="relative z-10 self-start flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)] sm:self-auto">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
                         {enfant.initiales}
                     </div>
@@ -381,9 +404,9 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
                     <div className="relative min-h-[320px] lg:min-h-full p-4 sm:p-6">
                         <div className="absolute inset-4 sm:inset-6 rounded-[30px] bg-gradient-to-br from-[#f9ecd6] via-[#f4dcc0] to-[#d98b54]" />
-                        <div className="pointer-events-none absolute -top-3 right-2 z-0 hidden w-[62%] opacity-[0.32] blur-[0.2px] sm:block">
+                        <div className="pointer-events-none absolute -top-100 right-[400px] z-0 hidden w-[76%] opacity-[0.18] blur-[0.35px] sm:block">
                             <Image
-                                src="/images/enfants/napoleon-watermark.svg"
+                                src="/images/enfants/napoleon-watermark-final.png"
                                 alt=""
                                 width={720}
                                 height={640}
@@ -433,9 +456,9 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     <h2 className="text-sm font-extrabold text-violet-950">Ta progression dans ce module</h2>
                     <div className="mt-3 flex items-center gap-3">
                         <div className="h-3 flex-1 overflow-hidden rounded-full bg-violet-100">
-                            <div 
-                                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-500" 
-                                style={{ width: `${progression}%` }} 
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-500"
+                                style={{ width: `${progression}%` }}
                             />
                         </div>
                         <div className="text-xl font-black text-violet-950">{progression}%</div>
@@ -464,16 +487,15 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     {activites.map((act, index) => {
                         const isTermine = act.statut === 'termine';
                         const isVerrouille = act.statut === 'verrouille';
-                        
+
                         return (
-                            <div 
-                                key={act.id} 
-                                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-5 transition-all bg-white ${
-                                    isVerrouille 
-                                        ? 'border-slate-100 bg-slate-50/50 opacity-60' 
-                                        : isTermine
-                                            ? 'border-emerald-100 shadow-[0_2px_8px_rgba(16,185,129,0.04)]'
-                                            : 'border-violet-200 shadow-sm hover:border-violet-300'
+                            <div
+                                key={act.id}
+                                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-5 transition-all bg-white ${isVerrouille
+                                    ? 'border-slate-100 bg-slate-50/50 opacity-60'
+                                    : isTermine
+                                        ? 'border-emerald-100 shadow-[0_2px_8px_rgba(16,185,129,0.04)]'
+                                        : 'border-violet-200 shadow-sm hover:border-violet-300'
                                     }`}
                             >
                                 <div className="flex gap-4 items-start">
@@ -518,14 +540,14 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                                             <Lock className="h-4 w-4" /> Bloqué
                                         </button>
                                     ) : isTermine ? (
-                                        <Link 
+                                        <Link
                                             href={`/enfant/modules/${id}/activite/${act.id}`}
                                             className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition-colors"
                                         >
                                             Revoir l&apos;activité
                                         </Link>
                                     ) : (
-                                        <Link 
+                                        <Link
                                             href={`/enfant/modules/${id}/activite/${act.id}`}
                                             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-2.5 text-xs font-black text-white hover:from-violet-700 hover:to-purple-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
                                         >
@@ -538,6 +560,6 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     })}
                 </div>
             </section>
-        </div>
+        </div >
     );
 }
