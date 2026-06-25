@@ -33,7 +33,13 @@ export async function middleware(request: NextRequest) {
     );
 
     // Récupération de l'utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = null;
+    try {
+        const { data } = await supabase.auth.getUser();
+        user = data?.user || null;
+    } catch (e) {
+        console.warn("[Middleware] Échec de la récupération de l'utilisateur (réseau/DNS déconnecté) :", e);
+    }
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
@@ -60,14 +66,18 @@ export async function middleware(request: NextRequest) {
     let userRole: UserRole | null = null;
 
     if (user.email) {
-        const { data: profile, error } = await supabase
-            .from('Utilisateur') // Nom de ta table Prisma
-            .select('role')
-            .eq('email', user.email)
-            .single();
+        try {
+            const { data: profile, error } = await supabase
+                .from('Utilisateur') // Nom de ta table Prisma
+                .select('role')
+                .eq('email', user.email)
+                .single();
 
-        if (!error && profile) {
-            userRole = profile.role as UserRole;
+            if (!error && profile) {
+                userRole = profile.role as UserRole;
+            }
+        } catch (e) {
+            console.warn("[Middleware] Échec de la récupération du rôle utilisateur (réseau/DNS déconnecté) :", e);
         }
     }
 
