@@ -15,7 +15,7 @@ export default function MembreLayout({
                 <AdminSideMenu />
             </aside>
 
-            <main className="w-5/6 ml-auto min-h-screen pt-24 flex flex-col">
+            <main className="w-5/6 ml-auto min-h-screen flex flex-col">
 
                 <div className="flex-1 p-6">
                     <div className="mx-auto w-full">
