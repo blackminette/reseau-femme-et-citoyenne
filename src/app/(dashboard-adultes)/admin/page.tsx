@@ -18,7 +18,10 @@ import {
     Handshake,
     FileText,
     Baby,
-    Loader2,
+    Volume2,
+    Bot,
+    HeartHandshake,
+    ArrowRight
 } from 'lucide-react';
 
 interface ModulePedagogique {
@@ -221,61 +224,225 @@ export default function AdminDashboard() {
                 </div>
             </section>
 
-            {/* SECTION 2 : MODULES PÉDAGOGIQUES DYNAMIQUES */}
-            <section className="mt-12 mb-8">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Modules pédagogiques</h3>
+            {/* Parcours pédagogique */}
+            <section className="mt-12 mb-8 space-y-10">
 
-                {isLoading ? (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement des modules...
+                {/* ================= SECTION ADULTES ================= */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-violet-400">
+                            Parcours Pédagogiques Adultes
+                        </h3>
+                        <span className="text-[10px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full">
+                            Insertion & Autonomie
+                        </span>
                     </div>
-                ) : modules.length === 0 ? (
-                    <p className="text-sm text-slate-500 mt-4">Aucun module configuré pour le moment.</p>
-                ) : (
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
-                        {modules.map((module) => {
-                            const { Icone } = extraireConfigurationModule(module.titre);
 
-                            const hrefUrl = module.public === "ADULTE"
-                                ? `/admin/pedagogie/adultes/${module.id}`
-                                : `/admin/pedagogie/enfants/${module.id}`;
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                            return (
-                                <Link
-                                    key={module.id}
-                                    href={hrefUrl}
-                                    className="group flex items-center justify-between bg-white border border-slate-200 p-5 rounded-2xl shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 rounded-xl bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
-                                            <Icone className="h-5 w-5" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="text-base font-bold text-slate-800 group-hover:text-violet-700 transition-colors">
-                                                    {module.titre}
-                                                </h4>
-                                                {/* Badges unifiés en Violet avec variations de nuances de fond */}
-                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold ${module.public === 'ADULTE'
-                                                    ? 'bg-violet-100 text-violet-700'
-                                                    : 'bg-violet-50 text-violet-500 border border-violet-100'
-                                                    }`}>
-                                                    {module.public === 'ADULTE' ? 'Adulte' : 'Enfant'}
-                                                </span>
-                                            </div>
-                                            {module.description && (
-                                                <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
-                                                    {module.description}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-slate-400 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                                </Link>
-                            );
-                        })}
+                        {/* Carte Numérique Adulte */}
+                        <Link
+                            href="/admin/pedagogie/numerique-adulte"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
+                                    <Laptop className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-700 group-hover:bg-violet-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-violet-950 transition-colors">
+                                    Numérique (Adulte)
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Ateliers informatiques, démarches administratives en ligne et compétences numériques clés pour les adultes.
+                                </p>
+                            </div>
+                        </Link>
+
+                        {/* Carte Expression & Compréhension Orale */}
+                        <Link
+                            href="/admin/pedagogie/oral"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
+                                    <Volume2 className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-700 group-hover:bg-violet-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-violet-950 transition-colors">
+                                    Expression & Compréhension Orale
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Ateliers d'expression, de communication et d'intégration linguistique pour le public adulte.
+                                </p>
+                            </div>
+                        </Link>
+
                     </div>
-                )}
+                </div>
+
+                {/* ================= SECTION ENFANTS ================= */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3 pt-5">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">
+                            Parcours Pédagogiques Enfants
+                        </h3>
+                        <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            Éveil & Juniors
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                        {/* Carte Numérique */}
+                        <Link
+                            href="/admin/pedagogie/numerique"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                                    <Laptop className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-950 transition-colors">
+                                    Numérique
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Initiation ludique aux outils numériques et logique de programmation adaptée aux enfants.
+                                </p>
+                            </div>
+                        </Link>
+
+                        {/* Carte Robotique */}
+                        <Link
+                            href="/admin/pedagogie/robotique"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                                    <Bot className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-950 transition-colors">
+                                    Robotique Ludique
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Ateliers de découverte de l'électronique, d'assemblage et de programmation de mini-robots.
+                                </p>
+                            </div>
+                        </Link>
+
+                        {/* Carte Anglais */}
+                        <Link
+                            href="/admin/pedagogie/anglais"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                                    <Languages className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-950 transition-colors">
+                                    Anglais
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Apprentissage de la langue de manière immersive et interactive par le jeu pour les juniors.
+                                </p>
+                            </div>
+                        </Link>
+
+                        {/* Carte Éco-Citoyenneté */}
+                        <Link
+                            href="/admin/pedagogie/eco-citoyennete"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                                    <HeartHandshake className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-950 transition-colors">
+                                    Éco-Citoyenneté
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Sensibilisation à l'environnement, à la biodiversité et aux écogestes citoyens dès le plus jeune âge.
+                                </p>
+                            </div>
+                        </Link>
+
+                        {/* Carte Éducation Civique */}
+                        <Link
+                            href="/admin/pedagogie/education-civique"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                                    <Scale className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-950 transition-colors">
+                                    Éducation Civique
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Découverte des valeurs, institutions républicaines et des notions de vivre-ensemble.
+                                </p>
+                            </div>
+                        </Link>
+
+                        {/* Carte Compréhension Lecture (Section Enfant) */}
+                        <Link
+                            href="/admin/pedagogie/comprehension-lecture"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                                    <BookOpen className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                    Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-950 transition-colors">
+                                    Compréhension Lecture
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    Soutien à la lecture, analyse d’histoires et consolidation du socle de vocabulaire des enfants.
+                                </p>
+                            </div>
+                        </Link>
+
+                    </div>
+                </div>
+
             </section>
         </div>
     );
