@@ -208,7 +208,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                 <div className="relative mt-2 flex flex-wrap items-center justify-between gap-5">
                     <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block sm:w-32 md:w-40">
                         <Image
-                            src="/images/enfants/napoleon-watermark-final.png"
+                            src="/images/enfants/napoleon-watermark.svg"
                             alt=""
                             width={720}
                             height={640}
@@ -331,13 +331,13 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
             {/* ─── Barre du haut : titre du module + chip enfant ─── */}
             <div className="relative mt-2 flex flex-wrap items-center justify-between gap-5">
 <div className="pointer-events-none absolute right-[10px] top-[85px] block h-[140px] w-[185px] overflow-visible opacity-45 sm:right-[40px] sm:top-[65px] sm:h-[160px] sm:w-[210px] sm:opacity-55 md:right-[90px] md:top-[-85px] md:h-[190px] md:w-[250px] lg:right-[260px] lg:top-[-20px] lg:h-[220px] lg:w-[300px] lg:opacity-65 xl:right-[470px] xl:top-[-45px] xl:h-[240px] xl:w-[330px] 2xl:right-[520px] 2xl:top-[-50px] 2xl:h-[260px] 2xl:w-[350px]">
-                                    <Image
+                    <Image
                         src="/images/enfants/napoleon-watermark-final.png"
                         alt=""
                         width={720}
                         height={640}
                         aria-hidden
-                        className="h-full w-full select-none object-contain opacity-78"
+                        className="h-full w-full select-none object-contain opacity-35 blur-[0.1px]"
                     />
                 </div>
 
@@ -404,9 +404,9 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
                     <div className="relative min-h-[320px] lg:min-h-full p-4 sm:p-6">
                         <div className="absolute inset-4 sm:inset-6 rounded-[30px] bg-gradient-to-br from-[#f9ecd6] via-[#f4dcc0] to-[#d98b54]" />
-                        <div className="pointer-events-none absolute -top-100 right-[400px] z-0 hidden w-[76%] opacity-[0.18] blur-[0.35px] sm:block">
+                        <div className="pointer-events-none absolute -top-100 right-[400px] z-0 hidden w-[76%] opacity-[0.15] blur-[0.35px] sm:block">
                             <Image
-                                src="/images/enfants/napoleon-watermark-final.png"
+                                src="/images/enfants/napoleon-watermark.svg"
                                 alt=""
                                 width={720}
                                 height={640}

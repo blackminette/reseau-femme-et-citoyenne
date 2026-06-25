@@ -16,7 +16,7 @@ export const ENFANT = {
 };
 
 // Modules d'apprentissage. Couleurs reprises de la maquette (dégradés), icônes lucide.
-export type Module = { id: string; label: string; Icon: LucideIcon; progression: number; from: string; to: string };
+export type Module = { id: string; label: string; Icon: LucideIcon; progression: number; from: string; to: string; slug?: string };
 export const MODULES: Module[] = [
     { id: "lecture", label: "Lecture & compréhension", Icon: BookOpen, progression: 73, from: "#66bb6a", to: "#2e7d32" },
     { id: "numerique", label: "Numérique", Icon: Laptop, progression: 85, from: "#42a5f5", to: "#0d47a1" },
