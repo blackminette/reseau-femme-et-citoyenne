@@ -55,11 +55,21 @@ const extraireConfigurationModule = (titre: string) => {
 };
 
 export default function AdminDashboard() {
+    const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
     const [nombreMembres, setNombreMembres] = useState(0);
     const [nombreEnfants, setNombreEnfants] = useState(0);
     const [nombrePartenaires, setNombrePartenaires] = useState(0);
+    const [nombreBenevoles, setNombreBenevoles] = useState(0);
+    const [nombreIntervenants, setNombreIntervenants] = useState(0);
+    const [nombreAdmin, setNombreAdmin] = useState(0);
+    const [nombreEtudiant, setNombreEtudiant] = useState(0);
+
     const [nombreContenus, setNombreContenus] = useState(0);
+    const [nombreLecon, setNombreLecon] = useState(0);
+    const [nombreExercice, setNombreExercice] = useState(0);
+    const [nombreModule, setNombreModule] = useState(0);
 
     const [modules, setModules] = useState<ModulePedagogique[]>([]);
 
@@ -247,8 +257,8 @@ export default function AdminDashboard() {
                                                 </h4>
                                                 {/* Badges unifiés en Violet avec variations de nuances de fond */}
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold ${module.public === 'ADULTE'
-                                                        ? 'bg-violet-100 text-violet-700'
-                                                        : 'bg-violet-50 text-violet-500 border border-violet-100'
+                                                    ? 'bg-violet-100 text-violet-700'
+                                                    : 'bg-violet-50 text-violet-500 border border-violet-100'
                                                     }`}>
                                                     {module.public === 'ADULTE' ? 'Adulte' : 'Enfant'}
                                                 </span>
