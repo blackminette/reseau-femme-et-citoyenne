@@ -16,6 +16,16 @@ function mapTitreToSlug(titre: string): string {
     return 'lecture'; // fallback
 }
 
+// Helper to handle and log DB connection errors cleanly
+function gererErreurBaseDeDonnees(nomFonction: string, err: any) {
+    const msg = err?.message || String(err);
+    if (msg.includes('getaddrinfo') || msg.includes('ECONNREFUSED') || msg.includes('pooler') || msg.includes('Can\'t reach database')) {
+        console.warn(`[Base de données Hors Ligne] ${nomFonction}: Impossible de se connecter à la base de données. Utilisation des fallbacks.`);
+    } else {
+        console.error(`Erreur ${nomFonction}:`, err);
+    }
+}
+
 // Helper to safely resolve student ID
 async function obtenirEtudiantId(): Promise<string> {
     try {
@@ -29,11 +39,15 @@ async function obtenirEtudiantId(): Promise<string> {
     }
     
     // Fallback: chercher le premier compte ENFANT
-    const defaultEnfant = await prisma.utilisateur.findFirst({
-        where: { role: 'ENFANT' }
-    });
-    
-    return defaultEnfant?.id || 'mock-uuid-enfant';
+    try {
+        const defaultEnfant = await prisma.utilisateur.findFirst({
+            where: { role: 'ENFANT' }
+        });
+        return defaultEnfant?.id || 'mock-uuid-enfant';
+    } catch (e) {
+        console.warn("[Actions Enfant] Impossible de se connecter à la base de données, utilisation du UUID fallback:", e);
+        return 'mock-uuid-enfant';
+    }
 }
 
 
@@ -141,7 +155,7 @@ export async function obtenirProfilEnfant() {
             badgesObtenus: badgesCount || 1 // au moins 1 par défaut pour l'accueil
         };
     } catch (e) {
-        console.error("Erreur obtenirProfilEnfant:", e);
+        gererErreurBaseDeDonnees("obtenirProfilEnfant", e);
         return {
             prenom: "Léa",
             nom: "Martin",
@@ -215,7 +229,7 @@ export async function obtenirModulesDepuisDB() {
 
         return { source: 'db', modules: mappedModules };
     } catch (e) {
-        console.error("Erreur obtenirModulesDepuisDB, fallback aux mocks:", e);
+        gererErreurBaseDeDonnees("obtenirModulesDepuisDB", e);
         return { source: 'mock', modules: [] };
     }
 }
@@ -371,7 +385,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             activites: finalActivites
         };
     } catch (e) {
-        console.error("Erreur obtenirDetailsModuleDepuisDB:", e);
+        gererErreurBaseDeDonnees("obtenirDetailsModuleDepuisDB", e);
         return null;
     }
 }
@@ -429,7 +443,7 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
             contenu: exercice.contenu ? (typeof exercice.contenu === 'string' ? JSON.parse(exercice.contenu) : exercice.contenu) : []
         };
     } catch (e) {
-        console.error("Erreur obtenirDetailsActiviteDepuisDB:", e);
+        gererErreurBaseDeDonnees("obtenirDetailsActiviteDepuisDB", e);
         return null;
     }
 }
@@ -469,7 +483,7 @@ export async function sauvegarderResultatActivite(exerciceIdStr: string, score: 
 
         return { success: true };
     } catch (e) {
-        console.error("Erreur sauvegarderResultatActivite:", e);
+        gererErreurBaseDeDonnees("sauvegarderResultatActivite", e);
         return { success: false, error: "Erreur lors de la sauvegarde" };
     }
 }
@@ -523,7 +537,7 @@ export async function obtenirActiviteRecente() {
             };
         });
     } catch (e) {
-        console.error("Erreur obtenirActiviteRecente:", e);
+        gererErreurBaseDeDonnees("obtenirActiviteRecente", e);
         return [];
     }
 }
@@ -599,7 +613,7 @@ export async function obtenirParcoursStats() {
 
         return stats;
     } catch (e) {
-        console.error("Erreur obtenirParcoursStats:", e);
+        gererErreurBaseDeDonnees("obtenirParcoursStats", e);
         return {
             lecture: 0,
             numerique: 0,
@@ -678,7 +692,7 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
         }
         return mapped;
     } catch (e) {
-        console.error("Erreur obtenirModulesDuParcours:", e);
+        gererErreurBaseDeDonnees("obtenirModulesDuParcours", e);
         return [];
     }
 }
