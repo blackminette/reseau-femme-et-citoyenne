@@ -1,6 +1,12 @@
 // * src/app/(dashboard-adultes)/admin/ateliers/page.tsx
 'use client'
 
+declare module '@fullcalendar/react';
+declare module '@fullcalendar/daygrid';
+declare module '@fullcalendar/timegrid';
+declare module '@fullcalendar/interaction';
+declare module '@fullcalendar/core/locales/fr';
+
 import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
