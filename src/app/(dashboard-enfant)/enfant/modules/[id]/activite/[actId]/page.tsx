@@ -534,17 +534,44 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         
         let parsedQuiz = [];
         if (dbActivity.type === 'QUIZ') {
-            try {
-                parsedQuiz = typeof dbActivity.instructions === 'string' && dbActivity.instructions.startsWith('[')
-                    ? JSON.parse(dbActivity.instructions)
-                    : [];
-            } catch (e) {
-                console.error("Failed to parse quiz instructions:", e);
+            if (Array.isArray(dbActivity.contenu) && dbActivity.contenu.length > 0) {
+                parsedQuiz = dbActivity.contenu.map((item: any) => {
+                    const opts = Array.isArray(item.options) ? item.options : (item.affirmation ? ["Vrai", "Faux"] : []);
+                    let ansIdx = opts.indexOf(item.reponseCorrecte);
+                    if (ansIdx === -1) {
+                        ansIdx = opts.findIndex((o: string) => o.toLowerCase() === String(item.reponseCorrecte).toLowerCase());
+                    }
+                    if (ansIdx === -1) ansIdx = 0;
+                    return {
+                        q: item.question || item.affirmation || '',
+                        options: opts,
+                        answer: ansIdx,
+                        explication: item.explication || "Bonne réponse !"
+                    };
+                });
+            } else {
+                try {
+                    parsedQuiz = typeof dbActivity.instructions === 'string' && dbActivity.instructions.startsWith('[')
+                        ? JSON.parse(dbActivity.instructions)
+                        : [];
+                } catch (e) {
+                    console.error("Failed to parse quiz instructions:", e);
+                }
             }
         }
 
         let parsedExerciceData = {};
-        if (dbActivity.type === 'MATCH' || dbActivity.type === 'ORDER') {
+        if (dbActivity.type === 'ORDER' && Array.isArray(dbActivity.contenu) && dbActivity.contenu.length > 0) {
+            const sorted = [...dbActivity.contenu].sort((a: any, b: any) => (a.ordreCorrect || 0) - (b.ordreCorrect || 0));
+            const correctOrder = sorted.map((item: any) => item.label);
+            const initialOrder = [...correctOrder].reverse();
+            parsedExerciceData = {
+                correctOrder,
+                initialOrder
+            };
+        } else if (dbActivity.type === 'MATCH' && dbActivity.contenu && typeof dbActivity.contenu === 'object' && !Array.isArray(dbActivity.contenu)) {
+            parsedExerciceData = dbActivity.contenu;
+        } else if (dbActivity.type === 'MATCH' || dbActivity.type === 'ORDER') {
             try {
                 parsedExerciceData = typeof dbActivity.instructions === 'string' && dbActivity.instructions.startsWith('{')
                     ? JSON.parse(dbActivity.instructions)
@@ -564,7 +591,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 ? {
                     titre: "Découvrir",
                     soustitre: slides[0].titre || dbActivity.titre,
-                    texte: slides[0].texte || slides[0].affirmation || "",
+                    texte: slides[0].texteExplicatif || slides[0].texte || slides[0].affirmation || "",
                     emoji: "📖",
                     aRetenir: slides[0].aRetenir || "Lis attentivement pour comprendre."
                 }
@@ -573,7 +600,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 ? {
                     soustitre: slides[1].titre || "Observer",
                     boxTitre: "À retenir",
-                    texte: slides[1].texte || slides[1].affirmation || "",
+                    texte: slides[1].texteExplicatif || slides[1].texte || slides[1].affirmation || "",
                     emoji: "💡",
                     aRetenir: Array.isArray(slides[1].aRetenir) ? slides[1].aRetenir : [slides[1].aRetenir || "Retiens les notions clés."]
                 }
@@ -581,7 +608,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
             step3: slides[2]
                 ? {
                     soustitre: slides[2].titre || "Comprendre",
-                    texte: slides[2].texte || slides[2].affirmation || "",
+                    texte: slides[2].texteExplicatif || slides[2].texte || slides[2].affirmation || "",
                     pointsCles: Array.isArray(slides[2].pointsCles) ? slides[2].pointsCles : ["Comprends les concepts."],
                     bulles: [],
                     illustration: "🧠"
@@ -611,11 +638,20 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                     } else if (dbAct.type === 'MATCH' || dbAct.type === 'ORDER') {
                         setStepIndex(3);
                         try {
-                            const parsedData = typeof dbAct.instructions === 'string' && dbAct.instructions.startsWith('{')
-                                ? JSON.parse(dbAct.instructions)
-                                : null;
-                            if (parsedData && dbAct.type === 'ORDER' && Array.isArray(parsedData.initialOrder)) {
-                                setOrderedItems([...parsedData.initialOrder]);
+                            if (dbAct.type === 'ORDER') {
+                                if (Array.isArray(dbAct.contenu) && dbAct.contenu.length > 0) {
+                                    const sorted = [...dbAct.contenu].sort((a: any, b: any) => (a.ordreCorrect || 0) - (b.ordreCorrect || 0));
+                                    const correctOrder = sorted.map((item: any) => item.label);
+                                    const initialOrder = [...correctOrder].reverse();
+                                    setOrderedItems(initialOrder);
+                                } else {
+                                    const parsedData = typeof dbAct.instructions === 'string' && dbAct.instructions.startsWith('{')
+                                        ? JSON.parse(dbAct.instructions)
+                                        : null;
+                                    if (parsedData && Array.isArray(parsedData.initialOrder)) {
+                                        setOrderedItems([...parsedData.initialOrder]);
+                                    }
+                                }
                             }
                         } catch (e) {
                             console.error(e);
@@ -833,15 +869,29 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
     const staticModInfo = MODULES.find(m => m.id === id) || { from: "#6d5ba8", to: "#5b4a98" };
 
+    const hasDbLessonPages = dbActivity && dbActivity.type === 'LECON' && Array.isArray(dbActivity.contenu) && dbActivity.contenu.length > 0;
+    const isDbLessonEmpty = dbActivity && dbActivity.type === 'LECON' && (!Array.isArray(dbActivity.contenu) || dbActivity.contenu.length === 0);
+    const maxLessonSteps = hasDbLessonPages ? dbActivity.contenu.length : (isDbLessonEmpty ? 0 : 3);
+
     const dynamicStepsList = [];
     if (dbActivity) {
         if (dbActivity.type === 'LECON') {
-            dynamicStepsList.push(
-                { idx: 0, label: "Découvrir", icon: "📖" },
-                { idx: 1, label: "Observer", icon: "🔍" },
-                { idx: 2, label: "Comprendre", icon: "💡" },
-                { idx: 5, label: "Résultat", icon: "🏆" }
-            );
+            if (hasDbLessonPages) {
+                dbActivity.contenu.forEach((page: any, pIdx: number) => {
+                    let label = "Découvrir";
+                    if (pIdx === 1) label = "Observer";
+                    else if (pIdx === 2) label = "Comprendre";
+                    else if (pIdx > 2) label = `Étape ${pIdx + 1}`;
+                    dynamicStepsList.push({
+                        idx: pIdx,
+                        label: page.titre || label,
+                        icon: "📖"
+                    });
+                });
+            } else {
+                // empty db lesson: no learning steps in navigation timeline
+            }
+            dynamicStepsList.push({ idx: 5, label: "Résultat", icon: "🏆" });
         } else if (dbActivity.type === 'QUIZ') {
             dynamicStepsList.push(
                 { idx: 4, label: "Quiz", icon: "🎯" },
@@ -923,7 +973,46 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
                 <div className="flex-grow flex flex-col justify-center py-6">
                     
-                    {stepIndex === 0 && (
+                    {/* DYNAMIC DATABASE LESSON PAGES */}
+                    {dbActivity && dbActivity.type === 'LECON' && (
+                        hasDbLessonPages && stepIndex < dbActivity.contenu.length ? (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center animate-fade-in">
+                                <div className="space-y-6 flex flex-col justify-between h-full">
+                                    <div className="space-y-4">
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest font-sans">
+                                            Leçon {stepIndex + 1}/{dbActivity.contenu.length}
+                                        </span>
+                                        <h1 className="text-2xl md:text-3xl font-black text-violet-950 leading-tight">
+                                            {dbActivity.contenu[stepIndex].titre}
+                                        </h1>
+                                        <p className="text-sm md:text-base text-slate-800 leading-relaxed font-semibold whitespace-pre-line">
+                                            {dbActivity.contenu[stepIndex].texteExplicatif || dbActivity.contenu[stepIndex].texte}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {dbActivity.contenu[stepIndex].imageUrl && (
+                                    <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
+                                        <img 
+                                            src={dbActivity.contenu[stepIndex].imageUrl} 
+                                            alt={dbActivity.contenu[stepIndex].titre} 
+                                            className="max-h-[260px] object-contain rounded-2xl hover:scale-102 transition-transform duration-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ) : (!hasDbLessonPages && stepIndex !== 5) ? (
+                            <div className="text-center py-12 space-y-6 max-w-xl mx-auto animate-fade-in">
+                                <span className="text-6xl animate-bounce inline-block">🚀</span>
+                                <h1 className="text-2xl font-black text-violet-950">Aventure en préparation !</h1>
+                                <p className="text-sm text-slate-600 font-bold leading-relaxed">
+                                    Le contenu de la leçon <span className="text-violet-700">« {dbActivity.titre} »</span> arrive très bientôt. Reste connecté(e) pour la suite !
+                                </p>
+                            </div>
+                        ) : null
+                    )}
+
+                    {stepIndex === 0 && !hasDbLessonPages && !dbActivity && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                             <div className="space-y-6 flex flex-col justify-between h-full">
                                 <div className="space-y-4">
@@ -957,7 +1046,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </div>
                     )}
 
-                    {stepIndex === 1 && (
+                    {stepIndex === 1 && !hasDbLessonPages && !dbActivity && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                             <div className="bg-yellow-50/40 border border-yellow-100 rounded-3xl p-6 shadow-xs relative overflow-hidden min-h-[280px] flex flex-col justify-between">
                                 <div className="absolute top-0 bottom-0 left-8 w-px bg-rose-200" />
@@ -999,7 +1088,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </div>
                     )}
 
-                    {stepIndex === 2 && (
+                    {stepIndex === 2 && !hasDbLessonPages && !dbActivity && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                             <div className="space-y-6 flex flex-col justify-between h-full">
                                 <div className="space-y-3">
@@ -1332,9 +1421,9 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </Link>
                     )}
 
-                    {stepIndex < 3 && (
+                    {stepIndex < maxLessonSteps && (
                         <div className="flex gap-2">
-                            {[0, 1, 2].map((dotIdx) => (
+                            {Array.from({ length: maxLessonSteps }).map((_, dotIdx) => (
                                 <button
                                     key={dotIdx}
                                     onClick={() => setStepIndex(dotIdx)}
@@ -1346,10 +1435,19 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </div>
                     )}
 
-                    {stepIndex < 3 ? (
+                    {isDbLessonEmpty && stepIndex === 0 ? (
                         <button
                             onClick={() => {
-                                if (stepIndex === 2) {
+                                router.push(`/enfant/modules/${id}`);
+                            }}
+                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all cursor-pointer"
+                        >
+                            Retourner aux modules
+                        </button>
+                    ) : stepIndex < maxLessonSteps ? (
+                        <button
+                            onClick={() => {
+                                if (stepIndex === maxLessonSteps - 1) {
                                     if (dbActivity?.type === 'LECON') {
                                         setStepIndex(5);
                                     } else {
@@ -1361,7 +1459,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             }}
                             className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all cursor-pointer"
                         >
-                            {stepIndex === 2 ? (dbActivity?.type === 'LECON' ? "Terminer la leçon" : "Passer à l'exercice") : "Suivant"} →
+                            {stepIndex === maxLessonSteps - 1 ? (dbActivity?.type === 'LECON' ? "Terminer la leçon" : "Passer à l'exercice") : "Suivant"} →
                         </button>
                     ) : stepIndex === 3 ? (
                         <div className="flex gap-2">

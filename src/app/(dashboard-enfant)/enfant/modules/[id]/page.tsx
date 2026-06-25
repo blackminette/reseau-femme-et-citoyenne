@@ -75,17 +75,12 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             return act;
                         });
 
-                        // Re-calculer séquentiellement l'état 'a_faire'
-                        let unlockedNext = false;
+                        // Déterminer l'état (tout déverrouillé pour l'exploration libre)
                         const finalActivites = enrichedActivites.map((act: any) => {
                             if (act.statut === 'termine') {
                                 return act;
                             }
-                            if (!unlockedNext) {
-                                unlockedNext = true;
-                                return { ...act, statut: 'a_faire' };
-                            }
-                            return { ...act, statut: 'verrouille' };
+                            return { ...act, statut: 'a_faire' };
                         });
 
                         // Re-calculer la progression globale

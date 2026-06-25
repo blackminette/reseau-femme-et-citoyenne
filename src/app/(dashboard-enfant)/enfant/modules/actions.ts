@@ -359,17 +359,12 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             }
         }
 
-        // Déterminer l'état (verrouillé / à faire) dans l'ordre séquentiel
-        let unlockedNext = false;
+        // Déterminer l'état (tout déverrouillé pour l'exploration libre)
         const finalActivites = activites.map((act) => {
             if (act.statut === 'termine') {
                 return act;
             }
-            if (!unlockedNext) {
-                unlockedNext = true;
-                return { ...act, statut: 'a_faire' as const };
-            }
-            return { ...act, statut: 'verrouille' as const };
+            return { ...act, statut: 'a_faire' as const };
         });
 
         const total = finalActivites.length;
