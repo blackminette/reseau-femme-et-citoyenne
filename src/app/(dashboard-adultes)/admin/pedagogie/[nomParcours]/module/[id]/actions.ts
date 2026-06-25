@@ -1,11 +1,10 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/enfants/[id]/actions.ts
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/actions.ts
 'use server';
 
 import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServer } from '@/lib/supabase';
-import { NiveauPedagogique } from '@prisma/client';
 
 export async function getModuleAndCours(id: number) {
     try {
@@ -25,7 +24,7 @@ export async function getModuleAndCours(id: number) {
     }
 }
 
-export async function creerCours(id: number, formData: { titre: string }) {
+export async function creerCours(id: number, formData: { titre: string }, nomParcours: string) {
     try {
         if (!formData.titre || !formData.titre.trim()) {
             return { success: false, error: "Le titre du cours est obligatoire." };
@@ -42,12 +41,11 @@ export async function creerCours(id: number, formData: { titre: string }) {
             data: {
                 titre: formData.titre,
                 intervenanteId: user.id,
-                moduleId: id,
-                niveauRequis: NiveauPedagogique.NIVEAU_1
+                moduleId: id
             }
         })
 
-        revalidatePath(`/admin/pedagogie/enfants/${id}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${id}`);
 
         return { success: true, data: result }
     } catch (error) {
@@ -55,13 +53,13 @@ export async function creerCours(id: number, formData: { titre: string }) {
     }
 }
 
-export async function supprimerCours(id: number) {
+export async function supprimerCours(id: number, nomParcours: string) {
     try {
         const result = await prisma.cours.delete({
             where: { id: id }
         })
 
-        revalidatePath(`/admin/pedagogie/enfants/${id}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${id}`);
 
         return { success: true }
     } catch (error) {
@@ -69,7 +67,7 @@ export async function supprimerCours(id: number) {
     }
 }
 
-export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BAS', moduleId: number) {
+export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BAS', moduleId: number, nomParcours: string) {
     try {
         const coursActuel = await prisma.cours.findUnique({ where: { id: coursId } });
         if (!coursActuel) return { success: false, error: "Cours introuvable" };
@@ -93,11 +91,10 @@ export async function changerOrdreCours(coursId: number, direction: 'HAUT' | 'BA
             prisma.cours.update({ where: { id: coursVoisin.id }, data: { ordreDansModule: coursActuel.ordreDansModule } })
         ]);
 
-        revalidatePath(`/admin/pedagogie/enfants/${moduleId}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${moduleId}`);
 
         return { success: true, data: true };
     } catch (error) {
         return { success: false, error: "Erreur lors de la réorganisation des cours." }
     }
-
 }

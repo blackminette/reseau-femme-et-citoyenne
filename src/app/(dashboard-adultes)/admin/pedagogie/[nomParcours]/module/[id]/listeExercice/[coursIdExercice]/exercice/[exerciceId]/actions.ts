@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/listeExercice/[coursIdExercice]/exercice/[exerciceId]/actions.ts
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/listeExercice/[coursIdExercice]/exercice/[exerciceId]/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
@@ -15,7 +15,7 @@ export async function getExercice(id: number) {
     }
 }
 
-export async function modifierTitreExercice(exerciceId: number, editTitre: string, moduleId: number) {
+export async function modifierTitreExercice(exerciceId: number, editTitre: string, moduleId: number, nomParcours: string) {
     try {
         const result = await prisma.exercice.update({
             where: { id: exerciceId },
@@ -24,7 +24,7 @@ export async function modifierTitreExercice(exerciceId: number, editTitre: strin
             }
         });
 
-        revalidatePath(`/admin/pedagogie/adultes/${moduleId}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${moduleId}`);
 
         return { success: true }
     } catch (error) {
@@ -32,14 +32,14 @@ export async function modifierTitreExercice(exerciceId: number, editTitre: strin
     }
 }
 
-export async function modifierContenuExercice(exerciceId: number, nouveauContenue: any[], moduleId: number) {
+export async function modifierContenuExercice(exerciceId: number, nouveauContenue: any[], moduleId: number, nomParcours: string) {
     try {
         const result = await prisma.exercice.update({
             where: { id: exerciceId },
             data: { contenu: nouveauContenue }
         })
 
-        revalidatePath(`/admin/pedagogie/adultes/${moduleId}`);
+        revalidatePath(`/admin/pedagogie/${nomParcours}/module/${moduleId}`);
 
         return { success: true }
     } catch (error) {

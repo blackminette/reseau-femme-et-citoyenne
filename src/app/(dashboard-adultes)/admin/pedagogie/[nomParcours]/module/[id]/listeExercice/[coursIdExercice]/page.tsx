@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/[id]/listeExercice/[coursIdExercice]/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/listeExercice/[coursIdExercice]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -26,6 +26,7 @@ export default function ListeExercice() {
 
     const paramId = params?.id;
     const paramCoursId = params?.coursIdExercice;
+    const nomParcours = params?.nomParcours as string;
 
     const moduleId = typeof paramId === 'string' ? parseInt(paramId, 10) : null;
     const coursId = typeof paramCoursId === 'string' ? parseInt(paramCoursId, 10) : null;
@@ -86,7 +87,7 @@ export default function ListeExercice() {
         const type = data.get('type') as string;
         const ordre = exercice.length + 1;
 
-        const result = await creerExercice(coursId, { titre, type, ordre }, moduleId)
+        const result = await creerExercice(coursId, { titre, type, ordre }, moduleId, nomParcours)
         if (result?.success) {
             setIsModalOpen(false);
             form.reset();
@@ -101,7 +102,7 @@ export default function ListeExercice() {
         setError(null);
 
         try {
-            const result = await supprimerExercice(exerciceId, coursId, moduleId);
+            const result = await supprimerExercice(exerciceId, coursId, moduleId, nomParcours);
             if (result?.success) {
                 await rafraichirDonnees();
             } else {
@@ -116,7 +117,7 @@ export default function ListeExercice() {
         if (!exercice || !coursId || !moduleId) return;
         setError(null);
 
-        const result = await changerOrdreExercice(exerciceId, direction, coursId, moduleId)
+        const result = await changerOrdreExercice(exerciceId, direction, coursId, moduleId, nomParcours)
 
         if (result.success) {
             await rafraichirDonnees();
@@ -128,7 +129,7 @@ export default function ListeExercice() {
     return (
         <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 text-violet-900 min-h-screen">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                <Link href={`/admin/pedagogie/adultes/${moduleId}`} className="hover:text-violet-600 transition-colors">Pédagogie</Link>
+                <Link href={`/admin/pedagogie/${nomParcours}/module/${moduleId}`} className="hover:text-violet-600 transition-colors">Pédagogie</Link>
                 <ChevronRight className="w-3 h-3" />
                 <span className="text-slate-600">Exercices du cours</span>
             </div>
@@ -169,7 +170,7 @@ export default function ListeExercice() {
                             className="flex items-center justify-between bg-white rounded-xl border border-slate-200/80 hover:border-violet-300 hover:shadow-xs transition-all group"
                         >
                             <Link
-                                href={`/admin/pedagogie/adultes/${moduleId}/listeExercice/${coursId}/exercice/${ex.id}`}
+                                href={`/admin/pedagogie/${nomParcours}/module/${moduleId}/listeExercice/${coursId}/exercice/${ex.id}`}
                                 className="flex-1 flex items-center gap-3.5 p-4 cursor-pointer"
                             >
                                 <div className="p-2.5 bg-violet-50/60 rounded-xl border border-violet-100/50 group-hover:bg-violet-100/50 transition-colors">

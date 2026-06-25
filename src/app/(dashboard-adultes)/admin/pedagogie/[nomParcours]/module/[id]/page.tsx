@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/enfants/[id]/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/module/[id]/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,15 +6,13 @@ import { useParams } from 'next/navigation';
 import { getModuleAndCours, creerCours, supprimerCours, changerOrdreCours } from './actions';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
-import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
-import { NiveauPedagogique } from '@prisma/client';
+import { ChevronRight, ArrowUp, ArrowDown, BrainCircuit, Trash2 } from 'lucide-react';
 
 interface CoursInfo {
     id: number;
     titre: string;
     description: string | null;
     ordreDansModule: number;
-    niveauRequis: NiveauPedagogique;
     createdAt: Date;
 }
 
@@ -35,28 +33,9 @@ export default function AdminModulePage() {
     const [coursId, setCoursId] = useState<number | null>(null);
 
     const params = useParams();
+    const nomParcours = params.nomParcours as string;
     const id = params.id as string;
     const moduleId = parseInt(id, 10);
-
-    const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
-        NIVEAU_1: {
-            label: 'Débutant',
-            classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        },
-        NIVEAU_2: {
-            label: 'Intermédiaire',
-            classes: 'bg-amber-50 text-amber-700 border-amber-200'
-        },
-        NIVEAU_3: {
-            label: 'Avancé',
-            classes: 'bg-rose-50 text-rose-700 border-rose-200'
-        },
-        ADULTE: {
-            label: 'Adulte',
-            // Un joli badge violet pour s'accorder avec votre thème principal
-            classes: 'bg-violet-50 text-violet-700 border-violet-200'
-        }
-    };
 
     const trierLesCours = (coursListe: CoursInfo[]) => {
         return [...coursListe].sort((a, b) => a.ordreDansModule - b.ordreDansModule);
@@ -90,7 +69,7 @@ export default function AdminModulePage() {
         const data = new FormData(form);
         const titre = data.get('titre') as string;
 
-        const result = await creerCours(moduleId, { titre });
+        const result = await creerCours(moduleId, { titre }, nomParcours);
         if (result.success && result.data) {
             setModule(prev => {
                 if (!prev) return null;
@@ -110,7 +89,7 @@ export default function AdminModulePage() {
         if (coursId === null) return;
         setError(null);
 
-        const result = await supprimerCours(coursId);
+        const result = await supprimerCours(coursId, nomParcours);
         if (result.success) {
             setModule(prev => {
                 if (!prev) return null;
@@ -122,7 +101,7 @@ export default function AdminModulePage() {
             setIsModalDeleteOpen(false);
             setCoursId(null);
         } else {
-            setError("Une erreur est survenue.")
+            setError("Une erreur est survenue.");
         }
     };
 
@@ -130,7 +109,7 @@ export default function AdminModulePage() {
         if (!module) return;
         setError(null);
 
-        const result = await changerOrdreCours(coursId, direction, moduleId);
+        const result = await changerOrdreCours(coursId, direction, moduleId, nomParcours);
 
         if (result.success && result.data) {
             const result = await getModuleAndCours(moduleId);
@@ -154,7 +133,7 @@ export default function AdminModulePage() {
         <div className="p-6 space-y-6">
             <div className="flex flex-col space-y-4 mb-6">
                 <Link
-                    href="/admin/pedagogie/enfants"
+                    href={`/admin/pedagogie/${nomParcours}`}
                     className="text-sm text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 w-fit"
                 >
                     <ChevronRight className="h-3 w-3 rotate-180" />
@@ -192,7 +171,7 @@ export default function AdminModulePage() {
                                 className="bg-white border border-violet-200 rounded-xl shadow-sm flex items-center justify-between gap-2 hover:border-violet-300 hover:shadow-md transition-all group pr-3"
                             >
                                 <Link
-                                    href={`/admin/pedagogie/enfants/${moduleId}/cours/${cours.id}`}
+                                    href={`/admin/pedagogie/${nomParcours}/module/${moduleId}/cours/${cours.id}`}
                                     className="flex-1 min-w-0 p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                                 >
                                     <div className="min-w-0">
@@ -200,19 +179,17 @@ export default function AdminModulePage() {
                                             {index + 1}. {cours.titre}
                                         </h3>
                                     </div>
-
-                                    {/* AFFICHAGE DU NIVEAU STYLISÉ */}
-                                    {cours.niveauRequis && (
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0 w-fit ${NIVEAU_STYLES[cours.niveauRequis]?.classes || 'bg-slate-50 text-slate-600 border-slate-200'
-                                            }`}>
-                                            {NIVEAU_STYLES[cours.niveauRequis]?.label || cours.niveauRequis}
-                                        </span>
-                                    )}
                                 </Link>
 
-                                {/* ZONE DE BOUTONS D'ACTION (Flèches d'ordre + Supprimer) */}
                                 <div className="flex items-center gap-1 relative z-10">
-                                    {/* Bouton Monter (Masqué ou désactivé pour le tout premier cours) */}
+                                    <Link
+                                        href={`/admin/pedagogie/${nomParcours}/module/${moduleId}/listeExercice/${cours.id}`}
+                                        className="inline-flex items-center gap-1.5 py-1.5 px-3 text-sm font-medium text-slate-600 hover:text-violet-700 hover:bg-violet-50 rounded-xl transition-all active:scale-95"
+                                    >
+                                        <BrainCircuit className="w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors" />
+                                        Exercices
+                                    </Link>
+
                                     <button
                                         onClick={() => handleReordonner(cours.id, 'HAUT')}
                                         disabled={index === 0}
@@ -222,7 +199,6 @@ export default function AdminModulePage() {
                                         <ArrowUp className="w-4 h-4" />
                                     </button>
 
-                                    {/* Bouton Descendre (Masqué ou désactivé pour le tout dernier cours) */}
                                     <button
                                         onClick={() => handleReordonner(cours.id, 'BAS')}
                                         disabled={index === module.cours.length - 1}
@@ -232,10 +208,8 @@ export default function AdminModulePage() {
                                         <ArrowDown className="w-4 h-4" />
                                     </button>
 
-                                    {/* Séparateur visuel subtil */}
                                     <span className="w-[1px] h-4 bg-slate-200 mx-1"></span>
 
-                                    {/* Ton bouton supprimer d'origine */}
                                     <button
                                         onClick={() => {
                                             setCoursId(cours.id);
@@ -244,16 +218,7 @@ export default function AdminModulePage() {
                                         className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex items-center justify-center shrink-0"
                                         title="Supprimer le cours"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={1.5}
-                                            stroke="currentColor"
-                                            className="w-5 h-5"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                        </svg>
+                                        <Trash2 className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>

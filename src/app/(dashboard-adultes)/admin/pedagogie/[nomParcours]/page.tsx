@@ -1,14 +1,13 @@
-// * src/app/(dashboard-adultes)/admin/pedagogie/adultes/page.tsx
+// * src/app/(dashboard-adultes)/admin/pedagogie/[nomParcours]/page.tsx
 'use client';
-
-/** Page pour choisir et rediriger vers le bon module pédagogique. */
 
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { listerTousLesModules, creerModule, supprimerModule, modifierModule, activateModule } from './actions';
 import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/Modal';
-import { NiveauPedagogique } from '@prisma/client';
+import { NiveauPedagogique, Parcours } from '@prisma/client';
+import { useParams } from 'next/navigation';
 
 interface ModuleAvecCompte {
     id: number;
@@ -21,7 +20,19 @@ interface ModuleAvecCompte {
     niveauRequis?: NiveauPedagogique;
 }
 
-export default function PedagogieAdultesPage() {
+// Mapping pour convertir le slug d'URL en Enum Prisma et gérer les titres dynamiques
+const PARCOURS_CONFIG: Record<string, { enum: Parcours; label: string; defaultNiveau: NiveauPedagogique }> = {
+    "numerique-adulte": { enum: Parcours.NUMERIQUE_ADULTE, label: "Numérique (Adultes)", defaultNiveau: NiveauPedagogique.ADULTE },
+    "oral": { enum: Parcours.ORAL, label: "Expression Orale (Adultes)", defaultNiveau: NiveauPedagogique.ADULTE },
+    "comprehension-lecture": { enum: Parcours.COMPREHENSION_LECTURE, label: "Compréhension Lecture (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
+    "numerique": { enum: Parcours.NUMERIQUE, label: "Numérique (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
+    "anglais": { enum: Parcours.ANGLAIS, label: "Anglais (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
+    "eco-citoyennete": { enum: Parcours.ECO_CITOYENNETE, label: "Éco-Citoyenneté (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
+    "education-civique": { enum: Parcours.EDUCATION_CIVIQUE, label: "Éducation Civique (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
+    "robotique": { enum: Parcours.ROBOTIQUE, label: "Robotique (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 }
+};
+
+export default function PedagogiePage() {
     const [modules, setModules] = useState<ModuleAvecCompte[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
@@ -30,35 +41,33 @@ export default function PedagogieAdultesPage() {
     const [modalDeleteIsOpen, setModalDeleteIsOpen] = useState(false);
     const [modalEditIsOpen, setModalEditIsOpen] = useState(false);
 
+    const params = useParams();
+    const nomParcours = params.nomParcours as string;
+    const config = PARCOURS_CONFIG[nomParcours];
+
+    if (!config) {
+        throw new Error(`Parcours inconnu : ${nomParcours}`);
+    }
+
+    const parcours = config.enum;
+
     const [formData, setFormData] = useState<{ titre: string; description: string; niveauRequis: NiveauPedagogique }>({
         titre: '',
         description: '',
-        niveauRequis: NiveauPedagogique.ADULTE
+        niveauRequis: config.defaultNiveau
     });
 
     const NIVEAU_STYLES: Record<string, { label: string; classes: string }> = {
-        NIVEAU_1: {
-            label: 'Débutant',
-            classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        },
-        NIVEAU_2: {
-            label: 'Intermédiaire',
-            classes: 'bg-amber-50 text-amber-700 border-amber-200'
-        },
-        NIVEAU_3: {
-            label: 'Avancé',
-            classes: 'bg-rose-50 text-rose-700 border-rose-200'
-        },
-        ADULTE: {
-            label: 'Adulte',
-            classes: 'bg-violet-50 text-violet-700 border-violet-200'
-        }
+        NIVEAU_1: { label: 'Débutant', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+        NIVEAU_2: { label: 'Intermédiaire', classes: 'bg-amber-50 text-amber-700 border-amber-200' },
+        NIVEAU_3: { label: 'Avancé', classes: 'bg-rose-50 text-rose-700 border-rose-200' },
+        ADULTE: { label: 'Adulte', classes: 'bg-violet-50 text-violet-700 border-violet-200' }
     };
 
     useEffect(() => {
         async function fetchModules() {
             setIsLoading(true);
-            const result = await listerTousLesModules();
+            const result = await listerTousLesModules(parcours);
             if (result.success && result.data) {
                 setModules(result.data as unknown as ModuleAvecCompte[]);
             } else {
@@ -66,16 +75,15 @@ export default function PedagogieAdultesPage() {
             }
             setIsLoading(false);
         }
-
         fetchModules();
-    }, []);
+    }, [parcours]);
 
     const ouvrirModalModification = (module: ModuleAvecCompte) => {
         setSelectedModuleId(module.id);
         setFormData({
             titre: module.titre,
             description: module.description || '',
-            niveauRequis: module.niveauRequis || NiveauPedagogique.ADULTE
+            niveauRequis: module.niveauRequis || config.defaultNiveau
         });
         setModalEditIsOpen(true);
     };
@@ -88,9 +96,9 @@ export default function PedagogieAdultesPage() {
         const data = new FormData(form);
         const titre = (data.get('titre') as string) || '';
         const description = (data.get('description') as string) || '';
-        const niveauRequis = (data.get('niveauRequis') as NiveauPedagogique) || NiveauPedagogique.ADULTE;
+        const niveauRequis = (data.get('niveauRequis') as NiveauPedagogique) || config.defaultNiveau;
 
-        const result = await creerModule({ titre, description, niveauRequis });
+        const result = await creerModule({ titre, description, niveauRequis }, parcours, nomParcours);
         if (result.success && result.data) {
             setModules(prev => [result.data as unknown as ModuleAvecCompte, ...prev]);
             setModalCreateIsOpen(false);
@@ -104,7 +112,7 @@ export default function PedagogieAdultesPage() {
         if (selectedModuleId === null) return;
         setError(null);
 
-        const result = await supprimerModule(selectedModuleId);
+        const result = await supprimerModule(selectedModuleId, nomParcours);
         if (result.success) {
             setModules(prev => prev.filter(m => m.id !== selectedModuleId));
             setModalDeleteIsOpen(false);
@@ -124,10 +132,11 @@ export default function PedagogieAdultesPage() {
             titre: formData.titre,
             description: formData.description,
             niveauRequis: formData.niveauRequis
-        });
+        }, nomParcours);
+
         if (result.success && result.data) {
             setModalEditIsOpen(false);
-            setFormData({ titre: '', description: '', niveauRequis: NiveauPedagogique.ADULTE });
+            setFormData({ titre: '', description: '', niveauRequis: config.defaultNiveau });
             setSelectedModuleId(null);
             setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m));
         } else {
@@ -135,16 +144,16 @@ export default function PedagogieAdultesPage() {
         }
     };
 
-    const handleActiveModule = async () => {
-        if (selectedModuleId === null) return;
-        const selectedModule = modules.find(m => m.id === selectedModuleId);
+    const handleActiveModule = async (modId: number) => {
+        const selectedModule = modules.find(m => m.id === modId);
         if (!selectedModule) return;
+        setError(null);
 
         const newStatus = !selectedModule.isPublished;
+        const result = await activateModule(modId, newStatus, nomParcours);
 
-        const result = await activateModule(selectedModule.id, newStatus);
         if (result.success) {
-            setModules(prev => prev.map(m => m.id === selectedModuleId ? (result.data as unknown as ModuleAvecCompte) : m));
+            setModules(prev => prev.map(m => m.id === modId ? (result.data as unknown as ModuleAvecCompte) : m));
         } else {
             setError(result.error || "Une erreur est survenue.");
         }
@@ -161,14 +170,14 @@ export default function PedagogieAdultesPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-violet-950 tracking-tight flex items-center gap-2">
                             <GraduationCap className="h-6 w-6 text-violet-600" />
-                            Modules pédagogiques pour adultes
+                            Modules : {config.label}
                         </h1>
-                        <p className="text-sm text-violet-600 mt-1">Gérez les modules d'apprentissage.</p>
+                        <p className="text-sm text-violet-600 mt-1">Gérez les modules d'apprentissage de ce parcours.</p>
                     </div>
 
                     <button
                         onClick={() => {
-                            setFormData({ titre: '', description: '', niveauRequis: NiveauPedagogique.ADULTE });
+                            setFormData({ titre: '', description: '', niveauRequis: config.defaultNiveau });
                             setModalCreateIsOpen(true);
                         }}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-md hover:bg-violet-700 transition-colors"
@@ -195,10 +204,6 @@ export default function PedagogieAdultesPage() {
                                 <div className="h-6 bg-violet-200 rounded-md w-3/4 animate-pulse" />
                                 <div className="h-4 bg-violet-100 rounded-md w-full animate-pulse" />
                             </div>
-                            <div className="pt-4 border-t border-violet-50 flex justify-between">
-                                <div className="h-4 bg-violet-100 rounded-md w-1/4 animate-pulse" />
-                                <div className="h-4 bg-violet-200 rounded-md w-1/3 animate-pulse" />
-                            </div>
                         </div>
                     ))}
                 </div>
@@ -210,10 +215,7 @@ export default function PedagogieAdultesPage() {
                         <BookOpen className="h-6 w-6" />
                     </div>
                     <h3 className="text-sm font-semibold text-violet-950">Aucun module pédagogique</h3>
-                    <p className="text-xs text-violet-600 mt-1 max-w-xs mx-auto">Commencez par créer votre premier module thématique pour y ajouter des chapitres et des exercices.</p>
-                    <button onClick={() => setModalCreateIsOpen(true)} className="mt-4 inline-flex items-center text-xs font-semibold text-violet-600 hover:text-violet-700 gap-1">
-                        Créer le premier module <ChevronRight className="h-3 w-3" />
-                    </button>
+                    <p className="text-xs text-violet-600 mt-1 max-w-xs mx-auto">Commencez par créer votre premier module thématique.</p>
                 </div>
             )}
 
@@ -223,77 +225,42 @@ export default function PedagogieAdultesPage() {
                         <div
                             key={module.id}
                             className={`group bg-white border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative
-                    ${module.isPublished
-                                    ? 'border-violet-200 hover:shadow-md hover:shadow-violet-100'
-                                    : 'border-slate-200 border-dashed bg-slate-50/50 opacity-85 hover:opacity-100'
-                                }`}
+                            ${module.isPublished ? 'border-violet-200 hover:shadow-md' : 'border-slate-200 border-dashed bg-slate-50/50 opacity-85'}`}
                         >
-                            {/* Indicateur visuel de statut (Badge) */}
                             <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
                                 {module.niveauRequis && (
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 w-fit ${NIVEAU_STYLES[module.niveauRequis]?.classes || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${NIVEAU_STYLES[module.niveauRequis]?.classes || ''}`}>
                                         {NIVEAU_STYLES[module.niveauRequis]?.label || module.niveauRequis}
                                     </span>
                                 )}
-                                {module.isPublished ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        Publié
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">
-                                        Brouillon
-                                    </span>
-                                )}
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${module.isPublished ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                                    {module.isPublished ? 'Publié' : 'Brouillon'}
+                                </span>
                             </div>
 
-                            <Link href={`/admin/pedagogie/adultes/${module.id}`} className="pr-16">
+                            <Link href={`/admin/pedagogie/${nomParcours}/module/${module.id}`} className="pr-16">
                                 <div className="space-y-3">
-                                    <div>
-                                        <h3 className={`font-bold text-base tracking-tight transition-colors
-                                ${module.isPublished ? 'text-violet-900 group-hover:text-violet-600' : 'text-slate-500 group-hover:text-violet-600'}`}
-                                        >
-                                            {module.titre}
-                                        </h3>
-                                        <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed
-                                ${module.isPublished ? 'text-violet-600' : 'text-slate-400'}`}
-                                        >
-                                            {module.description || "Aucune description fournie pour ce module pédagogique."}
-                                        </p>
-                                    </div>
+                                    <h3 className={`font-bold text-base tracking-tight ${module.isPublished ? 'text-violet-900' : 'text-slate-500'}`}>{module.titre}</h3>
+                                    <p className={`text-xs line-clamp-2 ${module.isPublished ? 'text-violet-600' : 'text-slate-400'}`}>{module.description || "Aucune description."}</p>
                                 </div>
                             </Link>
 
                             <div className="mt-5 pt-4 border-t border-violet-100 flex items-center justify-between text-xs">
                                 <div className="flex items-center gap-1.5 text-violet-700 font-medium bg-violet-50 px-2 py-1 rounded-md">
                                     <BookOpen className="h-3.5 w-3.5 text-violet-500" />
-                                    <span>{module._count.cours} {module._count.cours > 1 ? 'cours' : 'cours'}</span>
+                                    <span>{module._count.cours} cours</span>
                                 </div>
 
                                 <div className="flex items-center gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setSelectedModuleId(module.id);
-                                            handleActiveModule();
-                                        }}
-                                        className={`p-1.5 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm
-                                ${module.isPublished
-                                                ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-700'
-                                                : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700'
-                                            }`}
-                                        title={module.isPublished ? "Masquer le module (Brouillon)" : "Publier le module"}
+                                        onClick={() => handleActiveModule(module.id)}
+                                        className={`p-1.5 rounded-xl border flex items-center justify-center shadow-sm cursor-pointer ${module.isPublished ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-emerald-50 border-emerald-200 text-emerald-600'}`}
                                     >
                                         {module.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
-
-                                    <button onClick={() => ouvrirModalModification(module)} className="text-violet-600 hover:text-violet-700 font-semibold flex items-center gap-1 group/link cursor-pointer">
-                                        <Pencil className="h-3.5 w-3.5" /> Modifier
-                                    </button>
-
-                                    <button onClick={() => { setSelectedModuleId(module.id); setModalDeleteIsOpen(true); }} className="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1 group/link cursor-pointer">
-                                        <Trash className="h-3.5 w-3.5" /> Supprimer
-                                    </button>
+                                    <button onClick={() => ouvrirModalModification(module)} className="text-violet-600 text-xs font-semibold flex items-center gap-1"><Pencil className="h-3.5 w-3.5" /> Modifier</button>
+                                    <button onClick={() => { setSelectedModuleId(module.id); setModalDeleteIsOpen(true); }} className="text-amber-600 text-xs font-semibold flex items-center gap-1"><Trash className="h-3.5 w-3.5" /> Supprimer</button>
                                 </div>
                             </div>
                         </div>
@@ -301,20 +268,21 @@ export default function PedagogieAdultesPage() {
                 </div>
             )}
 
+            {/* Modal de Création */}
             <Modal isOpen={modalCreateIsOpen} onClose={() => setModalCreateIsOpen(false)} title="Créer un nouveau module pédagogique">
                 <div className="bg-white p-6 rounded-lg">
                     <form onSubmit={handleCreateModule} className="space-y-4">
                         <div>
                             <label htmlFor="titre" className="block text-sm font-medium text-violet-800">Titre du module <span className="text-amber-500">*</span></label>
-                            <input type="text" id="titre" name="titre" required className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez le titre du module" />
+                            <input type="text" id="titre" name="titre" required className="mt-1 block w-full border border-violet-200 rounded-md p-2 text-sm" placeholder="Entrez le titre du module" />
                         </div>
                         <div>
                             <label htmlFor="description" className="block text-sm font-medium text-violet-800">Description du module</label>
-                            <textarea id="description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez la description du module" />
+                            <textarea id="description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md p-2 text-sm" placeholder="Entrez la description du module" />
                         </div>
                         <div>
                             <label htmlFor="niveauRequis" className="block text-sm font-medium text-violet-800">Niveau requis</label>
-                            <select id="niveauRequis" name="niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500 bg-white">
+                            <select id="niveauRequis" name="niveauRequis" defaultValue={config.defaultNiveau} className="mt-1 block w-full border border-violet-200 rounded-md p-2 text-sm bg-white">
                                 <option value={NiveauPedagogique.ADULTE}>Adulte</option>
                                 <option value={NiveauPedagogique.NIVEAU_1}>Débutant (Niveau 1)</option>
                                 <option value={NiveauPedagogique.NIVEAU_2}>Intermédiaire (Niveau 2)</option>
@@ -322,37 +290,39 @@ export default function PedagogieAdultesPage() {
                             </select>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
-                            <button type="button" onClick={() => setModalCreateIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
-                            <button type="submit" className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm">Créer</button>
+                            <button type="button" onClick={() => setModalCreateIsOpen(false)} className="px-4 py-2 text-sm text-slate-500">Annuler</button>
+                            <button type="submit" className="px-4 py-2 bg-violet-600 text-white rounded-md text-sm">Créer</button>
                         </div>
                     </form>
                 </div>
             </Modal>
 
+            {/* Modal de Suppression */}
             <Modal isOpen={modalDeleteIsOpen} onClose={() => setModalDeleteIsOpen(false)} title="Confirmer la suppression">
                 <div className="bg-white p-6 rounded-lg">
                     <p className="text-violet-800 text-sm">Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.</p>
                     <div className="flex justify-end gap-3 mt-6">
-                        <button type="button" onClick={() => setModalDeleteIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
-                        <button type="button" onClick={handleDeleteModule} className="px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 font-medium rounded-md text-sm">Supprimer</button>
+                        <button type="button" onClick={() => setModalDeleteIsOpen(false)} className="px-4 py-2 text-sm text-slate-500">Annuler</button>
+                        <button type="button" onClick={handleDeleteModule} className="px-4 py-2 bg-amber-500 text-white rounded-md text-sm">Supprimer</button>
                     </div>
                 </div>
             </Modal>
 
+            {/* Modal de Modification */}
             <Modal isOpen={modalEditIsOpen} onClose={() => setModalEditIsOpen(false)} title="Modifier un module pédagogique">
                 <div className="bg-white p-6 rounded-lg">
                     <form onSubmit={handleModifierModule} className="space-y-4">
                         <div>
                             <label htmlFor="edit-titre" className="block text-sm font-medium text-violet-800">Titre du module <span className="text-amber-500">*</span></label>
-                            <input type="text" id="edit-titre" name="titre" required className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez le titre du module" value={formData.titre} onChange={e => setFormData({ ...formData, titre: e.target.value })} />
+                            <input type="text" id="edit-titre" required className="mt-1 block w-full border border-violet-200 rounded-md p-2 text-sm" value={formData.titre} onChange={e => setFormData({ ...formData, titre: e.target.value })} />
                         </div>
                         <div>
                             <label htmlFor="edit-description" className="block text-sm font-medium text-violet-800">Description du module</label>
-                            <textarea id="edit-description" name="description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500" placeholder="Entrez la description du module" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                            <textarea id="edit-description" rows={3} className="mt-1 block w-full border border-violet-200 rounded-md p-2 text-sm" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                         </div>
                         <div>
                             <label htmlFor="edit-niveauRequis" className="block text-sm font-medium text-violet-800">Niveau requis</label>
-                            <select id="edit-niveauRequis" name="niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md shadow-sm p-2 text-sm focus:ring-violet-500 focus:border-violet-500 bg-white" value={formData.niveauRequis} onChange={e => setFormData({ ...formData, niveauRequis: e.target.value as NiveauPedagogique })} >
+                            <select id="edit-niveauRequis" className="mt-1 block w-full border border-violet-200 rounded-md p-2 text-sm bg-white" value={formData.niveauRequis} onChange={e => setFormData({ ...formData, niveauRequis: e.target.value as NiveauPedagogique })} >
                                 <option value={NiveauPedagogique.ADULTE}>Adulte</option>
                                 <option value={NiveauPedagogique.NIVEAU_1}>Débutant (Niveau 1)</option>
                                 <option value={NiveauPedagogique.NIVEAU_2}>Intermédiaire (Niveau 2)</option>
@@ -360,8 +330,8 @@ export default function PedagogieAdultesPage() {
                             </select>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
-                            <button type="button" onClick={() => setModalEditIsOpen(false)} className="px-4 py-2 text-violet-700 hover:text-violet-900 font-medium text-sm">Annuler</button>
-                            <button type="submit" className="px-4 py-2 bg-violet-600 text-white hover:bg-violet-700 font-medium rounded-md text-sm">Enregistrer</button>
+                            <button type="button" onClick={() => setModalEditIsOpen(false)} className="px-4 py-2 text-sm text-slate-500">Annuler</button>
+                            <button type="submit" className="px-4 py-2 bg-violet-600 text-white rounded-md text-sm">Enregistrer</button>
                         </div>
                     </form>
                 </div>
