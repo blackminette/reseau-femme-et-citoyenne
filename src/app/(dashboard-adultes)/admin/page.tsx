@@ -1,11 +1,12 @@
-// * src/app/(dashboard-adultes)/admin/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { compterUtilisateurs, compterContenu, recupererModulesPedagogiques } from './actions';
+import { compterUtilisateurs, compterContenu } from './actions';
 import {
+    User,
     Users,
+    UsersRound,
     Calendar,
     GraduationCap,
     BookOpen,
@@ -21,7 +22,12 @@ import {
     Volume2,
     Bot,
     HeartHandshake,
-    ArrowRight
+    ArrowRight,
+    ShieldAlert,
+    UserCheck,
+    BookMarked,
+    FileCode,
+    Layers
 } from 'lucide-react';
 
 interface ModulePedagogique {
@@ -68,32 +74,40 @@ export default function AdminDashboard() {
     const [nombreIntervenants, setNombreIntervenants] = useState(0);
     const [nombreAdmin, setNombreAdmin] = useState(0);
     const [nombreEtudiant, setNombreEtudiant] = useState(0);
+    const [nombreUtilisateur, setNombreUtilisateur] = useState(0);
 
     const [nombreContenus, setNombreContenus] = useState(0);
-    const [nombreLecon, setNombreLecon] = useState(0);
+    const [nombreCours, setNombreCours] = useState(0);
     const [nombreExercice, setNombreExercice] = useState(0);
     const [nombreModule, setNombreModule] = useState(0);
 
-    const [modules, setModules] = useState<ModulePedagogique[]>([]);
-
     async function chargerDonneesDashboard() {
         try {
-            const [membre, enfant, partenaire, contenu, modulesRes] = await Promise.all([
+            const [membre, enfant, partenaire, benevole, intervenant, admin, etudiant, tous, contenu] = await Promise.all([
                 compterUtilisateurs('MEMBRE'),
                 compterUtilisateurs('ENFANT'),
                 compterUtilisateurs('PARTENAIRE'),
+                compterUtilisateurs('BENEVOLE'),
+                compterUtilisateurs('INTERVENANT'),
+                compterUtilisateurs('ADMIN'),
+                compterUtilisateurs('ETUDIANT'),
+                compterUtilisateurs('ALL'),
                 compterContenu(),
-                recupererModulesPedagogiques()
             ]);
 
-            if (membre.success && membre.data) setNombreMembres(membre.data.count);
-            if (enfant.success && enfant.data) setNombreEnfants(enfant.data.count);
-            if (partenaire.success && partenaire.data) setNombrePartenaires(partenaire.data.count);
-            if (contenu.success && contenu.data) setNombreContenus(contenu.data);
+            if (membre.success && membre.data) setNombreMembres(membre.data);
+            if (enfant.success && enfant.data) setNombreEnfants(enfant.data);
+            if (partenaire.success && partenaire.data) setNombrePartenaires(partenaire.data);
+            if (benevole.success && benevole.data) setNombreBenevoles(benevole.data);
+            if (intervenant.success && intervenant.data) setNombreIntervenants(intervenant.data);
+            if (admin.success && admin.data) setNombreAdmin(admin.data);
+            if (etudiant.success && etudiant.data) setNombreEtudiant(etudiant.data);
+            if (tous.success && tous.data) setNombreUtilisateur(tous.data);
 
-            if (modulesRes.success && modulesRes.data) {
-                setModules(modulesRes.data);
-            }
+            if (contenu.success && contenu.data) setNombreContenus(contenu.data);
+            if (contenu.success && contenu.dataCours) setNombreCours(contenu.dataCours);
+            if (contenu.success && contenu.dataExercice) setNombreExercice(contenu.dataExercice);
+            if (contenu.success && contenu.dataModule) setNombreModule(contenu.dataModule);
 
         } catch (error) {
             console.error("Erreur lors du chargement des statistiques du dashboard:", error);
@@ -108,88 +122,197 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-slate-50/50 text-violet-900 p-6 md:p-8">
-            {/* EN-TÊTE PRINCIPAL */}
             <div className="flex flex-col gap-1 border-b border-slate-200 pb-5">
                 <h1 className="text-3xl font-bold text-violet-950 tracking-tight">Console d'Administration</h1>
                 <p className="text-sm text-slate-500">Vue d'ensemble de l'association, gestion des adhésions et suivi des programmes.</p>
             </div>
 
-            {/* SECTION VUE D'ENSEMBLE / STATISTIQUES */}
-            <section className="mt-8">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Vue d'ensemble</h3>
-
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl">
-                    {/* Carte Statistique : Membres */}
-                    <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs flex items-center gap-4 transition-all hover:border-violet-300">
-                        <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
-                            <Users className="h-6 w-6" />
+            <section className="mt-8 space-y-8">
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Statistiques des Utilisateurs</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl">
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <User className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreMembres}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Membres inscrits</p>
+                            </div>
                         </div>
-                        <div>
-                            {isLoading ? (
-                                <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
-                            ) : (
-                                <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreMembres}</span>
-                            )}
-                            <p className="text-xs font-medium text-slate-500">Membres inscrits</p>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <Baby className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreEnfants}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Enfants suivis</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <Handshake className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombrePartenaires}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Partenaires</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <HeartHandshake className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreBenevoles}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Bénévoles</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <UserCheck className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreIntervenants}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Intervenants</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <GraduationCap className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreEtudiant}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Étudiants</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <ShieldAlert className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreAdmin}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Administrateurs</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <UsersRound className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreUtilisateur}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Nombre total d'utilisateurs</p>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Carte Statistique : Enfants */}
-                    <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs flex items-center gap-4 transition-all hover:border-violet-300">
-                        <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
-                            <Baby className="h-6 w-6" />
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Statistiques Pédagogiques</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl">
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <FileText className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreContenus}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Contenus globaux</p>
+                            </div>
                         </div>
-                        <div>
-                            {isLoading ? (
-                                <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
-                            ) : (
-                                <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreEnfants}</span>
-                            )}
-                            <p className="text-xs font-medium text-slate-500">Enfants suivis</p>
-                        </div>
-                    </div>
 
-                    {/* Carte Statistique : Partenaires */}
-                    <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs flex items-center gap-4 transition-all hover:border-violet-300">
-                        <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
-                            <Handshake className="h-6 w-6" />
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <Layers className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreModule}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Modules créés</p>
+                            </div>
                         </div>
-                        <div>
-                            {isLoading ? (
-                                <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
-                            ) : (
-                                <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombrePartenaires}</span>
-                            )}
-                            <p className="text-xs font-medium text-slate-500">Partenaires</p>
-                        </div>
-                    </div>
 
-                    {/* Carte Statistique : Contenus */}
-                    <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs flex items-center gap-4 transition-all hover:border-violet-300">
-                        <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
-                            <FileText className="h-6 w-6" />
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <BookMarked className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreCours}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Leçons publiées</p>
+                            </div>
                         </div>
-                        <div>
-                            {isLoading ? (
-                                <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
-                            ) : (
-                                <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreContenus}</span>
-                            )}
-                            <p className="text-xs font-medium text-slate-500">Contenus publiés</p>
+
+                        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:border-violet-300">
+                            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                                <FileCode className="h-6 w-6" />
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mb-1" />
+                                ) : (
+                                    <span className="text-2xl font-bold text-violet-950 tracking-tight">{nombreExercice}</span>
+                                )}
+                                <p className="text-xs font-medium text-slate-500">Exercices interactifs</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* SECTION 1 : ACTIONS RAPIDES */}
             <section className="mt-10">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Actions rapides</h3>
-
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
-                    {/* Gérer les membres */}
-                    <Link href="/admin/membres" className="group bg-white border border-slate-200 p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200">
+                    <Link href="/admin/membres" className="group bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md hover:border-violet-400 transition-all duration-200">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                            <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
                                 <Users className="h-5 w-5" />
                             </div>
                             <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-violet-500 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
@@ -198,10 +321,9 @@ export default function AdminDashboard() {
                         <p className="text-xs text-slate-500 mt-1">Inscriptions, rôles RBAC et fiches personnelles</p>
                     </Link>
 
-                    {/* Gérer les ateliers */}
-                    <Link href="/admin/ateliers" className="group bg-white border border-slate-200 p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200">
+                    <Link href="/admin/ateliers" className="group bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md hover:border-violet-400 transition-all duration-200">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                            <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
                                 <Calendar className="h-5 w-5" />
                             </div>
                             <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-violet-500 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
@@ -210,10 +332,9 @@ export default function AdminDashboard() {
                         <p className="text-xs text-slate-500 mt-1">Planification, présence et calendriers</p>
                     </Link>
 
-                    {/* Gérer la pédagogie */}
-                    <Link href="/admin/pedagogie" className="group bg-white border border-slate-200 p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200">
+                    <Link href="/admin/pedagogie" className="group bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md hover:border-violet-400 transition-all duration-200">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                            <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
                                 <GraduationCap className="h-5 w-5" />
                             </div>
                             <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-violet-500 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
@@ -224,10 +345,7 @@ export default function AdminDashboard() {
                 </div>
             </section>
 
-            {/* Parcours pédagogique */}
             <section className="mt-12 mb-8 space-y-10">
-
-                {/* ================= SECTION ADULTES ================= */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-violet-400">
@@ -239,17 +357,15 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                        {/* Carte Numérique Adulte */}
                         <Link
                             href="/admin/pedagogie/numerique-adulte"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-violet-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
                                     <Laptop className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-700 group-hover:bg-violet-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-700 group-hover:bg-violet-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -263,16 +379,15 @@ export default function AdminDashboard() {
                             </div>
                         </Link>
 
-                        {/* Carte Expression & Compréhension Orale */}
                         <Link
                             href="/admin/pedagogie/oral"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-violet-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-violet-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
                                     <Volume2 className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-700 group-hover:bg-violet-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-700 group-hover:bg-violet-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -285,11 +400,9 @@ export default function AdminDashboard() {
                                 </p>
                             </div>
                         </Link>
-
                     </div>
                 </div>
 
-                {/* ================= SECTION ENFANTS ================= */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-3 pt-5">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">
@@ -301,17 +414,15 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                        {/* Carte Numérique */}
                         <Link
                             href="/admin/pedagogie/numerique"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
                                     <Laptop className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -325,16 +436,15 @@ export default function AdminDashboard() {
                             </div>
                         </Link>
 
-                        {/* Carte Robotique */}
                         <Link
                             href="/admin/pedagogie/robotique"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
                                     <Bot className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -348,16 +458,15 @@ export default function AdminDashboard() {
                             </div>
                         </Link>
 
-                        {/* Carte Anglais */}
                         <Link
                             href="/admin/pedagogie/anglais"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
                                     <Languages className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -371,16 +480,15 @@ export default function AdminDashboard() {
                             </div>
                         </Link>
 
-                        {/* Carte Éco-Citoyenneté */}
                         <Link
                             href="/admin/pedagogie/eco-citoyennete"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
                                     <HeartHandshake className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -394,16 +502,15 @@ export default function AdminDashboard() {
                             </div>
                         </Link>
 
-                        {/* Carte Éducation Civique */}
                         <Link
                             href="/admin/pedagogie/education-civique"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
                                     <Scale className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -417,16 +524,15 @@ export default function AdminDashboard() {
                             </div>
                         </Link>
 
-                        {/* Carte Compréhension Lecture (Section Enfant) */}
                         <Link
                             href="/admin/pedagogie/comprehension-lecture"
-                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
+                            className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-400 transition-all duration-200 text-left"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
                                     <BookOpen className="h-6 w-6" />
                                 </div>
-                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors">
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full group-hover:text-amber-800 group-hover:bg-amber-100 transition-colors duration-200">
                                     Gérer <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </div>
@@ -439,10 +545,8 @@ export default function AdminDashboard() {
                                 </p>
                             </div>
                         </Link>
-
                     </div>
                 </div>
-
             </section>
         </div>
     );
