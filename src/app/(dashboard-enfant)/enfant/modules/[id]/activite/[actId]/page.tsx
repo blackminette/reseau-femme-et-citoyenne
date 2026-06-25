@@ -1110,32 +1110,45 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
                                 {content.exercice.type === 'order' && (
                                     <div className="space-y-2 max-w-xl">
-                                        {orderedItems.map((item: string, idx: number) => (
-                                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-3 text-xs font-bold">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-[10px]">
-                                                        {idx + 1}
-                                                    </span>
-                                                    <span className="text-slate-800">{item}</span>
+                                                                        {orderedItems.map((item: string, idx: number) => {
+                                            const dbItem = Array.isArray(dbActivity?.contenu) 
+                                                ? dbActivity.contenu.find((x: any) => x.label === item)
+                                                : null;
+                                            const imageUrl = dbItem?.imageUrl;
+                                            return (
+                                                <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-3 text-xs font-bold">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-[10px]">
+                                                            {idx + 1}
+                                                        </span>
+                                                        {imageUrl && (
+                                                            <img 
+                                                                src={imageUrl} 
+                                                                alt={item} 
+                                                                className="h-10 w-10 object-cover rounded-lg shrink-0 border border-slate-150 shadow-xs" 
+                                                            />
+                                                        )}
+                                                        <span className="text-slate-800">{item}</span>
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        <button 
+                                                            disabled={exerciceChecked || idx === 0}
+                                                            onClick={() => moveItem(idx, 'up')}
+                                                            className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                                                        >
+                                                            <MoveUp className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button 
+                                                            disabled={exerciceChecked || idx === orderedItems.length - 1}
+                                                            onClick={() => moveItem(idx, 'down')}
+                                                            className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                                                        >
+                                                            <MoveDown className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex gap-1">
-                                                    <button 
-                                                        disabled={exerciceChecked || idx === 0}
-                                                        onClick={() => moveItem(idx, 'up')}
-                                                        className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                                    >
-                                                        <MoveUp className="h-3.5 w-3.5" />
-                                                    </button>
-                                                    <button 
-                                                        disabled={exerciceChecked || idx === orderedItems.length - 1}
-                                                        onClick={() => moveItem(idx, 'down')}
-                                                        className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                                    >
-                                                        <MoveDown className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

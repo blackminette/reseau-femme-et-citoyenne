@@ -305,9 +305,16 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
 
                 if (scoreRecord && isQuizType) {
                     try {
-                        const questions = JSON.parse(ex.instructions);
-                        scoreString = `${scoreRecord.score}/${questions.length}`;
-                        parfait = scoreRecord.score === questions.length;
+                        const contenuParsed = typeof ex.contenu === 'string' ? JSON.parse(ex.contenu) : ex.contenu;
+                        const totalQuestions = Array.isArray(contenuParsed) ? contenuParsed.length : 0;
+                        if (totalQuestions > 0) {
+                            scoreString = `${scoreRecord.score}/${totalQuestions}`;
+                            parfait = scoreRecord.score === totalQuestions;
+                        } else {
+                            const questions = JSON.parse(ex.instructions);
+                            scoreString = `${scoreRecord.score}/${questions.length}`;
+                            parfait = scoreRecord.score === questions.length;
+                        }
                     } catch {
                         scoreString = `${scoreRecord.score}`;
                     }
@@ -404,8 +411,6 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
             return null;
         }
 
-        const cours = exercice.cours;
-
         let mappedType = exercice.type.toUpperCase();
         if (mappedType === 'QCM' || mappedType === 'VRAI_FAUX') {
             mappedType = 'QUIZ';
@@ -421,7 +426,7 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
             titre: exercice.titre,
             instructions: exercice.instructions,
             type: mappedType, // 'LECON', 'QUIZ', 'MATCH', 'ORDER', 'DESSIN'
-            contenu: cours?.contenu ? (typeof cours.contenu === 'string' ? JSON.parse(cours.contenu) : cours.contenu) : []
+            contenu: exercice.contenu ? (typeof exercice.contenu === 'string' ? JSON.parse(exercice.contenu) : exercice.contenu) : []
         };
     } catch (e) {
         console.error("Erreur obtenirDetailsActiviteDepuisDB:", e);
