@@ -376,18 +376,18 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             </p>
                         </div>
 
-                        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-4 shadow-sm">
-                                <div className="text-[11px] font-black uppercase tracking-widest text-orange-500">Leçon</div>
-                                <div className="mt-1 text-sm font-bold text-slate-900">Découvrir</div>
+                        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-3 shadow-sm sm:p-4">
+                                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500 sm:text-[11px]">Leçon</div>
+                                <div className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">Découvrir</div>
                             </div>
-                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-4 shadow-sm">
-                                <div className="text-[11px] font-black uppercase tracking-widest text-orange-500">Quiz</div>
-                                <div className="mt-1 text-sm font-bold text-slate-900">Réviser</div>
+                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-3 shadow-sm sm:p-4">
+                                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500 sm:text-[11px]">Quiz</div>
+                                <div className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">Réviser</div>
                             </div>
-                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-4 shadow-sm">
-                                <div className="text-[11px] font-black uppercase tracking-widest text-orange-500">Révisions</div>
-                                <div className="mt-1 text-sm font-bold text-slate-900">Mémoriser</div>
+                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-3 shadow-sm sm:p-4">
+                                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500 sm:text-[11px]">Révisions</div>
+                                <div className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">Mémoriser</div>
                             </div>
                         </div>
                     </div>
