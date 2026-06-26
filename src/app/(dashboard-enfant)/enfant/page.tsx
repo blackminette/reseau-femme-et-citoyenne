@@ -1,17 +1,17 @@
 // * src/app/(dashboard-enfant)/enfant/page.tsx
 import React from 'react';
-import { 
-    Target, Award, TrendingUp, BookOpen, Laptop, Cpu, Languages, 
+import {
+    Target, Award, TrendingUp, BookOpen, Laptop, Cpu, Languages,
     Landmark, Leaf, HelpCircle, Palette, Star, Check, Crown, Trophy
 } from "lucide-react";
 import Link from "next/link";
-import { 
-    ENFANT as MOCK_ENFANT, 
-    MODULES as MOCK_MODULES, 
-    BADGES as MOCK_BADGES, 
-    DERNIER_BADGE as MOCK_DERNIER_BADGE, 
-    RESULTATS as MOCK_RESULTATS, 
-    ACTIVITE as MOCK_ACTIVITE 
+import {
+    ENFANT as MOCK_ENFANT,
+    MODULES as MOCK_MODULES,
+    BADGES as MOCK_BADGES,
+    DERNIER_BADGE as MOCK_DERNIER_BADGE,
+    RESULTATS as MOCK_RESULTATS,
+    ACTIVITE as MOCK_ACTIVITE
 } from "@/lib/enfant-data";
 import { obtenirProfilEnfant, obtenirModulesDepuisDB, obtenirActiviteRecente } from "./modules/actions";
 
@@ -54,7 +54,7 @@ export default async function EnfantDashboard() {
                 from: meta.from,
                 to: meta.to
             };
-          })
+        })
         : MOCK_MODULES;
 
     const isMock = !modulesRes || modulesRes.source === 'mock';
@@ -68,7 +68,7 @@ export default async function EnfantDashboard() {
             date: s.date,
             score: s.score,
             parfait: s.parfait
-          }))
+        }))
         : MOCK_RESULTATS;
 
     const listActivite = !isMock
@@ -80,7 +80,7 @@ export default async function EnfantDashboard() {
             date: s.date,
             score: s.score,
             parfait: s.parfait
-          }))
+        }))
         : MOCK_ACTIVITE;
 
     const listBadges = isMock
@@ -91,7 +91,7 @@ export default async function EnfantDashboard() {
             { label: "Assidu", Icon: Trophy, desc: "Compléter 10 activités au total.", obtenu: enfant.progression >= 80 },
             { label: "Expert", Icon: Crown, desc: "Obtenir 5 scores parfaits.", obtenu: enfant.progression === 100 },
         ];
-    
+
     const dernierBadge = listBadges.find(b => b.obtenu) || (isMock ? MOCK_DERNIER_BADGE : null);
 
     return (
@@ -137,6 +137,76 @@ export default async function EnfantDashboard() {
                     </div>
                 </div>
             </section>
+
+            {/* ─── Zone d'orientation personnalisée (Difficultés & Recommandations) ─── */}
+            {((enfant.difficultes && enfant.difficultes.length > 0) || (enfant.recommandations && enfant.recommandations.length > 0)) && (
+                <section className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Zones de difficulté */}
+                    <div className="rounded-[20px] border border-red-100 bg-red-50/50 p-6 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center gap-2 text-red-700 font-extrabold text-sm mb-2">
+                                <span>⚠️</span> Objectif d'amélioration
+                            </div>
+                            <h4 className="text-[15px] font-black text-violet-950">Mes zones d'amélioration</h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                Voici les parcours où tu as rencontré des défis. Reprends-les pour t'améliorer !
+                            </p>
+                            <div className="mt-4 space-y-2">
+                                {enfant.difficultes && enfant.difficultes.length > 0 ? (
+                                    enfant.difficultes.map((d: any, idx: number) => (
+                                        <div key={idx} className="bg-white border border-red-100 rounded-xl p-3 flex justify-between items-center text-xs">
+                                            <div className="font-bold text-slate-800">{d.module}</div>
+                                            <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-black text-[10px]">{d.pourcentage}% réussite</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="bg-white border border-green-150 rounded-xl p-4 text-center text-xs font-semibold text-emerald-700">
+                                        ✨ Magnifique ! Tu n'as pas de difficultés détectées actuellement.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recommandations ciblées */}
+                    <div className="rounded-[20px] border border-indigo-100 bg-indigo-50/50 p-6 flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center gap-2 text-indigo-700 font-extrabold text-sm mb-2">
+                                <span>🎯</span> Recommandations de ton tuteur
+                            </div>
+                            <h4 className="text-[15px] font-black text-violet-950">Mes défis recommandés</h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                Les activités parfaites pour toi aujourd'hui afin de franchir un nouveau cap !
+                            </p>
+                            <div className="mt-4 space-y-2">
+                                {enfant.recommandations && enfant.recommandations.length > 0 ? (
+                                    enfant.recommandations.map((r: any, idx: number) => (
+                                        <Link
+                                            href={`/enfant/modules/${r.moduleSlug}`}
+                                            key={idx}
+                                            className="block bg-white border border-indigo-100 hover:border-indigo-300 rounded-xl p-3 shadow-xs hover:shadow-md transition-all group"
+                                        >
+                                            <div className="flex justify-between items-start gap-3">
+                                                <div>
+                                                    <div className="text-xs font-black text-slate-800 group-hover:text-indigo-600 transition-colors">{r.titre}</div>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">{r.raison}</div>
+                                                </div>
+                                                <span className="shrink-0 bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-[9px] font-black group-hover:bg-indigo-700 transition-colors">
+                                                    {r.action}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <div className="bg-white border border-slate-100 rounded-xl p-4 text-center text-xs font-semibold text-slate-400">
+                                        Aucun défi à recommander pour l'instant.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* ─── Mes parcours ─── */}
             <section id="modules" className="mt-8 scroll-mt-6">
@@ -196,7 +266,15 @@ export default async function EnfantDashboard() {
 
                 {/* Mes badges */}
                 <div id="badges" className="rounded-2xl border border-violet-200 bg-white p-5 shadow-xs scroll-mt-6">
-                    <div className="mb-3.5 text-[15px] font-bold text-violet-950">Mes badges</div>
+                    <div className="mb-3.5 flex items-center justify-between">
+                        <span className="text-[15px] font-bold text-violet-950">Mes badges</span>
+                        <Link 
+                            href="/enfant/badges" 
+                            className="text-xs font-black text-indigo-600 hover:text-indigo-700 transition-colors"
+                        >
+                            Voir tout →
+                        </Link>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                         {listBadges.map(({ label, Icon, desc, obtenu }) => (
                             <div
