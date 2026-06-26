@@ -6,13 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum NiveauPedagogique {
-  NIVEAU_1
-  NIVEAU_2
-  NIVEAU_3
-  ADULTE
-}
-
 model Utilisateur {
   id        String            @id @default(cuid())
   email     String            @unique
@@ -21,11 +14,10 @@ model Utilisateur {
   telephone String?
   role      String            @default("MEMBRE")
   createdAt DateTime          @default(now())
-  niveau    NiveauPedagogique? @default(NIVEAU_1)
 
   reservations    Reservation[]
   dons            Don[]
-  temoignages     Temoignage[]
+  temoignages      Temoignage[]
   coursAnimes     Cours[]           @relation("IntervenanteCours")
   suggestions     BoiteAIdees[]
   ateliersPrives  Atelier[]         @relation("PartenaireAtelier")
@@ -48,7 +40,6 @@ model Atelier {
   creneauVerrouille Boolean       @default(false)
   effectifPrevu     Int?
 
-  // 🔄 Remplacement de l'adresse par la relation Lieu
   lieuId            String
   lieu              Lieu          @relation(fields: [lieuId], references: [id], onDelete: Restrict)
 
@@ -58,12 +49,11 @@ model Atelier {
   reservations      Reservation[]
 }
 
-// ✨ Nouveau modèle pour centraliser et sécuriser les adresses
 model Lieu {
   id           String    @id @default(cuid())
-  nom          String    // Ex: "Parc Borély" ou "Cabinet de sophrologie"
-  adresseTexte String    // L'adresse propre complète pour l'affichage (ex: "12 Rue des Fleurs, 75001 Paris")
-  adresseIdBan String    @unique // 🛡️ L'ID unique officiel (BAN) pour éviter les doublons textuels
+  nom          String    
+  adresseTexte String    
+  adresseIdBan String    @unique 
   estExterieur Boolean   @default(false)
   
   ateliers     Atelier[]
@@ -88,11 +78,32 @@ enum PublicCible {
   ADULTE
 }
 
+enum Parcours {
+  COMPREHENSION_LECTURE
+  ECO_CITOYENNETE
+  EDUCATION_CIVIQUE
+  NUMERIQUE
+  ANGLAIS
+  ROBOTIQUE
+  NUMERIQUE_ADULTE
+  ORAL
+  BUREAUTIQUE
+}
+
+enum Difficulte {
+  FACILE
+  MOYEN
+  DIFFICILE
+}
+
 model Module {
   id           Int               @id @default(autoincrement())
   titre        String
   description  String?
+  parcours    Parcours[]
+  difficulte   Difficulte        @default(FACILE)
   public       PublicCible       @default(ADULTE)
+  isPublished  Boolean           @default(false)
   createdAt    DateTime          @default(now())
   cours        Cours[]
 }
@@ -104,33 +115,25 @@ model Cours {
   createdAt       DateTime          @default(now())
   intervenanteId  String
   contenu         Json              @default("[]")
-  niveauRequis    NiveauPedagogique @default(NIVEAU_1)
-  moduleId        Int?              // Optionnel : permet d'avoir un cours indépendant si besoin
-  ordreDansModule Int               @default(1) // Pour gérer l'enchaînement des cours (Cours 1, Cours 2...)
-  module          Module?           @relation(fields: [moduleId], references: [id], onDelete: SetNull)
-  compositions    Composition[]
+  moduleId        Int               
+  ordreDansModule Int               @default(1) 
+  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  exercices       Exercice[]        
   intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
   programmes      Programme[]
 }
 
 model Exercice {
-  id           Int           @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   titre        String
   instructions String
   type         String
-  compositions Composition[]
+  contenu      Json        @default("[]")
+  ordre        Int         @default(1) 
+  coursId      Int
+  cours        Cours       @relation(fields: [coursId], references: [id], onDelete: Cascade)
+
   scores       ScoreQuiz[]
-}
-
-model Composition {
-  id         Int      @id @default(autoincrement())
-  ordre      Int      @default(1)
-  coursId    Int
-  cours      Cours    @relation(fields: [coursId], references: [id], onDelete: Cascade)
-  exerciceId Int
-  exercice   Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
-
-  @@unique([coursId, exerciceId])
 }
 
 model ScoreQuiz {
@@ -174,6 +177,20 @@ model Temoignage {
   createdAt     DateTime    @default(now())
   utilisateurId String
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+}
+
+model Actualite {
+  id              Int      @id @default(autoincrement())
+  titre           String
+  tag             String
+  datePublication DateTime
+  extrait         String
+  ctaLabel        String   @default("Lire la suite")
+  ctaHref         String   @default("/ateliers")
+  ordre           Int      @default(1)
+  estPublic       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model MessageContact {

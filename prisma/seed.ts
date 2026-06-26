@@ -11,7 +11,7 @@ dotenv.config({ path: '.env.local' });
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 
-// Initialise Prisma avec l'adaptateur exigé par la v7
+// Initialise Prisma avec l'adaptateur
 const prisma = new PrismaClient({ adapter });
 
 // Initialisation du client Supabase avec la clé d'administration (Service Role Key)
@@ -134,7 +134,7 @@ async function main() {
   lundiCourant.setDate(aujourdhui.getDate() - diff);
   lundiCourant.setHours(0, 0, 0, 0);
 
-  // Helper pour générer des dates de manière lisible
+  // Helper pour générer des dates de manière lisible (Espace corrigé ici)
   const getDatePourJourEtHeure = (joursDepuisLundi: number, heures: number, minutes: number = 0) => {
     const d = new Date(lundiCourant);
     d.setDate(lundiCourant.getDate() + joursDepuisLundi);
@@ -166,105 +166,111 @@ async function main() {
     },
   });
 
-  // Nettoyage complet
+  // Nettoyage complet des anciennes réservations et ateliers avant injection
+  await prisma.reservation.deleteMany({});
   await prisma.atelier.deleteMany({});
 
   // B. Ajout des Ateliers de test calculés dynamiquement sur la semaine actuelle
-  await prisma.atelier.createMany({
-    data: [
-  // === LUNDI ===
-  {
-    titre: 'Arts Plastiques & Recyclage',
-    description: 'Donner une seconde vie aux objets. Dès 6 ans.',
-    dateDebut: getDatePourJourEtHeure(0, 14), // 0 = Lundi, 14h
-    dateFin: getDatePourJourEtHeure(0, 16),   // Lundi, 16h
-    placesMax: 12,
-    lieuId: lieuLab.id,
-  },
+  const ateliersData = [
+    // === LUNDI ===
+    {
+      titre: 'Arts Plastiques & Recyclage',
+      description: 'Donner une seconde vie aux objets. Dès 6 ans.',
+      dateDebut: getDatePourJourEtHeure(0, 14), // 0 = Lundi, 14h
+      dateFin: getDatePourJourEtHeure(0, 16),   // Lundi, 16h
+      placesMax: 12,
+      lieuId: lieuLab.id,
+    },
 
-  // === MARDI ===
-  {
-    titre: 'Conte & bricolage',
-    description: '3 - 5 ans. Doudou bienvenu.',
-    dateDebut: getDatePourJourEtHeure(1, 10), // 1 = Mardi, 10h
-    dateFin: getDatePourJourEtHeure(1, 12),   // Mardi, 12h
-    placesMax: 10,
-    lieuId: lieuMedia.id,
-  },
+    // === MARDI ===
+    {
+      titre: 'Conte & bricolage',
+      description: '3 - 5 ans. Doudou bienvenu.',
+      dateDebut: getDatePourJourEtHeure(1, 10), // 1 = Mardi, 10h
+      dateFin: getDatePourJourEtHeure(1, 12),   // Mardi, 12h
+      placesMax: 10,
+      lieuId: lieuMedia.id,
+    },
 
-  // === MERCREDI ===
-  {
-    titre: 'Éveil Musical Ludique',
-    description: 'Découverte des rythmes et instruments (3 - 5 ans).',
-    dateDebut: getDatePourJourEtHeure(2, 10), // 2 = Mercredi, 10h
-    dateFin: getDatePourJourEtHeure(2, 12),   // Mercredi, 12h
-    placesMax: 10,
-    lieuId: lieuMedia.id,
-  },
-  {
-    titre: 'Création de Jeux Scratch',
-    description: 'Niveau Poussins (3 - 5 ans).',
-    dateDebut: getDatePourJourEtHeure(2, 14), // Mercredi, 14h
-    dateFin: getDatePourJourEtHeure(2, 16),   // Mercredi, 16h
-    placesMax: 15,
-    lieuId: lieuMedia.id,
-  },
-  {
-    titre: 'Robotique & Kits Arduino',
-    description: 'Découverte ludique.',
-    dateDebut: getDatePourJourEtHeure(2, 16, 30), // Mercredi, 16h30
-    dateFin: getDatePourJourEtHeure(2, 18),      // Mercredi, 18h
-    placesMax: 15,
-    lieuId: lieuLab.id,
-  },
+    // === MERCREDI ===
+    {
+      titre: 'Éveil Musical Ludique',
+      description: 'Découverte des rythmes et instruments (3 - 5 ans).',
+      dateDebut: getDatePourJourEtHeure(2, 10), // 2 = Mercredi, 10h
+      dateFin: getDatePourJourEtHeure(2, 12),   // Mercredi, 12h
+      placesMax: 10,
+      lieuId: lieuMedia.id,
+    },
+    {
+      titre: 'Création de Jeux Scratch',
+      description: 'Niveau Poussins (3 - 5 ans).',
+      dateDebut: getDatePourJourEtHeure(2, 14), // Mercredi, 14h
+      dateFin: getDatePourJourEtHeure(2, 16),   // Mercredi, 16h
+      placesMax: 15,
+      lieuId: lieuMedia.id,
+    },
+    {
+      titre: 'Robotique & Kits Arduino',
+      description: 'Découverte ludique.',
+      dateDebut: getDatePourJourEtHeure(2, 16, 30), // Mercredi, 16h30
+      dateFin: getDatePourJourEtHeure(2, 18),      // Mercredi, 18h
+      placesMax: 15,
+      lieuId: lieuLab.id,
+    },
 
-  // === JEUDI ===
-  {
-    titre: 'Couture & Customisation',
-    description: 'Apprends à personnaliser tes vêtements. Dès 8 ans.',
-    dateDebut: getDatePourJourEtHeure(3, 16, 30), // 3 = Jeudi, 16h30
-    dateFin: getDatePourJourEtHeure(3, 18),      // Jeudi, 18h
-    placesMax: 8,
-    lieuId: lieuLab.id,
-  },
+    // === JEUDI ===
+    {
+      titre: 'Couture & Customisation',
+      description: 'Apprends à personnaliser tes vêtements. Dès 8 ans.',
+      dateDebut: getDatePourJourEtHeure(3, 16, 30), // 3 = Jeudi, 16h30
+      dateFin: getDatePourJourEtHeure(3, 18),      // Jeudi, 18h
+      placesMax: 8,
+      lieuId: lieuLab.id,
+    },
 
-  // === VENDREDI ===
-  {
-    titre: 'Théâtre & Improvisation',
-    description: 'Jeux d’expression et de confiance en soi.',
-    dateDebut: getDatePourJourEtHeure(4, 16, 30), // 4 = Vendredi, 16h30
-    dateFin: getDatePourJourEtHeure(4, 18),      // Vendredi, 18h
-    placesMax: 12,
-    lieuId: lieuMedia.id,
-  },
+    // === VENDREDI ===
+    {
+      titre: 'Théâtre & Improvisation',
+      description: 'Jeux d’expression et de confiance en soi.',
+      dateDebut: getDatePourJourEtHeure(4, 16, 30), // 4 = Vendredi, 16h30
+      dateFin: getDatePourJourEtHeure(4, 18),      // Vendredi, 18h
+      placesMax: 12,
+      lieuId: lieuMedia.id,
+    },
 
-  // === SAMEDI ===
-  {
-    titre: 'Atelier Pâtisserie Créative',
-    description: 'Confection et décoration de cupcakes.',
-    dateDebut: getDatePourJourEtHeure(5, 10), // 5 = Samedi, 10h
-    dateFin: getDatePourJourEtHeure(5, 12),   // Samedi, 12h
-    placesMax: 10,
-    lieuId: lieuLab.id,
-  },
-  {
-    titre: 'Initiation Peinture',
-    description: 'Expression créative libre.',
-    dateDebut: getDatePourJourEtHeure(5, 14), // Samedi, 14h
-    dateFin: getDatePourJourEtHeure(5, 16),   // Samedi, 16h
-    placesMax: 12,
-    lieuId: lieuLab.id,
-  },
-  {
-    titre: 'BD & Dessin Manga',
-    description: 'Techniques d’encrage et création de personnage.',
-    dateDebut: getDatePourJourEtHeure(5, 16, 30), // Samedi, 16h30
-    dateFin: getDatePourJourEtHeure(5, 18),      // Samedi, 18h
-    placesMax: 15,
-    lieuId: lieuMedia.id,
+    // === SAMEDI ===
+    {
+      titre: 'Atelier Pâtisserie Créative',
+      description: 'Confection et décoration de cupcakes.',
+      dateDebut: getDatePourJourEtHeure(5, 10), // 5 = Samedi, 10h
+      dateFin: getDatePourJourEtHeure(5, 12),   // Samedi, 12h
+      placesMax: 10,
+      lieuId: lieuLab.id,
+    },
+    {
+      titre: 'Initiation Peinture',
+      description: 'Expression créative libre.',
+      dateDebut: getDatePourJourEtHeure(5, 14), // Samedi, 14h
+      dateFin: getDatePourJourEtHeure(5, 16),   // Samedi, 16h
+      placesMax: 12,
+      lieuId: lieuLab.id,
+    },
+    {
+      titre: 'BD & Dessin Manga',
+      description: 'Techniques d’encrage et création de personnage.',
+      dateDebut: getDatePourJourEtHeure(5, 16, 30), // Samedi, 16h30
+      dateFin: getDatePourJourEtHeure(5, 18),      // Samedi, 18h
+      placesMax: 15,
+      lieuId: lieuMedia.id,
+    }
+  ];
+
+  // Insertion séquentielle
+  for (const item of ateliersData) {
+    await prisma.atelier.create({
+      data: item,
+    });
   }
-],
-  });
 
   console.log('✅ Données de planning injectées dynamiquement pour la semaine en cours !');
   console.log('✅ Seeding terminé avec succès !');
@@ -276,5 +282,6 @@ main()
     process.exit(1);
   })
   .finally(async () => {
+    await prisma.$disconnect();
     await pool.end();
   });
