@@ -26,11 +26,10 @@ export async function listerLesUtilisateurs(trie: string, filtre?: string) {
                 id: true,
                 nom: true,
                 prenom: true,
-                email: true,
+                username: true,
                 telephone: true,
                 role: true,
                 createdAt: true,
-                niveau: true,
                 _count: {
                     select: {
                         enfants: true,
@@ -62,7 +61,7 @@ export async function modifierUtilisateur(id: string, nouvelleDonnees: any) {
             data: {
                 nom: nouvelleDonnees.nom,
                 prenom: nouvelleDonnees.prenom,
-                email: nouvelleDonnees.email,
+                username: nouvelleDonnees.username,
                 telephone: nouvelleDonnees.telephone,
                 role: nouvelleDonnees.role
             }

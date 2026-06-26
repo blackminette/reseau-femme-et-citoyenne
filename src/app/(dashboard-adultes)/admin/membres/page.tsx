@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
 import Modal from '@/components/Modal';
-import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -23,6 +23,7 @@ export default function AdminMembresPage() {
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
     const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
+    const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
 
     const [filter, setFilter] = useState<string>("");
     const [trie, setTrie] = useState<string>('DECROISSANT');
@@ -32,12 +33,19 @@ export default function AdminMembresPage() {
     const [formData, setFormData] = useState({
         nom: '',
         prenom: '',
-        email: '',
+        username: '',
         telephone: '',
         role: ''
     });
 
-    // Effet de "Debounce" : Attend 400ms après la fin de la saisie avant de déclencher la recherche
+    const [creerFormData, setCreerFormData] = useState({
+        nom: '',
+        prenom: '',
+        username: '',
+        telephone: '',
+        role: 'MEMBRE'
+    });
+
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(search);
@@ -59,7 +67,7 @@ export default function AdminMembresPage() {
                 const dataFiltree = reponse.data.filter((m: any) =>
                     m.nom?.toLowerCase().includes(searchLower) ||
                     m.prenom?.toLowerCase().includes(searchLower) ||
-                    m.email?.toLowerCase().includes(searchLower)
+                    m.username?.toLowerCase().includes(searchLower)
                 );
                 setMembres(dataFiltree);
             } else {
@@ -69,7 +77,6 @@ export default function AdminMembresPage() {
         setIsLoading(false);
     }
 
-    // Le tableau se rafraîchit dès qu'un filtre, le texte ou le tri change
     useEffect(() => {
         chargerMembres();
     }, [filter, debouncedSearch, trie]);
@@ -79,7 +86,7 @@ export default function AdminMembresPage() {
         setFormData({
             nom: membre.nom || '',
             prenom: membre.prenom || '',
-            email: membre.email || '',
+            username: membre.username || '',
             telephone: membre.telephone || '',
             role: membre.role || 'MEMBRE'
         });
@@ -119,17 +126,46 @@ export default function AdminMembresPage() {
         }
     };
 
+    const handleCreer = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const reponse = await fetch('/api/utilisateurs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(creerFormData)
+        });
+        const result = await reponse.json();
+
+        if (result.success) {
+            setModalCreerIsOpen(false);
+            setCreerFormData({ nom: '', prenom: '', username: '', telephone: '', role: 'MEMBRE' });
+            await chargerMembres();
+        } else {
+            alert(result.error || "Une erreur est survenue.");
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-violet-950 tracking-tight">Gestion des membres</h1>
-                <p className="text-sm text-violet-600/80 mt-1">
-                    Visualisez, modifiez les rôles et gérez les profils des familles, intervenants et administrateurs du réseau.
-                </p>
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-violet-950 tracking-tight">Gestion des membres</h1>
+                    <p className="text-sm text-violet-600/80 mt-1">
+                        Visualisez, modifiez les rôles et gérez les profils des familles, intervenants et administrateurs du réseau.
+                    </p>
+                </div>
+                <button
+                    onClick={() => setModalCreerIsOpen(true)}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 active:scale-98 text-white rounded-xl text-sm font-semibold shadow-md shadow-violet-600/10 transition-all cursor-pointer h-fit self-start sm:self-center"
+                >
+                    <Plus className="w-4 h-4" />
+                    Ajouter un membre
+                </button>
             </div>
 
             <div className="mb-6 p-4 bg-white border border-violet-100 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-3 w-full">
-                {/* Barre de recherche */}
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
@@ -142,7 +178,6 @@ export default function AdminMembresPage() {
                     />
                 </div>
 
-                {/* Sélecteur de Tri (Stylisé) */}
                 <div className="relative min-w-[160px]">
                     <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <select
@@ -160,7 +195,6 @@ export default function AdminMembresPage() {
                     </div>
                 </div>
 
-                {/* Sélecteur de Rôle */}
                 <div className="relative min-w-[220px]">
                     <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <select
@@ -196,7 +230,7 @@ export default function AdminMembresPage() {
                             <thead>
                                 <tr className="bg-slate-50/70 border-b border-violet-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
                                     <th className="px-6 py-4">Nom / Prénom</th>
-                                    <th className="px-6 py-4">Email</th>
+                                    <th className="px-6 py-4">Username</th>
                                     <th className="px-6 py-4">Rôle</th>
                                     <th className="px-6 py-4">Statistiques</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
@@ -224,7 +258,7 @@ export default function AdminMembresPage() {
                                             </td>
 
                                             <td className="px-6 py-4 text-slate-600 font-normal">
-                                                {membre.email}
+                                                {membre.username}
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -232,11 +266,6 @@ export default function AdminMembresPage() {
                                                     <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
                                                         {membre.role?.toLowerCase()}
                                                     </span>
-                                                    {membre.role === 'ENFANT' && membre.niveau && (
-                                                        <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
-                                                            {membre.niveau}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </td>
 
@@ -295,7 +324,6 @@ export default function AdminMembresPage() {
                 </div>
             )}
 
-            {/* Modal de détails */}
             <Modal
                 isOpen={modalDetailsIsOpen}
                 onClose={() => setModalDetailsIsOpen(false)}
@@ -316,11 +344,6 @@ export default function AdminMembresPage() {
                                 <span className="px-2.5 py-1 bg-violet-600 text-white rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
                                     {membreSelectionne.role}
                                 </span>
-                                {membreSelectionne.role === 'ENFANT' && membreSelectionne.niveau && (
-                                    <span className="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded text-xs font-medium">
-                                        {membreSelectionne.niveau.replace('_', ' ')}
-                                    </span>
-                                )}
                             </div>
                         </div>
 
@@ -330,9 +353,9 @@ export default function AdminMembresPage() {
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="bg-white p-3 rounded-lg border border-violet-200 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-violet-500 uppercase">Adresse Email</span>
-                                    <a href={`mailto:${membreSelectionne.email}`} className="text-sm font-medium text-violet-600 hover:underline break-all">
-                                        {membreSelectionne.email}
+                                    <span className="block text-[10px] font-bold text-violet-500 uppercase">Username</span>
+                                    <a href={`mailto:${membreSelectionne.username}`} className="text-sm font-medium text-violet-600 hover:underline break-all">
+                                        {membreSelectionne.username}
                                     </a>
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border border-violet-200 shadow-sm">
@@ -413,7 +436,6 @@ export default function AdminMembresPage() {
                 )}
             </Modal>
 
-            {/* Modal de modification */}
             <Modal isOpen={modalModifierIsOpen} onClose={() => setModalModifierIsOpen(false)} title="Modifier le membre">
                 <form onSubmit={handleModifier} className="space-y-4">
                     <div>
@@ -437,11 +459,11 @@ export default function AdminMembresPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Username</label>
                         <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            type="text"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                             className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
                             required
                         />
@@ -490,7 +512,6 @@ export default function AdminMembresPage() {
                 </form>
             </Modal>
 
-            {/* Modal de suppression */}
             <Modal isOpen={modalSupprimerIsOpen} onClose={() => setModalSupprimerIsOpen(false)} title="Confirmer la suppression">
                 <div className="space-y-4">
                     <p className="text-sm text-violet-800">Êtes-vous sûr de vouloir supprimer <span className="font-bold">{membreSelectionne?.prenom} {membreSelectionne?.nom} ({membreSelectionne?.email})</span> ? Cette action est irréversible.</p>
@@ -511,6 +532,82 @@ export default function AdminMembresPage() {
                         </button>
                     </div>
                 </div>
+            </Modal>
+
+            <Modal isOpen={modalCreerIsOpen} onClose={() => setModalCreerIsOpen(false)} title="Ajouter un nouveau membre">
+                <form onSubmit={handleCreer} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Nom</label>
+                        <input
+                            type="text"
+                            value={creerFormData.nom}
+                            onChange={(e) => setCreerFormData({ ...creerFormData, nom: e.target.value })}
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Prénom</label>
+                        <input
+                            type="text"
+                            value={creerFormData.prenom}
+                            onChange={(e) => setCreerFormData({ ...creerFormData, prenom: e.target.value })}
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Username</label>
+                        <input
+                            type="text"
+                            value={creerFormData.username}
+                            onChange={(e) => setCreerFormData({ ...creerFormData, username: e.target.value })}
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Téléphone</label>
+                        <input
+                            type="text"
+                            value={creerFormData.telephone}
+                            onChange={(e) => setCreerFormData({ ...creerFormData, telephone: e.target.value })}
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-violet-800 mb-1">Rôle</label>
+                        <select
+                            value={creerFormData.role}
+                            onChange={(e) => setCreerFormData({ ...creerFormData, role: e.target.value })}
+                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                        >
+                            <option value="ADMIN">Administrateur</option>
+                            <option value="INTERVENANT">Intervenant</option>
+                            <option value="MEMBRE">Membre</option>
+                            <option value="ENFANT">Enfant</option>
+                            <option value="PARTENAIRE">Partenaire</option>
+                            <option value="BENEVOLE">Bénévole</option>
+                            <option value="ETUDIANT">Étudiant</option>
+                        </select>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setModalCreerIsOpen(false)}
+                            className="px-4 py-2 bg-violet-100 text-violet-800 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm font-medium transition-colors"
+                        >
+                            Ajouter
+                        </button>
+                    </div>
+                </form>
             </Modal>
         </div>
     );
