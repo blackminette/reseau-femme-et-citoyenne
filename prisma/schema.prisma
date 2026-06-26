@@ -22,9 +22,9 @@ model Utilisateur {
   suggestions     BoiteAIdees[]
   ateliersPrives  Atelier[]         @relation("PartenaireAtelier")
   messagesEnvoyes MessageContact[]
-
+  scoresQuiz      ScoreQuiz[]
   tuteurId        String?
-  tuteur          Utilisateur?      @relation("ParentEnfant", fields: [tuteurId], references: [id])
+  tuteur          Utilisateur?      @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
   enfants         Utilisateur[]     @relation("ParentEnfant")
 }
 
@@ -44,7 +44,7 @@ model Atelier {
   lieu              Lieu          @relation(fields: [lieuId], references: [id], onDelete: Restrict)
 
   partenaireId      String?
-  partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id])
+  partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id], onDelete: Cascade)
 
   reservations      Reservation[]
 }
@@ -119,7 +119,7 @@ model Cours {
   ordreDansModule Int               @default(1) 
   module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   exercices       Exercice[]        
-  intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+  intervenante    Utilisateur @relation("IntervenanteCours", fields: [intervenanteId], references: [id], onDelete: Cascade)
   programmes      Programme[]
 }
 
@@ -143,6 +143,7 @@ model ScoreQuiz {
   etudiantId String
   exerciceId Int
   exercice   Exercice @relation(fields: [exerciceId], references: [id])
+  etudiant   Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
 }
 
 model Programme {
@@ -167,7 +168,7 @@ model Don {
   dateDon       DateTime    @default(now())
   statut        String      @default("COMPLETED")
   utilisateurId String
-  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }
 
 model Temoignage {
@@ -201,5 +202,5 @@ model MessageContact {
   message       String
   envoyeLe      DateTime     @default(now())
   utilisateurId String?
-  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }

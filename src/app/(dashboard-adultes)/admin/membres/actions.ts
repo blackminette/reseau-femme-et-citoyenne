@@ -79,14 +79,24 @@ export async function modifierUtilisateur(id: string, nouvelleDonnees: any) {
 
 export async function supprimerUtilisateur(id: string) {
     try {
+        const supabase = await getSupabaseAdmin();
+
+        const { error: authError } = await supabase.auth.admin.deleteUser(id);
+
+        if (authError) {
+            console.error("[supprimerUtilisateur] Erreur Supabase Auth:", authError.message);
+            return { success: false, error: "Impossible de supprimer les identifiants de sécurité." };
+        }
+
         await prisma.utilisateur.delete({
             where: { id: id }
         });
+
         revalidatePath('/admin/membres');
         return { success: true };
     } catch (error) {
         console.error("Erreur lors de la suppression :", error);
-        return { success: false, error: "Impossible de supprimer le membre" };
+        return { success: false, error: "Impossible de supprimer le membre de la base de données." };
     }
 }
 
