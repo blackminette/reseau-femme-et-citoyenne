@@ -117,7 +117,6 @@ model Cours {
   contenu         Json              @default("[]")
   moduleId        Int               
   ordreDansModule Int               @default(1) 
-
   module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   exercices       Exercice[]        
   intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
@@ -204,4 +203,3 @@ model MessageContact {
   utilisateurId String?
   utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
 }
-
