@@ -119,6 +119,7 @@ async function main() {
       where: { id: supabaseAuthId },
       update: {
         email: u.email,
+        username: u.username,
         nom: u.nom,
         prenom: u.prenom,
         role: u.role,
@@ -127,6 +128,7 @@ async function main() {
       create: {
         id: supabaseAuthId,
         email: u.email,
+        username: u.username,
         nom: u.nom,
         prenom: u.prenom,
         role: u.role,
