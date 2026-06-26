@@ -28,43 +28,6 @@ type Activite = {
 
 type Params = Promise<{ id: string }>;
 
-function getMockActivitesForModule(id: string): Activite[] {
-    if (id !== 'napoleon') {
-        return [];
-    }
-
-    return [
-        {
-            id: '1',
-            titre: 'Découvrir Napoléon',
-            description: "Comprendre qui il était et pourquoi il est une figure importante de l'histoire française.",
-            type: 'lecon',
-            statut: 'a_faire',
-        },
-        {
-            id: '2',
-            titre: 'Napoléon et son époque',
-            description: "Lire le texte pour voir ce qu'il a changé et ce que son époque a produit.",
-            type: 'lecon',
-            statut: 'verrouille',
-        },
-        {
-            id: '3',
-            titre: 'Les limites à connaître',
-            description: "Relever les points essentiels sur le Code civil, les droits des femmes et l'esclavage.",
-            type: 'exercice',
-            statut: 'verrouille',
-        },
-        {
-            id: '4',
-            titre: 'Quiz Napoléon',
-            description: "Vérifier ce que tu as retenu avec des questions courtes.",
-            type: 'quiz',
-            statut: 'verrouille',
-        },
-    ];
-}
-
 function isActivityCompleted(actId: string): boolean {
     if (typeof window === 'undefined') {
         return false;
@@ -137,13 +100,8 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                         setActivites(hydratedActivities);
                         setProgression(Math.max(dbMod.progression, Math.round((completedCount / hydratedActivities.length) * 100)));
                     } else {
-                        const fallbackActivites = getMockActivitesForModule(id);
-                        if (fallbackActivites.length > 0) {
-                            const hydratedActivities = hydrateSequentialActivities(fallbackActivites);
-                            const completedCount = hydratedActivities.filter((activity) => activity.statut === 'termine').length;
-                            setActivites(hydratedActivities);
-                            setProgression(Math.round((completedCount / hydratedActivities.length) * 100));
-                        }
+                        setActivites([]);
+                        setProgression(0);
                     }
                 }
             } catch (err) {
