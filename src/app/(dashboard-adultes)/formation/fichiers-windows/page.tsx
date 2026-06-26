@@ -1,7 +1,7 @@
 // * src/app/(dashboard-adultes)/formation/fichiers-windows/page.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Menu, Check, ArrowLeft, ArrowRight, Compass, Eye, BookOpen, Target,
@@ -11,8 +11,7 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import {
-    obtenirProgressionFormation, sauvegarderEtapeFormation,
-    enregistrerScoreQuizFormation, terminerModuleFormation,
+    sauvegarderEtapeFormation, enregistrerScoreQuizFormation, terminerModuleFormation,
 } from '../actions';
 
 // Identifiant de ce module pour le suivi de progression en base.
@@ -86,17 +85,6 @@ export default function ModuleFichiersWindows() {
     const [etape, setEtape] = useState(0); // 0..6
     const courante = ETAPES[etape];
     const estDerniere = etape === ETAPES.length - 1;
-
-    // Reprise : charge la dernière étape atteinte en base au montage.
-    useEffect(() => {
-        obtenirProgressionFormation(MODULE_CLE)
-            .then((p) => {
-                if (!p.terminee && p.etapeActuelle > 0 && p.etapeActuelle < ETAPES.length) {
-                    setEtape(p.etapeActuelle);
-                }
-            })
-            .catch(() => { });
-    }, []);
 
     // Change d'étape et enregistre la progression en base.
     const allerEtape = (i: number) => {
