@@ -114,9 +114,19 @@ export default function ModuleFichiersWindows() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-800">
+        <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-800">
+            {/* Décor de fond : taches dégradées floutées */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
+                <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-violet-300/30 blur-3xl" />
+                <div className="absolute -right-20 top-1/3 h-80 w-80 rounded-full bg-purple-300/20 blur-3xl" />
+                <div className="absolute bottom-16 left-1/3 h-64 w-64 rounded-full bg-fuchsia-200/20 blur-3xl" />
+            </div>
+
+            {/* Animation d'apparition à chaque changement d'étape */}
+            <style>{`@keyframes etapeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
             {/* ── Barre supérieure ── */}
-            <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
+            <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
                     <div className="flex items-center gap-3">
                         <button className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Menu">
@@ -142,12 +152,12 @@ export default function ModuleFichiersWindows() {
                                     <div className="flex w-0 flex-1 flex-col items-center">
                                         <button
                                             onClick={() => allerEtape(i)}
-                                            className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                                            className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
                                                 fait
-                                                    ? 'bg-violet-600 text-white'
+                                                    ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-300/50'
                                                     : actif
-                                                        ? 'bg-violet-600 text-white ring-4 ring-violet-200'
-                                                        : 'border-2 border-slate-200 bg-white text-slate-400'
+                                                        ? 'scale-110 bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-400/50 ring-4 ring-violet-200'
+                                                        : 'border-2 border-slate-200 bg-white text-slate-400 hover:border-violet-300'
                                             }`}
                                         >
                                             {fait ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
@@ -157,7 +167,7 @@ export default function ModuleFichiersWindows() {
                                         </span>
                                     </div>
                                     {i < ETAPES.length - 1 && (
-                                        <div className={`mt-4 h-0.5 flex-1 ${i < etape ? 'bg-violet-500' : 'bg-slate-200'}`} />
+                                        <div className={`mt-4 h-1 flex-1 rounded-full transition-colors duration-300 ${i < etape ? 'bg-gradient-to-r from-violet-500 to-purple-500' : 'bg-slate-200'}`} />
                                     )}
                                 </React.Fragment>
                             );
@@ -166,26 +176,27 @@ export default function ModuleFichiersWindows() {
                 </div>
             </header>
 
-            {/* ── Corps : 2 colonnes ── */}
-            <main className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[340px_1fr]">
+            {/* ── Corps : 2 colonnes (ré-animé à chaque étape) ── */}
+            <main key={etape} style={{ animation: 'etapeIn .35s ease-out' }} className="relative z-10 mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[340px_1fr]">
                 {/* Colonne gauche : titre + description + encadrés */}
                 <div>
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-100 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-violet-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-sm shadow-violet-300/60">
                         <courante.Icon className="h-3.5 w-3.5" strokeWidth={2.5} /> Étape {etape + 1}
                     </span>
-                    <h2 className="mt-3 text-4xl font-black tracking-tight text-violet-950">{courante.titre}</h2>
+                    <h2 className="mt-3 bg-gradient-to-br from-violet-900 via-violet-700 to-purple-600 bg-clip-text text-4xl font-black tracking-tight text-transparent">{courante.titre}</h2>
                     <div className="mt-2 h-1 w-16 rounded-full bg-gradient-to-r from-violet-500 to-violet-300" />
                     <div className="mt-5 space-y-4">{panneauGauche(etape)}</div>
                 </div>
 
-                {/* Colonne droite : contenu de l'étape */}
-                <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50/60 to-white p-6 shadow-sm">
-                    {panneauDroite(etape)}
+                {/* Colonne droite : contenu de l'étape (avec filigrane d'icône en fond) */}
+                <div className="relative overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50/70 via-white to-white p-6 shadow-sm">
+                    <courante.Icon aria-hidden className="pointer-events-none absolute -right-7 -top-7 h-36 w-36 text-violet-100/80" strokeWidth={1.5} />
+                    <div className="relative">{panneauDroite(etape)}</div>
                 </div>
             </main>
 
             {/* ── Barre de navigation ── */}
-            <footer className="sticky bottom-0 border-t border-slate-200 bg-white">
+            <footer className="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white/85 backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
                     <button
                         onClick={precedent}
