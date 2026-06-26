@@ -2,6 +2,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
 export async function listerLesUtilisateurs(trie: string, filtre?: string) {
@@ -86,5 +87,67 @@ export async function supprimerUtilisateur(id: string) {
     } catch (error) {
         console.error("Erreur lors de la suppression :", error);
         return { success: false, error: "Impossible de supprimer le membre" };
+    }
+}
+
+export async function creerUtilisateur(formData: {
+    nom: string;
+    prenom: string;
+    username: string;
+    telephone?: string;
+    role: string;
+}) {
+    const { nom, prenom, username, telephone, role } = formData;
+
+    if (!nom || !prenom || !username || !role) {
+        return { success: false, error: "Les champs obligatoires sont manquants." };
+    }
+
+    try {
+        const supabase = await getSupabaseAdmin();
+
+        const emailSimule = `${username.trim().toLowerCase()}@association.local`;
+        const motDePasseTemporaire = "Password123!";
+
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+            email: emailSimule,
+            password: motDePasseTemporaire,
+            email_confirm: true,
+            user_metadata: {
+                nom: nom.trim(),
+                prenom: prenom.trim(),
+                telephone: telephone?.trim() || null,
+            }
+        });
+
+        if (authError) {
+            console.error("[creerUtilisateur] Erreur Supabase Admin Auth:", authError.message);
+            return { success: false, error: authError.message };
+        }
+
+        if (!authData.user) {
+            return { success: false, error: "Erreur lors de la création du compte de sécurité." };
+        }
+
+        const nouvelUtilisateur = await prisma.utilisateur.create({
+            data: {
+                id: authData.user.id,
+                username: username.trim(),
+                email: emailSimule,
+                nom: nom.trim(),
+                prenom: prenom.trim(),
+                telephone: telephone?.trim() || null,
+                role: role
+            }
+        });
+
+        return { success: true, data: nouvelUtilisateur };
+
+    } catch (error: any) {
+        console.error("[creerUtilisateur] Erreur critique :", error);
+        if (error.code === 'P2002') {
+            return { success: false, error: "Ce nom d'utilisateur est déjà pris." };
+        }
+        return { success: false, error: "Une erreur interne est survenue sur le serveur." };
     }
 }

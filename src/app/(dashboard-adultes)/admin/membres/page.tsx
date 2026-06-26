@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
+import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur } from './actions';
 import Modal from '@/components/Modal';
 import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus } from 'lucide-react';
 
@@ -130,12 +130,7 @@ export default function AdminMembresPage() {
         e.preventDefault();
         setIsLoading(true);
 
-        const reponse = await fetch('/api/utilisateurs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(creerFormData)
-        });
-        const result = await reponse.json();
+        const result = await creerUtilisateur(creerFormData);
 
         if (result.success) {
             setModalCreerIsOpen(false);
@@ -514,7 +509,7 @@ export default function AdminMembresPage() {
 
             <Modal isOpen={modalSupprimerIsOpen} onClose={() => setModalSupprimerIsOpen(false)} title="Confirmer la suppression">
                 <div className="space-y-4">
-                    <p className="text-sm text-violet-800">Êtes-vous sûr de vouloir supprimer <span className="font-bold">{membreSelectionne?.prenom} {membreSelectionne?.nom} ({membreSelectionne?.email})</span> ? Cette action est irréversible.</p>
+                    <p className="text-sm text-violet-800">Êtes-vous sûr de vouloir supprimer <span className="font-bold">{membreSelectionne?.prenom} {membreSelectionne?.nom}</span> ? Cette action est irréversible.</p>
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             type="button"
