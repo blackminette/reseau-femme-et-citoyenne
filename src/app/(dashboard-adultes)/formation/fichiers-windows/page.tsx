@@ -128,15 +128,16 @@ export default function ModuleFichiersWindows() {
             {/* ── Barre supérieure ── */}
             <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
-                    <div className="flex items-center gap-3">
-                        <button className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Menu">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <button className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Menu">
                             <Menu className="h-5 w-5" />
                         </button>
-                        <h1 className="text-[15px] font-bold text-violet-950 sm:text-base">
-                            Module : <span className="font-extrabold">Gérer ses fichiers sur Windows</span>
+                        <h1 className="truncate text-[15px] font-bold text-violet-950 sm:text-base">
+                            <span className="hidden sm:inline">Module : </span>
+                            <span className="font-extrabold">Gérer ses fichiers sur Windows</span>
                         </h1>
                     </div>
-                    <span className="shrink-0 text-sm font-extrabold text-violet-600">
+                    <span className="shrink-0 text-xs font-extrabold text-violet-600 sm:text-sm">
                         Étape {etape + 1} sur {ETAPES.length}
                     </span>
                 </div>
@@ -152,7 +153,7 @@ export default function ModuleFichiersWindows() {
                                     <div className="flex w-0 flex-1 flex-col items-center">
                                         <button
                                             onClick={() => allerEtape(i)}
-                                            className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
+                                            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 sm:h-9 sm:w-9 ${
                                                 fait
                                                     ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-300/50'
                                                     : actif
@@ -162,7 +163,7 @@ export default function ModuleFichiersWindows() {
                                         >
                                             {fait ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
                                         </button>
-                                        <span className={`mt-2 text-center text-[11px] leading-tight ${actif ? 'font-bold text-violet-700' : 'text-slate-400'}`}>
+                                        <span className={`mt-2 hidden text-center text-[11px] leading-tight sm:block ${actif ? 'font-bold text-violet-700' : 'text-slate-400'}`}>
                                             {e.label}
                                         </span>
                                     </div>
@@ -183,7 +184,7 @@ export default function ModuleFichiersWindows() {
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-sm shadow-violet-300/60">
                         <courante.Icon className="h-3.5 w-3.5" strokeWidth={2.5} /> Étape {etape + 1}
                     </span>
-                    <h2 className="mt-3 bg-gradient-to-br from-violet-900 via-violet-700 to-purple-600 bg-clip-text text-4xl font-black tracking-tight text-transparent">{courante.titre}</h2>
+                    <h2 className="mt-3 bg-gradient-to-br from-violet-900 via-violet-700 to-purple-600 bg-clip-text text-3xl font-black tracking-tight text-transparent sm:text-4xl">{courante.titre}</h2>
                     <div className="mt-2 h-1 w-16 rounded-full bg-gradient-to-r from-violet-500 to-violet-300" />
                     <div className="mt-5 space-y-4">{panneauGauche(etape)}</div>
                 </div>
@@ -445,8 +446,9 @@ function EtapeObserver() {
     ];
     return (
         <div>
-            {/* Fenêtre explorateur */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* Fenêtre explorateur (défile horizontalement sur mobile) */}
+            <div className="-mx-1 overflow-x-auto pb-1">
+            <div className="min-w-[560px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
                     <div className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-500">
                         <Folder className="h-3.5 w-3.5 text-amber-400" fill="currentColor" /> Ce PC <span className="text-slate-300">›</span> Documents
@@ -481,6 +483,7 @@ function EtapeObserver() {
                     </div>
                 </div>
             </div>
+            </div>
 
             {/* Questions d'observation */}
             <div className="mt-6">
@@ -493,13 +496,15 @@ function EtapeObserver() {
                         'Quels types de fichiers peut-on trouver ? Donnez au moins trois exemples.',
                         'Quelle information permet de connaître la date de modification d’un fichier ?',
                     ].map((q, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[12px] font-bold text-violet-700">{i + 1}</span>
-                            <span className="flex-1 text-[13px] text-slate-600">{q}</span>
+                        <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                            <div className="flex flex-1 items-start gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[12px] font-bold text-violet-700">{i + 1}</span>
+                                <span className="text-[13px] text-slate-600">{q}</span>
+                            </div>
                             <input
                                 type="text"
                                 placeholder="Votre réponse…"
-                                className="w-40 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 sm:w-40"
                             />
                         </div>
                     ))}
