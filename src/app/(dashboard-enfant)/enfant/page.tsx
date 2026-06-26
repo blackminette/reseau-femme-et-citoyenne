@@ -26,6 +26,7 @@ const METADATA_MAP = {
     robotique: { Icon: Cpu, from: "#9b8cff", to: "#6d5ba8" },
     anglais: { Icon: Languages, from: "#ec407a", to: "#880e4f" },
     civique: { Icon: Landmark, from: "#ffa726", to: "#e65100" },
+    napoleon: { Icon: Crown, from: "#f59e0b", to: "#7c2d12" },
     eco: { Icon: Leaf, from: "#26a69a", to: "#00695c" },
 };
 
@@ -48,6 +49,7 @@ export default async function EnfantDashboard() {
             const meta = METADATA_MAP[mod.slug as keyof typeof METADATA_MAP] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98" };
             return {
                 id: mod.id,
+                slug: mod.slug,
                 label: mod.label,
                 Icon: meta.Icon,
                 progression: mod.progression,
@@ -212,9 +214,9 @@ export default async function EnfantDashboard() {
             <section id="modules" className="mt-8 scroll-mt-6">
                 <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes parcours</h3>
                 <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-                    {listModules.map(({ id, label, Icon, progression, from, to }) => (
+                    {listModules.map(({ id, slug, label, Icon, progression, from, to }) => (
                         <Link
-                            href={`/enfant/modules/${id}`}
+                            href={`/enfant/modules/${slug || id}`}
                             key={id}
                             className="flex flex-col justify-between rounded-2xl p-5 text-white shadow-[0_4px_16px_rgba(109,91,168,0.12)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-violet-300"
                             style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}

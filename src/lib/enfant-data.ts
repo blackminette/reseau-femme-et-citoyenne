@@ -16,13 +16,14 @@ export const ENFANT = {
 };
 
 // Modules d'apprentissage. Couleurs reprises de la maquette (dégradés), icônes lucide.
-export type Module = { id: string; label: string; Icon: LucideIcon; progression: number; from: string; to: string };
+export type Module = { id: string; label: string; Icon: LucideIcon; progression: number; from: string; to: string; slug?: string };
 export const MODULES: Module[] = [
     { id: "lecture", label: "Lecture & compréhension", Icon: BookOpen, progression: 73, from: "#66bb6a", to: "#2e7d32" },
     { id: "numerique", label: "Numérique", Icon: Laptop, progression: 85, from: "#42a5f5", to: "#0d47a1" },
     { id: "robotique", label: "Robotique", Icon: Cpu, progression: 0, from: "#9b8cff", to: "#6d5ba8" },
     { id: "anglais", label: "Anglais", Icon: Languages, progression: 0, from: "#ec407a", to: "#880e4f" },
     { id: "civique", label: "Éducation civique", Icon: Landmark, progression: 0, from: "#ffa726", to: "#e65100" },
+    { id: "napoleon", label: "Napoléon", Icon: Crown, progression: 0, from: "#f59e0b", to: "#7c2d12" },
     { id: "eco", label: "Éco-citoyenneté", Icon: Leaf, progression: 0, from: "#26a69a", to: "#00695c" },
 ];
 

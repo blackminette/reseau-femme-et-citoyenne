@@ -1,18 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import ChildSideMenu from './ChildSideMenu';
 
 export default function ChildMobileNav() {
     const [isOpen, setIsOpen] = useState(false);
-    const pathname = usePathname();
-
-    // Close mobile menu when page/pathname changes
-    useEffect(() => {
-        setIsOpen(false);
-    }, [pathname]);
 
     // Prevent background scrolling when menu is open
     useEffect(() => {
@@ -51,7 +44,7 @@ export default function ChildMobileNav() {
 
             {/* Sidebar Drawer Overlay */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex">
+                <div className="fixed inset-0 z-50 flex justify-end">
                     {/* Backdrop */}
                     <div
                         className="fixed inset-0 bg-violet-950/40 backdrop-blur-xs transition-opacity duration-300"
@@ -59,7 +52,7 @@ export default function ChildMobileNav() {
                     />
 
                     {/* Drawer Content */}
-                    <div className="relative flex w-full max-w-[280px] flex-1 flex-col bg-white p-5 shadow-xl transition-transform duration-300 ease-in-out">
+                    <div className="relative flex h-full w-[84vw] max-w-[320px] flex-col bg-white p-5 shadow-xl transition-transform duration-300 ease-in-out">
                         {/* Close button */}
                         <div className="absolute right-4 top-4">
                             <button
