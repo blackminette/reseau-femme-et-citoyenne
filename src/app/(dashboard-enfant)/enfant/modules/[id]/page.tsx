@@ -47,18 +47,17 @@ function isActivityCompleted(actId: string): boolean {
 }
 
 function hydrateSequentialActivities(activities: Activite[]): Activite[] {
-    let unlockedNext = false;
+    let unlockedNext = true;
 
     return activities.map((activity) => {
         const completed = isActivityCompleted(activity.id);
 
         if (completed) {
-            unlockedNext = true;
             return { ...activity, statut: 'termine' as const };
         }
 
-        if (!unlockedNext) {
-            unlockedNext = true;
+        if (unlockedNext) {
+            unlockedNext = false;
             return { ...activity, statut: 'a_faire' as const };
         }
 
