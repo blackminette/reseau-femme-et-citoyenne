@@ -14,22 +14,37 @@ export async function loginAction(formData: any) {
             password,
         });
 
-        if (authError || !authData.user) {
-            return { success: false, error: "[login] Identifiants ou mot de passe incorrects." };
+        if (authError) {
+            console.error("[login] Erreur Supabase Auth:", authError.message);
+            // On renvoie le message de Supabase qui est souvent explicite (ex: Email not confirmed)
+            return { success: false, error: authError.message };
         }
 
-        // on vérifie que l'utilisateur existe bien dans la table Prisma (ex: s'il a déjà un profil créé)
-        const utilisateur = await prisma.utilisateur.findUnique({
+        if (!authData.user) {
+            return { success: false, error: "Utilisateur non trouvé dans Supabase Auth." };
+        }
+
+        console.log("[login] Authentification Supabase réussie pour:", email);
+
+        // on vérifie que l'utilisateur existe bien dans la table Prisma
+        let utilisateur = await prisma.utilisateur.findUnique({
             where: { email: email }
         });
 
-        // Si l'utilisateur n'existe pas, on renvoie une erreur (même si l'auth Supabase a réussi)
         if (!utilisateur) {
-            return {
-                success: false,
-                error: "[login] Compte authentifié, mais aucun profil utilisateur trouvé dans l'association."
-            };
+            console.log("[login] Profil Prisma manquant, création automatique pour:", email);
+            utilisateur = await prisma.utilisateur.create({
+                data: {
+                    id: authData.user.id, // Synchronisation de l'ID
+                    email: email,
+                    nom: authData.user.user_metadata?.nom || 'Nom par défaut',
+                    prenom: authData.user.user_metadata?.prenom || 'Prénom par défaut',
+                    role: 'MEMBRE' // Rôle par défaut
+                }
+            });
         }
+
+        console.log("[login] Profil trouvé/créé, rôle:", utilisateur.role);
 
 
         // Si tout est bon, on renvoie le rôle de l'utilisateur pour adapter l'interface ensuite
