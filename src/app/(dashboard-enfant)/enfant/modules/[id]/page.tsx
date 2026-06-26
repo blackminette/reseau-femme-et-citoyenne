@@ -206,16 +206,6 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
                 {/* Barre du haut */}
                 <div className="relative mt-2 flex flex-wrap items-center justify-between gap-5">
-                    <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block sm:w-32 md:w-40">
-                        <Image
-                            src="/images/enfants/napoleon-watermark.svg"
-                            alt=""
-                            width={720}
-                            height={640}
-                            aria-hidden
-                            className="h-auto w-full select-none opacity-35 blur-[0.1px]"
-                        />
-                    </div>
                     <div className="relative z-10">
                         <h1 className="flex items-center gap-2.5 text-[26px] font-extrabold tracking-tight text-violet-950">
                             <span
