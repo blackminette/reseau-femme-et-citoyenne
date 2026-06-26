@@ -25,6 +25,7 @@ async function main() {
     {
       email: 'admin@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'admin',
       nom: 'IPSSI',
       prenom: 'Johanna',
       role: 'ADMIN',
@@ -33,6 +34,7 @@ async function main() {
     {
       email: 'membre@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'membre',
       nom: 'Dupont',
       prenom: 'Jean',
       role: 'MEMBRE',
@@ -41,6 +43,7 @@ async function main() {
     {
       email: 'intervenant@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'intervenant',
       nom: 'Martin',
       prenom: 'Sophie',
       role: 'INTERVENANT',
@@ -49,6 +52,7 @@ async function main() {
     {
       email: 'partenaire@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'partenaire',
       nom: 'Asso',
       prenom: 'Partenaire',
       role: 'PARTENAIRE',
@@ -57,6 +61,7 @@ async function main() {
     {
       email: 'benevole@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'benevole',
       nom: 'Bernard',
       prenom: 'Lucas',
       role: 'BENEVOLE',
@@ -65,6 +70,7 @@ async function main() {
     {
       email: 'enfant@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'enfant',
       nom: 'Petit',
       prenom: 'Thomas',
       role: 'ENFANT',
@@ -73,6 +79,7 @@ async function main() {
     {
       email: 'etudiant@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'etudiant',
       nom: 'Grand',
       prenom: 'Emma',
       role: 'ETUDIANT',
@@ -112,6 +119,7 @@ async function main() {
       where: { id: supabaseAuthId },
       update: {
         email: u.email,
+        username: u.username,
         nom: u.nom,
         prenom: u.prenom,
         role: u.role,
@@ -120,6 +128,7 @@ async function main() {
       create: {
         id: supabaseAuthId,
         email: u.email,
+        username: u.username,
         nom: u.nom,
         prenom: u.prenom,
         role: u.role,
