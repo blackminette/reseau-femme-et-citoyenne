@@ -5,49 +5,48 @@ import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
 export async function loginAction(formData: any) {
-    const { email, password } = formData;
+    const { username, password } = formData;
 
     try {
+        const fauxEmail = `${username.trim().toLowerCase()}@rfc06.fr`;
+
         const supabase = await getSupabaseServer();
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email,
+            email: fauxEmail,
             password,
         });
 
         if (authError) {
             console.error("[login] Erreur Supabase Auth:", authError.message);
-            // On renvoie le message de Supabase qui est souvent explicite (ex: Email not confirmed)
-            return { success: false, error: authError.message };
+            return { success: false, error: "Identifiants ou mot de passe incorrects." };
         }
 
         if (!authData.user) {
-            return { success: false, error: "Utilisateur non trouvé dans Supabase Auth." };
+            return { success: false, error: "Utilisateur non trouvé." };
         }
 
-        console.log("[login] Authentification Supabase réussie pour:", email);
+        console.log("[login] Authentification Supabase réussie pour le pseudo:", username);
 
-        // on vérifie que l'utilisateur existe bien dans la table Prisma
         let utilisateur = await prisma.utilisateur.findUnique({
-            where: { email: email }
+            where: { username: username.trim() }
         });
 
         if (!utilisateur) {
-            console.log("[login] Profil Prisma manquant, création automatique pour:", email);
+            console.log("[login] Profil Prisma manquant, création automatique pour:", username);
             utilisateur = await prisma.utilisateur.create({
                 data: {
-                    id: authData.user.id, // Synchronisation de l'ID
-                    email: email,
+                    id: authData.user.id,
+                    email: fauxEmail,
+                    username: username.trim(),
                     nom: authData.user.user_metadata?.nom || 'Nom par défaut',
                     prenom: authData.user.user_metadata?.prenom || 'Prénom par défaut',
-                    role: 'MEMBRE' // Rôle par défaut
+                    role: 'MEMBRE'
                 }
             });
         }
 
-        console.log("[login] Profil trouvé/créé, rôle:", utilisateur.role);
+        console.log("[login] Profil trouvé, rôle:", utilisateur.role);
 
-
-        // Si tout est bon, on renvoie le rôle de l'utilisateur pour adapter l'interface ensuite
         return {
             success: true,
             role: utilisateur.role
@@ -57,7 +56,7 @@ export async function loginAction(formData: any) {
         console.error("[login] Erreur critique lors de la connexion :", error);
         return {
             success: false,
-            error: "[login] Une erreur serveur est survenue. Veuillez réessayer plus tard."
+            error: "Une erreur serveur est survenue. Veuillez réessayer plus tard."
         };
     }
 }
