@@ -94,6 +94,29 @@ export default function PedagogiePage() {
                             </div>
                         </Link>
 
+                        {/* Carte Bureautique (adulte) */}
+                        <Link
+                            href="/admin/pedagogie/bureautique"
+                            className="group relative flex flex-col bg-white border border-violet-200 rounded-2xl p-6 shadow-xs hover:shadow-md hover:border-violet-300 transition-all duration-200 text-left"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
+                                    <Volume2 className="h-6 w-6" />
+                                </div>
+                                <span className="flex items-center gap-1 text-xs font-medium text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full group-hover:text-violet-600 group-hover:bg-violet-100 transition-colors">
+                                    Accéder <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </div>
+                            <div className="mt-5 space-y-1">
+                                <h3 className="text-lg font-bold text-violet-900 group-hover:text-violet-700 transition-colors">
+                                    Bureautique (Adulte)
+                                </h3>
+                                <p className="text-sm text-violet-600 leading-relaxed">
+                                    Ateliers de bureautique etc ...
+                                </p>
+                            </div>
+                        </Link>
+
                     </div>
                 </div>
 

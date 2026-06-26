@@ -6,13 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum NiveauPedagogique {
-  NIVEAU_1
-  NIVEAU_2
-  NIVEAU_3
-  ADULTE
-}
-
 model Utilisateur {
   id        String            @id @default(cuid())
   email     String            @unique
@@ -21,7 +14,6 @@ model Utilisateur {
   telephone String?
   role      String            @default("MEMBRE")
   createdAt DateTime          @default(now())
-  niveau    NiveauPedagogique? @default(NIVEAU_1)
 
   reservations    Reservation[]
   dons            Don[]
@@ -95,6 +87,13 @@ enum Parcours {
   ROBOTIQUE
   NUMERIQUE_ADULTE
   ORAL
+  BUREAUTIQUE
+}
+
+enum Difficulte {
+  FACILE
+  MOYEN
+  DIFFICILE
 }
 
 model Module {
@@ -102,8 +101,8 @@ model Module {
   titre        String
   description  String?
   parcours    Parcours[]
+  difficulte   Difficulte        @default(FACILE)
   public       PublicCible       @default(ADULTE)
-  niveauRequis NiveauPedagogique @default(NIVEAU_1)
   isPublished  Boolean           @default(false)
   createdAt    DateTime          @default(now())
   cours        Cours[]

@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { listerTousLesModules, creerModule, supprimerModule, modifierModule, activateModule } from './actions';
 import { BookOpen, FolderPlus, GraduationCap, ChevronRight, AlertCircle, Pencil, Trash, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/Modal';
-import { NiveauPedagogique, Parcours } from '@prisma/client';
+import { Parcours } from '@prisma/client';
 import { useParams } from 'next/navigation';
 
 interface ModuleAvecCompte {
@@ -17,13 +17,13 @@ interface ModuleAvecCompte {
     _count: {
         cours: number;
     };
-    niveauRequis?: NiveauPedagogique;
 }
 
 // Mapping pour convertir le slug d'URL en Enum Prisma et gérer les titres dynamiques
 const PARCOURS_CONFIG: Record<string, { enum: Parcours; label: string; defaultNiveau: NiveauPedagogique }> = {
     "numerique-adulte": { enum: Parcours.NUMERIQUE_ADULTE, label: "Numérique (Adultes)", defaultNiveau: NiveauPedagogique.ADULTE },
     "oral": { enum: Parcours.ORAL, label: "Expression Orale (Adultes)", defaultNiveau: NiveauPedagogique.ADULTE },
+    "bureautique": { enum: Parcours.ORAL, label: "Bureautique (Adultes)", defaultNiveau: NiveauPedagogique.ADULTE },
     "comprehension-lecture": { enum: Parcours.COMPREHENSION_LECTURE, label: "Compréhension Lecture (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
     "numerique": { enum: Parcours.NUMERIQUE, label: "Numérique (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
     "anglais": { enum: Parcours.ANGLAIS, label: "Anglais (Enfants)", defaultNiveau: NiveauPedagogique.NIVEAU_1 },
