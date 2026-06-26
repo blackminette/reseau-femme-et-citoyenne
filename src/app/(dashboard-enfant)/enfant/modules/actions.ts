@@ -1,7 +1,7 @@
 // * src/app/(dashboard-enfant)/enfant/modules/actions.ts
 'use server';
 
-import { Prisma, Parcours } from '@prisma/client';
+import { Parcours } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
