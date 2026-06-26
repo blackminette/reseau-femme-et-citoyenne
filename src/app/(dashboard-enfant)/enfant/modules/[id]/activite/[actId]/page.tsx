@@ -621,10 +621,30 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
     const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
     const content = MODULES_ADVENTURES[activeModuleId];
-    const imageModuleId = activeModuleId === 'napoleon' ? 'civique' : activeModuleId;
+    const isNapoleonModule = activeModuleId === 'napoleon';
 
-    const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${imageModuleId}_decouvrir.png`;
-    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/robotic_arm.png' : `/images/enfants/${imageModuleId}_observer.png`;
+    const napoleonImages = {
+        step1: '/images/enfants/napoleon/napoleon_lecon_1_qui_etait_napoleon.png',
+        step2: '/images/enfants/napoleon/napoleon_lecon_2_napoleon_et_son_epoque.png',
+        step3: '/images/enfants/napoleon/napoleon_lecon_3_comprendre_avec_methode.png',
+        step4: '/images/enfants/napoleon/napoleon_lecon_4_les_limites_a_connaitre.png',
+        exercice: '/images/enfants/napoleon/napoleon_exercice_remettre_dans_l_ordre.png',
+        quiz: '/images/enfants/napoleon/napoleon_quiz_reviser_napoleon.png',
+    } as const;
+
+    const step1ImagePath = isNapoleonModule
+        ? napoleonImages.step1
+        : activeModuleId === 'robotique'
+            ? '/images/enfants/quiz_robot.png'
+            : `/images/enfants/${activeModuleId}_decouvrir.png`;
+    const step2ImagePath = isNapoleonModule
+        ? napoleonImages.step2
+        : activeModuleId === 'robotique'
+            ? '/images/enfants/robotic_arm.png'
+            : `/images/enfants/${activeModuleId}_observer.png`;
+    const step3NapoleonImages = isNapoleonModule ? [napoleonImages.step3, napoleonImages.step4] : [];
+    const step4ImagePath = isNapoleonModule ? napoleonImages.exercice : '/images/enfants/exercice_generic.png';
+    const quizImagePath = isNapoleonModule ? napoleonImages.quiz : '/images/enfants/quiz_robot.png';
 
     const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
     const [showConfetti, setShowConfetti] = useState(false);
@@ -1112,6 +1132,43 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                             </div>
                                         </div>
                                     </div>
+                                ) : activeModuleId === 'napoleon' ? (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {step3NapoleonImages.map((src, index) => (
+                                                <div
+                                                    key={src}
+                                                    className="relative min-h-[150px] overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm"
+                                                >
+                                                    <Image
+                                                        src={src}
+                                                        alt={index === 0
+                                                            ? 'Méthode pour analyser un personnage historique'
+                                                            : 'Illustration des limites du pouvoir et des libertés'}
+                                                        fill
+                                                        className="object-contain p-3"
+                                                        sizes="(min-width: 640px) 18vw, 100vw"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {content.step3.bulles.map((b, idx) => (
+                                                <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
+                                                    <span className="absolute -top-2 -left-2 text-xs">💬</span>
+                                                    <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {content.step3.objectif && (
+                                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
+                                                <span className="text-xl">🎯</span>
+                                                <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
                                     <>
                                         <div className="grid grid-cols-2 gap-2">
@@ -1336,6 +1393,14 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                             Quel est le bon ordre ? 🤔
                                         </div>
                                     </div>
+                                ) : activeModuleId === 'napoleon' ? (
+                                    <Image
+                                        src={step4ImagePath}
+                                        alt="Exercice de chronologie sur Napoléon"
+                                        width={360}
+                                        height={180}
+                                        className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
+                                    />
                                 ) : (
                                     <Image
                                         src="/images/enfants/exercice_generic.png"
@@ -1418,8 +1483,8 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             {/* Right Side: Robot helper */}
                             <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px]">
                                 <Image
-                                    src="/images/enfants/quiz_robot.png"
-                                    alt="Robot assistant"
+                                    src={quizImagePath}
+                                    alt={activeModuleId === 'napoleon' ? 'Quiz de révision sur Napoléon' : 'Robot assistant'}
                                     width={320}
                                     height={160}
                                     className="max-h-[160px] object-contain animate-bounce"
