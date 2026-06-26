@@ -10,7 +10,11 @@ import {
     Sparkles, CheckCircle2, XCircle, MoveUp, MoveDown
 } from 'lucide-react';
 import { MODULES } from '@/lib/enfant-data';
-import { sauvegarderResultatActivite } from '../../../actions';
+import {
+    obtenirDetailsActiviteDepuisDB,
+    obtenirDetailsModuleDepuisDB,
+    sauvegarderResultatActivite
+} from '../../../actions';
 
 // Types
 type Question = {
@@ -612,6 +616,94 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
     }
 };
 
+type DetailedActivity = NonNullable<Awaited<ReturnType<typeof obtenirDetailsActiviteDepuisDB>>>;
+
+function getFirstSentence(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+    const match = trimmed.match(/^[^.?!]+[.?!]?/);
+    return (match?.[0] || trimmed).trim();
+}
+
+function extractLesson(detail: DetailedActivity | null | undefined) {
+    const fallbackTitle = detail?.titre || '';
+    const rawContent = detail && Array.isArray(detail.contenu) ? detail.contenu : [];
+    const first = rawContent[0] as { titre?: string; texte?: string } | undefined;
+
+    return {
+        title: first?.titre || fallbackTitle,
+        text: first?.texte || detail?.instructions || ''
+    };
+}
+
+function buildNapoleonContentFromDb(
+    moduleDetails: NonNullable<Awaited<ReturnType<typeof obtenirDetailsModuleDepuisDB>>>,
+    activitiesDetails: Array<DetailedActivity | null>
+): ModuleContent {
+    const lessons = activitiesDetails.filter((activity): activity is DetailedActivity => activity !== null && activity.type === 'LECON');
+    const exercises = activitiesDetails.filter((activity): activity is DetailedActivity => activity !== null && activity.type !== 'LECON');
+
+    const lesson1 = extractLesson(lessons[0]);
+    const lesson2 = extractLesson(lessons[1]);
+    const lesson3 = extractLesson(lessons[2]);
+    const lesson4 = extractLesson(lessons[3]);
+    const fallback = MODULES_ADVENTURES.napoleon;
+
+    const orderExercise = exercises.find((exercise) => exercise.type === 'ORDER');
+    const quizExercise = exercises.find((exercise) => exercise.type === 'QUIZ');
+
+    const orderData = orderExercise && typeof orderExercise.contenu === 'object' ? orderExercise.contenu : fallback.exercice.data;
+    const quizData = Array.isArray(quizExercise?.contenu) ? quizExercise.contenu : fallback.quiz;
+
+    const step2Retenir = [
+        getFirstSentence(lesson2.text),
+        getFirstSentence(lesson3.text),
+        getFirstSentence(lesson4.text)
+    ].filter((item): item is string => Boolean(item));
+
+    return {
+        titreGlobal: moduleDetails.label,
+        description: moduleDetails.description || fallback.description,
+        themeColor: fallback.themeColor,
+        step1: {
+            titre: fallback.step1.titre,
+            soustitre: lesson1.title || fallback.step1.soustitre,
+            texte: lesson1.text || fallback.step1.texte,
+            emoji: fallback.step1.emoji,
+            aRetenir: lesson1.text || fallback.step1.aRetenir
+        },
+        step2: {
+            soustitre: fallback.step2.soustitre,
+            boxTitre: lesson2.title || fallback.step2.boxTitre,
+            texte: lesson2.text || fallback.step2.texte,
+            emoji: fallback.step2.emoji,
+            aRetenir: step2Retenir.length > 0 ? step2Retenir : fallback.step2.aRetenir
+        },
+        step3: {
+            soustitre: fallback.step3.soustitre,
+            texte: [lesson3.text, lesson4.text].filter(Boolean).join(' ') || fallback.step3.texte,
+            pointsCles: [
+                lesson3.text ? getFirstSentence(lesson3.text) : '',
+                lesson4.text ? getFirstSentence(lesson4.text) : '',
+                "L'histoire demande de la précision, pas du mythe."
+            ].filter((item): item is string => Boolean(item)),
+            bulles: [
+                lesson3.title || 'Contexte',
+                lesson4.title || 'Limites',
+                'Analyser avec méthode',
+                'Comparer les faits'
+            ],
+            illustration: fallback.step3.illustration
+        },
+        exercice: {
+            titre: orderExercise?.titre || fallback.exercice.titre,
+            type: 'order',
+            data: orderData as OrderExerciseData
+        },
+        quiz: quizData as Question[]
+    };
+}
+
 type PageParams = Promise<{ id: string; actId: string }>;
 
 export default function EnfantActivityPage({ params }: { params: PageParams }) {
@@ -619,9 +711,45 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const router = useRouter();
 
     // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
-    const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
-    const content = MODULES_ADVENTURES[activeModuleId];
-    const isNapoleonModule = activeModuleId === 'napoleon';
+    const isNapoleonModule = id === 'napoleon';
+    const activeModuleId = isNapoleonModule ? 'napoleon' : (MODULES_ADVENTURES[id] ? id : 'lecture');
+    const [napoleonContent, setNapoleonContent] = useState<ModuleContent>(MODULES_ADVENTURES.napoleon);
+    const content = isNapoleonModule ? napoleonContent : MODULES_ADVENTURES[activeModuleId];
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadNapoleonContent() {
+            if (!isNapoleonModule) {
+                return;
+            }
+
+            try {
+                const moduleDetails = await obtenirDetailsModuleDepuisDB('napoleon');
+                if (!moduleDetails || cancelled) {
+                    return;
+                }
+
+                const activitiesDetails = await Promise.all(
+                    moduleDetails.activites.map((activity) => obtenirDetailsActiviteDepuisDB(activity.id))
+                );
+
+                if (cancelled) {
+                    return;
+                }
+
+                setNapoleonContent(buildNapoleonContentFromDb(moduleDetails, activitiesDetails));
+            } catch (error) {
+                console.warn('[Napoleon] Utilisation du contenu de secours pendant le chargement DB.', error);
+            }
+        }
+
+        loadNapoleonContent();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isNapoleonModule]);
 
     const napoleonImages = {
         step1: '/images/enfants/napoleon/napoleon_lecon_1_qui_etait_napoleon.png',
