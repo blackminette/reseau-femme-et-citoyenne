@@ -689,17 +689,6 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
             });
         }
 
-        if (slug === 'civique' && !mapped.some((mod) => mod.slug === 'napoleon')) {
-            mapped.unshift({
-                id: 'napoleon',
-                dbId: null,
-                label: 'Napoléon',
-                description: "Comprendre un personnage clé de l'histoire française.",
-                progression: 0,
-                slug: 'napoleon'
-            });
-        }
-
         return mapped;
     } catch (e) {
         gererErreurBaseDeDonnees("obtenirModulesDuParcours", e);
