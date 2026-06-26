@@ -105,7 +105,6 @@ function hydrateSequentialActivities(activities: Activite[]): Activite[] {
 
 export default function EnfantModuleDetailPage({ params }: { params: Params }) {
     const { id } = use(params);
-    const isNapoleonModule = id === 'napoleon';
     const [activites, setActivites] = useState<Activite[]>([]);
     const [progression, setProgression] = useState(0);
     const [dbModule, setDbModule] = useState<{ label: string; slug: string; progression: number } | null>(null);
@@ -174,19 +173,6 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
         label: dbModule ? dbModule.label : currentModule.label,
         progression: progression
     } : (dbModule ? fallbackModule : null);
-
-    const heroPrimaryImage = isNapoleonModule
-        ? '/images/enfants/napoleon/napoleon_lecon_1_qui_etait_napoleon.png'
-        : '/images/enfants/napoleon-study.webp';
-    const heroPrimaryAlt = isNapoleonModule
-        ? 'Frise historique présentant les étapes de la vie de Napoléon'
-        : 'Napoléon dans son étude';
-    const heroSecondaryImage = isNapoleonModule
-        ? '/images/enfants/napoleon/napoleon_lecon_2_napoleon_et_son_epoque.png'
-        : '/images/enfants/napoleon-crossing-alps.jpg';
-    const heroSecondaryAlt = isNapoleonModule
-        ? "Illustration du Code civil et de l'organisation administrative sous Napoléon"
-        : 'Napoléon traversant les Alpes';
 
     if (loading) {
         return (
@@ -431,21 +417,22 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
                         <div className="absolute left-6 top-6 right-[32%] bottom-[24%] z-10 overflow-hidden rounded-[26px] border border-white/70 shadow-[0_18px_40px_rgba(92,54,18,0.18)]">
                             <Image
-                                src={heroPrimaryImage}
-                                alt={heroPrimaryAlt}
+                                src="/images/enfants/napoleon-study.webp"
+                                alt="Napoléon dans son étude"
                                 fill
                                 priority
-                                className="object-contain bg-transparent"
+                                className="object-cover"
+                                style={{ objectPosition: '50% 15%' }}
                                 sizes="(min-width: 1024px) 28vw, 100vw"
                             />
                         </div>
 
                         <div className="absolute right-6 top-10 bottom-10 z-10 w-[42%] overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_50px_rgba(92,54,18,0.22)] rotate-2">
                             <Image
-                                src={heroSecondaryImage}
-                                alt={heroSecondaryAlt}
+                                src="/images/enfants/napoleon-crossing-alps.jpg"
+                                alt="Napoléon traversant les Alpes"
                                 fill
-                                className="object-contain bg-transparent"
+                                className="object-cover object-center"
                                 sizes="(min-width: 1024px) 18vw, 40vw"
                             />
                         </div>
