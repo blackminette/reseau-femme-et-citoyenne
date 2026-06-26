@@ -4,9 +4,9 @@
 import React, { useState, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-    ChevronLeft, Star, Trophy, Check, RotateCcw, 
-    Sparkles, BookOpen, HelpCircle, 
+import {
+    ChevronLeft, Star, Trophy, Check, RotateCcw,
+    Sparkles, BookOpen, HelpCircle,
     ArrowRight, CheckCircle2, XCircle, MoveUp, MoveDown
 } from 'lucide-react';
 import { MODULES } from '@/lib/enfant-data';
@@ -134,6 +134,70 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
             { q: "L'accès à l'école gratuite pour tous est garanti par...", options: ["Le droit à la santé", "Le droit à l'éducation", "Le droit de vote", "La liberté d'expression"], answer: 1, explication: "C'est le droit à l'éducation qui garantit à chaque enfant l'accès aux apprentissages." },
             { q: "Dans quel ordre se trouvent les couleurs du drapeau français (de gauche à droite) ?", options: ["Rouge, Blanc, Bleu", "Bleu, Blanc, Rouge", "Vert, Blanc, Rouge", "Bleu, Rouge, Blanc"], answer: 1, explication: "Les trois bandes verticales sont ordonnées : Bleu, Blanc, puis Rouge." },
             { q: "Que veut dire la valeur de la 'Fraternité' ?", options: ["Faire ce que l'on veut", "Être tous identiques", "S'entraider et se respecter comme des frères et sœurs", "Avoir plus de droits que de devoirs"], answer: 2, explication: "La fraternité est la solidarité et l'amitié entre tous les citoyens." }
+        ]
+    },
+    napoleon: {
+        titreGlobal: "Napoléon",
+        description: "Comprendre un personnage clé de l'histoire française",
+        themeColor: "from-amber-500 to-rose-600",
+        step1: {
+            titre: "Découvrir",
+            soustitre: "Qui était Napoléon ?",
+            texte: "Napoléon Bonaparte est une grande figure de l'histoire de France. Il a d'abord été général, puis il est devenu Premier Consul et ensuite Empereur des Français. Pour l'étudier sérieusement, il faut regarder à la fois ses réussites et ses limites.",
+            emoji: "🎩 🇫🇷 📜",
+            aRetenir: "Napoléon a marqué l'histoire française, mais un personnage historique se juge avec des faits, pas avec des slogans."
+        },
+        step2: {
+            soustitre: "Lis attentivement le texte suivant.",
+            boxTitre: "Napoléon et son époque",
+            texte: "Napoléon Bonaparte a vécu pendant une période de grands changements en France. Après la Révolution, il a pris le pouvoir et a dirigé le pays. Son époque a vu des réformes importantes, comme l'organisation de l'administration et du droit. Mais son règne s'est aussi accompagné de guerres très nombreuses en Europe. Pour comprendre Napoléon, il faut donc distinguer les réformes utiles, le pouvoir personnel et les conflits.",
+            emoji: "⚖️ 🗺️ 🏛️",
+            aRetenir: [
+                "Napoléon est lié à une période de grands changements.",
+                "Il faut comparer ses actions et leurs conséquences.",
+                "L'histoire demande de la précision, pas du mythe."
+            ]
+        },
+        step3: {
+            soustitre: "Récapitulons !",
+            texte: "Napoléon est une figure historique importante, mais on doit l'analyser avec méthode : contexte, actions, conséquences et limites.",
+            pointsCles: [
+                "Il a dirigé la France après la Révolution.",
+                "Il a mis en place des réformes durables.",
+                "Son pouvoir s'est aussi accompagné de guerres."
+            ],
+            bulles: [
+                "Qui était-il ?",
+                "Que fait-il en France ?",
+                "Quelles sont ses réformes ?",
+                "Quelles sont ses limites ?"
+            ],
+            illustration: "🏛️"
+        },
+        exercice: {
+            titre: "Remets les grandes étapes de la vie politique de Napoléon dans le bon ordre.",
+            type: 'order',
+            data: {
+                correctOrder: [
+                    "Général pendant la Révolution française",
+                    "Premier Consul",
+                    "Empereur des Français",
+                    "Exil après sa chute"
+                ],
+                initialOrder: [
+                    "Empereur des Français",
+                    "Général pendant la Révolution française",
+                    "Exil après sa chute",
+                    "Premier Consul"
+                ]
+            }
+        },
+        quiz: [
+            { q: "Comment s'appelle la fonction de Napoléon avant de devenir Empereur ?", options: ["Président", "Premier Consul", "Roi de France", "Ministre"], answer: 1, explication: "Après le coup d'État de 1799, Napoléon devient Premier Consul." },
+            { q: "Napoléon a surtout dirigé la France après...", options: ["La Révolution française", "La Première Guerre mondiale", "La Seconde Guerre mondiale", "La guerre froide"], answer: 0, explication: "Napoléon prend le pouvoir dans la période qui suit la Révolution française." },
+            { q: "Pourquoi faut-il étudier Napoléon avec rigueur ?", options: ["Pour le transformer en héros parfait", "Pour oublier son époque", "Pour comprendre ses réussites et ses limites", "Parce qu'il n'a rien changé"], answer: 2, explication: "Un personnage historique se comprend en regardant les faits, les réformes et les conséquences." },
+            { q: "Quel est un exemple de conséquence liée à son époque ?", options: ["Des guerres très nombreuses en Europe", "La disparition totale de l'État", "La fin de toute administration", "L'arrêt de l'histoire"], answer: 0, explication: "Son règne a été marqué par des guerres à grande échelle en Europe." },
+            { q: "Que doit faire un élève quand il étudie l'histoire ?", options: ["Répéter des slogans", "Chercher des faits et des sources", "Éviter les dates", "Inventer des conclusions"], answer: 1, explication: "L'histoire demande des faits, du contexte et des sources fiables." }
         ]
     },
     anglais: {
@@ -503,176 +567,55 @@ type PageParams = Promise<{ id: string; actId: string }>;
 export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
-    
-    const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
-    const staticContent = MODULES_ADVENTURES[activeModuleId];
 
-    const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${activeModuleId}_decouvrir.png`;
-    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/robotic_arm.png' : `/images/enfants/${activeModuleId}_observer.png`;
+    // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
+    const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
+    const content = MODULES_ADVENTURES[activeModuleId];
+    const imageModuleId = activeModuleId === 'napoleon' ? 'civique' : activeModuleId;
+
+    const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${imageModuleId}_decouvrir.png`;
+    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/robotic_arm.png' : `/images/enfants/${imageModuleId}_observer.png`;
 
     const [loading, setLoading] = useState(true);
-    const [dbActivity, setDbActivity] = useState<any>(null);
-    const [stepIndex, setStepIndex] = useState(0); 
+    const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
     const [showConfetti, setShowConfetti] = useState(false);
 
+    // États pour l'Exercice Interactif
     const [exerciceChecked, setExerciceChecked] = useState(false);
     const [exerciceSuccess, setExerciceSuccess] = useState(false);
+
+    // --- États Exercice 'match' (Civique / Numérique) ---
     const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
     const [matches, setMatches] = useState<Record<string, string>>({});
+
+    // --- États Exercice 'order' (Anglais / Robotique) ---
     const [orderedItems, setOrderedItems] = useState<string[]>([]);
+
+    // --- États Exercice 'input' (Lecture) ---
     const [inputAnswers, setInputAnswers] = useState<Record<string, string>>({});
-    const [sortedItems, setSortedItems] = useState<Record<string, string>>({}); 
+
+    // --- États Exercice 'sort' (Éco-citoyenneté) ---
+    const [sortedItems, setSortedItems] = useState<Record<string, string>>({}); // itemId -> categoryId
     const [activeSortItemIndex, setActiveSortItemIndex] = useState(0);
 
+    // États pour le Quiz
     const [quizIndex, setQuizIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [score, setScore] = useState(0);
     const [showExplanation, setShowExplanation] = useState(false);
 
-    const content = React.useMemo(() => {
-        if (!dbActivity) return staticContent;
-        
-        let parsedQuiz = [];
-        if (dbActivity.type === 'QUIZ') {
-            if (Array.isArray(dbActivity.contenu) && dbActivity.contenu.length > 0) {
-                parsedQuiz = dbActivity.contenu.map((item: any) => {
-                    const opts = Array.isArray(item.options) ? item.options : (item.affirmation ? ["Vrai", "Faux"] : []);
-                    let ansIdx = opts.indexOf(item.reponseCorrecte);
-                    if (ansIdx === -1) {
-                        ansIdx = opts.findIndex((o: string) => o.toLowerCase() === String(item.reponseCorrecte).toLowerCase());
-                    }
-                    if (ansIdx === -1) ansIdx = 0;
-                    return {
-                        q: item.question || item.affirmation || '',
-                        options: opts,
-                        answer: ansIdx,
-                        explication: item.explication || "Bonne réponse !"
-                    };
-                });
-            } else {
-                try {
-                    parsedQuiz = typeof dbActivity.instructions === 'string' && dbActivity.instructions.startsWith('[')
-                        ? JSON.parse(dbActivity.instructions)
-                        : [];
-                } catch (e) {
-                    console.error("Failed to parse quiz instructions:", e);
-                }
-            }
-        }
-
-        let parsedExerciceData = {};
-        if (dbActivity.type === 'ORDER' && Array.isArray(dbActivity.contenu) && dbActivity.contenu.length > 0) {
-            const sorted = [...dbActivity.contenu].sort((a: any, b: any) => (a.ordreCorrect || 0) - (b.ordreCorrect || 0));
-            const correctOrder = sorted.map((item: any) => item.label);
-            const initialOrder = [...correctOrder].reverse();
-            parsedExerciceData = {
-                correctOrder,
-                initialOrder
-            };
-        } else if (dbActivity.type === 'MATCH' && dbActivity.contenu && typeof dbActivity.contenu === 'object' && !Array.isArray(dbActivity.contenu)) {
-            parsedExerciceData = dbActivity.contenu;
-        } else if (dbActivity.type === 'MATCH' || dbActivity.type === 'ORDER') {
-            try {
-                parsedExerciceData = typeof dbActivity.instructions === 'string' && dbActivity.instructions.startsWith('{')
-                    ? JSON.parse(dbActivity.instructions)
-                    : {};
-            } catch (e) {
-                console.error("Failed to parse exercise instructions:", e);
-            }
-        }
-
-        const slides = Array.isArray(dbActivity.contenu) ? dbActivity.contenu : [];
-
-        return {
-            titreGlobal: dbActivity.titre,
-            description: dbActivity.type === 'QUIZ' ? "Quiz d'évaluation" : (dbActivity.type === 'LECON' ? "Leçon" : "Exercice d'application"),
-            themeColor: staticContent.themeColor,
-            step1: slides[0]
-                ? {
-                    titre: "Découvrir",
-                    soustitre: slides[0].titre || dbActivity.titre,
-                    texte: slides[0].texteExplicatif || slides[0].texte || slides[0].affirmation || "",
-                    emoji: "📖",
-                    aRetenir: slides[0].aRetenir || "Lis attentivement pour comprendre."
-                }
-                : staticContent.step1,
-            step2: slides[1]
-                ? {
-                    soustitre: slides[1].titre || "Observer",
-                    boxTitre: "À retenir",
-                    texte: slides[1].texteExplicatif || slides[1].texte || slides[1].affirmation || "",
-                    emoji: "💡",
-                    aRetenir: Array.isArray(slides[1].aRetenir) ? slides[1].aRetenir : [slides[1].aRetenir || "Retiens les notions clés."]
-                }
-                : staticContent.step2,
-            step3: slides[2]
-                ? {
-                    soustitre: slides[2].titre || "Comprendre",
-                    texte: slides[2].texteExplicatif || slides[2].texte || slides[2].affirmation || "",
-                    pointsCles: Array.isArray(slides[2].pointsCles) ? slides[2].pointsCles : ["Comprends les concepts."],
-                    bulles: [],
-                    illustration: "🧠"
-                }
-                : staticContent.step3,
-            exercice: {
-                titre: dbActivity.titre,
-                type: (dbActivity.type.toLowerCase() === 'match' || dbActivity.type.toLowerCase() === 'order') ? dbActivity.type.toLowerCase() as 'match' | 'order' : 'match',
-                data: parsedExerciceData
-            },
-            quiz: parsedQuiz
-        } as any;
-    }, [dbActivity, staticContent]);
-
+    // Charger le module initial
     useEffect(() => {
         if (!id) return;
-        
-        async function loadActivity() {
-            setLoading(true);
-            try {
-                const dbAct = await obtenirDetailsActiviteDepuisDB(actId);
-                if (dbAct) {
-                    setDbActivity(dbAct);
-                    
-                    if (dbAct.type === 'QUIZ') {
-                        setStepIndex(4);
-                    } else if (dbAct.type === 'MATCH' || dbAct.type === 'ORDER') {
-                        setStepIndex(3);
-                        try {
-                            if (dbAct.type === 'ORDER') {
-                                if (Array.isArray(dbAct.contenu) && dbAct.contenu.length > 0) {
-                                    const sorted = [...dbAct.contenu].sort((a: any, b: any) => (a.ordreCorrect || 0) - (b.ordreCorrect || 0));
-                                    const correctOrder = sorted.map((item: any) => item.label);
-                                    const initialOrder = [...correctOrder].reverse();
-                                    setOrderedItems(initialOrder);
-                                } else {
-                                    const parsedData = typeof dbAct.instructions === 'string' && dbAct.instructions.startsWith('{')
-                                        ? JSON.parse(dbAct.instructions)
-                                        : null;
-                                    if (parsedData && Array.isArray(parsedData.initialOrder)) {
-                                        setOrderedItems([...parsedData.initialOrder]);
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    } else {
-                        setStepIndex(0);
-                    }
-                } else {
-                    if (staticContent.exercice.type === 'order') {
-                        setOrderedItems([...staticContent.exercice.data.initialOrder]);
-                    }
-                }
-            } catch (err) {
-                console.error("Erreur chargement exercice:", err);
-            }
-            setLoading(false);
+
+        // Initialiser l'exercice en fonction du type
+        if (content.exercice.type === 'order') {
+            setOrderedItems([...content.exercice.data.initialOrder]);
         }
+        setLoading(false);
+    }, [id, activeModuleId]);
 
-        loadActivity();
-    }, [id, actId, staticContent]);
-
+    // Lancer des confettis lors du résultat final
     useEffect(() => {
         if (stepIndex === 5) {
             setShowConfetti(true);
@@ -681,6 +624,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         }
     }, [stepIndex]);
 
+    // ─── LOGIQUE EXERCICE : MATCH ───
     const handleSelectLeft = (leftId: string) => {
         if (exerciceChecked) return;
         setSelectedLeft(leftId);
@@ -715,16 +659,31 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         setExerciceChecked(true);
     };
 
+    // ─── LOGIQUE EXERCICE : ORDER ───
     const moveItem = (index: number, direction: 'up' | 'down') => {
         if (exerciceChecked) return;
         const newOrder = [...orderedItems];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
-        
+        if (targetIndex < 0 || targetIndex >= newOrder.length) return;
+
+        // Échange
         const temp = newOrder[index];
         newOrder[index] = newOrder[targetIndex];
         newOrder[targetIndex] = temp;
-        
         setOrderedItems(newOrder);
+    };
+
+    const verifyOrder = () => {
+        const expected = content.exercice.data.correctOrder;
+        let isCorrect = true;
+        for (let i = 0; i < expected.length; i++) {
+            if (orderedItems[i] !== expected[i]) {
+                isCorrect = false;
+                break;
+            }
+        }
+        setExerciceSuccess(isCorrect);
+        setExerciceChecked(true);
     };
 
     const handleResetOrder = () => {
@@ -733,21 +692,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         setExerciceSuccess(false);
     };
 
-    const verifyOrder = () => {
-        const correct = content.exercice.data.correctOrder;
-        let allCorrect = true;
-
-        for (let i = 0; i < correct.length; i++) {
-            if (orderedItems[i] !== correct[i]) {
-                allCorrect = false;
-                break;
-            }
-        }
-
-        setExerciceSuccess(allCorrect);
-        setExerciceChecked(true);
-    };
-
+    // ─── LOGIQUE EXERCICE : INPUT ───
     const handleInputChange = (key: string, val: string) => {
         if (exerciceChecked) return;
         setInputAnswers(prev => ({
@@ -757,15 +702,15 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     };
 
     const verifyInput = () => {
-        const questions = content.exercice.data.questions;
+        const questionsList = content.exercice.data.questions;
         let allCorrect = true;
 
-        for (const q of questions) {
-            const answer = (inputAnswers[q.key] || "").trim().toLowerCase();
-            const expected = q.answer.toLowerCase();
-            if (answer !== expected) {
+        for (const q of questionsList) {
+            const userVal = (inputAnswers[q.key] || "").trim().toLowerCase();
+            // Vérifier si la réponse de l'utilisateur contient un des mots acceptés
+            const isMatch = q.correct.some((word: string) => userVal.includes(word.toLowerCase()));
+            if (!isMatch) {
                 allCorrect = false;
-                break;
             }
         }
 
@@ -779,6 +724,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         setExerciceSuccess(false);
     };
 
+    // ─── LOGIQUE EXERCICE : SORT ───
     const handleSortItem = (categoryId: string) => {
         if (exerciceChecked) return;
         const items = content.exercice.data.items;
@@ -792,6 +738,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         if (activeSortItemIndex < items.length - 1) {
             setActiveSortItemIndex(activeSortItemIndex + 1);
         } else {
+            // Tous triés, on vérifie
             let allCorrect = true;
             const updatedSorted: Record<string, string> = {
                 ...sortedItems,
@@ -814,6 +761,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         setExerciceSuccess(false);
     };
 
+    // ─── LOGIQUE QUIZ ───
     const handleAnswerQuiz = (index: number) => {
         if (selectedOption !== null) return;
         setSelectedOption(index);
@@ -829,27 +777,29 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         if (quizIndex < content.quiz.length - 1) {
             setQuizIndex(quizIndex + 1);
         } else {
+            // Fin de l'aventure
             setStepIndex(5);
         }
     };
 
+    // Enregistrer en BDD ou LocalStorage
     const handleSaveAdventure = async () => {
-        const isLesson = dbActivity?.type === 'LECON';
-        const finalScoreString = isLesson ? "1/1" : `${score}/${content.quiz.length}`;
-        const isPerfect = isLesson ? true : score === content.quiz.length;
+        const finalScoreString = `${score}/${content.quiz.length}`;
+        const isPerfect = score === content.quiz.length;
 
-        const savedData = { 
-            completed: true, 
+        const savedData = {
+            completed: true,
             score: finalScoreString,
             parfait: isPerfect
         };
 
+        // Sauvegarder pour l'enfant dans le localStorage
         localStorage.setItem(`rfc_enfant_act_${actId}`, JSON.stringify(savedData));
 
         const isMock = isNaN(Number(actId));
         if (!isMock) {
             try {
-                await sauvegarderResultatActivite(actId, isLesson ? 1 : score);
+                await sauvegarderResultatActivite(actId, score);
             } catch (err) {
                 console.error("Erreur de sauvegarde de l'activité sur la BDD:", err);
             }
@@ -867,55 +817,20 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         );
     }
 
+    const steps = [
+        { label: "Leçon 1/3", desc: "Découvrir" },
+        { label: "Leçon 2/3", desc: "Observer" },
+        { label: "Leçon 3/3", desc: "Comprendre" },
+        { label: "Exercice", desc: "S'entraîner" },
+        { label: "Quiz", desc: "Se tester" }
+    ];
+
+    // Trouver les métadonnées statiques du module actuel
     const staticModInfo = MODULES.find(m => m.id === id) || { from: "#6d5ba8", to: "#5b4a98" };
-
-    const hasDbLessonPages = dbActivity && dbActivity.type === 'LECON' && Array.isArray(dbActivity.contenu) && dbActivity.contenu.length > 0;
-    const isDbLessonEmpty = dbActivity && dbActivity.type === 'LECON' && (!Array.isArray(dbActivity.contenu) || dbActivity.contenu.length === 0);
-    const maxLessonSteps = hasDbLessonPages ? dbActivity.contenu.length : (isDbLessonEmpty ? 0 : 3);
-
-    const dynamicStepsList = [];
-    if (dbActivity) {
-        if (dbActivity.type === 'LECON') {
-            if (hasDbLessonPages) {
-                dbActivity.contenu.forEach((page: any, pIdx: number) => {
-                    let label = "Découvrir";
-                    if (pIdx === 1) label = "Observer";
-                    else if (pIdx === 2) label = "Comprendre";
-                    else if (pIdx > 2) label = `Étape ${pIdx + 1}`;
-                    dynamicStepsList.push({
-                        idx: pIdx,
-                        label: page.titre || label,
-                        icon: "📖"
-                    });
-                });
-            } else {
-                // empty db lesson: no learning steps in navigation timeline
-            }
-            dynamicStepsList.push({ idx: 5, label: "Résultat", icon: "🏆" });
-        } else if (dbActivity.type === 'QUIZ') {
-            dynamicStepsList.push(
-                { idx: 4, label: "Quiz", icon: "🎯" },
-                { idx: 5, label: "Résultat", icon: "🏆" }
-            );
-        } else {
-            dynamicStepsList.push(
-                { idx: 3, label: "Exercice", icon: "🎮" },
-                { idx: 5, label: "Résultat", icon: "🏆" }
-            );
-        }
-    } else {
-        dynamicStepsList.push(
-            { idx: 0, label: "Leçon 1/3", icon: "📖" },
-            { idx: 1, label: "Leçon 2/3", icon: "🔍" },
-            { idx: 2, label: "Leçon 3/3", icon: "💡" },
-            { idx: 3, label: "Exercice", icon: "🎮" },
-            { idx: 4, label: "Quiz", icon: "🎯" },
-            { idx: 5, label: "Résultat", icon: "🏆" }
-        );
-    }
 
     return (
         <div className="text-violet-900 max-w-6xl mx-auto pb-12 px-4 relative">
+            {/* Confettis Emojis */}
             {showConfetti && (
                 <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
                     <div className="absolute text-5xl md:text-7xl animate-bounce tracking-widest bg-white/20 backdrop-blur-xs rounded-2xl p-4 shadow-xl">
@@ -924,11 +839,15 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 </div>
             )}
 
+            {/* ─── CARTE PRINCIPALE GÉANTE (CONTIENT TOUT LE MODULE) ─── */}
             <div className="bg-white border border-slate-100 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 flex flex-col justify-between min-h-[580px]">
-                
+
+                {/* 1. Header de la carte : Titre à gauche, Timeline à droite */}
                 <div className="border-b border-slate-100 pb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+                    {/* Module Info */}
                     <div className="flex items-center gap-3">
-                        <div 
+                        <div
                             className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-lg font-bold"
                             style={{ backgroundImage: `linear-gradient(135deg, ${staticModInfo.from}, ${staticModInfo.to})` }}
                         >
@@ -940,19 +859,20 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </div>
                     </div>
 
+                    {/* Timeline horizontale intégrée dans le header de la carte */}
                     {stepIndex < 5 && (
                         <nav className="flex items-center gap-1 md:gap-3 text-[10px]">
-                            {dynamicStepsList.filter(s => s.idx !== 5).map((st, i) => {
-                                const isActive = stepIndex === st.idx;
-                                const isDone = stepIndex > st.idx;
+                            {steps.map((st, i) => {
+                                const isActive = stepIndex === i;
+                                const isDone = stepIndex > i;
                                 return (
-                                    <React.Fragment key={st.idx}>
+                                    <React.Fragment key={i}>
                                         <div className="flex items-center gap-1.5">
                                             <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black transition-all ${
-                                                isActive 
-                                                    ? 'bg-violet-600 text-white ring-4 ring-violet-100 scale-105' 
-                                                    : isDone 
-                                                        ? 'bg-emerald-500 text-white' 
+                                                isActive
+                                                    ? 'bg-violet-600 text-white ring-4 ring-violet-100 scale-105'
+                                                    : isDone
+                                                        ? 'bg-emerald-500 text-white'
                                                         : 'bg-slate-100 text-slate-400'
                                             }`}>
                                                 {isDone ? <Check className="h-3 w-3" /> : i + 1}
@@ -961,7 +881,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                                 {st.label}
                                             </span>
                                         </div>
-                                        {i < dynamicStepsList.length - 2 && (
+                                        {i < steps.length - 1 && (
                                             <span className="text-slate-200 font-bold ml-1">─</span>
                                         )}
                                     </React.Fragment>
@@ -971,49 +891,13 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                     )}
                 </div>
 
+                {/* 2. Corps de la carte : Changement en fonction du stepIndex */}
                 <div className="flex-grow flex flex-col justify-center py-6">
-                    
-                    {/* DYNAMIC DATABASE LESSON PAGES */}
-                    {dbActivity && dbActivity.type === 'LECON' && (
-                        hasDbLessonPages && stepIndex < dbActivity.contenu.length ? (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center animate-fade-in">
-                                <div className="space-y-6 flex flex-col justify-between h-full">
-                                    <div className="space-y-4">
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest font-sans">
-                                            Leçon {stepIndex + 1}/{dbActivity.contenu.length}
-                                        </span>
-                                        <h1 className="text-2xl md:text-3xl font-black text-violet-950 leading-tight">
-                                            {dbActivity.contenu[stepIndex].titre}
-                                        </h1>
-                                        <p className="text-sm md:text-base text-slate-800 leading-relaxed font-semibold whitespace-pre-line">
-                                            {dbActivity.contenu[stepIndex].texteExplicatif || dbActivity.contenu[stepIndex].texte}
-                                        </p>
-                                    </div>
-                                </div>
 
-                                {dbActivity.contenu[stepIndex].imageUrl && (
-                                    <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
-                                        <img 
-                                            src={dbActivity.contenu[stepIndex].imageUrl} 
-                                            alt={dbActivity.contenu[stepIndex].titre} 
-                                            className="max-h-[260px] object-contain rounded-2xl hover:scale-102 transition-transform duration-500"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        ) : (!hasDbLessonPages && stepIndex !== 5) ? (
-                            <div className="text-center py-12 space-y-6 max-w-xl mx-auto animate-fade-in">
-                                <span className="text-6xl animate-bounce inline-block">🚀</span>
-                                <h1 className="text-2xl font-black text-violet-950">Aventure en préparation !</h1>
-                                <p className="text-sm text-slate-600 font-bold leading-relaxed">
-                                    Le contenu de la leçon <span className="text-violet-700">« {dbActivity.titre} »</span> arrive très bientôt. Reste connecté(e) pour la suite !
-                                </p>
-                            </div>
-                        ) : null
-                    )}
-
-                    {stepIndex === 0 && !hasDbLessonPages && !dbActivity && (
+                    {/* ── STEP 0 : LEÇON 1/3 (DÉCOUVRIR) ── */}
+                    {stepIndex === 0 && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Side Content */}
                             <div className="space-y-6 flex flex-col justify-between h-full">
                                 <div className="space-y-4">
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest">
@@ -1027,27 +911,43 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     </p>
                                 </div>
 
-                                <div className="bg-amber-50 border border-amber-100/50 p-4 rounded-2xl flex items-start gap-3 mt-4">
-                                    <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
-                                    <div>
-                                        <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
-                                        <p className="text-xs text-amber-800 font-bold mt-0.5">{content.step1.aRetenir}</p>
+                                {/* Exemple Box (si spécifié, ex: aspirateur robot pour la robotique) */}
+                                {content.step1.exempleText ? (
+                                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between gap-4 mt-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] font-black text-violet-700 uppercase tracking-widest block">Exemple</span>
+                                            <p className="text-xs text-slate-700 font-bold leading-normal">{content.step1.exempleText}</p>
+                                        </div>
+                                        {content.step1.exempleImage && (
+                                            <img src={content.step1.exempleImage} alt="Exemple" className="h-14 w-14 object-contain rounded-lg shrink-0" />
+                                        )}
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="bg-amber-50 border border-amber-100/50 p-4 rounded-2xl flex items-start gap-3 mt-4">
+                                        <Star className="h-5 w-5 text-amber-500 shrink-0 fill-amber-500" />
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider">À retenir</h4>
+                                            <p className="text-xs text-amber-800 font-bold mt-0.5">{content.step1.aRetenir}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
+                            {/* Right Side Illustration */}
                             <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
-                                <img 
-                                    src={step1ImagePath} 
-                                    alt={content.step1.soustitre} 
+                                <img
+                                    src={step1ImagePath}
+                                    alt={content.step1.soustitre}
                                     className="max-h-[260px] object-contain rounded-2xl hover:scale-102 transition-transform duration-500"
                                 />
                             </div>
                         </div>
                     )}
 
-                    {stepIndex === 1 && !hasDbLessonPages && !dbActivity && (
+                    {/* ── STEP 1 : LEÇON 2/3 (OBSERVER) ── */}
+                    {stepIndex === 1 && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Side: Cahier ligné */}
                             <div className="bg-yellow-50/40 border border-yellow-100 rounded-3xl p-6 shadow-xs relative overflow-hidden min-h-[280px] flex flex-col justify-between">
                                 <div className="absolute top-0 bottom-0 left-8 w-px bg-rose-200" />
                                 <div className="pl-6 space-y-3 font-serif">
@@ -1059,13 +959,32 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         {content.step2.texte}
                                     </p>
                                 </div>
+
+                                {/* Ligne de diagramme horizontal spécifique pour le fonctionnement du robot */}
+                                {activeModuleId === 'robotique' && (
+                                    <div className="pl-6 mt-4 grid grid-cols-3 gap-2 border-t border-yellow-200/50 pt-4 text-center font-sans">
+                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
+                                            <span className="text-xl mb-1">👁️</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">1. Il reçoit une info</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
+                                            <span className="text-xl mb-1">💻</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">2. Il traite l'info</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
+                                            <span className="text-xl mb-1">⚙️</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">3. Il agit</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
+                            {/* Right Side: Image + À retenir */}
                             <div className="flex flex-col gap-5 justify-between h-full">
                                 <div className="bg-violet-50/40 border border-violet-100 rounded-3xl p-5 flex items-center justify-center shadow-inner min-h-[160px] max-h-[200px] overflow-hidden">
-                                    <img 
-                                        src={step2ImagePath} 
-                                        alt={content.step2.boxTitre} 
+                                    <img
+                                        src={step2ImagePath}
+                                        alt={content.step2.boxTitre}
                                         className="max-h-[150px] object-contain rounded-xl animate-pulse"
                                         style={{ animationDuration: '3s' }}
                                     />
@@ -1076,7 +995,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         <Star className="h-4 w-4 fill-violet-400 text-violet-400" /> À retenir
                                     </h4>
                                     <ul className="space-y-1.5 text-xs text-violet-950 font-bold">
-                                        {content.step2.aRetenir.map((a: string, idx: number) => (
+                                        {content.step2.aRetenir.map((a, idx) => (
                                             <li key={idx} className="flex items-start gap-2">
                                                 <span className="text-violet-500 font-bold">•</span>
                                                 <span>{a}</span>
@@ -1084,12 +1003,26 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         ))}
                                     </ul>
                                 </div>
+
+                                {/* Badges ou Bullet list facultatifs */}
+                                {content.step2.badges && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {content.step2.badges.map((b, idx) => (
+                                            <div key={idx} className="bg-white border border-slate-100 rounded-xl p-2.5 flex flex-col items-center justify-center text-center shadow-xs">
+                                                <span className="text-2xl mb-1">{b.emoji}</span>
+                                                <span className="text-[9px] font-black text-violet-900 leading-tight">{b.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
 
-                    {stepIndex === 2 && !hasDbLessonPages && !dbActivity && (
+                    {/* ── STEP 2 : LEÇON 3/3 (COMPRENDRE) ── */}
+                    {stepIndex === 2 && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Side: Points Clés */}
                             <div className="space-y-6 flex flex-col justify-between h-full">
                                 <div className="space-y-3">
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest">
@@ -1100,10 +1033,10 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     </h2>
                                     <p className="text-xs text-violet-800 leading-relaxed font-bold">{content.step3.texte}</p>
                                 </div>
-                                
+
                                 <div className="bg-white border border-violet-100 rounded-2xl p-5 shadow-xs space-y-3">
                                     <h4 className="text-[10px] font-black text-violet-800 uppercase tracking-widest">Points clés :</h4>
-                                    {content.step3.pointsCles.map((pt: string, idx: number) => (
+                                    {content.step3.pointsCles.map((pt, idx) => (
                                         <div key={idx} className="flex gap-2.5 items-start">
                                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                                                 <Check className="h-3 w-3" />
@@ -1114,48 +1047,80 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 </div>
                             </div>
 
+                            {/* Right Side: thought bubbles + image OR Robot labels diagram */}
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {content.step3.bulles.map((b: string, idx: number) => (
-                                        <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
-                                            <span className="absolute -top-2 -left-2 text-xs">💬</span>
-                                            <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
+                                {activeModuleId === 'robotique' ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-violet-50/20 border border-violet-100 rounded-3xl p-5 shadow-inner">
+                                        <div className="flex justify-center">
+                                            <img
+                                                src="/images/enfants/quiz_robot.png"
+                                                alt="Robot parts"
+                                                className="max-h-[180px] object-contain"
+                                            />
                                         </div>
-                                    ))}
-                                </div>
-
-                                {content.step3.objectif && (
-                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
-                                        <span className="text-xl">🎯</span>
-                                        <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
+                                        <div className="space-y-2">
+                                            <div className="bg-emerald-50 border-l-4 border-emerald-400 p-2 rounded-r-lg">
+                                                <h5 className="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Capteurs</h5>
+                                                <p className="text-[8px] text-emerald-700 font-bold leading-tight">Ils perçoivent le monde.</p>
+                                            </div>
+                                            <div className="bg-orange-50 border-l-4 border-orange-400 p-2 rounded-r-lg">
+                                                <h5 className="text-[9px] font-black text-orange-800 uppercase tracking-widest">Unité de contrôle</h5>
+                                                <p className="text-[8px] text-orange-700 font-bold leading-tight">Elle réfléchit et prend des décisions.</p>
+                                            </div>
+                                            <div className="bg-blue-50 border-l-4 border-blue-400 p-2 rounded-r-lg">
+                                                <h5 className="text-[9px] font-black text-blue-800 uppercase tracking-widest">Actionneurs</h5>
+                                                <p className="text-[8px] text-blue-700 font-bold leading-tight">Ils réalisent des actions.</p>
+                                            </div>
+                                        </div>
                                     </div>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {content.step3.bulles.map((b, idx) => (
+                                                <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
+                                                    <span className="absolute -top-2 -left-2 text-xs">💬</span>
+                                                    <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {content.step3.objectif && (
+                                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
+                                                <span className="text-xl">🎯</span>
+                                                <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
+                                            </div>
+                                        )}
+
+                                        <div className="text-center pt-2">
+                                            <span className="text-5xl animate-pulse inline-block">{content.step3.illustration}</span>
+                                        </div>
+                                    </>
                                 )}
-                                
-                                <div className="text-center pt-2">
-                                    <span className="text-5xl animate-pulse inline-block">{content.step3.illustration}</span>
-                                </div>
                             </div>
                         </div>
                     )}
 
+                    {/* ── STEP 3 : EXERCICE GUIDÉ ── */}
                     {stepIndex === 3 && (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            {/* Left Side Interaction */}
                             <div className="lg:col-span-8 space-y-4">
+                                {/* Match Exercise */}
                                 {content.exercice.type === 'match' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            {Array.isArray(content.exercice.data.left) && content.exercice.data.left.map((item: any) => {
+                                            {content.exercice.data.left.map((item: any) => {
                                                 const isSelected = selectedLeft === item.id;
                                                 const matchedRightId = matches[item.id];
-                                                const matchedRight = Array.isArray(content.exercice.data.right) && content.exercice.data.right.find((r: any) => r.id === matchedRightId);
-                                                
+                                                const matchedRight = content.exercice.data.right.find((r: any) => r.id === matchedRightId);
+
                                                 return (
                                                     <button
                                                         key={item.id}
                                                         disabled={exerciceChecked}
                                                         onClick={() => handleSelectLeft(item.id)}
                                                         className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs ${
-                                                            isSelected 
+                                                            isSelected
                                                                 ? 'border-violet-600 bg-violet-50 text-violet-900 shadow-sm'
                                                                 : matchedRightId
                                                                     ? 'border-emerald-200 bg-emerald-50/20 text-slate-800'
@@ -1174,7 +1139,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         </div>
 
                                         <div className="space-y-2">
-                                            {Array.isArray(content.exercice.data.right) && content.exercice.data.right.map((item: any) => {
+                                            {content.exercice.data.right.map((item: any) => {
                                                 const isMatchTarget = Object.values(matches).includes(item.id);
                                                 return (
                                                     <button
@@ -1197,186 +1162,278 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     </div>
                                 )}
 
+                                {/* Order Exercise */}
                                 {content.exercice.type === 'order' && (
                                     <div className="space-y-2 max-w-xl">
-                                                                        {orderedItems.map((item: string, idx: number) => {
-                                            const dbItem = Array.isArray(dbActivity?.contenu) 
-                                                ? dbActivity.contenu.find((x: any) => x.label === item)
-                                                : null;
-                                            const imageUrl = dbItem?.imageUrl;
-                                            return (
-                                                <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-3 text-xs font-bold">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-[10px]">
-                                                            {idx + 1}
-                                                        </span>
-                                                        {imageUrl && (
-                                                            <img 
-                                                                src={imageUrl} 
-                                                                alt={item} 
-                                                                className="h-10 w-10 object-cover rounded-lg shrink-0 border border-slate-150 shadow-xs" 
-                                                            />
-                                                        )}
-                                                        <span className="text-slate-800">{item}</span>
-                                                    </div>
-                                                    <div className="flex gap-1">
-                                                        <button 
-                                                            disabled={exerciceChecked || idx === 0}
-                                                            onClick={() => moveItem(idx, 'up')}
-                                                            className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                                        >
-                                                            <MoveUp className="h-3.5 w-3.5" />
-                                                        </button>
-                                                        <button 
-                                                            disabled={exerciceChecked || idx === orderedItems.length - 1}
-                                                            onClick={() => moveItem(idx, 'down')}
-                                                            className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                                        >
-                                                            <MoveDown className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </div>
+                                        {orderedItems.map((item: string, idx: number) => (
+                                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-3 text-xs font-bold">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-black text-[10px]">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <span className="text-slate-800">{item}</span>
                                                 </div>
-                                            );
-                                        })}
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        disabled={exerciceChecked || idx === 0}
+                                                        onClick={() => moveItem(idx, 'up')}
+                                                        className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                                                    >
+                                                        <MoveUp className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        disabled={exerciceChecked || idx === orderedItems.length - 1}
+                                                        onClick={() => moveItem(idx, 'down')}
+                                                        className="p-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                                                    >
+                                                        <MoveDown className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
-                            </div>
 
-                            <div className="lg:col-span-4 bg-violet-50/30 border border-violet-100 rounded-3xl p-5 space-y-4">
-                                <div className="flex items-center gap-2 text-violet-900">
-                                    <span className="text-xl">🎮</span>
-                                    <h4 className="text-xs font-black uppercase tracking-wider">{content.exercice.titre}</h4>
-                                </div>
-                                <p className="text-xs leading-relaxed text-violet-700">
-                                    Mets en pratique ce que tu as appris ! Relie ou ordonne correctement les éléments pour réussir le défi.
-                                </p>
+                                {/* Input Exercise */}
+                                {content.exercice.type === 'input' && (
+                                    <div className="space-y-4 max-w-xl">
+                                        {content.exercice.data.questions.map((q: any, idx: number) => (
+                                            <div key={idx} className="space-y-1">
+                                                <label className="block text-xs font-black text-violet-900">{q.label}</label>
+                                                <input
+                                                    type="text"
+                                                    disabled={exerciceChecked}
+                                                    placeholder={q.placeholder}
+                                                    value={inputAnswers[q.key] || ""}
+                                                    onChange={(e) => handleInputChange(q.key, e.target.value)}
+                                                    className="w-full border border-violet-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 outline-hidden font-bold"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Sort Exercise */}
+                                {content.exercice.type === 'sort' && (
+                                    <div className="max-w-xl">
+                                        {activeSortItemIndex < content.exercice.data.items.length && !exerciceChecked ? (
+                                            <div className="text-center space-y-4 bg-slate-50 border border-slate-100 p-5 rounded-2xl mb-4">
+                                                <p className="text-base font-black text-violet-950">
+                                                    "{content.exercice.data.items[activeSortItemIndex].text}"
+                                                </p>
+                                                <div className="flex justify-center gap-3">
+                                                    {content.exercice.data.categories.map((cat: any) => (
+                                                        <button
+                                                            key={cat.id}
+                                                            onClick={() => handleSortItem(cat.id)}
+                                                            className={`px-4 py-2.5 rounded-xl border-2 font-black text-xs hover:scale-102 transition-all ${cat.bg}`}
+                                                        >
+                                                            {cat.title}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl mb-4 text-xs font-bold text-violet-900">
+                                                Tous les gestes ont été classés. Clique sur Vérifier !
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-3 text-left">
+                                            {content.exercice.data.categories.map((cat: any) => (
+                                                <div key={cat.id} className={`rounded-xl border p-3 ${cat.bg}`}>
+                                                    <h5 className="font-black text-[10px] mb-2">{cat.title}</h5>
+                                                    <ul className="space-y-1 text-[10px] font-bold">
+                                                        {content.exercice.data.items.map((item: any) => {
+                                                            if (sortedItems[item.id] !== cat.id) return null;
+                                                            return (
+                                                                <li key={item.id} className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
+                                                                    • {item.text}
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* RÉSULTAT EXERCICE */}
                                 {exerciceChecked && (
-                                    <div className={`p-4 rounded-xl border flex gap-3 items-start animate-fade-in ${
-                                        exerciceSuccess 
-                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                                        exerciceSuccess
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                                             : 'bg-rose-50 border-rose-200 text-rose-800'
                                     }`}>
-                                        <span className="text-xl shrink-0">{exerciceSuccess ? "🎉" : "😭"}</span>
+                                        {exerciceSuccess ? (
+                                            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                                        ) : (
+                                            <XCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                                        )}
                                         <div>
-                                            <h5 className="text-xs font-extrabold">{exerciceSuccess ? "Félicitations !" : "Essaye encore !"}</h5>
-                                            <p className="text-[11px] mt-0.5">{exerciceSuccess ? "C'est un sans-faute !" : "Quelques erreurs se sont glissées, réessaye pour corriger !"}</p>
+                                            <h4 className="text-xs font-black uppercase">
+                                                {exerciceSuccess ? "C'est parfait !" : "Quelques erreurs !"}
+                                            </h4>
+                                            <p className="text-[10px] font-semibold mt-0.5">
+                                                {exerciceSuccess
+                                                    ? "Tu as réussi l'exercice guidé. Tu es prêt pour l'étape du quiz !"
+                                                    : "Recommence pour trouver la bonne solution."}
+                                            </p>
                                         </div>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Right Side Decoration */}
+                            <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/20 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px] overflow-hidden">
+                                {activeModuleId === 'robotique' ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <img
+                                            src="/images/enfants/exercice_generic.png"
+                                            alt="Activité robotique"
+                                            className="max-h-[160px] object-contain rounded-2xl"
+                                        />
+                                        <div className="mt-4 bg-white border border-violet-100 px-3 py-1.5 rounded-2xl text-[10px] font-black text-violet-700 shadow-xs">
+                                            Quel est le bon ordre ? 🤔
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <img
+                                        src="/images/enfants/exercice_generic.png"
+                                        alt="Activité"
+                                        className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
+                                    />
+                                )}
+                            </div>
                         </div>
                     )}
 
-                    {stepIndex === 4 && content.quiz.length > 0 && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                            <div className="lg:col-span-2 space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3.5 py-1 text-[10px] font-black text-violet-700 uppercase tracking-widest">
-                                        Question {quizIndex + 1} / {content.quiz.length}
-                                    </span>
+                    {/* ── STEP 4 : QUIZ (10 QUESTIONS) ── */}
+                    {stepIndex === 4 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center max-w-4xl mx-auto">
+                            {/* Left Side: Questions */}
+                            <div className="lg:col-span-8 space-y-4">
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                                    <div
+                                        className="bg-violet-600 h-full rounded-full transition-all duration-300"
+                                        style={{ width: `${((quizIndex + 1) / content.quiz.length) * 100}%` }}
+                                    />
                                 </div>
-                                <h2 className="text-xl md:text-2xl font-black text-violet-950 leading-tight">
-                                    {content.quiz[quizIndex].q}
-                                </h2>
-                                
-                                <div className="grid grid-cols-1 gap-3">
-                                    {content.quiz[quizIndex].options.map((opt: string, optIdx: number) => {
-                                        const isSelected = selectedOption === optIdx;
-                                        const isCorrect = optIdx === content.quiz[quizIndex].answer;
-                                        const hasAnswered = selectedOption !== null;
-                                        
+
+                                <div className="p-5 bg-violet-50/50 rounded-2xl border border-violet-100/50">
+                                    <h2 className="text-xs font-black text-violet-500 uppercase tracking-widest mb-1.5">Question {quizIndex + 1} sur {content.quiz.length}</h2>
+                                    <h3 className="text-sm md:text-base font-black text-violet-950 leading-snug">
+                                        {content.quiz[quizIndex].q}
+                                    </h3>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    {content.quiz[quizIndex].options.map((option, idx) => {
+                                        const isCorrectAnswer = idx === content.quiz[quizIndex].answer;
+                                        const isSelected = selectedOption === idx;
+
+                                        let optionStyle = 'border-slate-200 hover:border-violet-400 hover:bg-violet-50/20';
+                                        if (selectedOption !== null) {
+                                            if (isCorrectAnswer) {
+                                                optionStyle = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold';
+                                            } else if (isSelected) {
+                                                optionStyle = 'border-rose-500 bg-rose-50 text-rose-800';
+                                            } else {
+                                                optionStyle = 'border-slate-100 bg-slate-50 opacity-40';
+                                            }
+                                        }
+
                                         return (
                                             <button
-                                                key={optIdx}
-                                                disabled={hasAnswered}
-                                                onClick={() => handleAnswerQuiz(optIdx)}
-                                                className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-xs ${
-                                                    hasAnswered
-                                                        ? isCorrect
-                                                            ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                                                            : isSelected
-                                                                ? 'border-rose-500 bg-rose-50 text-rose-800'
-                                                                : 'border-slate-100 bg-slate-50/50 text-slate-400'
-                                                        : 'border-slate-100 bg-slate-50/50 text-slate-700 hover:border-violet-300 hover:bg-white'
-                                                }`}
+                                                key={idx}
+                                                disabled={selectedOption !== null}
+                                                onClick={() => handleAnswerQuiz(idx)}
+                                                className={`w-full text-left rounded-xl border p-3.5 text-xs font-bold transition-all flex items-center justify-between ${optionStyle}`}
                                             >
-                                                <span>{opt}</span>
-                                                {hasAnswered && isCorrect && <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 ml-2" />}
-                                                {hasAnswered && isSelected && !isCorrect && <XCircle className="h-4.5 w-4.5 text-rose-500 shrink-0 ml-2" />}
+                                                <span>{option}</span>
+                                                {selectedOption !== null && isCorrectAnswer && (
+                                                    <Check className="h-4 w-4 text-emerald-600 shrink-0 ml-2" />
+                                                )}
                                             </button>
                                         );
                                     })}
                                 </div>
+
+                                {showExplanation && (
+                                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100 flex items-start gap-2.5">
+                                        <Sparkles className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-[10px] font-black text-amber-900">
+                                                {selectedOption === content.quiz[quizIndex].answer ? "Bien joué ! 🌟" : "Presque ! 😉"}
+                                            </div>
+                                            <p className="text-xs text-amber-800 font-semibold mt-0.5 leading-relaxed">
+                                                {content.quiz[quizIndex].explication}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="bg-violet-50/30 border border-violet-100 rounded-3xl p-5 min-h-[220px] flex flex-col justify-between">
-                                <div className="flex items-center gap-2 text-violet-900">
-                                    <HelpCircle className="h-5 w-5 text-violet-600" />
-                                    <h4 className="text-xs font-black uppercase tracking-wider">Zone d'aide</h4>
-                                </div>
-                                
-                                {showExplanation ? (
-                                    <div className="my-4 p-4 rounded-xl bg-white border border-violet-100 animate-fade-in flex-grow flex flex-col justify-center">
-                                        <h5 className="text-[10px] font-black text-violet-700 uppercase tracking-widest mb-1">Explication :</h5>
-                                        <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                                            {content.quiz[quizIndex].explication}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <p className="my-4 text-xs leading-relaxed text-violet-700 flex-grow flex items-center">
-                                        Lis attentivement la question et choisis la réponse qui te semble correcte ! L'explication apparaîtra après ton choix.
-                                    </p>
-                                )}
+                            {/* Right Side: Robot helper */}
+                            <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px]">
+                                <img
+                                    src="/images/enfants/quiz_robot.png"
+                                    alt="Robot assistant"
+                                    className="max-h-[160px] object-contain animate-bounce"
+                                    style={{ animationDuration: '3s' }}
+                                />
+                                <span className="text-[9px] font-black text-violet-500 mt-3 uppercase tracking-widest bg-white border border-violet-100 px-3 py-1 rounded-full shadow-xs">
+                                    Aide Robot 🤖
+                                </span>
                             </div>
                         </div>
                     )}
 
+                    {/* ── STEP 5 : RESULTAT FINAL / BADGE ── */}
                     {stepIndex === 5 && (
-                        <div className="text-center max-w-lg mx-auto py-6 space-y-6">
-                            <div className="inline-block p-4 bg-amber-50 rounded-full border border-amber-200 animate-bounce">
-                                <Trophy className="h-16 w-16 text-amber-500 fill-amber-500/20" />
-                            </div>
-                            
-                            <div>
-                                <h1 className="text-3xl font-black text-violet-950">Aventure complétée !</h1>
-                                <p className="text-sm text-violet-600 mt-1">Tu as franchi toutes les étapes de ce parcours avec succès !</p>
-                            </div>
-
-                            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-inner">
-                                {dbActivity?.type === 'LECON' ? (
-                                    <div className="text-center space-y-4">
-                                        <span className="block text-[9px] font-black uppercase text-slate-400 tracking-widest">Leçon lue</span>
-                                        <span className="text-3xl md:text-4xl font-black text-emerald-600">
-                                            100%
-                                        </span>
-                                        <p className="text-[11px] font-bold text-violet-950 mt-2">
-                                            Félicitations ! Tu as lu et compris toute la leçon ! 🌟
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="text-center space-y-4">
-                                        <span className="block text-[9px] font-black uppercase text-slate-400 tracking-widest">Ton score final</span>
-                                        <span className="text-3xl md:text-4xl font-black text-emerald-600">
-                                            {score} <span className="text-lg text-slate-400">/ {content.quiz.length}</span>
-                                        </span>
-                                        <p className="text-[11px] font-bold text-violet-950 mt-2">
-                                            {score === content.quiz.length && "Excellent ! Un score parfait de champion ! 🌟"}
-                                            {score >= Math.floor(content.quiz.length * 0.8) && score < content.quiz.length && "Super travail ! Tu as très bien compris ! 👏"}
-                                            {score >= Math.floor(content.quiz.length * 0.5) && score < Math.floor(content.quiz.length * 0.8) && "Pas mal ! Revois la leçon pour faire encore mieux ! 👍"}
-                                            {score < Math.floor(content.quiz.length * 0.5) && "Recommence l'aventure pour améliorer ton score. Courage ! 💪"}
-                                        </p>
-                                    </div>
-                                )}
+                        <div className="text-center max-w-xl mx-auto space-y-6">
+                            <div className="flex justify-center">
+                                <img
+                                    src="/images/enfants/result_robot.png"
+                                    alt="Félicitations !"
+                                    className="max-h-[180px] object-contain animate-bounce"
+                                    style={{ animationDuration: '4s' }}
+                                />
                             </div>
 
+                            <div className="space-y-1.5">
+                                <h2 className="text-2xl md:text-3xl font-black text-violet-950">
+                                    {score >= 8 ? "Well done ! Félicitations !" : "Quiz Terminé !"}
+                                </h2>
+                                <p className="text-xs font-black text-violet-600 uppercase tracking-widest">
+                                    Tu as réussi ton aventure {content.titreGlobal} !
+                                </p>
+                            </div>
+
+                            <div className="bg-slate-50/60 rounded-2xl border border-slate-100 p-5 max-w-sm mx-auto shadow-xs">
+                                <span className="block text-[9px] font-black uppercase text-slate-400 tracking-widest">Ton score final</span>
+                                <span className="text-3xl md:text-4xl font-black text-emerald-600">
+                                    {score} <span className="text-lg text-slate-400">/ {content.quiz.length}</span>
+                                </span>
+                                <p className="text-[11px] font-bold text-violet-950 mt-2">
+                                    {score === 10 && "Excellent ! Un score parfait de champion ! 🌟"}
+                                    {score >= 8 && score < 10 && "Super travail ! Tu as très bien compris ! 👏"}
+                                    {score >= 5 && score < 8 && "Pas mal ! Revois la leçon pour faire encore mieux ! 👍"}
+                                    {score < 5 && "Recommence l'aventure pour améliorer ton score. Courage ! 💪"}
+                                </p>
+                            </div>
+
+                            {/* Étoiles d'évaluation */}
                             <div className="flex justify-center gap-1">
                                 {[1, 2, 3, 4, 5].map((starIdx) => {
-                                    const isGold = dbActivity?.type === 'LECON' ? true : score >= (starIdx * Math.floor(content.quiz.length / 5));
+                                    const starThreshold = starIdx * 2;
+                                    const isGold = score >= starThreshold;
                                     return (
-                                        <Star 
+                                        <Star
                                             key={starIdx}
-                                            className={`h-8 w-8 ${
-                                                isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-150'
+                                            className={`h-6 w-6 ${
+                                                isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-100'
                                             }`}
                                         />
                                     );
@@ -1386,7 +1443,9 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                     )}
                 </div>
 
+                {/* 3. Pied de la carte (Footer) : Navigation interne sous les colonnes */}
                 <div className="border-t border-slate-100 pt-5 flex items-center justify-between">
+                    {/* Bouton Retour (interne au wizard) */}
                     {stepIndex > 0 && stepIndex < 5 ? (
                         <button
                             onClick={() => {
@@ -1395,25 +1454,15 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     setSelectedOption(null);
                                     setShowExplanation(false);
                                 } else {
-                                    if (dbActivity) {
-                                        if (dbActivity.type === 'QUIZ') {
-                                            router.push(`/enfant/modules/${id}`);
-                                        } else if (dbActivity.type === 'MATCH' || dbActivity.type === 'ORDER') {
-                                            router.push(`/enfant/modules/${id}`);
-                                        } else {
-                                            setStepIndex(stepIndex - 1);
-                                        }
-                                    } else {
-                                        setStepIndex(stepIndex - 1);
-                                    }
+                                    setStepIndex(stepIndex - 1);
                                 }
                             }}
-                            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
+                            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 shadow-xs transition-all"
                         >
                             ← Retour
                         </button>
                     ) : (
-                        <Link 
+                        <Link
                             href={`/enfant/modules/${id}`}
                             className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 shadow-xs transition-all"
                         >
@@ -1421,13 +1470,14 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </Link>
                     )}
 
-                    {stepIndex < maxLessonSteps && (
+                    {/* Pagination Dots (uniquement pour les leçons 1/3, 2/3, 3/3) */}
+                    {stepIndex < 3 && (
                         <div className="flex gap-2">
-                            {Array.from({ length: maxLessonSteps }).map((_, dotIdx) => (
+                            {[0, 1, 2].map((dotIdx) => (
                                 <button
                                     key={dotIdx}
                                     onClick={() => setStepIndex(dotIdx)}
-                                    className={`h-2.5 w-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                                    className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
                                         stepIndex === dotIdx ? 'bg-violet-600 w-6' : 'bg-slate-200'
                                     }`}
                                 />
@@ -1435,31 +1485,13 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         </div>
                     )}
 
-                    {isDbLessonEmpty && stepIndex === 0 ? (
+                    {/* Bouton Suivant ou Sauvegarder */}
+                    {stepIndex < 3 ? (
                         <button
-                            onClick={() => {
-                                router.push(`/enfant/modules/${id}`);
-                            }}
-                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all cursor-pointer"
+                            onClick={() => setStepIndex(stepIndex + 1)}
+                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all"
                         >
-                            Retourner aux modules
-                        </button>
-                    ) : stepIndex < maxLessonSteps ? (
-                        <button
-                            onClick={() => {
-                                if (stepIndex === maxLessonSteps - 1) {
-                                    if (dbActivity?.type === 'LECON') {
-                                        setStepIndex(5);
-                                    } else {
-                                        setStepIndex(3);
-                                    }
-                                } else {
-                                    setStepIndex(stepIndex + 1);
-                                }
-                            }}
-                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all cursor-pointer"
-                        >
-                            {stepIndex === maxLessonSteps - 1 ? (dbActivity?.type === 'LECON' ? "Terminer la leçon" : "Passer à l'exercice") : "Suivant"} →
+                            {stepIndex === 2 ? "Passer à l'exercice" : "Suivant"} →
                         </button>
                     ) : stepIndex === 3 ? (
                         <div className="flex gap-2">
@@ -1471,37 +1503,31 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         else if (content.exercice.type === 'input') handleResetInput();
                                         else if (content.exercice.type === 'sort') handleResetSort();
                                     }}
-                                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer"
+                                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50"
                                 >
                                     <RotateCcw className="h-3.5 w-3.5" /> Recommencer
                                 </button>
                             )}
-                            
+
                             {!exerciceChecked ? (
                                 <button
                                     onClick={() => {
                                         if (content.exercice.type === 'match') verifyMatch();
                                         else if (content.exercice.type === 'order') verifyOrder();
                                         else if (content.exercice.type === 'input') verifyInput();
-                                        else if (content.exercice.type === 'sort') verifyInput();
+                                        else if (content.exercice.type === 'sort') verifyInput(); // triggers check
                                     }}
-                                    className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-black text-white hover:bg-emerald-700 shadow-md cursor-pointer"
+                                    className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-black text-white hover:bg-emerald-700 shadow-md"
                                 >
                                     Vérifier
                                 </button>
                             ) : (
                                 <button
                                     disabled={!exerciceSuccess}
-                                    onClick={() => {
-                                        if (dbActivity) {
-                                            setStepIndex(5);
-                                        } else {
-                                            setStepIndex(4);
-                                        }
-                                    }}
-                                    className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                    onClick={() => setStepIndex(4)}
+                                    className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                                 >
-                                    Terminer l'exercice →
+                                    Passer au Quiz →
                                 </button>
                             )}
                         </div>
@@ -1509,7 +1535,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         <button
                             disabled={selectedOption === null}
                             onClick={handleNextQuiz}
-                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
                             {quizIndex < content.quiz.length - 1 ? "Suivant" : "Terminer"} →
                         </button>
@@ -1517,17 +1543,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => {
-                                    if (dbActivity) {
-                                        if (dbActivity.type === 'QUIZ') {
-                                            setStepIndex(4);
-                                        } else if (dbActivity.type === 'MATCH' || dbActivity.type === 'ORDER') {
-                                            setStepIndex(3);
-                                        } else {
-                                            setStepIndex(0);
-                                        }
-                                    } else {
-                                        setStepIndex(0);
-                                    }
+                                    setStepIndex(0);
                                     setScore(0);
                                     setQuizIndex(0);
                                     setSelectedOption(null);
@@ -1535,13 +1551,13 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     setExerciceChecked(false);
                                     setExerciceSuccess(false);
                                 }}
-                                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-colors"
                             >
                                 <RotateCcw className="h-4 w-4 inline-block mr-1" /> Recommencer
                             </button>
                             <button
                                 onClick={handleSaveAdventure}
-                                className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md transition-all cursor-pointer"
+                                className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md transition-all"
                             >
                                 Continuer l'aventure →
                             </button>
@@ -1550,27 +1566,37 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 </div>
             </div>
 
+            {/* ─── TIMELINE DE NAVIGATION HORIZONTALE COMPLÈTE EN BAS (HORS DE LA CARTE) ─── */}
             <div className="mt-8 border border-slate-100 bg-white rounded-2xl p-4 flex flex-wrap items-center justify-center gap-2 md:gap-4 shadow-sm max-w-4xl mx-auto text-xs font-bold text-slate-400">
+                {/* Module title with robot/theme icon */}
                 <div className="flex items-center gap-2 text-slate-800 font-black">
                     <span className="text-base">🤖</span>
                     <span>{content.titreGlobal}</span>
                     <span className="text-slate-300 ml-1 font-normal">&gt;</span>
                 </div>
 
+                {/* Steps List */}
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[11px]">
-                    {dynamicStepsList.map((step, sIdx) => {
+                    {[
+                        { idx: 0, label: "Leçon 1/3", icon: "📖" },
+                        { idx: 1, label: "Leçon 2/3", icon: "🔍" },
+                        { idx: 2, label: "Leçon 3/3", icon: "💡" },
+                        { idx: 3, label: "Exercice", icon: "🎮" },
+                        { idx: 4, label: "Quiz", icon: "🎯" },
+                        { idx: 5, label: "Résultat", icon: "🏆" }
+                    ].map((step, sIdx) => {
                         const isActive = stepIndex === step.idx;
                         const isCompleted = stepIndex > step.idx;
 
                         return (
                             <React.Fragment key={step.idx}>
                                 {sIdx > 0 && <span className="text-slate-300">→</span>}
-                                <div 
+                                <div
                                     className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
-                                        isActive 
-                                            ? 'text-indigo-600 bg-indigo-50 font-black scale-105' 
-                                            : isCompleted 
-                                                ? 'text-slate-700 font-bold' 
+                                        isActive
+                                            ? 'text-indigo-600 bg-indigo-50 font-black scale-105'
+                                            : isCompleted
+                                                ? 'text-slate-700 font-bold'
                                                 : 'text-slate-350 opacity-60'
                                     }`}
                                 >

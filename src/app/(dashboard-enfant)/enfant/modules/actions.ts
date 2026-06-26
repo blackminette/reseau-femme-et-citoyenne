@@ -1,6 +1,7 @@
 // * src/app/(dashboard-enfant)/enfant/modules/actions.ts
 'use server';
 
+import { Prisma, Parcours } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
@@ -12,13 +13,14 @@ function mapTitreToSlug(titre: string): string {
     if (t.includes('robotique') || t.includes('robot')) return 'robotique';
     if (t.includes('anglais')) return 'anglais';
     if (t.includes('civique') || t.includes('citoyen')) return 'civique';
+    if (t.includes('napoléon') || t.includes('napoleon')) return 'napoleon';
     if (t.includes('éco') || t.includes('eco')) return 'eco';
     return 'lecture'; // fallback
 }
 
 // Helper to handle and log DB connection errors cleanly
-function gererErreurBaseDeDonnees(nomFonction: string, err: any) {
-    const msg = err?.message || String(err);
+function gererErreurBaseDeDonnees(nomFonction: string, err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes('getaddrinfo') || msg.includes('ECONNREFUSED') || msg.includes('pooler') || msg.includes('Can\'t reach database')) {
         console.warn(`[Base de données Hors Ligne] ${nomFonction}: Impossible de se connecter à la base de données. Utilisation des fallbacks.`);
     } else {
@@ -765,7 +767,7 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
     try {
         const studentId = await obtenirEtudiantId();
         
-        let targetEnum: any = null;
+        let targetEnum: Parcours | null = null;
         const slug = parcoursSlug.toLowerCase();
         if (slug === 'lecture') targetEnum = 'COMPREHENSION_LECTURE';
         else if (slug === 'numerique') targetEnum = 'NUMERIQUE';
@@ -822,9 +824,22 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
                 dbId: mod.id,
                 label: mod.titre,
                 description: mod.description || '',
-                progression: pct
+                progression: pct,
+                slug: mapTitreToSlug(mod.titre)
             });
         }
+
+        if (slug === 'civique' && !mapped.some((mod) => mod.slug === 'napoleon')) {
+            mapped.unshift({
+                id: 'napoleon',
+                dbId: null,
+                label: 'Napoléon',
+                description: "Comprendre un personnage clé de l'histoire française.",
+                progression: 0,
+                slug: 'napoleon'
+            });
+        }
+
         return mapped;
     } catch (e) {
         gererErreurBaseDeDonnees("obtenirModulesDuParcours", e);
