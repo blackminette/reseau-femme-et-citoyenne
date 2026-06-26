@@ -1,12 +1,23 @@
 // * src/app/(dashboard-adultes)/admin/membres/actions.ts
 'use server'
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
+type FiltresUtilisateur = Prisma.UtilisateurWhereInput;
+
+type DonneesUtilisateur = {
+    nom?: string;
+    prenom?: string;
+    email?: string;
+    telephone?: string | null;
+    role?: string;
+};
+
 export async function listerLesUtilisateurs(trie: string, filtre?: string) {
     try {
-        const whereCondition: any = {};
+        const whereCondition: FiltresUtilisateur = {};
 
         if (filtre) {
             whereCondition.OR = [
@@ -30,7 +41,6 @@ export async function listerLesUtilisateurs(trie: string, filtre?: string) {
                 telephone: true,
                 role: true,
                 createdAt: true,
-                niveau: true,
                 _count: {
                     select: {
                         enfants: true,
@@ -55,7 +65,7 @@ export async function listerLesUtilisateurs(trie: string, filtre?: string) {
     }
 }
 
-export async function modifierUtilisateur(id: string, nouvelleDonnees: any) {
+export async function modifierUtilisateur(id: string, nouvelleDonnees: DonneesUtilisateur) {
     try {
         const membreModifie = await prisma.utilisateur.update({
             where: { id: id },

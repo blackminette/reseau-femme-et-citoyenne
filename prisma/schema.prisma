@@ -21,7 +21,7 @@ model Utilisateur {
   telephone String?
   role      String            @default("MEMBRE")
   createdAt DateTime          @default(now())
-  niveau    NiveauPedagogique? @default(NIVEAU_1)
+  username  String            @unique
 
   reservations    Reservation[]
   dons            Don[]
@@ -97,13 +97,19 @@ enum Parcours {
   ORAL
 }
 
+enum Difficulte {
+  FACILE
+  MOYEN
+  DIFFICILE
+}
+
 model Module {
   id           Int               @id @default(autoincrement())
   titre        String
   description  String?
   parcours    Parcours[]
+  difficulte   Difficulte        @default(FACILE)
   public       PublicCible       @default(ADULTE)
-  niveauRequis NiveauPedagogique @default(NIVEAU_1)
   isPublished  Boolean           @default(false)
   createdAt    DateTime          @default(now())
   cours        Cours[]

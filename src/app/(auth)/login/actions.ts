@@ -4,7 +4,7 @@
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
-export async function loginAction(formData: any) {
+export async function loginAction(formData: { email: string; password: string }) {
     const { email, password } = formData;
 
     try {
@@ -33,10 +33,12 @@ export async function loginAction(formData: any) {
 
         if (!utilisateur) {
             console.log("[login] Profil Prisma manquant, création automatique pour:", email);
+            const username = authData.user.user_metadata?.username || email.split('@')[0];
             utilisateur = await prisma.utilisateur.create({
                 data: {
                     id: authData.user.id, // Synchronisation de l'ID
                     email: email,
+                    username,
                     nom: authData.user.user_metadata?.nom || 'Nom par défaut',
                     prenom: authData.user.user_metadata?.prenom || 'Prénom par défaut',
                     role: 'MEMBRE' // Rôle par défaut
