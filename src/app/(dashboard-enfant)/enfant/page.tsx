@@ -58,7 +58,7 @@ export default async function EnfantDashboard() {
             };
           })
         : MOCK_MODULES
-    ).filter((mod) => mod.slug !== "napoleon");
+    ).filter((mod) => mod.slug !== "napoleon" && mod.id !== "napoleon");
 
     const isMock = !modulesRes || modulesRes.source === 'mock';
 
