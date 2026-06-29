@@ -18,9 +18,15 @@ export async function signupAction(formData: any) {
         }
 
         const supabase = await getSupabaseServer();
+
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: fauxEmail,
             password,
+            options: {
+                data: {
+                    doitChangerMotDePasse: false
+                }
+            }
         });
 
         if (authError) {
