@@ -2,7 +2,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin, getSupabaseServer } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
 export async function listerLesUtilisateurs(trie: string, filtre?: string) {
@@ -159,6 +159,48 @@ export async function creerUtilisateur(formData: {
         if (error.code === 'P2002') {
             return { success: false, error: "Ce nom d'utilisateur est déjà pris." };
         }
+        return { success: false, error: "Une erreur interne est survenue sur le serveur." };
+    }
+}
+
+export async function reinitialiserMdp(username: string) {
+    if (!username) {
+        return { success: false, error: "Nom d'utilisateur manquant." };
+    }
+
+    try {
+        const utilisateur = await prisma.utilisateur.findUnique({
+            where: { username: username.trim() }
+        });
+
+        if (!utilisateur) {
+            return { success: false, error: "Utilisateur introuvable dans la base de données." };
+        }
+
+        const supabase = await getSupabaseAdmin();
+
+        const { error } = await supabase.auth.admin.updateUserById(
+            utilisateur.id,
+            {
+                password: "Password123!",
+                user_metadata: {
+                    doitChangerMotDePasse: true
+                }
+            }
+        );
+
+        if (error) {
+            console.error("[reinitialiserMdp] Erreur Supabase Admin :", error.message);
+            return { success: false, error: error.message };
+        }
+
+        await supabase.auth.admin.signOut(utilisateur.id);
+
+        revalidatePath('/admin/membres');
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("[reinitialiserMdp] Erreur critique :", error);
         return { success: false, error: "Une erreur interne est survenue sur le serveur." };
     }
 }

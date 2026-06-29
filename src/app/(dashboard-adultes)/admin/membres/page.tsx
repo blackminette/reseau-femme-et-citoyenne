@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur } from './actions';
+import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur, reinitialiserMdp } from './actions';
 import Modal from '@/components/Modal';
-import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus, RotateCcw } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -19,6 +19,7 @@ export default function AdminMembresPage() {
     const [membres, setMembres] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [membreSelectionne, setMembreSelectionne] = useState<any | null>(null);
+    const [isResetting, setIsResetting] = useState<string | null>(null);
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
@@ -142,6 +143,24 @@ export default function AdminMembresPage() {
         }
     };
 
+    const handleReinitialiser = async (username: string) => {
+        if (!confirm(`Êtes-vous sûr de vouloir réinitialiser le mot de passe de ${username} ?`)) {
+            return;
+        }
+
+        setIsResetting(username);
+
+        const result = await reinitialiserMdp(username)
+
+        setIsResetting(null);
+
+        if (result.success) {
+            alert(`Le mot de passe de ${username} a été réinitialisé à "Password123!". L'utilisateur devra le changer à sa prochaine connexion.`);
+        } else {
+            alert(result.error || "Une erreur est survenue.");
+        }
+    }
+
     return (
         <div>
             <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -168,7 +187,7 @@ export default function AdminMembresPage() {
                         name="search"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Rechercher un membre (nom, prénom, email...)"
+                        placeholder="Rechercher un membre (nom, prénom, username...)"
                         className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
                     />
                 </div>
@@ -279,6 +298,16 @@ export default function AdminMembresPage() {
 
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end items-center gap-2">
+                                                    {/* Bouton : Réinitialiser le mot de passe */}
+                                                    <button
+                                                        onClick={() => handleReinitialiser(membre.username)}
+                                                        title="Réinitialiser le mot de passe"
+                                                        className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Bouton : Voir les détails */}
                                                     <button
                                                         onClick={() => {
                                                             setMembreSelectionne(membre);
@@ -290,6 +319,7 @@ export default function AdminMembresPage() {
                                                         <Eye className="w-4 h-4" />
                                                     </button>
 
+                                                    {/* Bouton : Modifier */}
                                                     <button
                                                         onClick={() => ouvrirModalModifier(membre)}
                                                         title="Modifier le membre"
@@ -298,6 +328,7 @@ export default function AdminMembresPage() {
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
 
+                                                    {/* Bouton : Supprimer */}
                                                     <button
                                                         onClick={() => {
                                                             setMembreSelectionne(membre);
