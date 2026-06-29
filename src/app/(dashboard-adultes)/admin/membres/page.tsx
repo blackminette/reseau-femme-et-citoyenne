@@ -21,6 +21,7 @@ export default function AdminMembresPage() {
     const [recherche, setRecherche] = useState('');
     const [rolesSelectionnes, setRolesSelectionnes] = useState<string[]>([]);
     const [tri, setTri] = useState('DECROISSANT');
+    const [statutFiltre, setStatutFiltre] = useState<'TOUS' | 'ACTIF' | 'INACTIF'>('TOUS');
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
@@ -172,7 +173,13 @@ export default function AdminMembresPage() {
 
             const correspondRole = rolesSelectionnes.length === 0 || rolesSelectionnes.includes(membre.role);
 
-            return correspondRecherche && correspondRole;
+            const statutMembre = membre.isActive ?? true;
+            const correspondStatut =
+                statutFiltre === 'TOUS' ||
+                (statutFiltre === 'ACTIF' && statutMembre === true) ||
+                (statutFiltre === 'INACTIF' && statutMembre === false);
+
+            return correspondRecherche && correspondRole && correspondStatut;
         })
         .sort((a, b) => {
             const dateA = new Date(a.createdAt).getTime();
@@ -210,32 +217,68 @@ export default function AdminMembresPage() {
                     />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100">
-                    <span className="text-xs font-medium text-slate-500 px-1">Filtrer par rôles :</span>
-                    {Object.keys(ROLE_STYLES).map((role) => {
-                        const estSelectionne = rolesSelectionnes.includes(role);
-                        return (
+                {/* Filtre par rôle */}
+                <div className="flex flex-col gap-3 bg-slate-50/50 p-3 rounded-2xl border border-slate-100 flex-1 md:flex-initial">
+                    {/* Ligne 1 : Filtrer par Rôles */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-500 px-1">Rôles :</span>
+                        {Object.keys(ROLE_STYLES).map((role) => {
+                            const estSelectionne = rolesSelectionnes.includes(role);
+                            return (
+                                <button
+                                    key={role}
+                                    onClick={() => handleToggleRole(role)}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all cursor-pointer ${estSelectionne
+                                        ? `${ROLE_STYLES[role]} ring-2 ring-offset-1 ring-violet-500/20 scale-105`
+                                        : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600"
+                                        }`}
+                                >
+                                    {role}
+                                    {estSelectionne && <span className="ml-1 text-[10px]">✓</span>}
+                                </button>
+                            );
+                        })}
+                        {rolesSelectionnes.length > 0 && (
                             <button
-                                key={role}
-                                onClick={() => handleToggleRole(role)}
-                                className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all cursor-pointer ${estSelectionne
-                                    ? `${ROLE_STYLES[role]} ring-2 ring-offset-1 ring-violet-500/20 scale-105`
-                                    : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600"
-                                    }`}
+                                onClick={() => setRolesSelectionnes([])}
+                                className="text-xs text-violet-600 hover:text-violet-800 font-medium px-2 py-1 transition-colors cursor-pointer"
                             >
-                                {role}
-                                {estSelectionne && <span className="ml-1 text-[10px]">✓</span>}
+                                Effacer
                             </button>
-                        );
-                    })}
-                    {rolesSelectionnes.length > 0 && (
+                        )}
+                    </div>
+
+                    {/* Ligne 2 : Filtrer par Statut */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100/70">
+                        <span className="text-xs font-semibold text-slate-500 px-1">Statut :</span>
                         <button
-                            onClick={() => setRolesSelectionnes([])}
-                            className="text-xs text-violet-600 hover:text-violet-800 font-medium px-2 py-1 transition-colors cursor-pointer"
+                            onClick={() => setStatutFiltre('TOUS')}
+                            className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${statutFiltre === 'TOUS'
+                                ? 'bg-white text-violet-700 shadow-sm border border-slate-200'
+                                : 'text-slate-400 hover:text-slate-600'
+                                }`}
                         >
-                            Effacer
+                            Tous
                         </button>
-                    )}
+                        <button
+                            onClick={() => setStatutFiltre('ACTIF')}
+                            className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${statutFiltre === 'ACTIF'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm font-semibold'
+                                : 'text-slate-400 hover:text-emerald-600'
+                                }`}
+                        >
+                            Actifs
+                        </button>
+                        <button
+                            onClick={() => setStatutFiltre('INACTIF')}
+                            className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${statutFiltre === 'INACTIF'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200 shadow-sm font-semibold'
+                                : 'text-slate-400 hover:text-amber-600'
+                                }`}
+                        >
+                            Désactivés
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
