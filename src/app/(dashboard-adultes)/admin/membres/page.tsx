@@ -331,102 +331,126 @@ export default function AdminMembresPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
-                                {membresFiltresEtTries.map((membre) => (
-                                    <tr key={membre.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="py-4 px-6">
-                                            <div className="font-semibold text-slate-900 group-hover:text-violet-950 transition-colors">
-                                                {membre.nom.toUpperCase()} {membre.prenom}
-                                            </div>
-                                            <div className="text-xs text-slate-400 mt-0.5">
-                                                Inscrit le {new Date(membre.createdAt).toLocaleDateString('fr-FR')}
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6 font-mono text-xs text-slate-500">
-                                            @{membre.username}
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${ROLE_STYLES[membre.role] || 'bg-slate-100 text-slate-700'}`}>
-                                                {membre.role}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-6 text-slate-500">
-                                            {membre.telephone || <span className="text-slate-300 italic text-xs">Non renseigné</span>}
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                                                {membre.role === 'ADMIN' && (
-                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">Accès Total</span>
-                                                )}
-                                                {membre.role === 'INTERVENANT' && (
-                                                    <span>📚 <b>{membre._count?.coursAnimes || 0}</b> cours</span>
-                                                )}
-                                                {membre.role === 'MEMBRE' && (
-                                                    <>
-                                                        <span>👶 <b>{membre._count?.enfants || 0}</b> enf.</span>
-                                                        <span>💳 <b>{membre._count?.dons || 0}</b> dons</span>
-                                                    </>
-                                                )}
-                                                {membre.role === 'ENFANT' && (
-                                                    <span>🗓️ <b>{membre._count?.reservations || 0}</b> res.</span>
-                                                )}
-                                                {membre.role === 'BENEVOLE' && (
-                                                    <span>🤝 Actif</span>
-                                                )}
-                                                {membre.role === 'PARTENAIRE' && (
-                                                    <span>🏢 Entreprise</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex justify-end items-center gap-2">
-                                                <button
-                                                    onClick={() => handleActive(membre.id, membre.isActive)}
-                                                    title={(membre.isActive ?? true) ? "Désactiver le membre" : "Activer le membre"}
-                                                    className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${(membre.isActive ?? true)
-                                                        ? "text-emerald-600 hover:bg-emerald-50"
-                                                        : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                                                        }`}
-                                                >
-                                                    {(membre.isActive ?? true) ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
-                                                </button>
-                                                <button
-                                                    onClick={() => { handleReinitialiser(membre.username) }}
-                                                    title="Réinitialiser le mot de passe"
-                                                    className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                >
-                                                    <RotateCcw className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setMembreSelectionne(membre);
-                                                        setModalDetailsIsOpen(true);
-                                                    }}
-                                                    title="Voir les détails"
-                                                    className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => ouvrirModalModifier(membre)}
-                                                    title="Modifier le membre"
-                                                    className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setMembreSelectionne(membre);
-                                                        setModalSupprimerIsOpen(true);
-                                                    }}
-                                                    title="Supprimer le membre"
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {membresFiltresEtTries.map((membre) => {
+                                    // 💡 On définit une constante pour savoir si le membre est actif
+                                    const estActif = membre.isActive ?? true;
+
+                                    return (
+                                        <tr
+                                            key={membre.id}
+                                            // 💡 Effet visible : Si le compte est désactivé, la ligne est grisée, passe à 60% d'opacité et perd son effet hover violet
+                                            className={`transition-colors group ${estActif
+                                                    ? 'hover:bg-slate-50/50'
+                                                    : 'bg-slate-50/40 opacity-60 filter grayscale-[20%]'
+                                                }`}
+                                        >
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`font-semibold transition-colors ${estActif ? 'text-slate-900 group-hover:text-violet-950' : 'text-slate-500 line-through decoration-slate-400'
+                                                        }`}>
+                                                        {membre.nom.toUpperCase()} {membre.prenom}
+                                                    </div>
+                                                    {/* 💡 Symbole plus visible : Petit badge rouge si désactivé */}
+                                                    {!estActif && (
+                                                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 rounded animate-pulse">
+                                                            INACTIF
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs text-slate-400 mt-0.5">
+                                                    Inscrit le {new Date(membre.createdAt).toLocaleDateString('fr-FR')}
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 font-mono text-xs text-slate-500">
+                                                @{membre.username}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${estActif
+                                                        ? (ROLE_STYLES[membre.role] || 'bg-slate-100 text-slate-700')
+                                                        : 'bg-slate-200 text-slate-500 border-slate-300 line-through'
+                                                    }`}>
+                                                    {membre.role}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-slate-500">
+                                                {membre.telephone || <span className="text-slate-300 italic text-xs">Non renseigné</span>}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                                                    {membre.role === 'ADMIN' && (
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">Accès Total</span>
+                                                    )}
+                                                    {membre.role === 'INTERVENANT' && (
+                                                        <span>📚 <b>{membre._count?.coursAnimes || 0}</b> cours</span>
+                                                    )}
+                                                    {membre.role === 'MEMBRE' && (
+                                                        <>
+                                                            <span>👶 <b>{membre._count?.enfants || 0}</b> enf.</span>
+                                                            <span>💳 <b>{membre._count?.dons || 0}</b> dons</span>
+                                                        </>
+                                                    )}
+                                                    {membre.role === 'ENFANT' && (
+                                                        <span>🗓️ <b>{membre._count?.reservations || 0}</b> res.</span>
+                                                    )}
+                                                    {membre.role === 'BENEVOLE' && (
+                                                        <span>🤝 Actif</span>
+                                                    )}
+                                                    {membre.role === 'PARTENAIRE' && (
+                                                        <span>🏢 Entreprise</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleActive(membre.id, membre.isActive)}
+                                                        title={estActif ? "Désactiver le membre" : "Activer le membre"}
+                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${estActif
+                                                                ? "text-emerald-600 hover:bg-emerald-50"
+                                                                : "text-amber-600 bg-amber-50/70 border border-amber-200 hover:bg-amber-100 shadow-sm"
+                                                            }`}
+                                                    >
+                                                        {estActif ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { handleReinitialiser(membre.username) }}
+                                                        title="Réinitialiser le mot de passe"
+                                                        className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setMembreSelectionne(membre);
+                                                            setModalDetailsIsOpen(true);
+                                                        }}
+                                                        title="Voir les détails"
+                                                        className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => ouvrirModalModifier(membre)}
+                                                        title="Modifier le membre"
+                                                        className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setMembreSelectionne(membre);
+                                                            setModalSupprimerIsOpen(true);
+                                                        }}
+                                                        title="Supprimer le membre"
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
