@@ -161,6 +161,32 @@ export default function AdminMembresPage() {
         }
     }
 
+    const handleActive = async (id: string, currentStatus: boolean) => {
+        const statutActuel = currentStatus ?? true;
+        const actionTexte = statutActuel ? 'désactiver' : 'activer';
+
+        if (!confirm(`Voulez-vous ${actionTexte} ce membre ?`)) {
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const res = await toggleStatutUtilisateur(id, statutActuel);
+
+            if (res.success) {
+                await chargerMembres();
+            } else {
+                alert(res.error || `Impossible de ${actionTexte} le membre.`);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error(`[handleActive] Erreur lors de la modification du statut:`, error);
+            alert("Une erreur inattendue est survenue.");
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div>
             <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -298,22 +324,16 @@ export default function AdminMembresPage() {
 
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end items-center gap-2">
-                                                    // N'oublie pas d'importer UserCheck et UserX de 'lucide-react'
-
+                                                    {/* Bouton : Activer / désactiver */}
                                                     <button
-                                                        onClick={async () => {
-                                                            if (confirm(`Voulez-vous ${membre.isActive ? 'désactiver' : 'activer'} ce membre ?`)) {
-                                                                const res = await toggleStatutUtilisateur(membre.id, membre.isActive);
-                                                                if (!res.success) alert(res.error);
-                                                            }
-                                                        }}
-                                                        title={membre.isActive ? "Désactiver le membre" : "Activer le membre"}
-                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${membre.isActive
+                                                        onClick={() => handleActive(membre.id, membre.isActive)}
+                                                        title={(membre.isActive ?? true) ? "Désactiver le membre" : "Activer le membre"}
+                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${(membre.isActive ?? true)
                                                             ? "text-emerald-600 hover:bg-emerald-50"
                                                             : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
                                                             }`}
                                                     >
-                                                        {membre.isActive ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                                                        {(membre.isActive ?? true) ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                                                     </button>
 
                                                     {/* Bouton : Réinitialiser le mot de passe */}

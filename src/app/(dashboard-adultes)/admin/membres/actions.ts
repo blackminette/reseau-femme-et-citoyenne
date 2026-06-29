@@ -30,6 +30,7 @@ export async function listerLesUtilisateurs(trie: string, filtre?: string) {
                 username: true,
                 telephone: true,
                 role: true,
+                isActive: true,
                 createdAt: true,
                 _count: {
                     select: {
