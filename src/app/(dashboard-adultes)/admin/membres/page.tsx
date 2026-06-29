@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur, reinitialiserMdp } from './actions';
+import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur, reinitialiserMdp, toggleStatutUtilisateur } from './actions';
 import Modal from '@/components/Modal';
-import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus, RotateCcw } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -298,6 +298,24 @@ export default function AdminMembresPage() {
 
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end items-center gap-2">
+                                                    // N'oublie pas d'importer UserCheck et UserX de 'lucide-react'
+
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (confirm(`Voulez-vous ${membre.isActive ? 'désactiver' : 'activer'} ce membre ?`)) {
+                                                                const res = await toggleStatutUtilisateur(membre.id, membre.isActive);
+                                                                if (!res.success) alert(res.error);
+                                                            }
+                                                        }}
+                                                        title={membre.isActive ? "Désactiver le membre" : "Activer le membre"}
+                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${membre.isActive
+                                                            ? "text-emerald-600 hover:bg-emerald-50"
+                                                            : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                                            }`}
+                                                    >
+                                                        {membre.isActive ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                                                    </button>
+
                                                     {/* Bouton : Réinitialiser le mot de passe */}
                                                     <button
                                                         onClick={() => handleReinitialiser(membre.username)}

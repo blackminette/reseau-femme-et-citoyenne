@@ -204,3 +204,19 @@ export async function reinitialiserMdp(username: string) {
         return { success: false, error: "Une erreur interne est survenue sur le serveur." };
     }
 }
+
+export async function toggleStatutUtilisateur(id: string, statutActuel: boolean) {
+    try {
+        await prisma.utilisateur.update({
+            where: { id: id },
+            data: { isActive: !statutActuel }
+        });
+
+        revalidatePath('/admin/membres');
+
+        return { success: true };
+    } catch (error) {
+        console.error("[toggleStatutUtilisateur] Erreur :", error);
+        return { success: false, error: "Impossible de modifier le statut du membre." };
+    }
+}
