@@ -6,64 +6,52 @@ datasource db {
   provider = "postgresql"
 }
 
-enum NiveauPedagogique {
-  NIVEAU_1
-  NIVEAU_2
-  NIVEAU_3
-  ADULTE
-}
-
 model Utilisateur {
-  id        String            @id @default(cuid())
-  email     String            @unique
-  nom       String
-  prenom    String
-  telephone String?
-  role      String            @default("MEMBRE")
-  createdAt DateTime          @default(now())
-  niveau    NiveauPedagogique? @default(NIVEAU_1)
-
-  reservations    Reservation[]
-  dons            Don[]
-  temoignages      Temoignage[]
-  coursAnimes     Cours[]           @relation("IntervenanteCours")
-  suggestions     BoiteAIdees[]
-  ateliersPrives  Atelier[]         @relation("PartenaireAtelier")
-  messagesEnvoyes MessageContact[]
-
+  id              String           @id @default(cuid())
+  email           String           @unique
+  nom             String
+  prenom          String
+  telephone       String?
+  role            String           @default("MEMBRE")
+  createdAt       DateTime         @default(now())
   tuteurId        String?
-  tuteur          Utilisateur?      @relation("ParentEnfant", fields: [tuteurId], references: [id])
-  enfants         Utilisateur[]     @relation("ParentEnfant")
+  username        String           @unique
+  ateliersPrives  Atelier[]        @relation("PartenaireAtelier")
+  suggestions     BoiteAIdees[]
+  coursAnimes     Cours[]          @relation("IntervenanteCours")
+  dons            Don[]
+  messagesEnvoyes MessageContact[]
+  reservations    Reservation[]
+  ScoreQuiz       ScoreQuiz[]
+  temoignages     Temoignage[]
+  tuteur          Utilisateur?     @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
+  enfants         Utilisateur[]    @relation("ParentEnfant")
 }
 
 model Atelier {
   id                Int           @id @default(autoincrement())
   titre             String
   description       String?
-  dateDebut         DateTime
-  dateFin           DateTime
   placesMax         Int           @default(15)
   estPrive          Boolean       @default(false)
   typePaiement      String?
   creneauVerrouille Boolean       @default(false)
   effectifPrevu     Int?
-
-  lieuId            String
-  lieu              Lieu          @relation(fields: [lieuId], references: [id], onDelete: Restrict)
-
   partenaireId      String?
-  partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id])
-
+  dateDebut         DateTime
+  dateFin           DateTime
+  lieuId            String
+  lieu              Lieu          @relation(fields: [lieuId], references: [id])
+  partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id], onDelete: Cascade)
   reservations      Reservation[]
 }
 
 model Lieu {
   id           String    @id @default(cuid())
-  nom          String    
-  adresseTexte String    
-  adresseIdBan String    @unique 
+  nom          String
+  adresseTexte String
+  adresseIdBan String    @unique
   estExterieur Boolean   @default(false)
-  
   ateliers     Atelier[]
 }
 
@@ -71,56 +59,38 @@ model Reservation {
   id              Int         @id @default(autoincrement())
   dateReservation DateTime    @default(now())
   statut          String      @default("PENDING")
-
   utilisateurId   String
-  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-
   atelierId       Int
   atelier         Atelier     @relation(fields: [atelierId], references: [id], onDelete: Cascade)
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@unique([utilisateurId, atelierId])
 }
 
-enum PublicCible {
-  ENFANT
-  ADULTE
-}
-
-enum Parcours {
-  COMPREHENSION_LECTURE
-  ECO_CITOYENNETE
-  EDUCATION_CIVIQUE
-  NUMERIQUE
-  ANGLAIS
-  ROBOTIQUE
-  NUMERIQUE_ADULTE
-  ORAL
-}
-
 model Module {
-  id           Int               @id @default(autoincrement())
-  titre        String
-  description  String?
+  id          Int         @id @default(autoincrement())
+  titre       String
+  description String?
+  createdAt   DateTime    @default(now())
+  public      PublicCible @default(ADULTE)
+  isPublished Boolean     @default(false)
   parcours    Parcours[]
-  public       PublicCible       @default(ADULTE)
-  niveauRequis NiveauPedagogique @default(NIVEAU_1)
-  isPublished  Boolean           @default(false)
-  createdAt    DateTime          @default(now())
-  cours        Cours[]
+  difficulte  Difficulte  @default(FACILE)
+  cours       Cours[]
 }
 
 model Cours {
-  id              Int               @id @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   titre           String
-  estPublic       Boolean           @default(true)
-  createdAt       DateTime          @default(now())
+  estPublic       Boolean     @default(true)
+  createdAt       DateTime    @default(now())
   intervenanteId  String
-  contenu         Json              @default("[]")
-  moduleId        Int               
-  ordreDansModule Int               @default(1) 
-  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  exercices       Exercice[]        
-  intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id])
+  contenu         Json        @default("[]")
+  moduleId        Int
+  ordreDansModule Int         @default(1)
+  intervenante    Utilisateur @relation("IntervenanteCours", fields: [intervenanteId], references: [id], onDelete: Cascade)
+  module          Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  exercices       Exercice[]
   programmes      Programme[]
 }
 
@@ -130,20 +100,20 @@ model Exercice {
   instructions String
   type         String
   contenu      Json        @default("[]")
-  ordre        Int         @default(1) 
   coursId      Int
+  ordre        Int         @default(1)
   cours        Cours       @relation(fields: [coursId], references: [id], onDelete: Cascade)
-
   scores       ScoreQuiz[]
 }
 
 model ScoreQuiz {
-  id         Int      @id @default(autoincrement())
-  score      Int
-  createdAt  DateTime @default(now())
-  etudiantId String
-  exerciceId Int
-  exercice   Exercice @relation(fields: [exerciceId], references: [id])
+  id          Int         @id @default(autoincrement())
+  score       Int
+  createdAt   DateTime    @default(now())
+  etudiantId  String
+  exerciceId  Int
+  Utilisateur Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  exercice    Exercice    @relation(fields: [exerciceId], references: [id])
 }
 
 model Programme {
@@ -154,12 +124,12 @@ model Programme {
 }
 
 model BoiteAIdees {
-  id          Int         @id @default(autoincrement())
-  sujet       String
-  suggestion  String
-  createdAt   DateTime    @default(now())
-  membreId    String
-  membre      Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
+  id         Int         @id @default(autoincrement())
+  sujet      String
+  suggestion String
+  createdAt  DateTime    @default(now())
+  membreId   String
+  membre     Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
 }
 
 model Don {
@@ -168,7 +138,7 @@ model Don {
   dateDon       DateTime    @default(now())
   statut        String      @default("COMPLETED")
   utilisateurId String
-  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 }
 
 model Temoignage {
@@ -202,5 +172,28 @@ model MessageContact {
   message       String
   envoyeLe      DateTime     @default(now())
   utilisateurId String?
-  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+}
+
+enum PublicCible {
+  ENFANT
+  ADULTE
+}
+
+enum Parcours {
+  COMPREHENSION_LECTURE
+  ECO_CITOYENNETE
+  EDUCATION_CIVIQUE
+  NUMERIQUE
+  ANGLAIS
+  ROBOTIQUE
+  NUMERIQUE_ADULTE
+  ORAL
+  BUREAUTIQUE
+}
+
+enum Difficulte {
+  FACILE
+  MOYEN
+  DIFFICILE
 }

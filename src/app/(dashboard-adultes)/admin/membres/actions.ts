@@ -30,7 +30,6 @@ export async function listerLesUtilisateurs(trie: string, filtre?: string) {
                 telephone: true,
                 role: true,
                 createdAt: true,
-                niveau: true,
                 _count: {
                     select: {
                         enfants: true,

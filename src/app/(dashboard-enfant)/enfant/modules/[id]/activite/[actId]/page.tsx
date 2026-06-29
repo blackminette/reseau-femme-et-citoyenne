@@ -570,7 +570,62 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
     // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
     const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
-    const content = MODULES_ADVENTURES[activeModuleId];
+    
+    // Custom Dynamic DB Content State
+    const [dynamicContent, setDynamicContent] = useState<any>(null);
+
+    // Override content when loaded from DB
+    const content = dynamicContent 
+        ? {
+            titreGlobal: dynamicContent.titre,
+            description: dynamicContent.instructions || "Aventure d'apprentissage",
+            themeColor: "from-violet-400 to-indigo-500",
+            step1: {
+                titre: "Découvrir",
+                soustitre: "Découvrir la leçon",
+                texte: dynamicContent.instructions || "Lis attentivement les notions présentées pour réussir les étapes.",
+                emoji: "📖",
+                aRetenir: "Lis bien le contenu pour te préparer !",
+                exempleText: undefined,
+                exempleImage: undefined
+            },
+            step2: {
+                soustitre: "Observe attentivement",
+                boxTitre: "Points importants",
+                texte: dynamicContent.instructions || "Prends le temps d'assimiler les explications.",
+                emoji: "🔍",
+                aRetenir: ["Retiens l'essentiel de cette leçon."],
+                badges: undefined,
+                bulletList: undefined
+            },
+            step3: {
+                soustitre: "Récapitulation",
+                texte: "Voici un résumé des compétences de la leçon.",
+                pointsCles: ["Pratique régulièrement", "Valide tes acquis"],
+                bulles: ["As-tu tout compris ?"],
+                illustration: "💡",
+                objectif: undefined
+            },
+            exercice: {
+                titre: dynamicContent.titre || "Exercice d'application",
+                type: 'match', // defaults matching structure
+                data: {
+                    left: [{ id: 'l1', text: "Découverte" }],
+                    right: [{ id: 'r1', text: "Validation" }],
+                    pairs: { 'l1': 'r1' }
+                }
+            },
+            quiz: dynamicContent.type === 'QUIZ' && Array.isArray(dynamicContent.contenu) && dynamicContent.contenu.length > 0
+                ? dynamicContent.contenu.map((q: any, idx: number) => ({
+                    q: q.question,
+                    options: q.options || [],
+                    answer: q.options ? q.options.indexOf(q.reponseCorrecte) : 0,
+                    explication: "Bonne réponse !"
+                }))
+                : [{ q: "Es-tu prêt à valider tes connaissances ?", options: ["Oui !", "Non"], answer: 0, explication: "Super !" }]
+          }
+        : MODULES_ADVENTURES[activeModuleId];
+
     const imageModuleId = activeModuleId === 'napoleon' ? 'civique' : activeModuleId;
 
     const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${imageModuleId}_decouvrir.png`;
@@ -604,16 +659,37 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const [score, setScore] = useState(0);
     const [showExplanation, setShowExplanation] = useState(false);
 
+
+
     // Charger le module initial
     useEffect(() => {
         if (!id) return;
 
-        // Initialiser l'exercice en fonction du type
-        if (content.exercice.type === 'order') {
-            setOrderedItems([...content.exercice.data.initialOrder]);
+        async function loadActivityData() {
+            setLoading(true);
+            try {
+                if (actId) {
+                    const dbData = await obtenirDetailsActiviteDepuisDB(actId);
+                    if (dbData) {
+                        setDynamicContent(dbData);
+                        if (dbData.type === 'QUIZ') {
+                            setStepIndex(4); // Jump directly to Quiz if this is a db Quiz
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur de chargement dynamique de l'activité:", err);
+            } finally {
+                // Initialiser l'exercice en fonction du type
+                if (content?.exercice?.type === 'order') {
+                    setOrderedItems([...content.exercice.data.initialOrder]);
+                }
+                setLoading(false);
+            }
         }
-        setLoading(false);
-    }, [id, activeModuleId]);
+
+        loadActivityData();
+    }, [id, actId, activeModuleId]);
 
     // Lancer des confettis lors du résultat final
     useEffect(() => {
@@ -1329,7 +1405,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    {content.quiz[quizIndex].options.map((option, idx) => {
+                                    {content.quiz[quizIndex].options.map((option: string, idx: number) => {
                                         const isCorrectAnswer = idx === content.quiz[quizIndex].answer;
                                         const isSelected = selectedOption === idx;
 
@@ -1488,10 +1564,16 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                     {/* Bouton Suivant ou Sauvegarder */}
                     {stepIndex < 3 ? (
                         <button
-                            onClick={() => setStepIndex(stepIndex + 1)}
+                            onClick={() => {
+                                if (stepIndex === 2 && dynamicContent?.type === 'LECON') {
+                                    setStepIndex(5); // Jump directly to Results/Finished for lessons
+                                } else {
+                                    setStepIndex(stepIndex + 1);
+                                }
+                            }}
                             className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-md transition-all"
                         >
-                            {stepIndex === 2 ? "Passer à l'exercice" : "Suivant"} →
+                            {stepIndex === 2 ? (dynamicContent?.type === 'LECON' ? "Terminer la leçon" : "Passer à l'exercice") : "Suivant"} →
                         </button>
                     ) : stepIndex === 3 ? (
                         <div className="flex gap-2">

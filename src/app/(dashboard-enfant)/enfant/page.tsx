@@ -13,7 +13,7 @@ import {
     RESULTATS as MOCK_RESULTATS,
     ACTIVITE as MOCK_ACTIVITE
 } from "@/lib/enfant-data";
-import { obtenirProfilEnfant, obtenirModulesDepuisDB, obtenirActiviteRecente } from "./modules/actions";
+import { obtenirProfilEnfant, obtenirModulesDepuisDB, obtenirActiviteRecente, obtenirParcoursStats } from "./modules/actions";
 
 export const metadata = {
     title: "Mon espace",
@@ -21,13 +21,12 @@ export const metadata = {
 };
 
 const METADATA_MAP = {
-    lecture: { Icon: BookOpen, from: "#66bb6a", to: "#2e7d32" },
-    numerique: { Icon: Laptop, from: "#42a5f5", to: "#0d47a1" },
-    robotique: { Icon: Cpu, from: "#9b8cff", to: "#6d5ba8" },
-    anglais: { Icon: Languages, from: "#ec407a", to: "#880e4f" },
-    civique: { Icon: Landmark, from: "#ffa726", to: "#e65100" },
-    napoleon: { Icon: Crown, from: "#f59e0b", to: "#7c2d12" },
-    eco: { Icon: Leaf, from: "#26a69a", to: "#00695c" },
+    lecture: { label: "Lecture & compréhension", Icon: BookOpen, from: "#66bb6a", to: "#2e7d32" },
+    numerique: { label: "Numérique", Icon: Laptop, from: "#42a5f5", to: "#0d47a1" },
+    robotique: { label: "Robotique", Icon: Cpu, from: "#9b8cff", to: "#6d5ba8" },
+    anglais: { label: "Anglais", Icon: Languages, from: "#ec407a", to: "#880e4f" },
+    civique: { label: "Éducation civique", Icon: Landmark, from: "#ffa726", to: "#e65100" },
+    eco: { label: "Éco-citoyenneté", Icon: Leaf, from: "#26a69a", to: "#00695c" },
 };
 
 const ICON_MAP_ACT = {
@@ -40,24 +39,24 @@ export default async function EnfantDashboard() {
     const profile = await obtenirProfilEnfant();
     const modulesRes = await obtenirModulesDepuisDB();
     const recentScores = await obtenirActiviteRecente();
+    const stats = await obtenirParcoursStats();
 
     const enfant = profile || MOCK_ENFANT;
 
-    // Map modules with dynamic progress
-    const listModules = modulesRes && modulesRes.modules && modulesRes.modules.length > 0
-        ? modulesRes.modules.map(mod => {
-            const meta = METADATA_MAP[mod.slug as keyof typeof METADATA_MAP] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98" };
-            return {
-                id: mod.id,
-                slug: mod.slug,
-                label: mod.label,
-                Icon: meta.Icon,
-                progression: mod.progression,
-                from: meta.from,
-                to: meta.to
-            };
-        })
-        : MOCK_MODULES;
+    // Map modules with dynamic progress based on the 6 static Parcours (identical to Mes Parcours page)
+    const listModules = Object.entries(METADATA_MAP).map(([slug, meta]) => {
+        // Find stats matching slug key
+        const progression = stats[slug] || 0;
+        return {
+            id: slug,
+            slug: slug,
+            label: meta.label,
+            Icon: meta.Icon,
+            progression: progression,
+            from: meta.from,
+            to: meta.to
+        };
+    });
 
     const isMock = !modulesRes || modulesRes.source === 'mock';
 
@@ -140,75 +139,97 @@ export default async function EnfantDashboard() {
                 </div>
             </section>
 
-            {/* ─── Zone d'orientation personnalisée (Difficultés & Recommandations) ─── */}
-            {((enfant.difficultes && enfant.difficultes.length > 0) || (enfant.recommandations && enfant.recommandations.length > 0)) && (
-                <section className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Zones de difficulté */}
-                    <div className="rounded-[20px] border border-red-100 bg-red-50/50 p-6 flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center gap-2 text-red-700 font-extrabold text-sm mb-2">
-                                <span>⚠️</span> Objectif d'amélioration
-                            </div>
-                            <h4 className="text-[15px] font-black text-violet-950">Mes zones d'amélioration</h4>
-                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                Voici les parcours où tu as rencontré des défis. Reprends-les pour t'améliorer !
-                            </p>
-                            <div className="mt-4 space-y-2">
-                                {enfant.difficultes && enfant.difficultes.length > 0 ? (
-                                    enfant.difficultes.map((d: any, idx: number) => (
-                                        <div key={idx} className="bg-white border border-red-100 rounded-xl p-3 flex justify-between items-center text-xs">
-                                            <div className="font-bold text-slate-800">{d.module}</div>
-                                            <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-black text-[10px]">{d.pourcentage}% réussite</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="bg-white border border-green-150 rounded-xl p-4 text-center text-xs font-semibold text-emerald-700">
-                                        ✨ Magnifique ! Tu n'as pas de difficultés détectées actuellement.
-                                    </div>
-                                )}
-                            </div>
+            {/* ─── Zone d'orientation personnalisée (Difficultés, forces & Recommandations) ─── */}
+            <section className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Mes forces & points à améliorer */}
+                <div className="rounded-[20px] border border-violet-100 bg-white p-6 shadow-[0_2px_12px_rgba(109,91,168,0.04)] flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-violet-700 font-extrabold text-sm mb-2">
+                            <span>⭐</span> Mon bilan de compétences
                         </div>
-                    </div>
-
-                    {/* Recommandations ciblées */}
-                    <div className="rounded-[20px] border border-indigo-100 bg-indigo-50/50 p-6 flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center gap-2 text-indigo-700 font-extrabold text-sm mb-2">
-                                <span>🎯</span> Recommandations de ton tuteur
-                            </div>
-                            <h4 className="text-[15px] font-black text-violet-950">Mes défis recommandés</h4>
-                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                Les activités parfaites pour toi aujourd'hui afin de franchir un nouveau cap !
-                            </p>
-                            <div className="mt-4 space-y-2">
-                                {enfant.recommandations && enfant.recommandations.length > 0 ? (
-                                    enfant.recommandations.map((r: any, idx: number) => (
-                                        <Link
-                                            href={`/enfant/modules/${r.moduleSlug}`}
-                                            key={idx}
-                                            className="block bg-white border border-indigo-100 hover:border-indigo-300 rounded-xl p-3 shadow-xs hover:shadow-md transition-all group"
-                                        >
-                                            <div className="flex justify-between items-start gap-3">
-                                                <div>
-                                                    <div className="text-xs font-black text-slate-800 group-hover:text-indigo-600 transition-colors">{r.titre}</div>
-                                                    <div className="text-[10px] text-slate-400 mt-0.5">{r.raison}</div>
-                                                </div>
-                                                <span className="shrink-0 bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-[9px] font-black group-hover:bg-indigo-700 transition-colors">
-                                                    {r.action}
-                                                </span>
+                        <h4 className="text-[15px] font-black text-violet-950">Ce qui va super bien & Ce qu'il faut revoir</h4>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Retrouve ici tes réussites éclatantes et les compétences que tu peux renforcer !
+                        </p>
+                        
+                        <div className="mt-4 space-y-4">
+                            {/* Bien acquis */}
+                            <div>
+                                <div className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 mb-2">🌟 Ce que tu maîtrises super bien :</div>
+                                <div className="space-y-1.5">
+                                    {enfant.difficultes && enfant.difficultes.length > 0 && enfant.difficultes.some((d: any) => d.pourcentage >= 80) ? (
+                                        enfant.difficultes.filter((d: any) => d.pourcentage >= 80).map((d: any, idx: number) => (
+                                            <div key={idx} className="bg-emerald-50/50 border border-emerald-100 rounded-xl px-3 py-2 flex justify-between items-center text-xs">
+                                                <span className="font-bold text-slate-800">{d.module}</span>
+                                                <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black text-[10px]">{d.pourcentage}%</span>
                                             </div>
-                                        </Link>
-                                    ))
-                                ) : (
-                                    <div className="bg-white border border-slate-100 rounded-xl p-4 text-center text-xs font-semibold text-slate-400">
-                                        Aucun défi à recommander pour l'instant.
-                                    </div>
-                                )}
+                                        ))
+                                    ) : (
+                                        <div className="text-xs text-slate-400 italic">Continue tes efforts, des compétences vont bientôt briller ici !</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* À revoir */}
+                            <div>
+                                <div className="text-[11px] font-extrabold uppercase tracking-wider text-rose-500 mb-2">🔧 À revoir ou renforcer :</div>
+                                <div className="space-y-1.5">
+                                    {enfant.difficultes && enfant.difficultes.length > 0 && enfant.difficultes.some((d: any) => d.pourcentage < 80) ? (
+                                        enfant.difficultes.filter((d: any) => d.pourcentage < 80).map((d: any, idx: number) => (
+                                            <div key={idx} className="bg-rose-50/40 border border-rose-100/70 rounded-xl px-3 py-2 flex justify-between items-center text-xs">
+                                                <span className="font-bold text-slate-800">{d.module}</span>
+                                                <span className="bg-rose-500 text-white px-2 py-0.5 rounded-full font-black text-[10px]">{d.pourcentage}%</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="bg-emerald-50/50 border border-emerald-150 rounded-xl p-3 text-center text-xs font-semibold text-emerald-700">
+                                            ✨ Magnifique ! Tu n'as pas de difficultés détectées actuellement.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
-            )}
+                </div>
+
+                {/* Recommandations ciblées */}
+                <div className="rounded-[20px] border border-indigo-150 bg-indigo-50/40 p-6 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-indigo-700 font-extrabold text-sm mb-2">
+                            <span>🎯</span> Défi recommandé
+                        </div>
+                        <h4 className="text-[15px] font-black text-violet-950">Mon prochain défi recommandé</h4>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                            L'activité parfaite pour toi aujourd'hui afin de franchir un nouveau cap !
+                        </p>
+                        <div className="mt-4 space-y-2.5">
+                            {enfant.recommandations && enfant.recommandations.length > 0 ? (
+                                enfant.recommandations.map((r: any, idx: number) => (
+                                    <Link
+                                        href={`/enfant/modules/${r.moduleSlug}`}
+                                        key={idx}
+                                        className="block bg-white border border-indigo-100 hover:border-indigo-300 rounded-xl p-3 shadow-2xs hover:shadow-xs transition-all group"
+                                    >
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div>
+                                                <div className="text-xs font-black text-slate-800 group-hover:text-indigo-600 transition-colors">{r.titre}</div>
+                                                <div className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{r.raison}</div>
+                                            </div>
+                                            <span className="shrink-0 bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-[9px] font-black group-hover:bg-indigo-700 transition-colors">
+                                                {r.action}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="bg-white border border-slate-100 rounded-xl p-4 text-center text-xs font-semibold text-slate-400">
+                                    Aucun défi à recommander pour l'instant.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* ─── Mes parcours ─── */}
             <section id="modules" className="mt-8 scroll-mt-6">
