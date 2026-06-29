@@ -7,7 +7,7 @@ export default function ContactForm() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        subject: '',
+        subject: 'General',
         message: '',
     });
 
@@ -30,6 +30,7 @@ export default function ContactForm() {
 
     const handleSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
         e.preventDefault();
+        e.stopPropagation();
         setStatus({ submitting: true, success: null, error: null });
 
         try {
@@ -67,7 +68,14 @@ export default function ContactForm() {
             </p>
 
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form 
+                onSubmit={(e) => {
+                    e.preventDefault(); 
+                    handleSubmit(e);
+                }} 
+                className="space-y-4"
+            >
+
 
                 {/* Name */}
                 <div>

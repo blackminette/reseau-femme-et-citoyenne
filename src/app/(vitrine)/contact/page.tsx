@@ -68,19 +68,20 @@ export default function ContactPage() {
 
 
             {/* Main (Image + Contact_form superpose) */}
-            <div className="w-full max-w-5xl relative rounded-3xl overflow-hidden bg-gray-900 min-h-[500px] md:min-h-[600px] flex items-center justify-end p-6 md:p-12">
+            <div className="w-full max-w-5xl relative rounded-3xl overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center justify-end p-6 md:p-12">
 
 
                 {/* Container Image */}
-                <div 
-                    className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
-                    style={{ 
-                        backgroundImage: `url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200')` 
-                    }}
-                />
+                <div className="absolute inset-0 bg-cover bg-center">
+                    <img 
+                        src="https://i.postimg.cc/QdV0hTM8/image-page-contact.png" 
+                        alt="Image contact" 
+                        className="w-full h-full object-cover"
+                    />
+                </div>
 
                 {/* Overlay du Contact_form */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent pointer-events-none" />  
+                <div className="absolute inset-0 pointer-events-none" />  
 
                 
                 {/* Floating Interactive du Contact_form */}

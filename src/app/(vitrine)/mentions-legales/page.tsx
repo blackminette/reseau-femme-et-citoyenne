@@ -18,19 +18,19 @@ export default function MentionsLegalesPage() {
                     </li>
                     <li>
                         <strong>Numéro RNA :</strong>{' '}
-                        <span className="text-amber-600 font-semibold bg-amber-50 px-1 rounded">[À compléter]</span>
+                        <span className="text-[#260936] font-semibold px-1 rounded">W062016431</span>
                     </li>
                     <li>
                         <strong>Email :</strong>{' '}
-                        <span className="text-[#260936]"> femmecitoyenne06@gmail.com </span>
+                        <span className="text-[#260936] font-semibold rounded"> femmecitoyenne06@gmail.com </span>
                     </li>
                     <li>
                         <strong>Téléphone :</strong>{' '}
-                        <span className="text-amber-600 font-semibold bg-amber-50 px-1 rounded">[À compléter]</span>
+                        <span className="text-[#260936] font-semibold px-1 rounded"> 06 60 85 23 92</span>
                     </li>
                     <li>
                         <strong>Directeur de la publication :</strong>{' '}
-                        <span className="text-amber-600 font-semibold bg-amber-50 px-1 rounded">[Prénom Nom du/de la président(e)]</span>
+                        <span className="text-[#260936] font-semibold px-1 rounded">Richard DOMZALSKI</span>
                     </li>
                 </ul>
             </section>
@@ -149,12 +149,12 @@ export default function MentionsLegalesPage() {
                                 <tr className="hover:bg-gray-50/50 transition-colors">
                                     <td className="p-4">E-mail, mot de passe (haché), prénom/nom</td>
                                     <td className="p-4">Gestion du compte utilisateur</td>
-                                    <td className="p-4">Exécution du contrat</td>
+                                    <td className="p-4">Exécution des conditions générales d'utilisation (CGU)</td>
                                 </tr>
                                 <tr className="hover:bg-gray-50/50 transition-colors">
                                     <td className="p-4">Historique des ateliers réservés</td>
                                     <td className="p-4">Suivi de votre participation</td>
-                                    <td className="p-4">Exécution du contrat</td>
+                                    <td className="p-4">Exécution des conditions générales d'utilisation (CGU)</td>
                                 </tr>
                                 <tr className="hover:bg-gray-50/50 transition-colors">
                                     <td className="p-4">Prénom, nom, e-mail, téléphone, message (Formulaire de contact)</td>
