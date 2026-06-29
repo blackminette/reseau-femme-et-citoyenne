@@ -18,6 +18,31 @@ function mapTitreToSlug(titre: string): string {
     return 'lecture'; // fallback
 }
 
+function getFirstSentence(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+    const match = trimmed.match(/^[^.?!]+[.?!]?/);
+    return (match?.[0] || trimmed).trim();
+}
+
+function getCoursePreview(cours: { titre: string; contenu?: unknown }) {
+    const contenu = cours.contenu;
+
+    if (Array.isArray(contenu)) {
+        const firstBloc = contenu[0] as { titre?: string; texte?: string } | undefined;
+        const title = firstBloc?.titre?.trim();
+        const text = firstBloc?.texte?.trim();
+        if (title && text) {
+            return `${title} - ${getFirstSentence(text)}`;
+        }
+        if (text) {
+            return getFirstSentence(text);
+        }
+    }
+
+    return `Découvre les notions clés de ${cours.titre}.`;
+}
+
 // Helper to handle and log DB connection errors cleanly
 function gererErreurBaseDeDonnees(nomFonction: string, err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -290,7 +315,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             activites.push({
                 id: coursKey,
                 titre: crs.titre,
-                description: "Découvre et apprends les notions clés de cette leçon !",
+                description: getCoursePreview(crs),
                 type: 'lecon',
                 statut: 'verrouille',
                 score: undefined,
