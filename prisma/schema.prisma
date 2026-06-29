@@ -13,6 +13,7 @@ model Utilisateur {
   prenom    String
   telephone String?
   role      String            @default("MEMBRE")
+  isActive  Boolean           @default(true)
   createdAt DateTime          @default(now())
   username  String            @unique
   reservations    Reservation[]

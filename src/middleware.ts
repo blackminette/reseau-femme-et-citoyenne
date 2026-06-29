@@ -56,6 +56,36 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
+    // Récupération du rôle et du statut d'activation dans la table Prisma
+    let userRole: UserRole | null = null;
+    let isActive = true; // Actif par défaut par sécurité
+
+    if (user.email) {
+        const { data: profile, error } = await supabase
+            .from('Utilisateur')
+            .select('role, isActive')
+            .eq('email', user.email)
+            .single();
+
+        if (!error && profile) {
+            userRole = profile.role as UserRole;
+            isActive = profile.isActive;
+        }
+    }
+
+    // BLOCAGE SI LE COMPTE EST DÉSACTIVÉ
+    if (!isActive) {
+        url.pathname = '/login';
+        url.searchParams.set('error', 'disabled');
+
+        // Supprime les cookies de session pour déconnecter proprement l'utilisateur
+        const logoutResponse = NextResponse.redirect(url);
+        logoutResponse.cookies.delete('sb-access-token');
+        logoutResponse.cookies.delete('sb-refresh-token');
+
+        return logoutResponse;
+    }
+
     // FORCE LA MODIFICATION DU MOT DE PASSE À LA PREMIÈRE CONNEXION
     const doitChanger = user.user_metadata?.doitChangerMotDePasse === true;
     if (doitChanger) {
@@ -78,21 +108,6 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/login') {
         url.pathname = '/';
         return NextResponse.redirect(url);
-    }
-
-    // Récupération du rôle de l'utilisateur dans la table Prisma
-    let userRole: UserRole | null = null;
-
-    if (user.email) {
-        const { data: profile, error } = await supabase
-            .from('Utilisateur')
-            .select('role')
-            .eq('email', user.email)
-            .single();
-
-        if (!error && profile) {
-            userRole = profile.role as UserRole;
-        }
     }
 
     // Sécurité : Bloque l'accès si l'utilisateur n'a aucun rôle enregistré en base
