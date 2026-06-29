@@ -5,24 +5,9 @@ import { prisma } from '@/lib/prisma';
 import { getSupabaseAdmin, getSupabaseServer } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
-export async function listerLesUtilisateurs(trie: string, filtre?: string) {
+export async function listerLesUtilisateurs() {
     try {
-        const whereCondition: any = {};
-
-        if (filtre) {
-            whereCondition.OR = [
-                { role: filtre },
-                { nom: { contains: filtre, mode: 'insensitive' } },
-                { prenom: { contains: filtre, mode: 'insensitive' } },
-                { email: { contains: filtre, mode: 'insensitive' } },
-            ];
-        }
-
         const utilisateurs = await prisma.utilisateur.findMany({
-            where: whereCondition,
-            orderBy: {
-                createdAt: trie === 'CROISSANT' ? 'asc' : 'desc',
-            },
             select: {
                 id: true,
                 nom: true,

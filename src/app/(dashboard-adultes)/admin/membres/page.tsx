@@ -18,148 +18,56 @@ const ROLE_STYLES: Record<string, string> = {
 export default function AdminMembresPage() {
     const [membres, setMembres] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [membreSelectionne, setMembreSelectionne] = useState<any | null>(null);
-    const [isResetting, setIsResetting] = useState<string | null>(null);
+    const [recherche, setRecherche] = useState('');
+    const [rolesSelectionnes, setRolesSelectionnes] = useState<string[]>([]);
+    const [tri, setTri] = useState('DECROISSANT');
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
     const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
     const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
 
-    const [filter, setFilter] = useState<string>("");
-    const [trie, setTrie] = useState<string>('DECROISSANT');
-    const [search, setSearch] = useState<string>("");
-    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const [membreSelectionne, setMembreSelectionne] = useState<any>(null);
 
-    const [formData, setFormData] = useState({
+    const [modifierForm, setModifierForm] = useState({
         nom: '',
         prenom: '',
-        username: '',
         telephone: '',
         role: ''
     });
 
-    const [creerFormData, setCreerFormData] = useState({
+    const [creerForm, setCreerForm] = useState({
         nom: '',
         prenom: '',
         username: '',
+        email: '',
+        password: 'Password123!',
         telephone: '',
         role: 'MEMBRE'
     });
 
     useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 400);
+        chargerMembres();
+    }, []);
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [search]);
-
-    async function chargerMembres() {
+    const chargerMembres = async () => {
         setIsLoading(true);
-        const termeRecherche = filter || debouncedSearch;
-        const reponse = await listerLesUtilisateurs(trie, termeRecherche);
-
-        if (reponse.success && reponse.data) {
-            if (filter && debouncedSearch) {
-                const searchLower = debouncedSearch.toLowerCase();
-                const dataFiltree = reponse.data.filter((m: any) =>
-                    m.nom?.toLowerCase().includes(searchLower) ||
-                    m.prenom?.toLowerCase().includes(searchLower) ||
-                    m.username?.toLowerCase().includes(searchLower)
-                );
-                setMembres(dataFiltree);
-            } else {
-                setMembres(reponse.data);
-            }
+        const result = await listerLesUtilisateurs();
+        if (result.success && result.data) {
+            setMembres(result.data);
+        } else {
+            alert(result.error || "Une erreur est survenue lors du chargement des membres.");
         }
         setIsLoading(false);
-    }
-
-    useEffect(() => {
-        chargerMembres();
-    }, [filter, debouncedSearch, trie]);
-
-    const ouvrirModalModifier = (membre: any) => {
-        setMembreSelectionne(membre);
-        setFormData({
-            nom: membre.nom || '',
-            prenom: membre.prenom || '',
-            username: membre.username || '',
-            telephone: membre.telephone || '',
-            role: membre.role || 'MEMBRE'
-        });
-        setModalModifierIsOpen(true);
     };
 
-    const handleModifier = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!membreSelectionne) return;
-
-        setIsLoading(true);
-        const reponse = await modifierUtilisateur(membreSelectionne.id, formData);
-
-        if (reponse.success) {
-            setModalModifierIsOpen(false);
-            setMembreSelectionne(null);
-            await chargerMembres();
-        } else {
-            alert(reponse.error || "Une erreur est survenue.");
-            setIsLoading(false);
-        }
+    const handleToggleRole = (role: string) => {
+        setRolesSelectionnes((prev) =>
+            prev.includes(role)
+                ? prev.filter((r) => r !== role)
+                : [...prev, role]
+        );
     };
-
-    const handleSupprimer = async () => {
-        if (!membreSelectionne) return;
-
-        setIsLoading(true);
-        const reponse = await supprimerUtilisateur(membreSelectionne.id);
-
-        if (reponse.success) {
-            setModalSupprimerIsOpen(false);
-            setMembreSelectionne(null);
-            await chargerMembres();
-        } else {
-            alert(reponse.error || "Une erreur est survenue.");
-            setIsLoading(false);
-        }
-    };
-
-    const handleCreer = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        const result = await creerUtilisateur(creerFormData);
-
-        if (result.success) {
-            setModalCreerIsOpen(false);
-            setCreerFormData({ nom: '', prenom: '', username: '', telephone: '', role: 'MEMBRE' });
-            await chargerMembres();
-        } else {
-            alert(result.error || "Une erreur est survenue.");
-            setIsLoading(false);
-        }
-    };
-
-    const handleReinitialiser = async (username: string) => {
-        if (!confirm(`Êtes-vous sûr de vouloir réinitialiser le mot de passe de ${username} ?`)) {
-            return;
-        }
-
-        setIsResetting(username);
-
-        const result = await reinitialiserMdp(username)
-
-        setIsResetting(null);
-
-        if (result.success) {
-            alert(`Le mot de passe de ${username} a été réinitialisé à "Password123!". L'utilisateur devra le changer à sa prochaine connexion.`);
-        } else {
-            alert(result.error || "Une erreur est survenue.");
-        }
-    }
 
     const handleActive = async (id: string, currentStatus: boolean) => {
         const statutActuel = currentStatus ?? true;
@@ -170,10 +78,8 @@ export default function AdminMembresPage() {
         }
 
         setIsLoading(true);
-
         try {
             const res = await toggleStatutUtilisateur(id, statutActuel);
-
             if (res.success) {
                 await chargerMembres();
             } else {
@@ -181,317 +87,342 @@ export default function AdminMembresPage() {
                 setIsLoading(false);
             }
         } catch (error) {
-            console.error(`[handleActive] Erreur lors de la modification du statut:`, error);
+            console.error(error);
             alert("Une erreur inattendue est survenue.");
             setIsLoading(false);
         }
     };
 
+    const handleReinitialiser = async (username: string) => {
+        if (!confirm(`Êtes-vous sûr de vouloir réinitialiser le mot de passe de ${username} ?`)) {
+            return;
+        }
+        const result = await reinitialiserMdp(username);
+        if (result.success) {
+            alert(`Le mot de passe de ${username} a été réinitialisé à "Password123!". L'utilisateur devra le changer à sa prochaine connexion.`);
+        } else {
+            alert(result.error || "Une erreur est survenue.");
+        }
+    };
+
+    const ouvrirModalModifier = (membre: any) => {
+        setMembreSelectionne(membre);
+        setModifierForm({
+            nom: membre.nom,
+            prenom: membre.prenom,
+            telephone: membre.telephone || '',
+            role: membre.role
+        });
+        setModalModifierIsOpen(true);
+    };
+
+    const handleModifierSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!membreSelectionne) return;
+
+        const result = await modifierUtilisateur(membreSelectionne.id, modifierForm);
+        if (result.success) {
+            setModalModifierIsOpen(false);
+            chargerMembres();
+        } else {
+            alert(result.error || "Erreur lors de la modification");
+        }
+    };
+
+    const handleCreerSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const result = await creerUtilisateur(creerForm);
+        if (result.success) {
+            setModalCreerIsOpen(false);
+            setCreerForm({
+                nom: '',
+                prenom: '',
+                username: '',
+                email: '',
+                password: 'Password123!',
+                telephone: '',
+                role: 'MEMBRE'
+            });
+            chargerMembres();
+        } else {
+            alert(result.error || "Erreur lors de la création");
+        }
+    };
+
+    const handleSupprimer = async () => {
+        if (!membreSelectionne) return;
+
+        const result = await supprimerUtilisateur(membreSelectionne.id);
+        if (result.success) {
+            setModalSupprimerIsOpen(false);
+            setMembreSelectionne(null);
+            chargerMembres();
+        } else {
+            alert(result.error || "Erreur lors de la suppression");
+        }
+    };
+
+    const membresFiltresEtTries = membres
+        .filter((membre) => {
+            const correspondRecherche =
+                membre.nom.toLowerCase().includes(recherche.toLowerCase()) ||
+                membre.prenom.toLowerCase().includes(recherche.toLowerCase()) ||
+                membre.username.toLowerCase().includes(recherche.toLowerCase()) ||
+                (membre.email && membre.email.toLowerCase().includes(recherche.toLowerCase()));
+
+            const correspondRole = rolesSelectionnes.length === 0 || rolesSelectionnes.includes(membre.role);
+
+            return correspondRecherche && correspondRole;
+        })
+        .sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return tri === 'DECROISSANT' ? dateB - dateA : dateA - dateB;
+        });
+
     return (
-        <div>
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-violet-100 shadow-sm">
                 <div>
-                    <h1 className="text-3xl font-bold text-violet-950 tracking-tight">Gestion des membres</h1>
-                    <p className="text-sm text-violet-600/80 mt-1">
-                        Visualisez, modifiez les rôles et gérez les profils des familles, intervenants et administrateurs du réseau.
+                    <h1 className="text-2xl font-bold text-violet-950 tracking-tight">Gestion des Membres</h1>
+                    <p className="text-sm text-slate-500 mt-1">
+                        Visualisez, modifiez ou supprimez les membres de l'association ({membresFiltresEtTries.length} affichés)
                     </p>
                 </div>
                 <button
                     onClick={() => setModalCreerIsOpen(true)}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 active:scale-98 text-white rounded-xl text-sm font-semibold shadow-md shadow-violet-600/10 transition-all cursor-pointer h-fit self-start sm:self-center"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl shadow-md font-medium text-sm hover:bg-violet-700 transition-all transform hover:-translate-y-0.5 cursor-pointer"
                 >
                     <Plus className="w-4 h-4" />
                     Ajouter un membre
                 </button>
             </div>
 
-            <div className="mb-6 p-4 bg-white border border-violet-100 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-3 w-full">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-white p-4 rounded-2xl border border-violet-50 shadow-sm">
+                <div className="flex-1 relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         type="text"
-                        name="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Rechercher un membre (nom, prénom, username...)"
-                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                        placeholder="Rechercher par nom, prénom, identifiant..."
+                        value={recherche}
+                        onChange={(e) => setRecherche(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all placeholder:text-slate-400 text-slate-700"
                     />
                 </div>
 
-                <div className="relative min-w-[160px]">
-                    <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                    <select
-                        name="trie"
-                        id="trie"
-                        value={trie}
-                        onChange={(e) => setTrie(e.target.value)}
-                        className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all appearance-none cursor-pointer"
-                    >
-                        <option value="DECROISSANT">Décroissant</option>
-                        <option value="CROISSANT">Croissant</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <ChevronDown className='h-5 w-5' />
-                    </div>
+                <div className="flex flex-wrap items-center gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100">
+                    <span className="text-xs font-medium text-slate-500 px-1">Filtrer par rôles :</span>
+                    {Object.keys(ROLE_STYLES).map((role) => {
+                        const estSelectionne = rolesSelectionnes.includes(role);
+                        return (
+                            <button
+                                key={role}
+                                onClick={() => handleToggleRole(role)}
+                                className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all cursor-pointer ${estSelectionne
+                                    ? `${ROLE_STYLES[role]} ring-2 ring-offset-1 ring-violet-500/20 scale-105`
+                                    : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600"
+                                    }`}
+                            >
+                                {role}
+                                {estSelectionne && <span className="ml-1 text-[10px]">✓</span>}
+                            </button>
+                        );
+                    })}
+                    {rolesSelectionnes.length > 0 && (
+                        <button
+                            onClick={() => setRolesSelectionnes([])}
+                            className="text-xs text-violet-600 hover:text-violet-800 font-medium px-2 py-1 transition-colors cursor-pointer"
+                        >
+                            Effacer
+                        </button>
+                    )}
                 </div>
 
-                <div className="relative min-w-[220px]">
-                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                    <select
-                        name="filter"
-                        id="filter"
-                        className="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all appearance-none cursor-pointer"
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setTri(tri === 'DECROISSANT' ? 'CROISSANT' : 'DECROISSANT')}
+                        className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
                     >
-                        <option value="">Tous les rôles</option>
-                        <option value="ADMIN">Administrateur</option>
-                        <option value="INTERVENANT">Intervenant</option>
-                        <option value="MEMBRE">Membre</option>
-                        <option value="ENFANT">Enfant</option>
-                        <option value="PARTENAIRE">Partenaire</option>
-                        <option value="BENEVOLE">Bénévole</option>
-                        <option value="ETUDIANT">Étudiant</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <ChevronDown className='h-5 w-5' />
-                    </div>
+                        <ArrowUpDown className="w-4 h-4 text-slate-400" />
+                        Date d'inscription : {tri === 'DECROISSANT' ? 'Récent' : 'Ancien'}
+                    </button>
                 </div>
             </div>
 
-            {isLoading && membres.length === 0 ? (
-                <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-violet-600 font-medium animate-pulse">Chargement...</p>
-                </div>
-            ) : (
-                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+            <div className="bg-white border border-violet-100 rounded-2xl shadow-sm overflow-hidden">
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm text-slate-500 font-medium">Chargement des membres...</p>
+                    </div>
+                ) : membresFiltresEtTries.length === 0 ? (
+                    <div className="text-center py-16 px-4">
+                        <div className="text-slate-300 font-medium text-lg">Aucun membre trouvé</div>
+                        <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                            Aucun résultat ne correspond à vos critères de recherche ou de filtrage.
+                        </p>
+                    </div>
+                ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50/70 border-b border-violet-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                                    <th className="px-6 py-4">Nom / Prénom</th>
-                                    <th className="px-6 py-4">Username</th>
-                                    <th className="px-6 py-4">Rôle</th>
-                                    <th className="px-6 py-4">Statistiques</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
+                                <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <th className="py-4 px-6">Membre</th>
+                                    <th className="py-4 px-6">Identifiant</th>
+                                    <th className="py-4 px-6">Rôle</th>
+                                    <th className="py-4 px-6">Téléphone</th>
+                                    <th className="py-4 px-6">Statistiques</th>
+                                    <th className="py-4 px-6 text-end">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 text-sm text-violet-900">
-                                {membres.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-10 text-center text-slate-400 italic">
-                                            Aucun membre ne correspond à votre recherche.
+                            <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                                {membresFiltresEtTries.map((membre) => (
+                                    <tr key={membre.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="py-4 px-6">
+                                            <div className="font-semibold text-slate-900 group-hover:text-violet-950 transition-colors">
+                                                {membre.nom.toUpperCase()} {membre.prenom}
+                                            </div>
+                                            <div className="text-xs text-slate-400 mt-0.5">
+                                                Inscrit le {new Date(membre.createdAt).toLocaleDateString('fr-FR')}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-6 font-mono text-xs text-slate-500">
+                                            @{membre.username}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${ROLE_STYLES[membre.role] || 'bg-slate-100 text-slate-700'}`}>
+                                                {membre.role}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-slate-500">
+                                            {membre.telephone || <span className="text-slate-300 italic text-xs">Non renseigné</span>}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                                                {membre.role === 'ADMIN' && (
+                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">Accès Total</span>
+                                                )}
+                                                {membre.role === 'INTERVENANT' && (
+                                                    <span>📚 <b>{membre._count?.coursAnimes || 0}</b> cours</span>
+                                                )}
+                                                {membre.role === 'MEMBRE' && (
+                                                    <>
+                                                        <span>👶 <b>{membre._count?.enfants || 0}</b> enf.</span>
+                                                        <span>💳 <b>{membre._count?.dons || 0}</b> dons</span>
+                                                    </>
+                                                )}
+                                                {membre.role === 'ENFANT' && (
+                                                    <span>🗓️ <b>{membre._count?.reservations || 0}</b> res.</span>
+                                                )}
+                                                {membre.role === 'BENEVOLE' && (
+                                                    <span>🤝 Actif</span>
+                                                )}
+                                                {membre.role === 'PARTENAIRE' && (
+                                                    <span>🏢 Entreprise</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex justify-end items-center gap-2">
+                                                <button
+                                                    onClick={() => handleActive(membre.id, membre.isActive)}
+                                                    title={(membre.isActive ?? true) ? "Désactiver le membre" : "Activer le membre"}
+                                                    className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${(membre.isActive ?? true)
+                                                        ? "text-emerald-600 hover:bg-emerald-50"
+                                                        : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                                        }`}
+                                                >
+                                                    {(membre.isActive ?? true) ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                                                </button>
+                                                <button
+                                                    onClick={() => { handleReinitialiser(membre.username) }}
+                                                    title="Réinitialiser le mot de passe"
+                                                    className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                >
+                                                    <RotateCcw className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setMembreSelectionne(membre);
+                                                        setModalDetailsIsOpen(true);
+                                                    }}
+                                                    title="Voir les détails"
+                                                    className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => ouvrirModalModifier(membre)}
+                                                    title="Modifier le membre"
+                                                    className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setMembreSelectionne(membre);
+                                                        setModalSupprimerIsOpen(true);
+                                                    }}
+                                                    title="Supprimer le membre"
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
-                                ) : (
-                                    membres.map((membre) => (
-                                        <tr key={membre.id} className="hover:bg-violet-50/40 transition-colors duration-150">
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-slate-900">{membre.nom} {membre.prenom}</span>
-                                                    {membre.tuteur && (
-                                                        <span className="text-xs text-violet-500/90 mt-0.5">
-                                                            👶 Enfant de : <span className="font-medium">{membre.tuteur.prenom}</span>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4 text-slate-600 font-normal">
-                                                {membre.username}
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1.5 items-center">
-                                                    <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
-                                                        {membre.role?.toLowerCase()}
-                                                    </span>
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-1 text-xs text-slate-600">
-                                                    {membre._count?.enfants > 0 && <span>👶 {membre._count.enfants} enfant(s)</span>}
-                                                    {membre._count?.reservations > 0 && <span>📅 {membre._count.reservations} réservation(s)</span>}
-                                                    {membre._count?.coursAnimes > 0 && <span className="text-violet-600 font-medium">👨‍🏫 {membre._count.coursAnimes} cours animés</span>}
-                                                    {membre._count?.dons > 0 && (
-                                                        <span className="w-fit px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[11px] font-semibold">
-                                                            ❤️ Donateur
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end items-center gap-2">
-                                                    {/* Bouton : Activer / désactiver */}
-                                                    <button
-                                                        onClick={() => handleActive(membre.id, membre.isActive)}
-                                                        title={(membre.isActive ?? true) ? "Désactiver le membre" : "Activer le membre"}
-                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${(membre.isActive ?? true)
-                                                            ? "text-emerald-600 hover:bg-emerald-50"
-                                                            : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                                                            }`}
-                                                    >
-                                                        {(membre.isActive ?? true) ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
-                                                    </button>
-
-                                                    {/* Bouton : Réinitialiser le mot de passe */}
-                                                    <button
-                                                        onClick={() => handleReinitialiser(membre.username)}
-                                                        title="Réinitialiser le mot de passe"
-                                                        className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                    >
-                                                        <RotateCcw className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Bouton : Voir les détails */}
-                                                    <button
-                                                        onClick={() => {
-                                                            setMembreSelectionne(membre);
-                                                            setModalDetailsIsOpen(true);
-                                                        }}
-                                                        title="Voir les détails"
-                                                        className="p-2 text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Bouton : Modifier */}
-                                                    <button
-                                                        onClick={() => ouvrirModalModifier(membre)}
-                                                        title="Modifier le membre"
-                                                        className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Bouton : Supprimer */}
-                                                    <button
-                                                        onClick={() => {
-                                                            setMembreSelectionne(membre);
-                                                            setModalSupprimerIsOpen(true);
-                                                        }}
-                                                        title="Supprimer le membre"
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
+                                ))}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
-            <Modal
-                isOpen={modalDetailsIsOpen}
-                onClose={() => setModalDetailsIsOpen(false)}
-                title={membreSelectionne ? `Fiche Profil — ${membreSelectionne.prenom} ${membreSelectionne.nom}` : "Fiche Profil"}
-            >
+            {/* Modals... (le reste demeure identique au code précédent) */}
+            <Modal isOpen={modalDetailsIsOpen} onClose={() => setModalDetailsIsOpen(false)} title="Détails du membre">
                 {membreSelectionne && (
-                    <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
-                        <div className="flex justify-between items-start bg-violet-50 p-4 rounded-xl border border-violet-200">
+                    <div className="space-y-4 text-slate-700">
+                        <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                             <div>
-                                <h2 className="text-lg font-bold text-violet-950">
-                                    {membreSelectionne.nom} {membreSelectionne.prenom}
-                                </h2>
-                                <p className="text-xs text-violet-600 mt-0.5">
-                                    Inscrit(e) le {membreSelectionne.createdAt ? new Date(membreSelectionne.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnue'}
-                                </p>
+                                <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Nom complet</div>
+                                <div className="font-semibold text-slate-900 mt-0.5">{membreSelectionne.nom.toUpperCase()} {membreSelectionne.prenom}</div>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <span className="px-2.5 py-1 bg-violet-600 text-white rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
+                            <div>
+                                <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Identifiant</div>
+                                <div className="font-mono text-sm text-violet-700 mt-0.5">@{membreSelectionne.username}</div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 px-1">
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-400 font-medium">Rôle</span>
+                                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${ROLE_STYLES[membreSelectionne.role]}`}>
                                     {membreSelectionne.role}
                                 </span>
                             </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-violet-500 border-b border-violet-100 pb-1">
-                                Coordonnées de contact
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="bg-white p-3 rounded-lg border border-violet-200 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-violet-500 uppercase">Username</span>
-                                    <a href={`mailto:${membreSelectionne.username}`} className="text-sm font-medium text-violet-600 hover:underline break-all">
-                                        {membreSelectionne.username}
-                                    </a>
-                                </div>
-                                <div className="bg-white p-3 rounded-lg border border-violet-200 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-violet-500 uppercase">Téléphone</span>
-                                    <p className="text-sm font-medium text-violet-800">
-                                        {membreSelectionne.telephone ? (
-                                            <a href={`tel:${membreSelectionne.telephone}`} className="hover:underline">{membreSelectionne.telephone}</a>
-                                        ) : (
-                                            <span className="text-violet-500 italic">Non renseigné</span>
-                                        )}
-                                    </p>
-                                </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-400 font-medium">Téléphone</span>
+                                <span className="font-medium text-slate-800">{membreSelectionne.telephone || 'Non renseigné'}</span>
                             </div>
-                        </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100">
+                                <span className="text-slate-400 font-medium">Date d'inscription</span>
+                                <span className="font-medium text-slate-800">{new Date(membreSelectionne.createdAt).toLocaleDateString('fr-FR')}</span>
+                            </div>
 
-                        {(membreSelectionne.tuteur || membreSelectionne._count?.enfants > 0) && (
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-violet-500 border-b border-violet-100 pb-1">
-                                    Structure familiale
-                                </h4>
-                                {membreSelectionne.tuteur && (
-                                    <div className="bg-amber-50/60 border border-amber-200 p-3 rounded-lg flex items-center gap-2.5">
-                                        <span className="text-lg">👨‍👩</span>
-                                        <div>
-                                            <span className="block text-[10px] font-bold text-amber-700 uppercase">Tuteur légal (Parent)</span>
-                                            <p className="text-sm font-semibold text-violet-900">
-                                                {membreSelectionne.tuteur.prenom} {membreSelectionne.tuteur.nom}
-                                            </p>
-                                        </div>
+                            {membreSelectionne.tuteur && (
+                                <div className="mt-4 p-3 bg-violet-50/50 rounded-xl border border-violet-100/50">
+                                    <div className="text-xs font-bold text-violet-800 uppercase tracking-wider mb-1">Responsable Légal (Tuteur)</div>
+                                    <div className="text-sm font-semibold text-slate-800">
+                                        {membreSelectionne.tuteur.nom.toUpperCase()} {membreSelectionne.tuteur.prenom}
                                     </div>
-                                )}
-                                {membreSelectionne._count?.enfants > 0 && (
-                                    <div className="bg-violet-50/60 border border-violet-200 p-3 rounded-lg flex items-center gap-2.5">
-                                        <span className="text-lg">👶</span>
-                                        <div>
-                                            <span className="block text-[10px] font-bold text-violet-700 uppercase">Foyer rattaché</span>
-                                            <p className="text-sm font-semibold text-violet-900">
-                                                {membreSelectionne._count.enfants} enfant(s) enregistré(s) sur ce compte
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-violet-500 border-b border-violet-100 pb-1">
-                                Activité & Engagement
-                            </h4>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-violet-50 border border-slate-150 p-3 rounded-lg text-center">
-                                    <span className="block text-xl mb-1">📅</span>
-                                    <span className="block text-xs text-violet-600 font-medium">Réservations</span>
-                                    <span className="text-lg font-extrabold text-violet-900">{membreSelectionne._count?.reservations || 0}</span>
                                 </div>
-                                <div className={`border p-3 rounded-lg text-center ${membreSelectionne._count?.dons > 0 ? 'bg-amber-50/50 border-amber-200' : 'bg-violet-50 border-slate-150'}`}>
-                                    <span className="block text-xl mb-1">❤️</span>
-                                    <span className="block text-xs text-violet-600 font-medium">Dons</span>
-                                    <span className={`text-lg font-extrabold ${membreSelectionne._count?.dons > 0 ? 'text-amber-600' : 'text-violet-900'}`}>
-                                        {membreSelectionne._count?.dons || 0}
-                                    </span>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
-                        <div className="flex justify-between items-center pt-4 border-t border-violet-100 mt-2">
-                            <span className="text-[10px] font-mono text-violet-400 break-all select-all">
-                                UID: {membreSelectionne.id}
-                            </span>
+                        <div className="flex justify-end pt-4">
                             <button
                                 onClick={() => setModalDetailsIsOpen(false)}
-                                className="px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-800 rounded-lg text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                                 Fermer
                             </button>
@@ -501,52 +432,46 @@ export default function AdminMembresPage() {
             </Modal>
 
             <Modal isOpen={modalModifierIsOpen} onClose={() => setModalModifierIsOpen(false)} title="Modifier le membre">
-                <form onSubmit={handleModifier} className="space-y-4">
+                <form onSubmit={handleModifierSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nom</label>
+                            <input
+                                type="text"
+                                value={modifierForm.nom}
+                                onChange={(e) => setModifierForm({ ...modifierForm, nom: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Prénom</label>
+                            <input
+                                type="text"
+                                value={modifierForm.prenom}
+                                onChange={(e) => setModifierForm({ ...modifierForm, prenom: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                required
+                            />
+                        </div>
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Nom</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Téléphone</label>
                         <input
                             type="text"
-                            value={formData.nom}
-                            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                            required
+                            value={modifierForm.telephone}
+                            onChange={(e) => setModifierForm({ ...modifierForm, telephone: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
                         />
                     </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Prénom</label>
-                        <input
-                            type="text"
-                            value={formData.prenom}
-                            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Username</label>
-                        <input
-                            type="text"
-                            value={formData.username}
-                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Téléphone</label>
-                        <input
-                            type="text"
-                            value={formData.telephone}
-                            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Rôle</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rôle</label>
                         <select
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                            value={modifierForm.role}
+                            onChange={(e) => setModifierForm({ ...modifierForm, role: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-violet-500 transition-colors"
                         >
                             <option value="ADMIN">Administrateur</option>
                             <option value="INTERVENANT">Intervenant</option>
@@ -562,13 +487,13 @@ export default function AdminMembresPage() {
                         <button
                             type="button"
                             onClick={() => setModalModifierIsOpen(false)}
-                            className="px-4 py-2 bg-violet-100 text-violet-800 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors"
+                            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
                         >
                             Annuler
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm font-medium transition-colors"
+                            className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 text-sm font-medium transition-colors"
                         >
                             Enregistrer
                         </button>
@@ -578,19 +503,23 @@ export default function AdminMembresPage() {
 
             <Modal isOpen={modalSupprimerIsOpen} onClose={() => setModalSupprimerIsOpen(false)} title="Confirmer la suppression">
                 <div className="space-y-4">
-                    <p className="text-sm text-violet-800">Êtes-vous sûr de vouloir supprimer <span className="font-bold">{membreSelectionne?.prenom} {membreSelectionne?.nom}</span> ? Cette action est irréversible.</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                        Êtes-vous sûr de vouloir supprimer définitivement le membre{' '}
+                        <span className="font-semibold text-slate-900">
+                            {membreSelectionne?.nom.toUpperCase()} {membreSelectionne?.prenom}
+                        </span>{' '}
+                        ? Cette action effacera également son compte d'authentification et est irréversible.
+                    </p>
                     <div className="flex justify-end gap-2 pt-2">
                         <button
-                            type="button"
                             onClick={() => setModalSupprimerIsOpen(false)}
-                            className="px-4 py-2 bg-violet-100 text-violet-800 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors"
+                            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors cursor-pointer"
                         >
                             Annuler
                         </button>
                         <button
-                            type="button"
                             onClick={handleSupprimer}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg shadow-sm hover:bg-red-700 text-sm font-medium transition-colors cursor-pointer"
                         >
                             Supprimer
                         </button>
@@ -598,53 +527,86 @@ export default function AdminMembresPage() {
                 </div>
             </Modal>
 
-            <Modal isOpen={modalCreerIsOpen} onClose={() => setModalCreerIsOpen(false)} title="Ajouter un nouveau membre">
-                <form onSubmit={handleCreer} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Nom</label>
-                        <input
-                            type="text"
-                            value={creerFormData.nom}
-                            onChange={(e) => setCreerFormData({ ...creerFormData, nom: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                            required
-                        />
+            <Modal isOpen={modalCreerIsOpen} onClose={() => setModalCreerIsOpen(false)} title="Créer un nouveau membre">
+                <form onSubmit={handleCreerSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nom</label>
+                            <input
+                                type="text"
+                                value={creerForm.nom}
+                                onChange={(e) => setCreerForm({ ...creerForm, nom: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Prénom</label>
+                            <input
+                                type="text"
+                                value={creerForm.prenom}
+                                onChange={(e) => setCreerForm({ ...creerForm, prenom: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                required
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Prénom</label>
-                        <input
-                            type="text"
-                            value={creerFormData.prenom}
-                            onChange={(e) => setCreerFormData({ ...creerFormData, prenom: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                            required
-                        />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Identifiant unique (Username)</label>
+                            <input
+                                type="text"
+                                value={creerForm.username}
+                                onChange={(e) => setCreerForm({ ...creerForm, username: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                placeholder="ex: jdupont"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Adresse Email</label>
+                            <input
+                                type="email"
+                                value={creerForm.email}
+                                onChange={(e) => setCreerForm({ ...creerForm, email: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                placeholder="ex: jean.dupont@mail.com"
+                                required
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Username</label>
-                        <input
-                            type="text"
-                            value={creerFormData.username}
-                            onChange={(e) => setCreerFormData({ ...creerFormData, username: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                            required
-                        />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Mot de passe initial</label>
+                            <input
+                                type="text"
+                                value={creerForm.password}
+                                onChange={(e) => setCreerForm({ ...creerForm, password: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-lg text-sm focus:outline-none"
+                                readOnly
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Téléphone</label>
+                            <input
+                                type="text"
+                                value={creerForm.telephone}
+                                onChange={(e) => setCreerForm({ ...creerForm, telephone: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                placeholder="ex: 0612345678"
+                            />
+                        </div>
                     </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Téléphone</label>
-                        <input
-                            type="text"
-                            value={creerFormData.telephone}
-                            onChange={(e) => setCreerFormData({ ...creerFormData, telephone: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-violet-800 mb-1">Rôle</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rôle initial</label>
                         <select
-                            value={creerFormData.role}
-                            onChange={(e) => setCreerFormData({ ...creerFormData, role: e.target.value })}
-                            className="w-full px-3 py-2 border border-violet-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm text-violet-900"
+                            value={creerForm.role}
+                            onChange={(e) => setCreerForm({ ...creerForm, role: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-violet-500 transition-colors"
                         >
                             <option value="ADMIN">Administrateur</option>
                             <option value="INTERVENANT">Intervenant</option>
