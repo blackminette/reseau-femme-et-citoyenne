@@ -625,6 +625,22 @@ function getFirstSentence(text: string) {
     return (match?.[0] || trimmed).trim();
 }
 
+function getNapoleonInitialStepIndex(actId: string) {
+    const match = actId.match(/^cours_(\d+)$/);
+    if (!match) return 0;
+
+    const courseNumber = Number.parseInt(match[1], 10);
+    if (Number.isNaN(courseNumber) || courseNumber <= 1) {
+        return 0;
+    }
+
+    if (courseNumber === 2) {
+        return 1;
+    }
+
+    return 2;
+}
+
 function extractLesson(detail: DetailedActivity | null | undefined) {
     const fallbackTitle = detail?.titre || '';
     const rawContent = detail && Array.isArray(detail.contenu) ? detail.contenu : [];
@@ -774,7 +790,9 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const step4ImagePath = isNapoleonModule ? napoleonImages.exercice : '/images/enfants/exercice_generic.png';
     const quizImagePath = isNapoleonModule ? napoleonImages.quiz : '/images/enfants/quiz_robot.png';
 
-    const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
+    const [stepIndex, setStepIndex] = useState(() => (
+        isNapoleonModule ? getNapoleonInitialStepIndex(actId) : 0
+    )); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
     const [showConfetti, setShowConfetti] = useState(false);
 
     // États pour l'Exercice Interactif
