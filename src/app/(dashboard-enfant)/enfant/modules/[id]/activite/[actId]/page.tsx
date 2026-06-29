@@ -214,17 +214,17 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
         },
         step3: {
             soustitre: "Récapitulons !",
-            texte: "Napoléon est une figure historique importante, mais on doit l'analyser avec méthode : contexte, actions, conséquences et limites.",
+            texte: "Napoléon est une figure historique importante, mais on doit l'analyser avec méthode : on observe le contexte, on compare les décisions, on mesure les conséquences et on garde en tête les limites du pouvoir.",
             pointsCles: [
-                "Il a dirigé la France après la Révolution.",
-                "Il a mis en place des réformes durables.",
-                "Son pouvoir s'est aussi accompagné de guerres."
+                "Le contexte historique change la manière de lire ses actions.",
+                "Une réforme peut avoir des effets utiles et des limites en même temps.",
+                "L'histoire demande des faits précis, pas une admiration aveugle."
             ],
             bulles: [
-                "Qui était-il ?",
-                "Que fait-il en France ?",
-                "Quelles sont ses réformes ?",
-                "Quelles sont ses limites ?"
+                "Quel est le contexte ?",
+                "Quelles décisions prend-il ?",
+                "Quels effets voit-on ?",
+                "Quelles limites faut-il noter ?"
             ],
             illustration: "🏛️"
         },

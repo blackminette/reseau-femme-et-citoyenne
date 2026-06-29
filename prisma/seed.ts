@@ -49,8 +49,8 @@ const NAPOLEON_COURS = [
     ordreDansModule: 3,
     contenu: [
       {
-        titre: 'Contexte, actions, conséquences',
-        texte: "Pour comprendre Napoléon, il faut distinguer le contexte, les actions, les conséquences et les limites. L'histoire demande de la précision, pas du mythe."
+        titre: 'Analyser un personnage historique',
+        texte: "Pour comprendre Napoléon, on doit poser des questions précises : dans quel contexte agit-il, quelles décisions prend-il, qui en profite, qui en souffre et quelles sont les limites de son pouvoir ? L'histoire s'explique avec des faits, pas avec des impressions."
       }
     ],
   },
