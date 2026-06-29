@@ -20,7 +20,7 @@ export default function AdminMembresPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [recherche, setRecherche] = useState('');
     const [rolesSelectionnes, setRolesSelectionnes] = useState<string[]>([]);
-    const [tri, setTri] = useState('DECROISSANT');
+    const [tri, setTri] = useState<'RECENT' | 'ANCIEN' | 'ALPHABETIQUE'>('RECENT');
     const [statutFiltre, setStatutFiltre] = useState<'TOUS' | 'ACTIF' | 'INACTIF'>('TOUS');
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
@@ -182,9 +182,15 @@ export default function AdminMembresPage() {
             return correspondRecherche && correspondRole && correspondStatut;
         })
         .sort((a, b) => {
+            if (tri === 'ALPHABETIQUE') {
+                const nomA = `${a.nom} ${a.prenom}`.toLowerCase();
+                const nomB = `${b.nom} ${b.prenom}`.toLowerCase();
+                return nomA.localeCompare(nomB, 'fr');
+            }
+
             const dateA = new Date(a.createdAt).getTime();
             const dateB = new Date(b.createdAt).getTime();
-            return tri === 'DECROISSANT' ? dateB - dateA : dateA - dateB;
+            return tri === 'RECENT' ? dateB - dateA : dateA - dateB;
         });
 
     return (
@@ -282,13 +288,19 @@ export default function AdminMembresPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setTri(tri === 'DECROISSANT' ? 'CROISSANT' : 'DECROISSANT')}
-                        className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
-                    >
-                        <ArrowUpDown className="w-4 h-4 text-slate-400" />
-                        Date d'inscription : {tri === 'DECROISSANT' ? 'Récent' : 'Ancien'}
-                    </button>
+                    <div className="relative">
+                        <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <select
+                            value={tri}
+                            onChange={(e) => setTri(e.target.value as any)}
+                            className="pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all cursor-pointer appearance-none"
+                        >
+                            <option value="RECENT">Date : Récent → Ancien</option>
+                            <option value="ANCIEN">Date : Ancien → Récent</option>
+                            <option value="ALPHABETIQUE">Nom : Ordre alphabétique (A-Z)</option>
+                        </select>
+                        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
                 </div>
             </div>
 
