@@ -116,7 +116,7 @@ export async function creerUtilisateur(formData: {
     try {
         const supabase = await getSupabaseAdmin();
 
-        const emailSimule = `${username.trim().toLowerCase()}@association.local`;
+        const emailSimule = `${username.trim().toLowerCase()}@rfc06.fr`;
         const motDePasseTemporaire = "Password123!";
 
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -127,6 +127,7 @@ export async function creerUtilisateur(formData: {
                 nom: nom.trim(),
                 prenom: prenom.trim(),
                 telephone: telephone?.trim() || null,
+                doitChangerMotDePasse: true
             }
         });
 

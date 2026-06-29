@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Route sur laquelle le middleware s'applique (toutes les routes privées)
+// Route sur laquelle le middleware s'applique
 export const config = {
     matcher: [
         '/membre/:path*',
@@ -13,6 +13,7 @@ export const config = {
         '/intervenant/:path*',
         '/benevole/:path*',
         '/partenaire/:path*',
+        '/premiere-connexion/:path*',
     ],
 };
 
@@ -21,7 +22,7 @@ export async function middleware(request: NextRequest) {
         request: { headers: request.headers },
     });
 
-    // Initialisation du client Supabase pour gérer les cookies de session
+    // Initialisation du client Supabase
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,17 +43,35 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
-    // Détection des routes privées (/admin, /membre...)
+    // Détection des routes privées
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin', '/benevole'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
     // Si non connecté et tente d'aller sur une page privée -> Redirection /login
     if (!user) {
-        if (isPrivateRoute) {
+        if (isPrivateRoute || pathname.startsWith('/premiere-connexion')) {
             url.pathname = '/login';
             return NextResponse.redirect(url);
         }
         return response;
+    }
+
+    // FORCE LA MODIFICATION DU MOT DE PASSE À LA PREMIÈRE CONNEXION
+    const doitChanger = user.user_metadata?.doitChangerMotDePasse === true;
+    if (doitChanger) {
+        // Redirige vers la page dédiée si l'utilisateur essaie d'aller ailleurs
+        if (!pathname.startsWith('/premiere-connexion')) {
+            url.pathname = '/premiere-connexion';
+            return NextResponse.redirect(url);
+        }
+        // S'il est déjà sur /premiere-connexion, on le laisse charger la page
+        return response;
+    }
+
+    // Si le mot de passe est déjà changé, interdit l'accès à la page de configuration initiale
+    if (pathname.startsWith('/premiere-connexion') && !doitChanger) {
+        url.pathname = '/';
+        return NextResponse.redirect(url);
     }
 
     // Si déjà connecté et tente d'aller sur /login -> Redirection vers l'accueil
@@ -66,7 +85,7 @@ export async function middleware(request: NextRequest) {
 
     if (user.email) {
         const { data: profile, error } = await supabase
-            .from('Utilisateur') // Nom de ta table Prisma
+            .from('Utilisateur')
             .select('role')
             .eq('email', user.email)
             .single();
