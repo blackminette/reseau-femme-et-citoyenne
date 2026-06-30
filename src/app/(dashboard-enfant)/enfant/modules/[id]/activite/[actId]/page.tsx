@@ -846,9 +846,10 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const [matches, setMatches] = useState<Record<string, string>>({});
 
     // --- États Exercice 'order' (Anglais / Robotique) ---
-    const [orderedItems, setOrderedItems] = useState<string[]>(
-        () => (content.exercice.type === 'order' ? [...content.exercice.data.initialOrder] : [])
-    );
+    const [orderedItemsState, setOrderedItemsState] = useState<string[] | null>(null);
+    const orderedItems = content.exercice.type === 'order'
+        ? (orderedItemsState ?? [...content.exercice.data.initialOrder])
+        : [];
 
     // --- États Exercice 'input' (Lecture) ---
     const [inputAnswers, setInputAnswers] = useState<Record<string, string>>({});
@@ -930,7 +931,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         const temp = newOrder[index];
         newOrder[index] = newOrder[targetIndex];
         newOrder[targetIndex] = temp;
-        setOrderedItems(newOrder);
+        setOrderedItemsState(newOrder);
     };
 
     const verifyOrder = () => {
@@ -947,7 +948,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     };
 
     const handleResetOrder = () => {
-        setOrderedItems([...(content.exercice.data as OrderExerciseData).initialOrder]);
+        setOrderedItemsState([...(content.exercice.data as OrderExerciseData).initialOrder]);
         setExerciceChecked(false);
         setExerciceSuccess(false);
     };
