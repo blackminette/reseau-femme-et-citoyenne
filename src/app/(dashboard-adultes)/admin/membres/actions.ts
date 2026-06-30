@@ -206,3 +206,80 @@ export async function toggleStatutUtilisateur(id: string, statutActuel: boolean)
         return { success: false, error: "Impossible de modifier le statut du membre." };
     }
 }
+
+export async function creerUtilisateursEnLot(data: {
+    prefixe: string;
+    role: string;
+    nombre: number;
+}) {
+    const { prefixe, role, nombre } = data;
+
+    if (!prefixe || !role || !nombre || nombre < 1) {
+        return { success: false, error: "Paramètres invalides." };
+    }
+
+    if (nombre > 50) {
+        return { success: false, error: "Par sécurité, vous ne pouvez pas créer plus de 50 comptes à la fois." };
+    }
+
+    try {
+        const supabase = await getSupabaseAdmin();
+        const baseUsername = prefixe.trim().toLowerCase().replace(/\s+/g, '');
+        const comptesCrees = [];
+
+        for (let i = 1; i <= nombre; i++) {
+            const currentUsername = `${baseUsername}${i}`;
+            const emailSimule = `${currentUsername}@rfc06.fr`;
+            const motDePasseTemporaire = "Password123!";
+
+            const existingUser = await prisma.utilisateur.findUnique({
+                where: { username: currentUsername }
+            });
+
+            if (existingUser) {
+                continue;
+            }
+
+            const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                email: emailSimule,
+                password: motDePasseTemporaire,
+                email_confirm: true,
+                user_metadata: {
+                    nom: prefixe.toUpperCase(),
+                    prenom: `N°${i}`,
+                    doitChangerMotDePasse: true
+                }
+            });
+
+            if (authError) {
+                console.error(`[creerUtilisateursEnLot] Erreur Supabase pour ${currentUsername}:`, authError.message);
+                continue;
+            }
+
+            if (authData?.user) {
+                const nouvelUser = await prisma.utilisateur.create({
+                    data: {
+                        id: authData.user.id,
+                        username: currentUsername,
+                        email: emailSimule,
+                        nom: prefixe.trim(),
+                        prenom: `N°${i}`,
+                        role: role
+                    }
+                });
+                comptesCrees.push(nouvelUser);
+            }
+        }
+
+        revalidatePath('/admin/membres');
+
+        return {
+            success: true,
+            message: `${comptesCrees.length} compte(s) créé(s) avec succès.`
+        };
+
+    } catch (error) {
+        console.error("[creerUtilisateursEnLot] Erreur critique :", error);
+        return { success: false, error: "Une erreur interne est survenue lors de la création en lot." };
+    }
+}

@@ -1,9 +1,17 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur, reinitialiserMdp, toggleStatutUtilisateur } from './actions';
+import {
+    listerLesUtilisateurs,
+    modifierUtilisateur,
+    supprimerUtilisateur,
+    creerUtilisateur,
+    reinitialiserMdp,
+    toggleStatutUtilisateur,
+    creerUtilisateursEnLot
+} from './actions';
 import Modal from '@/components/Modal';
-import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -27,6 +35,7 @@ export default function AdminMembresPage() {
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
     const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
     const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
+    const [modalLotIsOpen, setModalLotIsOpen] = useState(false);
 
     const [membreSelectionne, setMembreSelectionne] = useState<any>(null);
 
@@ -45,6 +54,12 @@ export default function AdminMembresPage() {
         password: 'Password123!',
         telephone: '',
         role: 'MEMBRE'
+    });
+
+    const [lotForm, setLotForm] = useState({
+        prefixe: '',
+        role: 'ETUDIANT',
+        nombre: 5
     });
 
     useEffect(() => {
@@ -193,6 +208,23 @@ export default function AdminMembresPage() {
             return tri === 'RECENT' ? dateB - dateA : dateA - dateB;
         });
 
+    const handleLotSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const result = await creerUtilisateursEnLot(lotForm);
+
+        if (result.success) {
+            alert(result.message || "Les comptes ont été créés.");
+            setModalLotIsOpen(false);
+            setLotForm({ prefixe: '', role: 'ETUDIANT', nombre: 5 });
+            await chargerMembres();
+        } else {
+            alert(result.error || "Une erreur est survenue lors de la création.");
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-violet-100 shadow-sm">
@@ -202,13 +234,22 @@ export default function AdminMembresPage() {
                         Visualisez, modifiez ou supprimez les membres de l'association ({membresFiltresEtTries.length} affichés)
                     </p>
                 </div>
-                <button
-                    onClick={() => setModalCreerIsOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl shadow-md font-medium text-sm hover:bg-violet-700 transition-all transform hover:-translate-y-0.5 cursor-pointer"
-                >
-                    <Plus className="w-4 h-4" />
-                    Ajouter un membre
-                </button>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => setModalLotIsOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-xl shadow-sm font-medium text-sm transition-all cursor-pointer"
+                    >
+                        Création en lot
+                    </button>
+
+                    <button
+                        onClick={() => setModalCreerIsOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl shadow-md font-medium text-sm hover:bg-violet-700 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Ajouter un membre
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-white p-4 rounded-2xl border border-violet-50 shadow-sm">
@@ -340,8 +381,8 @@ export default function AdminMembresPage() {
                                             key={membre.id}
                                             // 💡 Effet visible : Si le compte est désactivé, la ligne est grisée, passe à 60% d'opacité et perd son effet hover violet
                                             className={`transition-colors group ${estActif
-                                                    ? 'hover:bg-slate-50/50'
-                                                    : 'bg-slate-50/40 opacity-60 filter grayscale-[20%]'
+                                                ? 'hover:bg-slate-50/50'
+                                                : 'bg-slate-50/40 opacity-60 filter grayscale-[20%]'
                                                 }`}
                                         >
                                             <td className="py-4 px-6">
@@ -366,8 +407,8 @@ export default function AdminMembresPage() {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${estActif
-                                                        ? (ROLE_STYLES[membre.role] || 'bg-slate-100 text-slate-700')
-                                                        : 'bg-slate-200 text-slate-500 border-slate-300 line-through'
+                                                    ? (ROLE_STYLES[membre.role] || 'bg-slate-100 text-slate-700')
+                                                    : 'bg-slate-200 text-slate-500 border-slate-300 line-through'
                                                     }`}>
                                                     {membre.role}
                                                 </span>
@@ -406,8 +447,8 @@ export default function AdminMembresPage() {
                                                         onClick={() => handleActive(membre.id, membre.isActive)}
                                                         title={estActif ? "Désactiver le membre" : "Activer le membre"}
                                                         className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${estActif
-                                                                ? "text-emerald-600 hover:bg-emerald-50"
-                                                                : "text-amber-600 bg-amber-50/70 border border-amber-200 hover:bg-amber-100 shadow-sm"
+                                                            ? "text-emerald-600 hover:bg-emerald-50"
+                                                            : "text-amber-600 bg-amber-50/70 border border-amber-200 hover:bg-amber-100 shadow-sm"
                                                             }`}
                                                     >
                                                         {estActif ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
@@ -457,7 +498,7 @@ export default function AdminMembresPage() {
                 )}
             </div>
 
-            {/* Modals... (le reste demeure identique au code précédent) */}
+            {/* Modal de détails */}
             <Modal isOpen={modalDetailsIsOpen} onClose={() => setModalDetailsIsOpen(false)} title="Détails du membre">
                 {membreSelectionne && (
                     <div className="space-y-4 text-slate-700">
@@ -510,6 +551,7 @@ export default function AdminMembresPage() {
                 )}
             </Modal>
 
+            {/* Modal de modification */}
             <Modal isOpen={modalModifierIsOpen} onClose={() => setModalModifierIsOpen(false)} title="Modifier le membre">
                 <form onSubmit={handleModifierSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -580,6 +622,7 @@ export default function AdminMembresPage() {
                 </form>
             </Modal>
 
+            {/* Modal de suppression */}
             <Modal isOpen={modalSupprimerIsOpen} onClose={() => setModalSupprimerIsOpen(false)} title="Confirmer la suppression">
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600 leading-relaxed">
@@ -606,6 +649,7 @@ export default function AdminMembresPage() {
                 </div>
             </Modal>
 
+            {/* Modal de création */}
             <Modal isOpen={modalCreerIsOpen} onClose={() => setModalCreerIsOpen(false)} title="Créer un nouveau membre">
                 <form onSubmit={handleCreerSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -710,6 +754,75 @@ export default function AdminMembresPage() {
                             className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm font-medium transition-colors"
                         >
                             Ajouter
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal de création en lot */}
+            <Modal isOpen={modalLotIsOpen} onClose={() => setModalLotIsOpen(false)} title="Création de comptes en lot">
+                <form onSubmit={handleLotSubmit} className="space-y-4">
+                    <p className="text-xs text-slate-500 bg-slate-50 p-3 border border-slate-100 rounded-xl leading-relaxed">
+                        Cette option permet de créer plusieurs comptes d'un coup. Si vous indiquez le préfixe <code className="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-violet-700">etudiant</code>, les comptes créés auront pour identifiants <code className="font-mono">@etudiant1</code>, <code className="font-mono">@etudiant2</code>, etc. Le mot de passe initial sera automatiquement configuré sur <span className="font-semibold text-slate-700">"Password123!"</span> et l'accès obligera un changement à la première connexion.
+                    </p>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Préfixe générique (Nom & Identifiant)</label>
+                        <input
+                            type="text"
+                            value={lotForm.prefixe}
+                            onChange={(e) => setLotForm({ ...lotForm, prefixe: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                            placeholder="ex: etudiant ou benevole"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nombre de comptes</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={50}
+                                value={lotForm.nombre}
+                                onChange={(e) => setLotForm({ ...lotForm, nombre: parseInt(e.target.value) || 0 })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rôle attribué</label>
+                            <select
+                                value={lotForm.role}
+                                onChange={(e) => setLotForm({ ...lotForm, role: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-violet-500 transition-colors"
+                            >
+                                <option value="ADMIN">Administrateur</option>
+                                <option value="INTERVENANT">Intervenant</option>
+                                <option value="MEMBRE">Membre</option>
+                                <option value="ENFANT">Enfant</option>
+                                <option value="PARTENAIRE">Partenaire</option>
+                                <option value="BENEVOLE">Bénévole</option>
+                                <option value="ETUDIANT">Étudiant</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setModalLotIsOpen(false)}
+                            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 disabled:bg-violet-400 text-sm font-medium transition-colors"
+                        >
+                            {isLoading ? "Génération..." : "Générer les comptes"}
                         </button>
                     </div>
                 </form>
