@@ -5,15 +5,8 @@ import {
     Landmark, Leaf, HelpCircle, Palette, Star, Check, Crown, Trophy
 } from "lucide-react";
 import Link from "next/link";
-import {
-    ENFANT as MOCK_ENFANT,
-    MODULES as MOCK_MODULES,
-    BADGES as MOCK_BADGES,
-    DERNIER_BADGE as MOCK_DERNIER_BADGE,
-    RESULTATS as MOCK_RESULTATS,
-    ACTIVITE as MOCK_ACTIVITE
-} from "@/lib/enfant-data";
 import { obtenirProfilEnfant, obtenirModulesDepuisDB, obtenirActiviteRecente, obtenirParcoursStats } from "./modules/actions";
+import ParcoursGrid from "@/components/ParcoursGrid";
 
 export const metadata = {
     title: "Mon espace",
@@ -41,7 +34,16 @@ export default async function EnfantDashboard() {
     const recentScores = await obtenirActiviteRecente();
     const stats = await obtenirParcoursStats();
 
-    const enfant = profile || MOCK_ENFANT;
+    const enfant = profile || {
+        prenom: "Élève",
+        nom: "",
+        age: 9,
+        initiales: "E",
+        progression: 0,
+        badgesObtenus: 0,
+        difficultes: [],
+        recommandations: []
+    };
 
     // Map modules with dynamic progress based on the 6 static Parcours (identical to Mes Parcours page)
     const listModules = Object.entries(METADATA_MAP).map(([slug, meta]) => {
@@ -51,7 +53,6 @@ export default async function EnfantDashboard() {
             id: slug,
             slug: slug,
             label: meta.label,
-            Icon: meta.Icon,
             progression: progression,
             from: meta.from,
             to: meta.to
@@ -70,7 +71,7 @@ export default async function EnfantDashboard() {
             score: s.score,
             parfait: s.parfait
         }))
-        : MOCK_RESULTATS;
+        : [];
 
     const listActivite = !isMock
         ? recentScores.map(s => ({
@@ -82,18 +83,16 @@ export default async function EnfantDashboard() {
             score: s.score,
             parfait: s.parfait
         }))
-        : MOCK_ACTIVITE;
+        : [];
 
-    const listBadges = isMock
-        ? MOCK_BADGES
-        : [
-            { label: "1ers pas", Icon: Target, desc: "Terminer sa première activité.", obtenu: recentScores && recentScores.length > 0 },
-            { label: "Score parfait", Icon: Star, desc: "Obtenir une note maximale.", obtenu: recentScores && recentScores.some(s => s.parfait) },
-            { label: "Assidu", Icon: Trophy, desc: "Compléter 10 activités au total.", obtenu: enfant.progression >= 80 },
-            { label: "Expert", Icon: Crown, desc: "Obtenir 5 scores parfaits.", obtenu: enfant.progression === 100 },
-        ];
+    const listBadges = [
+        { label: "1ers pas", Icon: Target, desc: "Terminer sa première activité.", obtenu: recentScores && recentScores.length > 0 },
+        { label: "Score parfait", Icon: Star, desc: "Obtenir une note maximale.", obtenu: recentScores && recentScores.some(s => s.parfait) },
+        { label: "Assidu", Icon: Trophy, desc: "Compléter 10 activités au total.", obtenu: enfant.progression >= 80 },
+        { label: "Expert", Icon: Crown, desc: "Obtenir 5 scores parfaits.", obtenu: enfant.progression === 100 },
+    ];
 
-    const dernierBadge = listBadges.find(b => b.obtenu) || (isMock ? MOCK_DERNIER_BADGE : null);
+    const dernierBadge = listBadges.find(b => b.obtenu) || null;
 
     return (
         <div className="text-violet-900">
@@ -234,27 +233,7 @@ export default async function EnfantDashboard() {
             {/* ─── Mes parcours ─── */}
             <section id="modules" className="mt-8 scroll-mt-6">
                 <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes parcours</h3>
-                <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-                    {listModules.map(({ id, slug, label, Icon, progression, from, to }) => (
-                        <Link
-                            href={`/enfant/modules/${slug || id}`}
-                            key={id}
-                            className="flex flex-col justify-between rounded-2xl p-5 text-white shadow-[0_4px_16px_rgba(109,91,168,0.12)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-violet-300"
-                            style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}
-                        >
-                            <div>
-                                <Icon className="h-7 w-7" aria-hidden />
-                                <div className="mt-3 text-sm font-bold leading-tight">{label}</div>
-                            </div>
-                            <div className="mt-6">
-                                <div className="text-2xl font-extrabold">{progression}%</div>
-                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/30">
-                                    <div className="h-full rounded-full bg-white" style={{ width: `${progression}%` }} />
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+                <ParcoursGrid initialModules={listModules} />
             </section>
 
             {/* ─── 3 panneaux : résultats / badges / activité ─── */}

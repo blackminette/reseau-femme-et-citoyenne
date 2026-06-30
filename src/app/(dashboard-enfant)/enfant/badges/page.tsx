@@ -6,7 +6,6 @@ import {
     Sparkles, CheckCircle2, Lock, HelpCircle 
 } from 'lucide-react';
 import { obtenirProfilEnfant, obtenirActiviteRecente } from '../modules/actions';
-import { ENFANT as MOCK_ENFANT, BADGES as MOCK_BADGES } from '@/lib/enfant-data';
 
 export const metadata = {
     title: 'Mes badges - Espace Enfant',
@@ -17,59 +16,52 @@ export default async function EnfantBadgesPage() {
     const profile = await obtenirProfilEnfant();
     const recentScores = await obtenirActiviteRecente();
 
-    const enfant = profile || MOCK_ENFANT;
-    const isMock = !profile;
+    const enfant = profile || {
+        prenom: "Élève",
+        nom: "",
+        age: 9,
+        initiales: "E",
+        progression: 0,
+        badgesObtenus: 0,
+        difficultes: [],
+        recommandations: []
+    };
 
     // Map DB status to badges
-    const listBadges = isMock
-        ? MOCK_BADGES.map((b, idx) => ({
-            id: `mock-${idx}`,
-            label: b.label,
-            Icon: b.Icon,
-            desc: b.desc,
-            obtenu: b.obtenu,
-            instruction: idx === 0 
-                ? "Termine n'importe quelle leçon ou réponds à un quiz pour débloquer ce badge !" 
-                : idx === 1 
-                ? "Réponds correctement à toutes les questions d'un quiz !" 
-                : idx === 2 
-                ? "Valide des leçons et des quiz pour atteindre 80% de progression globale !" 
-                : "Atteins 100% de progression sur tout ton parcours d'apprentissage !"
-          }))
-        : [
-            { 
-                id: '1ers-pas',
-                label: '1ers pas', 
-                Icon: Target, 
-                desc: 'Terminer sa première activité.', 
-                obtenu: recentScores && recentScores.length > 0,
-                instruction: "Termine n'importe quelle leçon ou réponds à un quiz pour débloquer ce badge !"
-            },
-            { 
-                id: 'score-parfait',
-                label: 'Score parfait', 
-                Icon: Star, 
-                desc: 'Obtenir une note maximale à un quiz.', 
-                obtenu: recentScores && recentScores.some(s => s.parfait),
-                instruction: "Réponds correctement à toutes les questions d'un quiz !"
-            },
-            { 
-                id: 'assidu',
-                label: 'Assidu', 
-                Icon: Trophy, 
-                desc: 'Compléter la majorité du parcours.', 
-                obtenu: enfant.progression >= 80,
-                instruction: "Valide des leçons et des quiz pour atteindre 80% de progression globale !"
-            },
-            { 
-                id: 'expert',
-                label: 'Expert', 
-                Icon: Crown, 
-                desc: 'Compléter tout le parcours.', 
-                obtenu: enfant.progression === 100,
-                instruction: "Atteins 100% de progression sur tout ton parcours d'apprentissage !"
-            },
-        ];
+    const listBadges = [
+        { 
+            id: '1ers-pas',
+            label: '1ers pas', 
+            Icon: Target, 
+            desc: 'Terminer sa première activité.', 
+            obtenu: recentScores && recentScores.length > 0,
+            instruction: "Termine n'importe quelle leçon ou réponds à un quiz pour débloquer ce badge !"
+        },
+        { 
+            id: 'score-parfait',
+            label: 'Score parfait', 
+            Icon: Star, 
+            desc: 'Obtenir une note maximale à un quiz.', 
+            obtenu: recentScores && recentScores.some(s => s.parfait),
+            instruction: "Réponds correctement à toutes les questions d'un quiz !"
+        },
+        { 
+            id: 'assidu',
+            label: 'Assidu', 
+            Icon: Trophy, 
+            desc: 'Compléter la majorité du parcours.', 
+            obtenu: enfant.progression >= 80,
+            instruction: "Valide des leçons et des quiz pour atteindre 80% de progression globale !"
+        },
+        { 
+            id: 'expert',
+            label: 'Expert', 
+            Icon: Crown, 
+            desc: 'Compléter tout le parcours.', 
+            obtenu: enfant.progression === 100,
+            instruction: "Atteins 100% de progression sur tout ton parcours d'apprentissage !"
+        },
+    ];
 
     const badgesAcquisCount = listBadges.filter(b => b.obtenu).length;
     const progressionPourcent = Math.round((badgesAcquisCount / listBadges.length) * 100);

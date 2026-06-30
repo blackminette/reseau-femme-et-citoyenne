@@ -568,11 +568,24 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
 
+    const [lessonPageIndex, setLessonPageIndex] = useState(0); // Used for multi-page dynamic DB lessons
+
     // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
     const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
     
     // Custom Dynamic DB Content State
     const [dynamicContent, setDynamicContent] = useState<any>(null);
+
+    // Parse dynamic multi-page lessons content if available
+    const lessonPages = dynamicContent?.type === 'LECON'
+        ? (Array.isArray(dynamicContent.contenu) 
+            ? dynamicContent.contenu 
+            : (typeof dynamicContent.contenu === 'string' 
+                ? (JSON.parse(dynamicContent.contenu) || []) 
+                : []))
+        : [];
+
+    const totalLessonPages = lessonPages.length > 0 ? lessonPages.length : 3;
 
     // Override content when loaded from DB
     const content = dynamicContent 
@@ -582,8 +595,8 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
             themeColor: "from-violet-400 to-indigo-500",
             step1: {
                 titre: "Découvrir",
-                soustitre: "Découvrir la leçon",
-                texte: dynamicContent.instructions || "Lis attentivement les notions présentées pour réussir les étapes.",
+                soustitre: lessonPages[lessonPageIndex]?.titre || "Découvrir la leçon",
+                texte: lessonPages[lessonPageIndex]?.texte || dynamicContent.instructions || "Lis attentivement les notions présentées pour réussir les étapes.",
                 emoji: "📖",
                 aRetenir: "Lis bien le contenu pour te préparer !",
                 exempleText: undefined,
@@ -860,8 +873,9 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
     // Enregistrer en BDD ou LocalStorage
     const handleSaveAdventure = async () => {
-        const finalScoreString = `${score}/${content.quiz.length}`;
-        const isPerfect = score === content.quiz.length;
+        const isLesson = dynamicContent?.type === 'LECON';
+        const finalScoreString = isLesson ? "1/1" : `${score}/${content.quiz.length}`;
+        const isPerfect = isLesson ? true : score === content.quiz.length;
 
         const savedData = {
             completed: true,
@@ -872,10 +886,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         // Sauvegarder pour l'enfant dans le localStorage
         localStorage.setItem(`rfc_enfant_act_${actId}`, JSON.stringify(savedData));
 
-        const isMock = isNaN(Number(actId));
+        // For dynamic database modules save
+        const isMock = isNaN(Number(actId)) && !actId.startsWith('cours_');
         if (!isMock) {
             try {
-                await sauvegarderResultatActivite(actId, score);
+                await sauvegarderResultatActivite(actId, isLesson ? 1 : score);
             } catch (err) {
                 console.error("Erreur de sauvegarde de l'activité sur la BDD:", err);
             }

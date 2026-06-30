@@ -1,9 +1,10 @@
 // * src/app/(dashboard-enfant)/enfant/modules/[id]/page.tsx
 'use client';
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import {
     ChevronLeft, Play, CheckCircle, Lock, Trophy,
     Star, Sparkles, BookOpen
@@ -103,8 +104,9 @@ function hydrateSequentialActivities(activities: Activite[]): Activite[] {
     });
 }
 
-export default function EnfantModuleDetailPage({ params }: { params: Params }) {
-    const { id } = use(params);
+export default function EnfantModuleDetailPage() {
+    const params = useParams();
+    const id = params?.id as string;
     const [activites, setActivites] = useState<Activite[]>([]);
     const [progression, setProgression] = useState(0);
     const [dbModule, setDbModule] = useState<{ label: string; slug: string; progression: number } | null>(null);
@@ -127,7 +129,29 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                 if (isParcours) {
                     // Charger les modules du parcours
                     const mods = await obtenirModulesDuParcours(id);
-                    setModulesList(mods);
+                    
+                    // Hydrate module progressions on the client side using localStorage activity completions
+                    const hydratedMods = mods.map((mod: any) => {
+                        const actIds = mod.activiteIds || [];
+                        if (actIds.length > 0) {
+                            const totalCount = actIds.length;
+                            let completed = 0;
+                            for (const actId of actIds) {
+                                const saved = localStorage.getItem(`rfc_enfant_act_${actId}`);
+                                if (saved) {
+                                    const parsed = JSON.parse(saved);
+                                    if (parsed?.completed) completed++;
+                                }
+                            }
+                            return {
+                                ...mod,
+                                progression: Math.round((completed / totalCount) * 100)
+                            };
+                        }
+                        return mod;
+                    });
+
+                    setModulesList(hydratedMods);
                 } else {
                     const dbMod = await obtenirDetailsModuleDepuisDB(id);
                     if (dbMod) {

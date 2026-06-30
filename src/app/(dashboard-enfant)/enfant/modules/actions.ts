@@ -359,13 +359,24 @@ export async function obtenirModulesDepuisDB() {
             const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
             const slug = mapTitreToSlug(mod.titre);
 
+            // Generate direct list of activity IDs for this module to avoid client loops
+            const actIds: string[] = [];
+            for (const crs of mod.cours) {
+                // Course ID mapping as 'cours_ID'
+                actIds.push(`cours_${crs.id}`);
+                for (const ex of crs.exercices) {
+                    actIds.push(ex.id.toString());
+                }
+            }
+
             mappedModules.push({
                 id: mod.id.toString(),
                 dbId: mod.id,
                 label: mod.titre,
                 description: mod.description || '',
                 progression: pct,
-                slug: slug
+                slug: slug,
+                activiteIds: actIds
             });
         }
 
@@ -819,13 +830,24 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
 
             const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
+            // Generate direct list of activity IDs for this module to avoid client loops
+            const actIds: string[] = [];
+            for (const crs of mod.cours) {
+                // Course ID mapping as 'cours_ID'
+                actIds.push(`cours_${crs.id}`);
+                for (const ex of crs.exercices) {
+                    actIds.push(ex.id.toString());
+                }
+            }
+
             mapped.push({
                 id: mod.id.toString(),
                 dbId: mod.id,
                 label: mod.titre,
                 description: mod.description || '',
                 progression: pct,
-                slug: mapTitreToSlug(mod.titre)
+                slug: mapTitreToSlug(mod.titre),
+                activiteIds: actIds
             });
         }
 

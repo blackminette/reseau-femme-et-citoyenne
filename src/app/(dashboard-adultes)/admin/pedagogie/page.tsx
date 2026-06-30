@@ -17,6 +17,7 @@ interface BuilderQuestion {
     question: string;
     options: string[];
     reponseCorrecte: string;
+    explication?: string;
 }
 
 export default function PedagogiePage() {
@@ -29,13 +30,21 @@ export default function PedagogiePage() {
     const [modalCoursOpen, setModalCoursOpen] = useState(false);
     const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
     const [coursTitre, setCoursTitre] = useState('');
-    const [coursContenu, setCoursContenu] = useState('');
+    
+    // Multi-page builder states for new Course
+    const [coursPages, setCoursPages] = useState<Array<{ id: number; titre: string; texte: string }>>([
+        { id: 1, titre: '', texte: '' }
+    ]);
 
     // Modal state for editing Cours / Lesson
     const [modalEditCoursOpen, setModalEditCoursOpen] = useState(false);
     const [editCoursId, setEditCoursId] = useState<number | null>(null);
     const [editCoursTitre, setEditCoursTitre] = useState('');
-    const [editCoursContenu, setEditCoursContenu] = useState('');
+    
+    // Multi-page builder states for editing Course
+    const [editCoursPages, setEditCoursPages] = useState<Array<{ id: number; titre: string; texte: string }>>([
+        { id: 1, titre: '', texte: '' }
+    ]);
 
     // Modal state for adding Exercice / Quiz
     const [modalExOpen, setModalExOpen] = useState(false);
@@ -70,15 +79,22 @@ export default function PedagogiePage() {
 
     const handleAddCours = async () => {
         if (!selectedModuleId || !coursTitre.trim()) return;
+
+        // Map pages into the required schema format
+        const cleanPages = coursPages.filter(p => p.texte.trim() !== '' || p.titre.trim() !== '');
+        const pagesPayload = cleanPages.length > 0 
+            ? cleanPages.map(p => ({ titre: p.titre.trim(), texte: p.texte.trim() }))
+            : [{ titre: coursTitre, texte: "" }];
+
         const res = await ajouterCoursDansModule({
             moduleId: selectedModuleId,
             titre: coursTitre,
-            contenuHTML: coursContenu
+            contenuHTML: JSON.stringify(pagesPayload)
         });
         if (res.success) {
             setModalCoursOpen(false);
             setCoursTitre('');
-            setCoursContenu('');
+            setCoursPages([{ id: 1, titre: '', texte: '' }]);
             loadData();
         } else {
             alert(res.error || "Une erreur est survenue.");
@@ -88,32 +104,89 @@ export default function PedagogiePage() {
     const openEditCoursModal = (cours: any) => {
         setEditCoursId(cours.id);
         setEditCoursTitre(cours.titre);
-        let contentStr = '';
+        
+        let pagesList: Array<{ id: number; titre: string; texte: string }> = [];
+        let rawContent = '';
+        
         if (Array.isArray(cours.contenu) && cours.contenu.length > 0) {
-            contentStr = cours.contenu[0];
+            rawContent = cours.contenu[0];
         } else if (typeof cours.contenu === 'string') {
-            contentStr = cours.contenu;
+            rawContent = cours.contenu;
         }
-        setEditCoursContenu(contentStr);
+
+        try {
+            if (rawContent && (rawContent.startsWith('[') || rawContent.startsWith('{'))) {
+                const parsed = JSON.parse(rawContent);
+                if (Array.isArray(parsed)) {
+                    pagesList = parsed.map((p, idx) => ({
+                        id: idx + 1,
+                        titre: p.titre || '',
+                        texte: p.texte || ''
+                    }));
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing course pages JSON:", e);
+        }
+
+        if (pagesList.length === 0) {
+            pagesList = [{ id: 1, titre: cours.titre, texte: rawContent || '' }];
+        }
+
+        setEditCoursPages(pagesList);
         setModalEditCoursOpen(true);
     };
 
     const handleEditCours = async () => {
         if (!editCoursId || !editCoursTitre.trim()) return;
+
+        const cleanPages = editCoursPages.filter(p => p.texte.trim() !== '' || p.titre.trim() !== '');
+        const pagesPayload = cleanPages.length > 0 
+            ? cleanPages.map(p => ({ titre: p.titre.trim(), texte: p.texte.trim() }))
+            : [{ titre: editCoursTitre, texte: "" }];
+
         const res = await modifierCoursDansModule({
             coursId: editCoursId,
             titre: editCoursTitre,
-            contenuHTML: editCoursContenu
+            contenuHTML: JSON.stringify(pagesPayload)
         });
         if (res.success) {
             setModalEditCoursOpen(false);
             setEditCoursId(null);
             setEditCoursTitre('');
-            setEditCoursContenu('');
+            setEditCoursPages([{ id: 1, titre: '', texte: '' }]);
             loadData();
         } else {
             alert(res.error || "Une erreur est survenue.");
         }
+    };
+
+    // Helper functions for add course pages builder
+    const addCoursPage = () => {
+        setCoursPages(prev => [...prev, { id: Date.now(), titre: '', texte: '' }]);
+    };
+    const removeCoursPage = (id: number) => {
+        setCoursPages(prev => prev.filter(p => p.id !== id));
+    };
+    const updateCoursPageTitle = (id: number, val: string) => {
+        setCoursPages(prev => prev.map(p => p.id === id ? { ...p, titre: val } : p));
+    };
+    const updateCoursPageText = (id: number, val: string) => {
+        setCoursPages(prev => prev.map(p => p.id === id ? { ...p, texte: val } : p));
+    };
+
+    // Helper functions for edit course pages builder
+    const addEditCoursPage = () => {
+        setEditCoursPages(prev => [...prev, { id: Date.now(), titre: '', texte: '' }]);
+    };
+    const removeEditCoursPage = (id: number) => {
+        setEditCoursPages(prev => prev.filter(p => p.id !== id));
+    };
+    const updateEditCoursPageTitle = (id: number, val: string) => {
+        setEditCoursPages(prev => prev.map(p => p.id === id ? { ...p, titre: val } : p));
+    };
+    const updateEditCoursPageText = (id: number, val: string) => {
+        setEditCoursPages(prev => prev.map(p => p.id === id ? { ...p, texte: val } : p));
     };
 
     const handleAddExercice = async () => {
@@ -129,11 +202,16 @@ export default function PedagogiePage() {
         // Convert the interactive builder state to the database JSON string
         const generatedJsonString = JSON.stringify(
             exType === 'QUIZ'
-                ? cleanQuestions.map(q => ({
-                    question: q.question.trim(),
-                    options: q.options.filter(o => o.trim() !== ''),
-                    reponseCorrecte: q.reponseCorrecte.trim()
-                }))
+                ? cleanQuestions.map(q => {
+                    const cleanOpts = q.options.filter(o => o.trim() !== '');
+                    const correctIdx = cleanOpts.indexOf(q.reponseCorrecte);
+                    return {
+                        q: q.question.trim(),
+                        answer: correctIdx !== -1 ? correctIdx : 0,
+                        options: cleanOpts,
+                        explication: q.explication?.trim() || "Bonne réponse !"
+                    };
+                })
                 : [] // default empty payload for drawings/puzzles text types for now
         );
 
@@ -149,7 +227,7 @@ export default function PedagogiePage() {
             setModalExOpen(false);
             setExTitre('');
             setExInstructions('');
-            setQuestions([{ id: 1, question: '', options: ['', ''], reponseCorrecte: '' }]);
+            setQuestions([{ id: 1, question: '', options: ['', ''], reponseCorrecte: '', explication: '' }]);
             loadData();
         } else {
             alert(res.error || "Une erreur est survenue.");
@@ -160,8 +238,12 @@ export default function PedagogiePage() {
     const addQuestion = () => {
         setQuestions(prev => [
             ...prev,
-            { id: Date.now(), question: '', options: ['', ''], reponseCorrecte: '' }
+            { id: Date.now(), question: '', options: ['', ''], reponseCorrecte: '', explication: '' }
         ]);
+    };
+
+    const updateQuestionExplication = (id: number, text: string) => {
+        setQuestions(prev => prev.map(q => q.id === id ? { ...q, explication: text } : q));
     };
 
     const removeQuestion = (id: number) => {
@@ -449,25 +531,63 @@ export default function PedagogiePage() {
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Titre de la leçon / du cours</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Titre global du cours</label>
                         <input
                             type="text"
                             value={coursTitre}
                             onChange={e => setCoursTitre(e.target.value)}
-                            placeholder="Ex : Gestion des dossiers et fichiers"
-                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                            placeholder="Ex : Qui était Napoléon ?"
+                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white font-semibold text-slate-800"
                         />
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contenu textuel / Explication de la leçon</label>
-                        <textarea
-                            value={coursContenu}
-                            onChange={e => setCoursContenu(e.target.value)}
-                            placeholder="Rédigez l'explication complète de la leçon pour l'apprenant..."
-                            rows={6}
-                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                        />
+
+                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-bold text-indigo-700 uppercase">Pages du cours</h4>
+                            <button
+                                onClick={addCoursPage}
+                                className="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded text-[9px] font-bold"
+                            >
+                                + Ajouter une page
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                            {coursPages.map((page, idx) => (
+                                <div key={page.id} className="border border-slate-100 bg-slate-50/50 rounded-xl p-3 space-y-2 relative">
+                                    {coursPages.length > 1 && (
+                                        <button
+                                            onClick={() => removeCoursPage(page.id)}
+                                            className="absolute top-2 right-2 text-rose-500 text-[10px] font-bold hover:underline"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    )}
+                                    <div className="pr-12">
+                                        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Titre Page {idx + 1}</label>
+                                        <input
+                                            type="text"
+                                            value={page.titre}
+                                            onChange={e => updateCoursPageTitle(page.id, e.target.value)}
+                                            placeholder="Ex : Qui était Napoléon ?"
+                                            className="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-white focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Contenu Page {idx + 1}</label>
+                                        <textarea
+                                            value={page.texte}
+                                            onChange={e => updateCoursPageText(page.id, e.target.value)}
+                                            placeholder="Rédigez le texte de cette page..."
+                                            rows={3}
+                                            className="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-white focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
+
                     <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                         <button
                             onClick={() => setModalCoursOpen(false)}
@@ -493,25 +613,63 @@ export default function PedagogiePage() {
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Titre de la leçon / du cours</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Titre global du cours</label>
                         <input
                             type="text"
                             value={editCoursTitre}
                             onChange={e => setEditCoursTitre(e.target.value)}
-                            placeholder="Ex : Gestion des dossiers et fichiers"
-                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                            placeholder="Ex : Qui était Napoléon ?"
+                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white font-semibold text-slate-800"
                         />
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contenu textuel / Explication de la leçon</label>
-                        <textarea
-                            value={editCoursContenu}
-                            onChange={e => setEditCoursContenu(e.target.value)}
-                            placeholder="Rédigez l'explication complète de la leçon pour l'apprenant..."
-                            rows={6}
-                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                        />
+
+                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-bold text-indigo-700 uppercase">Pages du cours</h4>
+                            <button
+                                onClick={addEditCoursPage}
+                                className="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded text-[9px] font-bold"
+                            >
+                                + Ajouter une page
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                            {editCoursPages.map((page, idx) => (
+                                <div key={page.id} className="border border-slate-100 bg-slate-50/50 rounded-xl p-3 space-y-2 relative">
+                                    {editCoursPages.length > 1 && (
+                                        <button
+                                            onClick={() => removeEditCoursPage(page.id)}
+                                            className="absolute top-2 right-2 text-rose-500 text-[10px] font-bold hover:underline"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    )}
+                                    <div className="pr-12">
+                                        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Titre Page {idx + 1}</label>
+                                        <input
+                                            type="text"
+                                            value={page.titre}
+                                            onChange={e => updateEditCoursPageTitle(page.id, e.target.value)}
+                                            placeholder="Ex : Qui était Napoléon ?"
+                                            className="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-white focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Contenu Page {idx + 1}</label>
+                                        <textarea
+                                            value={page.texte}
+                                            onChange={e => updateEditCoursPageText(page.id, e.target.value)}
+                                            placeholder="Rédigez le texte de cette page..."
+                                            rows={3}
+                                            className="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-white focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
+
                     <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                         <button
                             onClick={() => setModalEditCoursOpen(false)}
@@ -655,6 +813,17 @@ export default function PedagogiePage() {
                                                     </div>
                                                 ))}
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Explication de la réponse (facultatif)</label>
+                                            <input
+                                                type="text"
+                                                value={q.explication || ''}
+                                                onChange={e => updateQuestionExplication(q.id, e.target.value)}
+                                                placeholder="Ex : Après le coup d'État de 1799, Napoléon devient Premier Consul."
+                                                className="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-white focus:outline-none"
+                                            />
                                         </div>
 
                                         {q.reponseCorrecte === '' && (
