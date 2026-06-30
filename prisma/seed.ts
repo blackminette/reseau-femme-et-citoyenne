@@ -4,8 +4,10 @@ import pg from 'pg';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-// Charge le fichier .env
-dotenv.config({ path: '.env.local' });
+// Charge d'abord .env puis .env.local s'il existe afin de couvrir les deux
+// conventions de configuration utilisées dans le dépôt.
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
 
 // Configure le pool de connexion PostgreSQL natif
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -20,7 +22,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const NAPOLEON_TITLES = ['Napoléon', 'Napoleon'];
+const NAPOLEON_TITLES = ['Napoléon', 'Napoleon', 'Éducation Civique', 'Education Civique'];
 const NAPOLEON_MODULE_DESCRIPTION = "Comprendre un personnage clé de l'histoire française";
 
 const NAPOLEON_COURS = [
@@ -128,9 +130,8 @@ const NAPOLEON_EXERCICES = [
 ] as const;
 
 async function nettoyerNapoleonSeed() {
-  const existingModules = await prisma.module.findMany({
+  const allChildModules = await prisma.module.findMany({
     where: {
-      titre: { in: NAPOLEON_TITLES },
       public: 'ENFANT'
     },
     include: {
@@ -142,13 +143,19 @@ async function nettoyerNapoleonSeed() {
     }
   });
 
+  const existingModules = allChildModules.filter((module) =>
+    NAPOLEON_TITLES.includes(module.titre) || module.parcours.includes('EDUCATION_CIVIQUE')
+  );
+
   if (existingModules.length === 0) {
-    return;
+    return null;
   }
 
+  const targetModule = existingModules[0];
   const exerciceIds = existingModules.flatMap((mod) =>
     mod.cours.flatMap((cours) => cours.exercices.map((exercice) => exercice.id))
   );
+  const coursIds = existingModules.flatMap((mod) => mod.cours.map((cours) => cours.id));
 
   if (exerciceIds.length > 0) {
     await prisma.scoreQuiz.deleteMany({
@@ -158,26 +165,70 @@ async function nettoyerNapoleonSeed() {
     });
   }
 
-  await prisma.module.deleteMany({
-    where: {
-      id: { in: existingModules.map((mod) => mod.id) }
-    }
-  });
+  if (coursIds.length > 0) {
+    await prisma.programme.deleteMany({
+      where: {
+        coursId: { in: coursIds }
+      }
+    });
+    await prisma.cours.deleteMany({
+      where: {
+        id: { in: coursIds }
+      }
+    });
+  }
+
+  const extraModuleIds = existingModules.slice(1).map((mod) => mod.id);
+  if (extraModuleIds.length > 0) {
+    await prisma.module.deleteMany({
+      where: {
+        id: { in: extraModuleIds }
+      }
+    });
+  }
+
+  return targetModule.id;
+}
+
+async function resetSerialSequence(tableName: string) {
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"${tableName}"', 'id'), COALESCE((SELECT MAX(id) FROM "${tableName}"), 0) + 1, false);`
+  );
+}
+
+async function resetNapoleonSequences() {
+  await resetSerialSequence('Module');
+  await resetSerialSequence('Cours');
+  await resetSerialSequence('Exercice');
+  await resetSerialSequence('Programme');
+  await resetSerialSequence('ScoreQuiz');
 }
 
 async function seedNapoleonModule(intervenanteId: string) {
-  await nettoyerNapoleonSeed();
-
-  const napoleonModule = await prisma.module.create({
-    data: {
-      titre: 'Napoléon',
-      description: NAPOLEON_MODULE_DESCRIPTION,
-      parcours: ['EDUCATION_CIVIQUE'],
-      difficulte: 'MOYEN',
-      public: 'ENFANT',
-      isPublished: true
-    }
-  });
+  const targetModuleId = await nettoyerNapoleonSeed();
+  await resetNapoleonSequences();
+  const napoleonModule = targetModuleId
+    ? await prisma.module.update({
+      where: { id: targetModuleId },
+      data: {
+        titre: 'Napoléon',
+        description: NAPOLEON_MODULE_DESCRIPTION,
+        parcours: ['EDUCATION_CIVIQUE'],
+        difficulte: 'MOYEN',
+        public: 'ENFANT',
+        isPublished: true
+      }
+    })
+    : await prisma.module.create({
+      data: {
+        titre: 'Napoléon',
+        description: NAPOLEON_MODULE_DESCRIPTION,
+        parcours: ['EDUCATION_CIVIQUE'],
+        difficulte: 'MOYEN',
+        public: 'ENFANT',
+        isPublished: true
+      }
+    });
 
   const coursCrees: Array<{ id: number; titre: string }> = [];
 
