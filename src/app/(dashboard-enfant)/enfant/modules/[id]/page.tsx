@@ -85,21 +85,22 @@ function isActivityCompleted(actId: string): boolean {
 }
 
 function hydrateSequentialActivities(activities: Activite[]): Activite[] {
-    let unlockedNext = false;
+    let firstUncompletedFound = false;
 
     return activities.map((activity) => {
         const completed = isActivityCompleted(activity.id);
 
         if (completed) {
-            unlockedNext = true;
             return { ...activity, statut: 'termine' as const };
         }
 
-        if (!unlockedNext) {
-            unlockedNext = true;
+        // The first uncompleted activity becomes 'a_faire'
+        if (!firstUncompletedFound) {
+            firstUncompletedFound = true;
             return { ...activity, statut: 'a_faire' as const };
         }
 
+        // All subsequent uncompleted activities remain locked/verrouille
         return { ...activity, statut: 'verrouille' as const };
     });
 }
