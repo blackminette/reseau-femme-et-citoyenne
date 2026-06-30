@@ -32,6 +32,8 @@ export default function AdminMembresPage() {
     const [tri, setTri] = useState<'RECENT' | 'ANCIEN' | 'ALPHABETIQUE'>('RECENT');
     const [statutFiltre, setStatutFiltre] = useState<'TOUS' | 'ACTIF' | 'INACTIF'>('TOUS');
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [pageActuelle, setPageActuelle] = useState(1);
+    const [membresParPage, setMembresParPage] = useState(20);
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
@@ -67,6 +69,10 @@ export default function AdminMembresPage() {
     useEffect(() => {
         chargerMembres();
     }, []);
+
+    useEffect(() => {
+        setPageActuelle(1);
+    }, [recherche, rolesSelectionnes, statutFiltre]);
 
     const chargerMembres = async () => {
         setIsLoading(true);
@@ -208,7 +214,13 @@ export default function AdminMembresPage() {
             const dateA = new Date(a.createdAt).getTime();
             const dateB = new Date(b.createdAt).getTime();
             return tri === 'RECENT' ? dateB - dateA : dateA - dateB;
-        });
+        })
+
+    const indexDernierMembre = pageActuelle * membresParPage;
+    const indexPremierMembre = indexDernierMembre - membresParPage;
+    const membresAffiches = membresFiltresEtTries.slice(indexPremierMembre, indexDernierMembre);
+
+    const totalPages = Math.ceil(membresFiltresEtTries.length / membresParPage);
 
     const handleLotSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -417,8 +429,17 @@ export default function AdminMembresPage() {
                                     <th className="py-3 px-4 text-left w-10">
                                         <input
                                             type="checkbox"
-                                            checked={membresFiltresEtTries.length > 0 && selectedIds.length === membresFiltresEtTries.length}
-                                            onChange={() => handleSelectAll(membresFiltresEtTries)}
+                                            checked={membresAffiches.length > 0 && membresAffiches.every(m => selectedIds.includes(m.id))}
+                                            onChange={() => {
+                                                const tousLesAffichesCoches = membresAffiches.every(m => selectedIds.includes(m.id));
+                                                if (tousLesAffichesCoches) {
+                                                    const idsAffiches = membresAffiches.map(m => m.id);
+                                                    setSelectedIds(prev => prev.filter(id => !idsAffiches.includes(id)));
+                                                } else {
+                                                    const nouveauxIds = membresAffiches.map(m => m.id).filter(id => !selectedIds.includes(id));
+                                                    setSelectedIds(prev => [...prev, ...nouveauxIds]);
+                                                }
+                                            }}
                                             className="rounded border-slate-300 text-violet-600 focus:ring-violet-500 h-4 w-4 cursor-pointer"
                                         />
                                     </th>
@@ -431,8 +452,7 @@ export default function AdminMembresPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
-                                {membresFiltresEtTries.map((membre) => {
-                                    // 💡 On définit une constante pour savoir si le membre est actif
+                                {membresAffiches.map((membre) => {
                                     const estActif = membre.isActive ?? true;
 
                                     return (
@@ -561,6 +581,55 @@ export default function AdminMembresPage() {
                                 })}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                {membresFiltresEtTries.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 bg-white p-4 rounded-2xl border border-violet-100 shadow-sm animate-in fade-in duration-300">
+
+                        {/* Nombre par page */}
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <span>Afficher</span>
+                            <select
+                                value={membresParPage}
+                                onChange={(e) => {
+                                    setMembresParPage(Number(e.target.value));
+                                    setPageActuelle(1); // Retour automatique page 1 car l'indexation change
+                                }}
+                                className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 cursor-pointer transition-all"
+                            >
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                            <span>membres par page</span>
+                            <span className="text-xs text-slate-400 font-medium ml-1">
+                                (Total : {membresFiltresEtTries.length})
+                            </span>
+                        </div>
+
+                        {/* Navigation de page */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPageActuelle(prev => Math.max(prev - 1, 1))}
+                                disabled={pageActuelle === 1}
+                                className="px-3 py-1.5 bg-white border border-slate-200 text-slate-650 text-xs font-bold rounded-xl hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-white disabled:active:scale-100 transition-all cursor-pointer"
+                            >
+                                Précédent
+                            </button>
+
+                            <div className="text-xs font-medium text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                                Page <span className="font-bold text-violet-950">{pageActuelle}</span> sur <span className="font-bold text-slate-800">{totalPages || 1}</span>
+                            </div>
+
+                            <button
+                                onClick={() => setPageActuelle(prev => Math.min(prev + 1, totalPages))}
+                                disabled={pageActuelle === totalPages || totalPages === 0}
+                                className="px-3 py-1.5 bg-white border border-slate-200 text-slate-650 text-xs font-bold rounded-xl hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-white disabled:active:scale-100 transition-all cursor-pointer"
+                            >
+                                Suivant
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
