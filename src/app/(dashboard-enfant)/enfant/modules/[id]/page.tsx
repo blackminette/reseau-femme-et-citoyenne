@@ -94,10 +94,17 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     const dbMod = await obtenirDetailsModuleDepuisDB(id);
                     if (dbMod) {
                         const hydratedActivities = hydrateSequentialActivities(dbMod.activites as Activite[]);
-                        const completedCount = hydratedActivities.filter((activity) => activity.statut === 'termine').length;
+                        const visibleActivities = dbMod.slug === 'napoleon'
+                            ? hydratedActivities.filter((activity) => activity.type === 'lecon').slice(0, 1)
+                            : hydratedActivities;
+                        const completedCount = visibleActivities.filter((activity) => activity.statut === 'termine').length;
                         setDbModule(dbMod);
-                        setActivites(hydratedActivities);
-                        setProgression(Math.max(dbMod.progression, Math.round((completedCount / hydratedActivities.length) * 100)));
+                        setActivites(visibleActivities);
+                        setProgression(
+                            visibleActivities.length > 0
+                                ? Math.round((completedCount / visibleActivities.length) * 100)
+                                : 0
+                        );
                     } else {
                         setActivites([]);
                         setProgression(0);
