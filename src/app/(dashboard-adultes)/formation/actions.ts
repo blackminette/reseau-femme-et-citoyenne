@@ -11,19 +11,15 @@ import { revalidatePath } from 'next/cache';
  * progression de l'utilisateur (étape atteinte, score au quiz, statut terminé).
  */
 
-// Récupère l'ID de l'utilisateur connecté (repli sur le premier MEMBRE, comme l'espace membre).
+// Récupère l'ID de l'utilisateur connecté, ou null si personne n'est connecté.
+// Pas de repli sur un autre compte : la progression n'est enregistrée que pour le vrai utilisateur.
 async function obtenirUtilisateurId(): Promise<string | null> {
     try {
         const supabase = await getSupabaseServer();
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) return user.id;
+        return user?.id ?? null;
     } catch (e) {
-        console.warn('[Formation] Session Supabase indisponible, repli :', e);
-    }
-    try {
-        const membre = await prisma.utilisateur.findFirst({ where: { role: 'MEMBRE' } });
-        return membre?.id ?? null;
-    } catch {
+        console.warn('[Formation] Session Supabase indisponible :', e);
         return null;
     }
 }
