@@ -725,12 +725,58 @@ type PageParams = Promise<{ id: string; actId: string }>;
 export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
+    const [resolvedModuleId, setResolvedModuleId] = useState<string | null>(
+        MODULES_ADVENTURES[id] ? id : null
+    );
 
     // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
-    const isNapoleonModule = id === 'napoleon';
-    const activeModuleId = isNapoleonModule ? 'napoleon' : (MODULES_ADVENTURES[id] ? id : 'lecture');
+    const isNapoleonModule = resolvedModuleId === 'napoleon';
+    const activeModuleId = resolvedModuleId ?? 'lecture';
     const [napoleonContent, setNapoleonContent] = useState<ModuleContent>(MODULES_ADVENTURES.napoleon);
-    const content = isNapoleonModule ? napoleonContent : MODULES_ADVENTURES[activeModuleId];
+    const content = isNapoleonModule ? napoleonContent : (MODULES_ADVENTURES[activeModuleId] ?? MODULES_ADVENTURES.lecture);
+    const isModuleResolutionPending = !MODULES_ADVENTURES[id] && resolvedModuleId === null;
+    const [stepIndex, setStepIndex] = useState(() => (
+        isNapoleonModule ? getNapoleonInitialStepIndex(actId) : 0
+    )); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
+    const [showConfetti, setShowConfetti] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function resolveModuleFromDb() {
+            if (MODULES_ADVENTURES[id]) {
+                if (!cancelled) {
+                    setResolvedModuleId(id);
+                }
+                return;
+            }
+
+            try {
+                const moduleDetails = await obtenirDetailsModuleDepuisDB(id);
+                if (cancelled) return;
+
+                if (moduleDetails?.slug === 'napoleon' || moduleDetails?.label?.toLowerCase().includes('napoléon')) {
+                    setResolvedModuleId('napoleon');
+                } else if (moduleDetails?.slug && MODULES_ADVENTURES[moduleDetails.slug]) {
+                    setResolvedModuleId(moduleDetails.slug);
+                } else if (moduleDetails?.slug) {
+                    setResolvedModuleId(moduleDetails.slug);
+                } else {
+                    setResolvedModuleId('lecture');
+                }
+            } catch {
+                if (!cancelled) {
+                    setResolvedModuleId('lecture');
+                }
+            }
+        }
+
+        resolveModuleFromDb();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
 
     useEffect(() => {
         let cancelled = false;
@@ -755,6 +801,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                 }
 
                 setNapoleonContent(buildNapoleonContentFromDb(moduleDetails, activitiesDetails));
+                setStepIndex(getNapoleonInitialStepIndex(actId));
             } catch (error) {
                 console.warn('[Napoleon] Utilisation du contenu de secours pendant le chargement DB.', error);
             }
@@ -765,7 +812,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         return () => {
             cancelled = true;
         };
-    }, [isNapoleonModule]);
+    }, [isNapoleonModule, id, actId]);
 
     const napoleonImages = {
         step1: '/images/enfants/napoleon/napoleon_lecon_1_qui_etait_napoleon.png',
@@ -789,11 +836,6 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const step3NapoleonImages = isNapoleonModule ? [napoleonImages.step3, napoleonImages.step4] : [];
     const step4ImagePath = isNapoleonModule ? napoleonImages.exercice : '/images/enfants/exercice_generic.png';
     const quizImagePath = isNapoleonModule ? napoleonImages.quiz : '/images/enfants/quiz_robot.png';
-
-    const [stepIndex, setStepIndex] = useState(() => (
-        isNapoleonModule ? getNapoleonInitialStepIndex(actId) : 0
-    )); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
-    const [showConfetti, setShowConfetti] = useState(false);
 
     // États pour l'Exercice Interactif
     const [exerciceChecked, setExerciceChecked] = useState(false);
@@ -832,6 +874,15 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
             };
         }
     }, [stepIndex]);
+
+    if (isModuleResolutionPending) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center text-violet-900">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+                <p className="mt-4 text-violet-500">Chargement de ton aventure...</p>
+            </div>
+        );
+    }
 
     // ─── LOGIQUE EXERCICE : MATCH ───
     const handleSelectLeft = (leftId: string) => {
