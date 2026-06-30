@@ -283,3 +283,58 @@ export async function creerUtilisateursEnLot(data: {
         return { success: false, error: "Une erreur interne est survenue lors de la création en lot." };
     }
 }
+
+export async function supprimerUtilisateursEnMasse(ids: string[]) {
+    if (!ids || ids.length === 0) {
+        return { success: false, error: "Aucun utilisateur sélectionné." };
+    }
+
+    try {
+        const supabase = await getSupabaseAdmin();
+
+        const idsSupprimesAvecSucces: string[] = [];
+
+        for (const id of ids) {
+            const { error: authError } = await supabase.auth.admin.deleteUser(id);
+
+            if (authError) {
+                console.error(`[supprimerMasse] Impossible de supprimer Auth pour ${id}:`, authError.message);
+                continue;
+            }
+
+            idsSupprimesAvecSucces.push(id);
+        }
+
+        if (idsSupprimesAvecSucces.length === 0) {
+            return {
+                success: false,
+                error: "La suppression a échoué dans le système d'authentification. Aucune donnée n'a été retirée de la base de données."
+            };
+        }
+
+        const result = await prisma.utilisateur.deleteMany({
+            where: {
+                id: {
+                    in: idsSupprimesAvecSucces
+                }
+            }
+        });
+
+        revalidatePath('/admin/membres');
+
+        // On prépare un message précis pour l'administrateur si certains comptes ont échoué
+        const totalEchecs = ids.length - idsSupprimesAvecSucces.length;
+        const messageSucces = totalEchecs > 0
+            ? `${result.count} membre(s) supprimé(s) avec succès. (${totalEchecs} échec(s) ignoré(s) par sécurité)`
+            : `${result.count} membre(s) supprimé(s) avec succès.`;
+
+        return {
+            success: true,
+            message: messageSucces
+        };
+
+    } catch (error) {
+        console.error("[supprimerUtilisateursEnMasse] Erreur critique :", error);
+        return { success: false, error: "Une erreur est survenue lors de la suppression groupée." };
+    }
+}

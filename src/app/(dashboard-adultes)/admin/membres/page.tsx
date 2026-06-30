@@ -8,7 +8,8 @@ import {
     creerUtilisateur,
     reinitialiserMdp,
     toggleStatutUtilisateur,
-    creerUtilisateursEnLot
+    creerUtilisateursEnLot,
+    supprimerUtilisateursEnMasse
 } from './actions';
 import Modal from '@/components/Modal';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function AdminMembresPage() {
     const [rolesSelectionnes, setRolesSelectionnes] = useState<string[]>([]);
     const [tri, setTri] = useState<'RECENT' | 'ANCIEN' | 'ALPHABETIQUE'>('RECENT');
     const [statutFiltre, setStatutFiltre] = useState<'TOUS' | 'ACTIF' | 'INACTIF'>('TOUS');
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
@@ -225,6 +227,40 @@ export default function AdminMembresPage() {
         }
     };
 
+    const handleSelectRow = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = (membresAffiches: any[]) => {
+        if (selectedIds.length === membresAffiches.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(membresAffiches.map(m => m.id));
+        }
+    };
+
+    const handleSuppressionMasse = async () => {
+        if (selectedIds.length === 0) return;
+
+        const confirmation = window.confirm(`Êtes-vous absolument sûr de vouloir supprimer définitivement ces ${selectedIds.length} membres ? Cette action est irréversible.`);
+
+        if (confirmation) {
+            setIsLoading(true);
+            const res = await supprimerUtilisateursEnMasse(selectedIds);
+
+            if (res.success) {
+                alert(res.message);
+                setSelectedIds([]);
+                await chargerMembres();
+            } else {
+                alert(res.error);
+                setIsLoading(false);
+            }
+        }
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-violet-100 shadow-sm">
@@ -328,13 +364,16 @@ export default function AdminMembresPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* 2. Colonne verticale pour le Tri ET la Suppression en masse */}
+                <div className="flex flex-col gap-2 flex-1 sm:flex-initial">
+
+                    {/* Le Sélecteur de Tri */}
                     <div className="relative">
                         <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                         <select
                             value={tri}
                             onChange={(e) => setTri(e.target.value as any)}
-                            className="pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all cursor-pointer appearance-none"
+                            className="w-full sm:w-auto pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-650 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all cursor-pointer appearance-none shadow-sm"
                         >
                             <option value="RECENT">Date : Récent → Ancien</option>
                             <option value="ANCIEN">Date : Ancien → Récent</option>
@@ -342,6 +381,18 @@ export default function AdminMembresPage() {
                         </select>
                         <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
+
+                    {/* 💡 Le Bouton de Suppression en masse : Apparaît pile en dessous du Tri si des lignes sont cochées */}
+                    {selectedIds.length > 0 && (
+                        <button
+                            onClick={handleSuppressionMasse}
+                            disabled={isLoading}
+                            className="w-full sm:w-auto px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold text-xs rounded-xl transition-all shadow-sm cursor-pointer text-center flex items-center justify-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200 disabled:opacity-50"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-red-550 animate-pulse" />
+                            Supprimer la sélection ({selectedIds.length})
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -363,6 +414,14 @@ export default function AdminMembresPage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <th className="py-3 px-4 text-left w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={membresFiltresEtTries.length > 0 && selectedIds.length === membresFiltresEtTries.length}
+                                            onChange={() => handleSelectAll(membresFiltresEtTries)}
+                                            className="rounded border-slate-300 text-violet-600 focus:ring-violet-500 h-4 w-4 cursor-pointer"
+                                        />
+                                    </th>
                                     <th className="py-4 px-6">Membre</th>
                                     <th className="py-4 px-6">Identifiant</th>
                                     <th className="py-4 px-6">Rôle</th>
@@ -385,6 +444,14 @@ export default function AdminMembresPage() {
                                                 : 'bg-slate-50/40 opacity-60 filter grayscale-[20%]'
                                                 }`}
                                         >
+                                            <td className="py-4 px-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.includes(membre.id)}
+                                                    onChange={() => handleSelectRow(membre.id)}
+                                                    className="rounded border-slate-300 text-violet-600 focus:ring-violet-500 h-4 w-4 cursor-pointer"
+                                                />
+                                            </td>
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-2">
                                                     <div className={`font-semibold transition-colors ${estActif ? 'text-slate-900 group-hover:text-violet-950' : 'text-slate-500 line-through decoration-slate-400'
