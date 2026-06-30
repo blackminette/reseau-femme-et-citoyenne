@@ -113,6 +113,7 @@ export async function ajouterExerciceDansCours(formData: {
     instructions: string;
     type: 'QUIZ' | 'DESSIN' | 'TEXTE' | 'COMPLEMENT';
     contenu: string; // JSON string
+    competence?: string; // Compétence associée
 }) {
     try {
         if (!formData.titre || !formData.titre.trim()) {
@@ -140,7 +141,8 @@ export async function ajouterExerciceDansCours(formData: {
                 type: formData.type,
                 contenu: parsedContenu,
                 coursId: formData.coursId,
-                ordre: count + 1
+                ordre: count + 1,
+                competence: formData.competence?.trim() || null
             }
         });
 

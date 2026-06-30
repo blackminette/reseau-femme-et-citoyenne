@@ -10,7 +10,7 @@ import {
     ArrowRight, CheckCircle2, XCircle, MoveUp, MoveDown
 } from 'lucide-react';
 import { MODULES } from '@/lib/enfant-data';
-import { obtenirDetailsActiviteDepuisDB, sauvegarderResultatActivite, obtenirDetailsModuleDepuisDB } from '../../../actions';
+import { obtenirDetailsActiviteDepuisDB, sauvegarderResultatActivite, enregistrerTentativeExercice, obtenirDetailsModuleDepuisDB } from '../../../actions';
 
 // Types
 type Question = {
@@ -890,7 +890,22 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         const isMock = isNaN(Number(actId)) && !actId.startsWith('cours_');
         if (!isMock) {
             try {
-                await sauvegarderResultatActivite(actId, isLesson ? 1 : score);
+                if (isLesson) {
+                    await sauvegarderResultatActivite(actId, 1);
+                } else {
+                    const totalQ = content.quiz.length;
+                    const correctCount = score;
+                    const wrongCount = Math.max(0, totalQ - correctCount);
+                    await enregistrerTentativeExercice(
+                        actId,
+                        correctCount,
+                        totalQ,
+                        correctCount,
+                        wrongCount,
+                        undefined, // duration omitted or added later
+                        false // assistance
+                    );
+                }
             } catch (err) {
                 console.error("Erreur de sauvegarde de l'activité sur la BDD:", err);
             }

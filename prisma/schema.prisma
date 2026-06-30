@@ -7,25 +7,26 @@ datasource db {
 }
 
 model Utilisateur {
-  id              String           @id @default(cuid())
-  email           String           @unique
+  id              String              @id @default(cuid())
+  email           String              @unique
   nom             String
   prenom          String
   telephone       String?
-  role            String           @default("MEMBRE")
-  createdAt       DateTime         @default(now())
+  role            String              @default("MEMBRE")
+  createdAt       DateTime            @default(now())
   tuteurId        String?
-  username        String           @unique
-  ateliersPrives  Atelier[]        @relation("PartenaireAtelier")
+  username        String              @unique
+  ateliersPrives  Atelier[]           @relation("PartenaireAtelier")
   suggestions     BoiteAIdees[]
-  coursAnimes     Cours[]          @relation("IntervenanteCours")
+  coursAnimes     Cours[]             @relation("IntervenanteCours")
   dons            Don[]
   messagesEnvoyes MessageContact[]
   reservations    Reservation[]
   ScoreQuiz       ScoreQuiz[]
+  tentatives      TentativeExercice[]
   temoignages     Temoignage[]
-  tuteur          Utilisateur?     @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
-  enfants         Utilisateur[]    @relation("ParentEnfant")
+  tuteur          Utilisateur?        @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
+  enfants         Utilisateur[]       @relation("ParentEnfant")
 }
 
 model Atelier {
@@ -95,15 +96,17 @@ model Cours {
 }
 
 model Exercice {
-  id           Int         @id @default(autoincrement())
+  id           Int                 @id @default(autoincrement())
   titre        String
   instructions String
   type         String
-  contenu      Json        @default("[]")
+  contenu      Json                @default("[]")
+  competence   String?             // Ex: "Gestion des dossiers", "Recherche"
   coursId      Int
-  ordre        Int         @default(1)
-  cours        Cours       @relation(fields: [coursId], references: [id], onDelete: Cascade)
+  ordre        Int                 @default(1)
+  cours        Cours               @relation(fields: [coursId], references: [id], onDelete: Cascade)
   scores       ScoreQuiz[]
+  tentatives   TentativeExercice[]
 }
 
 model ScoreQuiz {
@@ -114,6 +117,21 @@ model ScoreQuiz {
   exerciceId  Int
   Utilisateur Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
   exercice    Exercice    @relation(fields: [exerciceId], references: [id])
+}
+
+model TentativeExercice {
+  id                Int         @id @default(autoincrement())
+  createdAt         DateTime    @default(now())
+  score             Int         // Nombre de bonnes réponses
+  totalQuestions    Int         // Nombre total de questions
+  bonnesReponses    Int
+  mauvaisesReponses Int
+  dureeSecondes     Int?        // Temps estimé ou mesuré
+  assistee          Boolean     @default(false)
+  etudiantId        String
+  exerciceId        Int
+  Utilisateur       Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  exercice          Exercice    @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
 }
 
 model Programme {

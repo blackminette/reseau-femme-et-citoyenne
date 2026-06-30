@@ -636,6 +636,69 @@ export async function sauvegarderResultatActivite(exerciceIdStr: string, score: 
     }
 }
 
+// Action to save detailed attempt history
+export async function enregistrerTentativeExercice(
+    exerciceIdStr: string,
+    score: number,
+    totalQuestions: number,
+    bonnesReponses: number,
+    mauvaisesReponses: number,
+    dureeSecondes?: number,
+    assistee: boolean = false
+) {
+    try {
+        const studentId = await obtenirEtudiantId();
+        const parsedId = parseInt(exerciceIdStr);
+
+        if (isNaN(parsedId)) {
+            return { success: false, error: "ID invalide" };
+        }
+
+        await prisma.tentativeExercice.create({
+            data: {
+                etudiantId: studentId,
+                exerciceId: parsedId,
+                score,
+                totalQuestions,
+                bonnesReponses,
+                mauvaisesReponses,
+                dureeSecondes,
+                assistee
+            }
+        });
+
+        // Met également à jour le score global (sauvegarde du meilleur score)
+        const existingScore = await prisma.scoreQuiz.findFirst({
+            where: {
+                etudiantId: studentId,
+                exerciceId: parsedId
+            }
+        });
+
+        if (existingScore) {
+            if (score > existingScore.score) {
+                await prisma.scoreQuiz.update({
+                    where: { id: existingScore.id },
+                    data: { score: score }
+                });
+            }
+        } else {
+            await prisma.scoreQuiz.create({
+                data: {
+                    etudiantId: studentId,
+                    exerciceId: parsedId,
+                    score: score
+                }
+            });
+        }
+
+        return { success: true };
+    } catch (e) {
+        gererErreurBaseDeDonnees("enregistrerTentativeExercice", e);
+        return { success: false, error: "Erreur lors de l'enregistrement de la tentative" };
+    }
+}
+
 // Action to get recent activity details
 export async function obtenirActiviteRecente() {
     try {

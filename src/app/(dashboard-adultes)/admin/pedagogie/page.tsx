@@ -51,6 +51,7 @@ export default function PedagogiePage() {
     const [selectedCoursId, setSelectedCoursId] = useState<number | null>(null);
     const [exTitre, setExTitre] = useState('');
     const [exInstructions, setExInstructions] = useState('');
+    const [exCompetence, setExCompetence] = useState('');
     const [exType, setExType] = useState<'QUIZ' | 'DESSIN' | 'TEXTE' | 'COMPLEMENT'>('QUIZ');
     
     // Interactive Builder State (replaces raw JSON)
@@ -220,13 +221,15 @@ export default function PedagogiePage() {
             titre: exTitre,
             instructions: exInstructions,
             type: exType,
-            contenu: generatedJsonString
+            contenu: generatedJsonString,
+            competence: exCompetence
         });
 
         if (res.success) {
             setModalExOpen(false);
             setExTitre('');
             setExInstructions('');
+            setExCompetence('');
             setQuestions([{ id: 1, question: '', options: ['', ''], reponseCorrecte: '', explication: '' }]);
             loadData();
         } else {
@@ -720,15 +723,27 @@ export default function PedagogiePage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Consignes / Instructions pour l'élève</label>
-                        <textarea
-                            value={exInstructions}
-                            onChange={e => setExInstructions(e.target.value)}
-                            placeholder="Ex : Réponds aux questions suivantes sur le dossier..."
-                            rows={2}
-                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Consignes / Instructions pour l'élève</label>
+                            <textarea
+                                value={exInstructions}
+                                onChange={e => setExInstructions(e.target.value)}
+                                placeholder="Ex : Réponds aux questions..."
+                                rows={2}
+                                className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Compétence associée (Optionnel)</label>
+                            <input
+                                type="text"
+                                value={exCompetence}
+                                onChange={e => setExCompetence(e.target.value)}
+                                placeholder="Ex : Gestion des dossiers, Téléchargements"
+                                className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                            />
+                        </div>
                     </div>
 
                     {/* INTERACTIVE BUILDER FOR QUIZZES */}
