@@ -195,7 +195,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             {modulesList.map((mod) => (
                                 <Link
                                     key={mod.id}
-                                    href={`/enfant/modules/${mod.slug || mod.id}`}
+                                    href={`/enfant/modules/${mod.dbId ?? mod.slug ?? mod.id}`}
                                     className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-300"
                                 >
                                     <div
