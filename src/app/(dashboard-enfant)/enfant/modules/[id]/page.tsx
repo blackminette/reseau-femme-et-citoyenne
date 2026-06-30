@@ -107,7 +107,9 @@ function hydrateSequentialActivities(activities: Activite[]): Activite[] {
 
 export default function EnfantModuleDetailPage() {
     const params = useParams();
-    const id = params?.id as string;
+    const rawId = (params?.id as string) || '';
+    const id = rawId.toLowerCase();
+
     const [activites, setActivites] = useState<Activite[]>([]);
     const [progression, setProgression] = useState(0);
     const [dbModule, setDbModule] = useState<{ label: string; slug: string; progression: number } | null>(null);
