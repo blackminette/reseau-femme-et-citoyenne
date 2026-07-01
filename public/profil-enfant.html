@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil enfant – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+</head>
+<body>
+
+<header>
+<div class="brand-group">
+<a href="index.html" class="brand brand-rfc"><span class="brand-tag">VITRINE</span><span class="brand-name">RFC 06</span></a>
+<a href="dashboard-parent.html" id="brand-atelier-link" class="brand brand-atelier"><span class="brand-tag">PLATEFORME</span><span class="brand-name">AtelierKids</span></a>
+</div>
+<nav><ul><li><a href="dashboard-parent.html">Tableau de bord</a></li></ul></nav>
+<div class="nav-auth">
+<a href="login.html" class="btn-nav" id="nav-login-link">Connexion</a>
+<a href="dashboard-parent.html" class="btn-nav btn-espace" id="nav-dashboard-link" style="display:none">Tableau de bord</a>
+<a href="espace-enfant.html" class="btn-nav btn-espace" id="nav-espace-link" style="display:none">Mon espace</a>
+<a href="admin.html" class="btn-nav btn-espace" id="nav-admin-link" style="display:none;background:linear-gradient(90deg,#1a1f4e,#2c3a8e);">Admin</a>
+<button class="btn-nav btn-logout" id="nav-logout-btn" onclick="logout()" style="display:none">Déconnexion</button>
+</div>
+</header>
+
+<div class="page-container" id="profile-container">
+  <a href="dashboard-parent.html" class="back-link">← Retour au tableau de bord</a>
+  <div class="empty-state"><div class="es-icon">⏳</div><h3>Chargement…</h3></div>
+</div>
+
+<footer>
+<div class="logo">AtelierKids</div>
+<div>Conditions d'utilisation<br>Mentions légales</div>
+<div>contact@atelierkids.fr</div>
+</footer>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const parent = await requireParent();
+  if (!parent) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const childId = params.get('id');
+  if (!childId) { window.location.href = 'dashboard-parent.html'; return; }
+
+  const child = await getChildById(childId);
+  if (!child || child.parentId !== parent.id) { window.location.href = 'dashboard-parent.html'; return; }
+
+  renderProfile(child);
+});
+
+function renderProfile(child) {
+  const stats = getStats(child);
+  const scores = (child.scores || []).slice().sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  // Moyennes par module
+  const moduleAvgs = {};
+  Object.keys(MODULES).forEach(k => {
+    const list = scores.filter(s => s.module === k);
+    moduleAvgs[k] = list.length
+      ? Math.round(list.reduce((s,e)=>s+(e.score/e.total)*100,0)/list.length)
+      : 0;
+  });
+
+  const container = document.getElementById('profile-container');
+  container.innerHTML = `
+    <a href="dashboard-parent.html" class="back-link">← Retour au tableau de bord</a>
+
+    <div class="profile-header">
+      <div class="profile-big-avatar">${child.avatar||'🧒'}</div>
+      <div class="profile-info">
+        <h2>${child.prenom} ${child.nom}</h2>
+        <div class="pi-sub">${child.age} ans • Membre depuis le ${formatDate(child.createdAt)}</div>
+        <div class="pi-creds">👤 @${child.username} &nbsp;|&nbsp; 🔑 ${child.password}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="gestion-enfant.html?id=${child.id}" class="btn-secondary" style="padding:10px 22px;font-size:13px;">✏️ Modifier</a>
+      </div>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:30px;">
+      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value">${stats.total}</div><div class="stat-label">Activités</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">${stats.avg}%</div><div class="stat-label">Moyenne</div></div>
+      <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value">${stats.perfect}</div><div class="stat-label">Scores parfaits</div></div>
+      <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value">${(child.badges||[]).length}</div><div class="stat-label">Badges</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card-section">
+        <h3>📈 Progression par module</h3>
+        ${Object.entries(MODULES).map(([k, m]) => `
+          <div class="progress-row">
+            <div class="progress-label"><span>${m.icon} ${m.label}</span><span>${moduleAvgs[k]}%</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${moduleAvgs[k]}%;background:${m.bg}"></div></div>
+          </div>`).join('')}
+      </div>
+
+      <div class="card-section">
+        <h3>🏅 Badges</h3>
+        <div class="badges-grid">
+          ${Object.entries(BADGES).map(([key, b]) => {
+            const earned = (child.badges||[]).includes(key);
+            return `<div class="badge-item ${earned?'earned':'locked'}" title="${b.desc}">
+              <div class="badge-icon">${b.icon}</div>
+              <div class="badge-label">${b.label}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card-section">
+      <h3>📋 Historique des activités</h3>
+      ${scores.length === 0
+        ? `<div class="empty-state" style="padding:40px"><div class="es-icon">📭</div><h3>Aucune activité</h3><p>Cet enfant n'a pas encore réalisé d'activités.</p></div>`
+        : `<ul class="score-history">
+            ${scores.slice(0,30).map(s => {
+              const m = MODULES[s.module] || { icon:'❓', label:s.module };
+              const isPerfect = s.score === s.total;
+              const typeLabel = s.type === 'quiz' ? 'Quiz' : 'Exercice';
+              return `<li class="score-entry">
+                <div class="entry-type">${m.icon}</div>
+                <div class="entry-info">
+                  <strong>${typeLabel} – ${m.label}</strong>
+                  <small>${formatDate(s.date)}</small>
+                </div>
+                <div class="score-pill ${isPerfect?'perfect':''}">${s.score}/${s.total}${isPerfect?' ⭐':''}</div>
+              </li>`;
+            }).join('')}
+          </ul>`
+      }
+    </div>
+  `;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+</script>
+<script src="lang.js?v=20260603d"></script>
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

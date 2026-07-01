@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+</head>
+<body>
+
+<header>
+<div class="brand-group">
+<a href="index.html" class="brand brand-rfc"><span class="brand-tag">VITRINE</span><span class="brand-name">RFC 06</span></a>
+<a href="espace-enfant.html" id="brand-atelier-link" class="brand brand-atelier"><span class="brand-tag">PLATEFORME</span><span class="brand-name">AtelierKids</span></a>
+</div>
+<nav><ul><li><a href="espace-enfant.html">Mes modules</a></li></ul></nav>
+<div class="nav-auth">
+<a href="login.html" class="btn-nav" id="nav-login-link">Connexion</a>
+<a href="dashboard-parent.html" class="btn-nav btn-espace" id="nav-dashboard-link" style="display:none">Tableau de bord</a>
+<a href="espace-enfant.html" class="btn-nav btn-espace" id="nav-espace-link" style="display:none">Mon espace</a>
+<a href="admin.html" class="btn-nav btn-espace" id="nav-admin-link" style="display:none;background:linear-gradient(90deg,#1a1f4e,#2c3a8e);">Admin</a>
+<button class="btn-nav btn-logout" id="nav-logout-btn" onclick="logout()" style="display:none">Déconnexion</button>
+</div>
+</header>
+
+<div class="page-container">
+<a href="espace-enfant.html" class="back-link">← Mes modules</a>
+
+<div id="module-banner" class="module-banner"></div>
+
+<div class="tabs-bar" id="tabs-bar"></div>
+
+<div class="tab-content active" id="tab-quiz">
+  <div class="content-list" id="list-quiz"></div>
+</div>
+<div class="tab-content" id="tab-exercices">
+  <div class="content-list" id="list-exercices"></div>
+</div>
+<div class="tab-content" id="tab-lecons">
+  <div class="content-list" id="list-lecons"></div>
+</div>
+<div class="tab-content" id="tab-videos">
+  <div class="content-list" id="list-videos"></div>
+</div>
+
+<!-- Encart conseils -->
+<div style="background:white;border-radius:18px;padding:24px 28px;margin-top:35px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;box-shadow:0 4px 18px rgba(109,91,168,0.06);">
+  <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#f4f1fb,#fff8e8);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">💡</div>
+  <div>
+    <div style="font-size:15px;font-weight:700;color:#6d5ba8;margin-bottom:4px;">Comment progresser dans ce module ?</div>
+    <div style="font-size:13px;color:#666;line-height:1.6;">
+      1️⃣ Commence par lire les <strong>leçons</strong> pour bien comprendre les bases •
+      2️⃣ Teste tes connaissances avec les <strong>quizz</strong> •
+      3️⃣ Mets-toi au défi avec les <strong>exercices</strong> !
+    </div>
+  </div>
+</div>
+
+<!-- Autres modules -->
+<div style="margin-top:30px;background:white;border-radius:18px;padding:28px;box-shadow:0 4px 18px rgba(109,91,168,0.06);">
+  <h3 style="font-size:17px;color:#6d5ba8;margin-bottom:18px;">🌟 Explorer d'autres modules</h3>
+  <div id="other-modules-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
+</div>
+
+</div>
+
+<footer>
+<div class="logo">AtelierKids</div>
+<div>Conditions d'utilisation</div>
+<div>contact@atelierkids.fr</div>
+</footer>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+let moduleKey = null;
+let module    = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!await requireChild()) return;
+  const params = new URLSearchParams(window.location.search);
+  moduleKey = params.get('m');
+  module    = MODULES[moduleKey];
+  if (!module) { window.location.href = 'espace-enfant.html'; return; }
+
+  renderBanner();
+  renderTabs();
+  renderContent();
+  renderOtherModules();
+});
+
+function renderOtherModules() {
+  const grid = document.getElementById('other-modules-grid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(MODULES)
+    .filter(([k]) => k !== moduleKey)
+    .map(([k, m]) => `
+      <a href="module.html?m=${k}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px;border-radius:14px;color:white;text-decoration:none;background:${m.bg};text-align:center;transition:0.25s;">
+        <div style="font-size:28px;margin-bottom:6px;">${m.icon}</div>
+        <div style="font-size:12px;font-weight:700;line-height:1.2;">${m.label}</div>
+      </a>`).join('');
+}
+
+function renderBanner() {
+  const el = document.getElementById('module-banner');
+  el.style.background = module.bg;
+  el.innerHTML = `
+    <div class="mb-icon">${module.icon}</div>
+    <div class="mb-info">
+      <h1>${module.label}</h1>
+      <p>${module.desc}</p>
+    </div>`;
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabs-bar');
+  const tabs = [
+    { id:'quiz',      label:'🎯 Quiz' },
+    { id:'exercices', label:'📝 Exercices' },
+    { id:'lecons',    label:'📚 Leçons' }
+  ];
+  if (module.hasVideo) tabs.push({ id:'videos', label:'🎬 Vidéos' });
+
+  bar.innerHTML = tabs.map((t, i) => `
+    <button class="tab-btn ${i===0?'active':''}" onclick="showTab('${t.id}')">${t.label}</button>
+  `).join('');
+}
+
+function showTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${id}"]`).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+async function renderContent() {
+  const content = await getModuleContent(moduleKey);
+
+  // Quizzes
+  renderList('list-quiz', content.quizzes, 'QUIZ', q =>
+    `<a href="quiz.html?m=${moduleKey}&id=${q.id}" class="content-card ${isCustomContent(q.id)?'custom':''}">
+      <div class="cc-type">Quiz</div>
+      <div class="cc-title">${q.title}</div>
+      <div class="cc-meta">📋 ${q.questions.length} questions</div>
+    </a>`);
+
+  // Exercices
+  renderList('list-exercices', content.exercises, 'EXERCICE', ex =>
+    `<a href="exercice.html?m=${moduleKey}&id=${ex.id}" class="content-card ${isCustomContent(ex.id)?'custom':''}">
+      <div class="cc-type">Exercice</div>
+      <div class="cc-title">${ex.title}</div>
+      <div class="cc-desc">${ex.intro || ''}</div>
+      <div class="cc-meta">📋 ${ex.questions.length} questions${ex.text?' • 📖 texte à lire':''}</div>
+    </a>`);
+
+  // Leçons
+  renderList('list-lecons', content.lessons, 'LECON', l =>
+    `<a href="lecon.html?m=${moduleKey}&id=${l.id}" class="content-card ${isCustomContent(l.id)?'custom':''}">
+      <div class="cc-type">Leçon</div>
+      <div class="cc-title">${l.title}</div>
+      <div class="cc-desc">${l.content.substring(0, 100)}…</div>
+    </a>`);
+
+  // Vidéos
+  if (module.hasVideo) {
+    renderList('list-videos', content.videos, 'VIDEO', v =>
+      `<a href="video.html?m=${moduleKey}&id=${v.id}" class="content-card ${isCustomContent(v.id)?'custom':''}">
+        <div class="cc-type">Vidéo</div>
+        <div class="cc-title">${v.title}</div>
+        <div class="cc-desc">${v.description || ''}</div>
+      </a>`);
+  }
+}
+
+function renderList(elId, items, label, render) {
+  const el = document.getElementById(elId);
+  if (!items || !items.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="es-icon">📭</div>
+      <h3>Aucun contenu disponible</h3>
+      <p>Reviens bientôt, du nouveau contenu sera ajouté !</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = items.map(render).join('');
+}
+</script>
+
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

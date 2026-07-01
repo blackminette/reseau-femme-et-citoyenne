@@ -1,0 +1,274 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon espace – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+<style>body{background:#f8f6fc;}</style>
+</head>
+<body>
+
+<button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<div class="app-layout">
+
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <a href="index.html" class="sidebar-brand">
+    <div class="sidebar-brand-box"><small>RFC</small><span>06</span></div>
+    <div class="sidebar-brand-text">
+      <div class="sb-title">AtelierKids</div>
+      <div class="sb-sub">Grandir, apprendre, s'épanouir</div>
+    </div>
+  </a>
+
+  <nav class="sidebar-menu">
+    <a href="espace-enfant.html" class="sidebar-link active"><span class="sl-icon">🏠</span> Mon espace</a>
+    <a href="#modules"   class="sidebar-link" onclick="scrollToSection('modules',event)"><span class="sl-icon">📚</span> Mes modules</a>
+    <a href="#progres"   class="sidebar-link" onclick="scrollToSection('progres',event)"><span class="sl-icon">📈</span> Mes progrès</a>
+    <a href="badges-enfant.html" class="sidebar-link"><span class="sl-icon">🏅</span> Mes badges</a>
+    <a href="#resultats" class="sidebar-link" onclick="scrollToSection('resultats',event)"><span class="sl-icon">📋</span> Mes résultats</a>
+    <a href="ateliers-enfant.html" class="sidebar-link"><span class="sl-icon">🎨</span> Mes ateliers</a>
+    <a href="assistant.html" class="sidebar-link"><span class="sl-icon">🤖</span> Mon assistant</a>
+  </nav>
+
+  <div class="sidebar-help">
+    <h4>Besoin d'aide ?</h4>
+    <p>Parle à tes parents ou contacte le support AtelierKids.</p>
+    <a href="apropos.html" class="help-btn">Voir l'aide</a>
+  </div>
+
+  <button class="sidebar-logout" onclick="confirmLogout()">🚪 Se déconnecter</button>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<main class="main-app">
+
+  <!-- TopBar -->
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1 id="page-title">Bonjour ! 👋</h1>
+      <p id="page-sub">Continue comme ça, tu fais des progrès incroyables !</p>
+    </div>
+    <div class="topbar-actions">
+      <div class="user-chip">
+        <div class="user-chip-avatar" id="user-avatar">🧒</div>
+        <div class="user-chip-info">
+          <div class="user-chip-name" id="user-name">—</div>
+          <div class="user-chip-sub" id="user-sub">— ans</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome banner -->
+  <section class="welcome-v2">
+    <div class="welcome-v2-text">
+      <h2>Mission du jour 🎯</h2>
+      <p>Termine une activité dans un module et continue à progresser !</p>
+      <div class="wv-pill" id="welcome-badge-count">🏅 0 badge</div>
+    </div>
+    <div class="welcome-v2-progress">
+      <div class="wv-prog-label">Progression globale</div>
+      <div class="wv-prog-row">
+        <div class="wv-prog-bar"><div class="wv-prog-bar-fill" id="global-prog-fill" style="width:0%"></div></div>
+        <div class="wv-prog-value" id="global-prog-value">0%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modules -->
+  <section id="modules">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:18px;color:#2c2c3a;font-weight:700;">Mes modules</h3>
+    </div>
+    <div class="modules-grid-v2" id="modules-grid"></div>
+  </section>
+
+  <!-- 3 panels -->
+  <section class="three-panels">
+
+    <!-- Derniers résultats -->
+    <div class="panel-card" id="resultats">
+      <div class="panel-card-header">
+        <div class="panel-card-title">Mes derniers résultats</div>
+      </div>
+      <div id="recent-scores">
+        <div style="text-align:center;color:#aaa;padding:30px 10px;font-size:13px;">
+          Aucune activité pour l'instant.<br>Lance-toi !
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="panel-card" id="badges">
+      <div class="panel-card-header">
+        <div class="panel-card-title">Mes badges</div>
+      </div>
+      <div class="badges-mini" id="badges-grid"></div>
+      <div class="new-badge-pill" id="new-badge-pill" style="display:none">
+        <div class="nbp-icon" id="nbp-icon">⭐</div>
+        <div class="nbp-info">
+          <div class="nbp-title" id="nbp-title">Nouveau badge !</div>
+          <div class="nbp-sub" id="nbp-sub">Continue à explorer !</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activité récente -->
+    <div class="panel-card" id="progres">
+      <div class="panel-card-header">
+        <div class="panel-card-title">Activité récente</div>
+      </div>
+      <div id="recent-activity">
+        <div style="text-align:center;color:#aaa;padding:30px 10px;font-size:13px;">
+          Pas encore d'activité.
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+</div>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+function confirmLogout() {
+  if (confirm('Veux-tu vraiment te déconnecter ?')) logout();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const child = await requireChild();
+  if (!child) return;
+
+  // TopBar
+  document.getElementById('page-title').textContent = `Bonjour ${child.prenom} ! 👋`;
+  document.getElementById('page-sub').textContent   = `Tu as ${child.age} ans — continue comme ça, tu fais des progrès incroyables !`;
+  document.getElementById('user-name').textContent  = `${child.prenom} ${child.nom}`;
+  document.getElementById('user-sub').textContent   = `${child.age} ans`;
+  document.getElementById('user-avatar').textContent= child.avatar || '🧒';
+
+  // Welcome
+  const nbBadges = (child.badges || []).length;
+  document.getElementById('welcome-badge-count').textContent = `🏅 ${nbBadges} badge${nbBadges>1?'s':''} obtenu${nbBadges>1?'s':''}`;
+
+  const stats = getStats(child);
+  document.getElementById('global-prog-fill').style.width  = stats.avg + '%';
+  document.getElementById('global-prog-value').textContent = stats.avg + '%';
+
+  renderModules(child);
+  renderScores(child);
+  renderBadges(child);
+  renderActivity(child);
+});
+
+function renderModules(child) {
+  const grid = document.getElementById('modules-grid');
+  grid.innerHTML = Object.entries(MODULES).map(([key, m]) => {
+    const scores = (child.scores || []).filter(s => s.module === key);
+    const avg = scores.length ? Math.round(scores.reduce((s,e)=>s+(e.score/e.total)*100,0)/scores.length) : 0;
+    return `<a href="module.html?m=${key}" class="module-card-v2" style="background:${m.bg}">
+      <div>
+        <div class="mcv-icon">${m.icon}</div>
+        <div class="mcv-title">${m.label}</div>
+      </div>
+      <div class="mcv-bottom">
+        <div class="mcv-pct">${avg}%</div>
+        <div class="mcv-bar"><div class="mcv-bar-fill" style="width:${avg}%"></div></div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+function renderScores(child) {
+  const scores = (child.scores || []).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,4);
+  if (!scores.length) return;
+  document.getElementById('recent-scores').innerHTML = scores.map(s => {
+    const m = MODULES[s.module] || { icon:'❓', label:s.module };
+    const perfect = s.score === s.total;
+    const label = (s.type === 'quiz' ? 'Quiz' : 'Exercice') + ' — ' + m.label;
+    return `<div class="score-row">
+      <div class="score-row-icon">${m.icon}</div>
+      <div class="score-row-info">
+        <div class="score-row-name">${label}</div>
+        <div class="score-row-date">${formatRelDate(s.date)}</div>
+      </div>
+      <div class="score-row-pill ${perfect?'perfect':''}">${s.score}/${s.total}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBadges(child) {
+  const grid = document.getElementById('badges-grid');
+  const keys = Object.keys(BADGES).slice(0, 4);  // top 4 badges
+  grid.innerHTML = keys.map(key => {
+    const b = BADGES[key];
+    const earned = (child.badges || []).includes(key);
+    return `<div class="badge-mini ${earned?'earned':'locked'}" title="${b.desc}">
+      <div class="bm-icon">${b.icon}</div>
+      <div class="bm-label">${b.label}</div>
+    </div>`;
+  }).join('');
+
+  // Bandeau "nouveau badge" si l'enfant a au moins 1 badge
+  if ((child.badges || []).length > 0) {
+    const lastKey = child.badges[child.badges.length - 1];
+    const b = BADGES[lastKey];
+    if (b) {
+      const pill = document.getElementById('new-badge-pill');
+      pill.style.display = 'flex';
+      document.getElementById('nbp-icon').textContent  = b.icon;
+      document.getElementById('nbp-title').textContent = `Badge : ${b.label}`;
+      document.getElementById('nbp-sub').textContent   = b.desc;
+    }
+  }
+}
+
+function renderActivity(child) {
+  const scores = (child.scores || []).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
+  if (!scores.length) return;
+  document.getElementById('recent-activity').innerHTML = scores.map(s => {
+    const m = MODULES[s.module] || { icon:'❓', label:s.module };
+    const perfect = s.score === s.total;
+    const action = s.type === 'quiz' ? 'as terminé le quiz' : 'as fait l\'exercice';
+    return `<div class="score-row">
+      <div class="score-row-icon">${perfect?'⭐':'✓'}</div>
+      <div class="score-row-info">
+        <div class="score-row-name">Tu ${action}</div>
+        <div class="score-row-date">${m.label} • ${formatRelDate(s.date)}</div>
+      </div>
+      <div class="score-row-pill ${perfect?'perfect':''}">${s.score}/${s.total}</div>
+    </div>`;
+  }).join('');
+}
+
+function formatRelDate(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 3600)   return 'Il y a ' + Math.max(1,Math.floor(diff/60)) + ' min';
+  if (diff < 86400)  return 'Il y a ' + Math.floor(diff/3600) + 'h';
+  if (diff < 86400*2) return 'Hier';
+  if (diff < 86400*7) return 'Il y a ' + Math.floor(diff/86400) + ' jours';
+  return d.toLocaleDateString('fr-FR');
+}
+
+function scrollToSection(id, e) {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  // Active class
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+}
+</script>
+<script src="lang.js?v=20260603d"></script>
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

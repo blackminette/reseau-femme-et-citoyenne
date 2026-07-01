@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vidéo – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+</head>
+<body>
+
+<header>
+<div class="brand-group">
+<a href="index.html" class="brand brand-rfc"><span class="brand-tag">VITRINE</span><span class="brand-name">RFC 06</span></a>
+<a href="espace-enfant.html" id="brand-atelier-link" class="brand brand-atelier"><span class="brand-tag">PLATEFORME</span><span class="brand-name">AtelierKids</span></a>
+</div>
+<nav><ul><li><a href="espace-enfant.html">Mes modules</a></li></ul></nav>
+<div class="nav-auth">
+<a href="login.html" class="btn-nav" id="nav-login-link">Connexion</a>
+<a href="dashboard-parent.html" class="btn-nav btn-espace" id="nav-dashboard-link" style="display:none">Tableau de bord</a>
+<a href="espace-enfant.html" class="btn-nav btn-espace" id="nav-espace-link" style="display:none">Mon espace</a>
+<a href="admin.html" class="btn-nav btn-espace" id="nav-admin-link" style="display:none;background:linear-gradient(90deg,#1a1f4e,#2c3a8e);">Admin</a>
+<button class="btn-nav btn-logout" id="nav-logout-btn" onclick="logout()" style="display:none">Déconnexion</button>
+</div>
+</header>
+
+<div class="lesson-container">
+<a href="#" id="back-link" class="back-link">← Retour au module</a>
+
+<div class="video-frame">
+  <div class="vf-title" id="vf-title">Chargement…</div>
+  <div class="vf-desc" id="vf-desc"></div>
+  <div class="video-wrap"><iframe id="vf-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+</div>
+
+<div style="background:linear-gradient(135deg,#f4f1fb,#fff8e8);border-radius:14px;padding:18px 22px;margin-bottom:25px;font-size:14px;color:#555;line-height:1.6;">
+  🎥 <strong>Astuce :</strong> Tu peux mettre la vidéo en plein écran avec l'icône en bas à droite. N'hésite pas à la regarder plusieurs fois pour bien tout comprendre !
+</div>
+
+<!-- Autres vidéos -->
+<div style="background:white;border-radius:18px;padding:28px;box-shadow:0 4px 18px rgba(109,91,168,0.07);margin-bottom:25px;">
+  <h3 style="font-size:18px;color:#6d5ba8;margin-bottom:18px;display:flex;align-items:center;gap:8px;">
+    🎬 Autres vidéos du module
+  </h3>
+  <div id="other-videos" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;"></div>
+</div>
+
+<!-- Leçons associées -->
+<div style="background:white;border-radius:18px;padding:28px;box-shadow:0 4px 18px rgba(109,91,168,0.07);">
+  <h3 style="font-size:18px;color:#6d5ba8;margin-bottom:18px;display:flex;align-items:center;gap:8px;">
+    📚 Leçons associées
+  </h3>
+  <div id="related-lessons" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;"></div>
+</div>
+
+</div>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!await fetchMe()) { window.location.href = 'login.html'; return; }
+
+  const p = new URLSearchParams(window.location.search);
+  const moduleKey = p.get('m');
+  const videoId   = p.get('id');
+  if (!moduleKey || !videoId) { window.location.href = 'espace-enfant.html'; return; }
+
+  const video = await getContentItem(moduleKey, 'videos', videoId);
+  if (!video) { window.location.href = 'module.html?m=' + moduleKey; return; }
+
+  document.getElementById('back-link').href = `module.html?m=${moduleKey}`;
+  document.getElementById('vf-title').textContent = video.title;
+  document.getElementById('vf-desc').textContent  = video.description || '';
+  document.getElementById('vf-iframe').src = toEmbedUrl(video.url);
+
+  const content = await getModuleContent(moduleKey);
+  const module = MODULES[moduleKey];
+
+  // Autres vidéos
+  const otherVideos = (content.videos || []).filter(v => v.id !== videoId).slice(0, 4);
+  const ovEl = document.getElementById('other-videos');
+  if (otherVideos.length) {
+    ovEl.innerHTML = otherVideos.map(v => `
+      <a href="video.html?m=${moduleKey}&id=${v.id}" style="display:block;padding:14px;background:#faf8ff;border-radius:13px;text-decoration:none;border-left:3px solid ${module.color};">
+        <div style="font-size:13.5px;font-weight:700;color:#333;line-height:1.3;">🎬 ${v.title}</div>
+        <div style="font-size:11px;color:#888;margin-top:6px;line-height:1.5;">${v.description || ''}</div>
+      </a>`).join('');
+  } else {
+    ovEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:14px;font-size:13px;">Pas d'autre vidéo dans ce module pour l'instant.</div>`;
+  }
+
+  // Leçons du même module
+  const lessons = (content.lessons || []).slice(0, 4);
+  const rlEl = document.getElementById('related-lessons');
+  if (lessons.length) {
+    rlEl.innerHTML = lessons.map(l => `
+      <a href="lecon.html?m=${moduleKey}&id=${l.id}" style="display:block;padding:14px;background:#faf8ff;border-radius:13px;text-decoration:none;border-left:3px solid ${module.color};">
+        <div style="font-size:13.5px;font-weight:700;color:#333;line-height:1.3;">${l.title}</div>
+        <div style="font-size:11px;color:#888;margin-top:6px;line-height:1.5;">${l.content.substring(0, 60).replace(/\*\*/g,'')}…</div>
+      </a>`).join('');
+  } else {
+    rlEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:14px;font-size:13px;">Pas de leçon dans ce module pour l'instant.</div>`;
+  }
+});
+</script>
+
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

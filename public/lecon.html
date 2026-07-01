@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leçon – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+</head>
+<body>
+
+<header>
+<div class="brand-group">
+<a href="index.html" class="brand brand-rfc"><span class="brand-tag">VITRINE</span><span class="brand-name">RFC 06</span></a>
+<a href="espace-enfant.html" id="brand-atelier-link" class="brand brand-atelier"><span class="brand-tag">PLATEFORME</span><span class="brand-name">AtelierKids</span></a>
+</div>
+<nav><ul><li><a href="espace-enfant.html">Mes modules</a></li></ul></nav>
+<div class="nav-auth">
+<a href="login.html" class="btn-nav" id="nav-login-link">Connexion</a>
+<a href="dashboard-parent.html" class="btn-nav btn-espace" id="nav-dashboard-link" style="display:none">Tableau de bord</a>
+<a href="espace-enfant.html" class="btn-nav btn-espace" id="nav-espace-link" style="display:none">Mon espace</a>
+<a href="admin.html" class="btn-nav btn-espace" id="nav-admin-link" style="display:none;background:linear-gradient(90deg,#1a1f4e,#2c3a8e);">Admin</a>
+<button class="btn-nav btn-logout" id="nav-logout-btn" onclick="logout()" style="display:none">Déconnexion</button>
+</div>
+</header>
+
+<div class="lesson-container">
+<a href="#" id="back-link" class="back-link">← Retour au module</a>
+
+<div class="lesson-card">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:8px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;">
+      <div class="lesson-title" id="lesson-title">Chargement…</div>
+      <div class="lesson-meta" id="lesson-meta"></div>
+    </div>
+    <button id="pdf-btn" onclick="downloadLessonPDF()" style="background:linear-gradient(90deg,#9b8cff,#6d5ba8);color:white;border:none;border-radius:11px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:0.25s;white-space:nowrap;">
+      📥 Télécharger en PDF
+    </button>
+  </div>
+  <div class="lesson-content" id="lesson-content"></div>
+  <div class="lesson-tip">
+    💡 <strong>Astuce :</strong> Télécharge cette leçon en PDF pour la lire hors-ligne ou l'imprimer, puis teste-toi avec le quiz !
+  </div>
+</div>
+
+<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">
+  <a href="#" id="quiz-link"      class="btn-full" style="max-width:240px;text-decoration:none;display:inline-block;text-align:center;">🎯 Faire un quiz</a>
+  <a href="#" id="exercice-link"  class="btn-secondary" style="padding:13px 26px;">📝 Faire un exercice</a>
+</div>
+
+<!-- Pour aller plus loin -->
+<div style="background:white;border-radius:18px;padding:28px;box-shadow:0 4px 18px rgba(109,91,168,0.07);margin-bottom:25px;">
+  <h3 style="font-size:18px;color:#6d5ba8;margin-bottom:18px;display:flex;align-items:center;gap:8px;">
+    📚 Sur le même thème
+  </h3>
+  <div id="other-lessons" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;"></div>
+</div>
+
+<!-- Autres modules à découvrir -->
+<div style="background:white;border-radius:18px;padding:28px;box-shadow:0 4px 18px rgba(109,91,168,0.07);">
+  <h3 style="font-size:18px;color:#6d5ba8;margin-bottom:18px;display:flex;align-items:center;gap:8px;">
+    🌟 Explorer d'autres modules
+  </h3>
+  <div id="other-modules" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
+</div>
+
+</div>
+
+<!-- jsPDF pour le téléchargement PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+let currentLesson = null;
+let currentModule = null;
+
+function downloadLessonPDF() {
+  if (!currentLesson || !currentModule) return;
+  if (typeof window.jspdf === 'undefined') {
+    alert('La librairie PDF n\'est pas encore chargée. Réessaie dans 1 seconde.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 50;
+  const contentW = pageW - margin * 2;
+  let y = margin;
+
+  // ── HEADER ──
+  // Bande colorée en haut
+  doc.setFillColor(109, 91, 168);
+  doc.rect(0, 0, pageW, 90, 'F');
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RFC 06 · AtelierKids', margin, 38);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Grandir, apprendre, s\'epanouir', margin, 55);
+  doc.setFontSize(9);
+  doc.text(new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }), pageW - margin - doc.getTextWidth(new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })), 38);
+
+  y = 130;
+
+  // ── BADGE MODULE ──
+  const moduleTxt = `${currentModule.icon || ''} ${currentModule.label}`.trim();
+  doc.setFillColor(244, 241, 251);
+  doc.roundedRect(margin, y - 16, doc.getTextWidth(moduleTxt) + 24, 24, 6, 6, 'F');
+  doc.setTextColor(109, 91, 168);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(moduleTxt, margin + 12, y);
+  y += 30;
+
+  // ── TITRE ──
+  doc.setTextColor(45, 45, 60);
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  const titleLines = doc.splitTextToSize(stripEmojis(currentLesson.title), contentW);
+  titleLines.forEach(line => { doc.text(line, margin, y); y += 26; });
+  y += 6;
+
+  // Ligne séparatrice
+  doc.setDrawColor(220, 215, 240);
+  doc.setLineWidth(1);
+  doc.line(margin, y, pageW - margin, y);
+  y += 20;
+
+  // ── CONTENU ──
+  doc.setTextColor(40, 40, 55);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+
+  const paragraphs = currentLesson.content.split('\n');
+  const lineHeight = 17;
+
+  paragraphs.forEach(par => {
+    if (y > pageH - margin - 50) { doc.addPage(); y = margin + 20; }
+
+    if (!par.trim()) { y += 8; return; }
+
+    // **gras**
+    const parts = par.split(/(\*\*[^*]+\*\*)/g);
+    let xPos = margin;
+    let lineBuffer = '';
+    let isBold = false;
+
+    parts.forEach(part => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        // Flush buffer
+        if (lineBuffer) {
+          doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+          const lines = doc.splitTextToSize(lineBuffer, contentW);
+          lines.forEach((l, i) => {
+            if (i > 0) { y += lineHeight; xPos = margin; }
+            if (y > pageH - margin - 50) { doc.addPage(); y = margin + 20; }
+            doc.text(l, margin, y);
+          });
+          y += lineHeight; xPos = margin; lineBuffer = '';
+        }
+        // Bold portion
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(109, 91, 168);
+        const txt = part.slice(2, -2);
+        const lines = doc.splitTextToSize(txt, contentW);
+        lines.forEach((l, i) => {
+          if (i > 0) y += lineHeight;
+          if (y > pageH - margin - 50) { doc.addPage(); y = margin + 20; }
+          doc.text(l, margin, y);
+        });
+        y += lineHeight;
+        doc.setTextColor(40, 40, 55);
+        doc.setFont('helvetica', 'normal');
+      } else if (part) {
+        const lines = doc.splitTextToSize(stripEmojis(part), contentW);
+        lines.forEach((l, i) => {
+          if (i > 0) y += lineHeight;
+          if (y > pageH - margin - 50) { doc.addPage(); y = margin + 20; }
+          doc.setFont('helvetica', 'normal');
+          doc.text(l, margin, y);
+        });
+        y += lineHeight;
+      }
+    });
+    y += 4;
+  });
+
+  // ── FOOTER toutes pages ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(220, 215, 240);
+    doc.line(margin, pageH - 40, pageW - margin, pageH - 40);
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 165);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Association RFC 06 · AtelierKids · contact@atelierkids.fr', margin, pageH - 22);
+    doc.text(`Page ${i}/${totalPages}`, pageW - margin - 50, pageH - 22);
+  }
+
+  // Nom de fichier
+  const cleanTitle = currentLesson.title.replace(/[^\w\s]/g, '').replace(/\s+/g, '-').toLowerCase().substring(0, 40);
+  doc.save(`lecon-${cleanTitle}.pdf`);
+}
+
+// Retire les emojis pour le PDF (font helvetica ne les gère pas bien)
+function stripEmojis(str) {
+  return (str || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F910}-\u{1F96B}\u{1F980}-\u{1F9E0}]/gu, '').replace(/[️‍]/g, '');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Permet aussi à un parent/admin de voir les leçons sans bloquer
+  const me = await fetchMe();
+  if (!me) { window.location.href = 'login.html'; return; }
+
+  const p = new URLSearchParams(window.location.search);
+  const moduleKey = p.get('m');
+  const lessonId  = p.get('id');
+  const module    = MODULES[moduleKey];
+
+  if (!moduleKey || !lessonId || !module) {
+    window.location.href = 'espace-enfant.html'; return;
+  }
+
+  const lesson = await getContentItem(moduleKey, 'lessons', lessonId);
+  if (!lesson) { window.location.href = 'module.html?m=' + moduleKey; return; }
+
+  // Globaliser pour le bouton PDF
+  currentLesson = lesson;
+  currentModule = module;
+
+  document.getElementById('back-link').href = `module.html?m=${moduleKey}`;
+  document.getElementById('quiz-link').href     = `module.html?m=${moduleKey}`;
+  document.getElementById('exercice-link').href = `module.html?m=${moduleKey}`;
+
+  document.getElementById('lesson-title').textContent = lesson.title;
+  document.getElementById('lesson-meta').innerHTML =
+    `<span style="background:${module.bg};color:white;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;">${module.icon} ${module.label}</span>`;
+
+  // Formatage simple : **gras** → <strong>, sinon white-space:pre-line garde les retours
+  const formatted = lesson.content
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  document.getElementById('lesson-content').innerHTML = formatted;
+
+  // Autres leçons du même module
+  const content = await getModuleContent(moduleKey);
+  const otherLessons = (content.lessons || []).filter(l => l.id !== lessonId).slice(0, 4);
+  const otherEl = document.getElementById('other-lessons');
+  if (otherLessons.length) {
+    otherEl.innerHTML = otherLessons.map(l => `
+      <a href="lecon.html?m=${moduleKey}&id=${l.id}" style="display:block;padding:14px;background:#faf8ff;border-radius:13px;text-decoration:none;border-left:3px solid ${module.color};transition:0.2s;">
+        <div style="font-size:14px;font-weight:700;color:#333;line-height:1.3;">${l.title}</div>
+        <div style="font-size:11px;color:#888;margin-top:6px;">${l.content.substring(0, 70).replace(/\*\*/g,'')}…</div>
+      </a>`).join('');
+  } else {
+    otherEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:14px;font-size:13px;">Pas d'autre leçon dans ce module pour l'instant.</div>`;
+  }
+
+  // Autres modules
+  const otherModulesEl = document.getElementById('other-modules');
+  otherModulesEl.innerHTML = Object.entries(MODULES)
+    .filter(([k]) => k !== moduleKey)
+    .map(([k, m]) => `
+      <a href="module.html?m=${k}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px;border-radius:14px;color:white;text-decoration:none;background:${m.bg};text-align:center;transition:0.2s;">
+        <div style="font-size:28px;margin-bottom:6px;">${m.icon}</div>
+        <div style="font-size:11.5px;font-weight:700;line-height:1.2;">${m.label}</div>
+      </a>`).join('');
+});
+</script>
+
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>
