@@ -153,7 +153,8 @@ export async function obtenirProfilEnfant() {
         let difficultes = [];
 
         try {
-            const tousLesScores = await prisma.scoreQuiz.findMany({
+            // Récupérer toutes les tentatives détaillées de l'étudiant
+            const toutesTentatives = await prisma.tentativeExercice.findMany({
                 where: { etudiantId: studentId },
                 include: {
                     exercice: {
@@ -165,87 +166,57 @@ export async function obtenirProfilEnfant() {
                             }
                         }
                     }
-                }
+                },
+                orderBy: { createdAt: 'desc' }
             });
 
-            // Groupement par module pour identifier les zones de réussite et de difficultés
-            const modulePerformance: Record<number, { totalScore: number, maxScore: number, moduleTitre: string, slug: string, exNonReussis: any[] }> = {};
+            // Grouper les résultats par compétence
+            const competenceStats: Record<string, { totalScore: number, totalQuestions: number, moduleTitre: string, slug: string, exIds: Set<number> }> = {};
 
-            for (const s of tousLesScores) {
-                if (!s.exercice || !s.exercice.cours || !s.exercice.cours.module) continue;
-                const mod = s.exercice.cours.module;
-                
-                // Déterminer le max de questions de l'exercice
-                let maxQuestions = 1;
-                try {
-                    const contenuParsed = typeof s.exercice.contenu === 'string' ? JSON.parse(s.exercice.contenu) : s.exercice.contenu;
-                    if (Array.isArray(contenuParsed) && contenuParsed.length > 0) {
-                        maxQuestions = contenuParsed.length;
-                    } else {
-                        const instructionsParsed = JSON.parse(s.exercice.instructions);
-                        if (Array.isArray(instructionsParsed)) {
-                            maxQuestions = instructionsParsed.length;
-                        }
-                    }
-                } catch {
-                    maxQuestions = 1;
-                }
+            for (const t of toutesTentatives) {
+                if (!t.exercice || !t.exercice.cours || !t.exercice.cours.module) continue;
+                const compName = t.exercice.competence || "Général";
+                const mod = t.exercice.cours.module;
 
-                if (!modulePerformance[mod.id]) {
-                    modulePerformance[mod.id] = {
+                if (!competenceStats[compName]) {
+                    competenceStats[compName] = {
                         totalScore: 0,
-                        maxScore: 0,
+                        totalQuestions: 0,
                         moduleTitre: mod.titre,
                         slug: mapTitreToSlug(mod.titre),
-                        exNonReussis: []
+                        exIds: new Set()
                     };
                 }
 
-                modulePerformance[mod.id].totalScore += s.score;
-                modulePerformance[mod.id].maxScore += maxQuestions;
-
-                const ratio = s.score / maxQuestions;
-                if (ratio < 0.7) {
-                    modulePerformance[mod.id].exNonReussis.push({
-                        id: s.exercice.id,
-                        titre: s.exercice.titre,
-                        ratioPct: Math.round(ratio * 100)
-                    });
-                }
+                competenceStats[compName].totalScore += t.score;
+                competenceStats[compName].totalQuestions += t.totalQuestions;
+                competenceStats[compName].exIds.add(t.exerciceId);
             }
 
-            // Génération des diagnostics
-            for (const [modId, perf] of Object.entries(modulePerformance)) {
-                const ratioPct = perf.maxScore > 0 ? Math.round((perf.totalScore / perf.maxScore) * 100) : 100;
+            // Calculer le taux de réussite par compétence
+            for (const [compName, stat] of Object.entries(competenceStats)) {
+                const ratioPct = stat.totalQuestions > 0 ? Math.round((stat.totalScore / stat.totalQuestions) * 100) : 100;
                 
-                if (ratioPct < 70) {
-                    difficultes.push({
-                        parcours: perf.slug,
-                        module: perf.moduleTitre,
-                        pourcentage: ratioPct,
-                        texte: `Tu as un taux de réussite de ${ratioPct}% en ${perf.moduleTitre}.`
+                difficultes.push({
+                    parcours: stat.slug,
+                    module: compName,
+                    pourcentage: ratioPct,
+                    texte: `Niveau de maîtrise : ${ratioPct}% en ${compName}.`
+                });
+
+                // Si la compétence est fragile ou en difficulté (< 80%), recommander de s'entraîner
+                if (ratioPct < 80) {
+                    recommandations.push({
+                        moduleSlug: stat.slug,
+                        titre: `Renforcer : ${compName}`,
+                        action: "S'entraîner",
+                        raison: `Ton taux de maîtrise actuel est de ${ratioPct}%`
                     });
                 }
             }
 
-            // Si l'enfant a des difficultés, on lui recommande de recommencer ces exercices précis
-            for (const [modId, perf] of Object.entries(modulePerformance)) {
-                if (perf.exNonReussis.length > 0) {
-                    for (const ex of perf.exNonReussis) {
-                        recommandations.push({
-                            id: ex.id.toString(),
-                            moduleSlug: perf.slug,
-                            titre: ex.titre,
-                            action: "Recommencer l'exercice",
-                            raison: `Ton dernier score était de ${ex.ratioPct}%`
-                        });
-                    }
-                }
-            }
-
-            // Si aucune recommandation spécifique, suggérer le prochain exercice non commencé
+            // Si aucune recommandation basée sur les erreurs, suggérer le premier exercice non complété
             if (recommandations.length === 0) {
-                // Trouver le premier exercice non complété
                 const tousLesExercices = await prisma.exercice.findMany({
                     where: {
                         cours: {
@@ -265,14 +236,17 @@ export async function obtenirProfilEnfant() {
                     orderBy: { ordre: 'asc' }
                 });
 
+                const tousLesScores = await prisma.scoreQuiz.findMany({
+                    where: { etudiantId: studentId }
+                });
                 const completedExercices = new Set(tousLesScores.map(s => s.exerciceId));
+
                 for (const ex of tousLesExercices) {
                     if (!completedExercices.has(ex.id)) {
                         recommandations.push({
-                            id: ex.id.toString(),
                             moduleSlug: mapTitreToSlug(ex.cours.module.titre),
                             titre: ex.titre,
-                            action: "Découvrir ce défi",
+                            action: "Commencer",
                             raison: `Nouveau défi disponible dans ${ex.cours.module.titre} !`
                         });
                         break;
