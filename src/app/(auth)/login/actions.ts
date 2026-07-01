@@ -9,15 +9,14 @@ export async function loginAction(formData: any) {
 
     try {
         const fauxEmail = `${username.trim().toLowerCase()}@rfc06.fr`;
-
         const supabase = await getSupabaseServer();
+
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email: fauxEmail,
             password,
         });
 
         if (authError) {
-            console.error("[login] Erreur Supabase Auth:", authError.message);
             return { success: false, error: "Identifiants ou mot de passe incorrects." };
         }
 
@@ -25,14 +24,11 @@ export async function loginAction(formData: any) {
             return { success: false, error: "Utilisateur non trouvé." };
         }
 
-        console.log("[login] Authentification Supabase réussie pour le pseudo:", username);
-
         let utilisateur = await prisma.utilisateur.findUnique({
             where: { username: username.trim() }
         });
 
         if (!utilisateur) {
-            console.log("[login] Profil Prisma manquant, création automatique pour:", username);
             utilisateur = await prisma.utilisateur.create({
                 data: {
                     id: authData.user.id,
@@ -45,15 +41,14 @@ export async function loginAction(formData: any) {
             });
         }
 
-        console.log("[login] Profil trouvé, rôle:", utilisateur.role);
-
         return {
             success: true,
-            role: utilisateur.role
+            role: utilisateur.role,
+            session: authData.session
         };
 
     } catch (error) {
-        console.error("[login] Erreur critique lors de la connexion :", error);
+        console.error("[loginAction] Erreur serveur critique :", error);
         return {
             success: false,
             error: "Une erreur serveur est survenue. Veuillez réessayer plus tard."

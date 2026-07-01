@@ -7,56 +7,53 @@ datasource db {
 }
 
 model Utilisateur {
-  id        String            @id @default(cuid())
-  email     String            @unique
-  nom       String
-  prenom    String
-  telephone String?
-  role      String            @default("MEMBRE")
-  isActive  Boolean           @default(true)
-  createdAt DateTime          @default(now())
-  username  String            @unique
-  reservations    Reservation[]
-  dons            Don[]
-  temoignages      Temoignage[]
-  coursAnimes     Cours[]           @relation("IntervenanteCours")
-  suggestions     BoiteAIdees[]
-  ateliersPrives  Atelier[]         @relation("PartenaireAtelier")
-  messagesEnvoyes MessageContact[]
-  scoresQuiz      ScoreQuiz[]
+  id              String              @id @default(cuid())
+  email           String              @unique
+  nom             String
+  prenom          String
+  telephone       String?
+  role            String              @default("MEMBRE")
+  createdAt       DateTime            @default(now())
   tuteurId        String?
-  tuteur          Utilisateur?      @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
-  enfants         Utilisateur[]     @relation("ParentEnfant")
+  username        String              @unique
+  isActive        Boolean             @default(true)
+  ateliersPrives  Atelier[]           @relation("PartenaireAtelier")
+  suggestions     BoiteAIdees[]
+  coursAnimes     Cours[]             @relation("IntervenanteCours")
+  dons            Don[]
+  messagesEnvoyes MessageContact[]
+  reservations    Reservation[]
+  ScoreQuiz       ScoreQuiz[]
+  tentatives      TentativeExercice[]
+  temoignages     Temoignage[]
+  tuteur          Utilisateur?        @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
+  enfants         Utilisateur[]       @relation("ParentEnfant")
 }
 
 model Atelier {
   id                Int           @id @default(autoincrement())
   titre             String
   description       String?
-  dateDebut         DateTime
-  dateFin           DateTime
   placesMax         Int           @default(15)
   estPrive          Boolean       @default(false)
   typePaiement      String?
   creneauVerrouille Boolean       @default(false)
   effectifPrevu     Int?
-
-  lieuId            String
-  lieu              Lieu          @relation(fields: [lieuId], references: [id], onDelete: Restrict)
-
   partenaireId      String?
+  dateDebut         DateTime
+  dateFin           DateTime
+  lieuId            String
+  lieu              Lieu          @relation(fields: [lieuId], references: [id])
   partenaire        Utilisateur?  @relation("PartenaireAtelier", fields: [partenaireId], references: [id], onDelete: Cascade)
-
   reservations      Reservation[]
 }
 
 model Lieu {
   id           String    @id @default(cuid())
-  nom          String    
-  adresseTexte String    
-  adresseIdBan String    @unique 
+  nom          String
+  adresseTexte String
+  adresseIdBan String    @unique
   estExterieur Boolean   @default(false)
-  
   ateliers     Atelier[]
 }
 
@@ -64,87 +61,78 @@ model Reservation {
   id              Int         @id @default(autoincrement())
   dateReservation DateTime    @default(now())
   statut          String      @default("PENDING")
-
   utilisateurId   String
-  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-
   atelierId       Int
   atelier         Atelier     @relation(fields: [atelierId], references: [id], onDelete: Cascade)
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@unique([utilisateurId, atelierId])
 }
 
-enum PublicCible {
-  ENFANT
-  ADULTE
-}
-
-enum Parcours {
-  COMPREHENSION_LECTURE
-  ECO_CITOYENNETE
-  EDUCATION_CIVIQUE
-  NUMERIQUE
-  ANGLAIS
-  ROBOTIQUE
-  NUMERIQUE_ADULTE
-  ORAL
-  BUREAUTIQUE
-}
-
-enum Difficulte {
-  FACILE
-  MOYEN
-  DIFFICILE
-}
-
 model Module {
-  id           Int               @id @default(autoincrement())
-  titre        String
-  description  String?
+  id          Int         @id @default(autoincrement())
+  titre       String
+  description String?
+  createdAt   DateTime    @default(now())
+  public      PublicCible @default(ADULTE)
+  isPublished Boolean     @default(false)
   parcours    Parcours[]
-  difficulte   Difficulte        @default(FACILE)
-  public       PublicCible       @default(ADULTE)
-  isPublished  Boolean           @default(false)
-  createdAt    DateTime          @default(now())
-  cours        Cours[]
+  difficulte  Difficulte  @default(FACILE)
+  cours       Cours[]
 }
 
 model Cours {
-  id              Int               @id @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   titre           String
-  estPublic       Boolean           @default(true)
-  createdAt       DateTime          @default(now())
+  estPublic       Boolean     @default(true)
+  createdAt       DateTime    @default(now())
   intervenanteId  String
-  contenu         Json              @default("[]")
-  moduleId        Int               
-  ordreDansModule Int               @default(1) 
-  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  exercices       Exercice[]        
+  contenu         Json        @default("[]")
+  moduleId        Int
+  ordreDansModule Int         @default(1)
   intervenante    Utilisateur @relation("IntervenanteCours", fields: [intervenanteId], references: [id], onDelete: Cascade)
+  module          Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  exercices       Exercice[]
   programmes      Programme[]
 }
 
 model Exercice {
-  id           Int         @id @default(autoincrement())
+  id           Int                 @id @default(autoincrement())
   titre        String
   instructions String
   type         String
-  contenu      Json        @default("[]")
-  ordre        Int         @default(1) 
+  contenu      Json                @default("[]")
+  competence   String?             // Ex: "Gestion des dossiers", "Recherche"
   coursId      Int
-  cours        Cours       @relation(fields: [coursId], references: [id], onDelete: Cascade)
-
+  ordre        Int                 @default(1)
+  cours        Cours               @relation(fields: [coursId], references: [id], onDelete: Cascade)
   scores       ScoreQuiz[]
+  tentatives   TentativeExercice[]
 }
 
 model ScoreQuiz {
-  id         Int      @id @default(autoincrement())
-  score      Int
-  createdAt  DateTime @default(now())
-  etudiantId String
-  exerciceId Int
-  exercice   Exercice @relation(fields: [exerciceId], references: [id])
-  etudiant   Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  id          Int         @id @default(autoincrement())
+  score       Int
+  createdAt   DateTime    @default(now())
+  etudiantId  String
+  exerciceId  Int
+  Utilisateur Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  exercice    Exercice    @relation(fields: [exerciceId], references: [id])
+}
+
+model TentativeExercice {
+  id                Int         @id @default(autoincrement())
+  createdAt         DateTime    @default(now())
+  score             Int         // Nombre de bonnes réponses
+  totalQuestions    Int         // Nombre total de questions
+  bonnesReponses    Int
+  mauvaisesReponses Int
+  dureeSecondes     Int?        // Temps estimé ou mesuré
+  assistee          Boolean     @default(false)
+  etudiantId        String
+  exerciceId        Int
+  Utilisateur       Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  exercice          Exercice    @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
 }
 
 model Programme {
@@ -155,12 +143,12 @@ model Programme {
 }
 
 model BoiteAIdees {
-  id          Int         @id @default(autoincrement())
-  sujet       String
-  suggestion  String
-  createdAt   DateTime    @default(now())
-  membreId    String
-  membre      Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
+  id         Int         @id @default(autoincrement())
+  sujet      String
+  suggestion String
+  createdAt  DateTime    @default(now())
+  membreId   String
+  membre     Utilisateur @relation(fields: [membreId], references: [id], onDelete: Cascade)
 }
 
 model Don {
@@ -204,4 +192,27 @@ model MessageContact {
   envoyeLe      DateTime     @default(now())
   utilisateurId String?
   utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+}
+
+enum PublicCible {
+  ENFANT
+  ADULTE
+}
+
+enum Parcours {
+  COMPREHENSION_LECTURE
+  ECO_CITOYENNETE
+  EDUCATION_CIVIQUE
+  NUMERIQUE
+  ANGLAIS
+  ROBOTIQUE
+  NUMERIQUE_ADULTE
+  ORAL
+  BUREAUTIQUE
+}
+
+enum Difficulte {
+  FACILE
+  MOYEN
+  DIFFICILE
 }

@@ -17,16 +17,20 @@ import {
     FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { loginAction } from "@/app/(auth)/login/actions"
+import { loginAction } from "./actions"
 import { useRouter } from 'next/navigation'
 import { supabaseClient } from '@/lib/supabaseClient'
 import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react'
 
 export default function LoginPage({
     className,
+    params,
+    searchParams,
     ...props
 }: {
     className?: string;
+    params?: any;
+    searchParams?: any;
     [key: string]: any;
 }) {
     const [username, setUsername] = useState('');
@@ -45,24 +49,23 @@ export default function LoginPage({
         try {
             const result = await loginAction({ username, password });
 
-            if (result.success && result.role) {
+            if (result.success && result.role && result.session) {
                 try {
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (session) {
-                        await supabaseClient.auth.setSession({
-                            access_token: session.access_token,
-                            refresh_token: session.refresh_token
-                        });
-                    } else {
-                        await supabaseClient.auth.refreshSession();
-                    }
+                    await supabaseClient.auth.setSession({
+                        access_token: result.session.access_token,
+                        refresh_token: result.session.refresh_token
+                    });
                 } catch (syncError) {
-                    console.warn("Erreur de synchronisation client/serveur :", syncError);
+                    // Fail-safe silencieux pour l'environnement client
                 }
 
                 router.refresh();
-                const destination = `/${result.role.toLowerCase()}`;
-                router.push(destination);
+                const destination = result.role === 'ADMIN' ? '/admin' : `/${result.role.toLowerCase()}`;
+
+                setTimeout(() => {
+                    router.push(destination);
+                }, 100);
+
             } else {
                 setIsLoading(false);
                 setError(result.error || "Identifiants incorrects.");
@@ -70,15 +73,13 @@ export default function LoginPage({
         } catch (err) {
             setIsLoading(false);
             setError("Une erreur serveur est survenue.");
-            console.error(err);
         }
     };
 
     return (
         <div className="min-h-[calc(100vh-6rem)] flex flex-col items-center justify-center p-6 md:p-10 bg-[#eedeff]">
             <div className="flex w-full max-w-md flex-col gap-8">
-                <div className="flex flex-col items-center gap-3 self-center group cursor-default">
-                </div>
+                <div className="flex flex-col items-center gap-3 self-center group cursor-default"></div>
                 <div className={cn("flex flex-col gap-6", className)} {...props}>
                     <Card className="border-slate-200 bg-white text-slate-900 shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffd166] to-[#260936]" />

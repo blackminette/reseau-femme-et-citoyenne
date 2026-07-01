@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
 
-// Route sur laquelle le middleware s'applique
 export const config = {
     matcher: [
         '/membre/:path*',
@@ -14,6 +13,7 @@ export const config = {
         '/benevole/:path*',
         '/partenaire/:path*',
         '/premiere-connexion/:path*',
+        '/login',
     ],
 };
 
@@ -22,7 +22,9 @@ export async function middleware(request: NextRequest) {
         request: { headers: request.headers },
     });
 
-    // Initialisation du client Supabase
+    const url = request.nextUrl.clone();
+    const pathname = url.pathname;
+
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -38,16 +40,11 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    // Récupération de l'utilisateur connecté
     const { data: { user } } = await supabase.auth.getUser();
-    const url = request.nextUrl.clone();
-    const pathname = url.pathname;
 
-    // Détection des routes privées
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin', '/benevole'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
-    // Si non connecté et tente d'aller sur une page privée -> Redirection /login
     if (!user) {
         if (isPrivateRoute || pathname.startsWith('/premiere-connexion')) {
             url.pathname = '/login';
@@ -56,74 +53,63 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // Récupération du rôle et du statut d'activation dans la table Prisma
     let userRole: UserRole | null = null;
-    let isActive = true; // Actif par défaut par sécurité
+    let isActive = true;
 
-    if (user.email) {
+    if (user.id) {
         const { data: profile, error } = await supabase
-            .from('Utilisateur')
+            .from("Utilisateur")
             .select('role, isActive')
-            .eq('email', user.email)
+            .eq('id', user.id)
             .single();
 
         if (!error && profile) {
             userRole = profile.role as UserRole;
-            isActive = profile.isActive;
+            isActive = profile.isActive ?? true;
         }
     }
 
-    // BLOCAGE SI LE COMPTE EST DÉSACTIVÉ
     if (!isActive) {
         url.pathname = '/login';
         url.searchParams.set('error', 'disabled');
-
-        // Supprime les cookies de session pour déconnecter proprement l'utilisateur
         const logoutResponse = NextResponse.redirect(url);
         logoutResponse.cookies.delete('sb-access-token');
         logoutResponse.cookies.delete('sb-refresh-token');
-
         return logoutResponse;
     }
 
-    // FORCE LA MODIFICATION DU MOT DE PASSE À LA PREMIÈRE CONNEXION
     const doitChanger = user.user_metadata?.doitChangerMotDePasse === true;
     if (doitChanger) {
-        // Redirige vers la page dédiée si l'utilisateur essaie d'aller ailleurs
         if (!pathname.startsWith('/premiere-connexion')) {
             url.pathname = '/premiere-connexion';
             return NextResponse.redirect(url);
         }
-        // S'il est déjà sur /premiere-connexion, on le laisse charger la page
         return response;
     }
 
-    // Si le mot de passe est déjà changé, interdit l'accès à la page de configuration initiale
     if (pathname.startsWith('/premiere-connexion') && !doitChanger) {
         url.pathname = '/';
         return NextResponse.redirect(url);
     }
 
-    // Si déjà connecté et tente d'aller sur /login -> Redirection vers l'accueil
     if (pathname === '/login') {
+        if (userRole) {
+            return redirectUserToDefaultDashboard(userRole, url);
+        }
         url.pathname = '/';
         return NextResponse.redirect(url);
     }
 
-    // Sécurité : Bloque l'accès si l'utilisateur n'a aucun rôle enregistré en base
     if (!userRole && isPrivateRoute) {
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
 
-    // Gestion des accès selon le rôle (RBAC)
     if (userRole) {
-        // Interdit l'accès à /admin si l'utilisateur n'est pas ADMIN
         if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
             return redirectUserToDefaultDashboard(userRole, url);
         }
 
-        // Redirige de force l'utilisateur vers son propre espace s'il s'est trompé d'URL
         if (isPrivateRoute) {
             if (userRole === 'PARTENAIRE' && !pathname.startsWith('/partenaire')) {
                 url.pathname = '/partenaire';
@@ -159,7 +145,6 @@ export async function middleware(request: NextRequest) {
     return response;
 }
 
-// Fonction utilitaire pour renvoyer un utilisateur vers son tableau de bord par défaut
 function redirectUserToDefaultDashboard(role: UserRole, url: URL) {
     switch (role) {
         case 'ADMIN': url.pathname = '/admin'; break;
