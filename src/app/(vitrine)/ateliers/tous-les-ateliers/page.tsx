@@ -8,7 +8,7 @@ const ateliersData = [
         description: "Un atelier interactif pour développer votre potentiel creatif.",
         atelierPasse: "15 Juin 2026 à 10h00",
         slug: "atelier-mosaique",
-        mediaUrl: "#",
+        mediaUrl: "https://www.youtube.com/embed/b7Jx4m610GY",
     },
     {
         id: 2,
@@ -24,7 +24,7 @@ const ateliersData = [
         description: "Initiation aux outils digitaux et aux bases du développement web pour toutes.",
         atelierPasse: "15 Juin 2026 à 14h00",
         slug: "numerique-et-code",
-        mediaUrl: "#",
+        mediaUrl: "https://www.instagram.com/reel/DZHT0Eqszji/embed",
     },
     {
         id: 4,
@@ -59,14 +59,34 @@ export default function Ateliers_Carreaux() {
                             key={atelier.id} 
                             className="bg-[#260936] rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-stretch"
                         >
-                            {/* Zone Média (Image ou Vidéo) */}
-                            <div className="w-full sm:w-2/5 min-h-[160px] relative rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                                <img 
-                                    src={atelier.mediaUrl} 
-                                    alt={atelier.titre}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>  
+
+
+
+                            {/* Zone Média (Image ou Vidéo Réelle - Sans Scroll) */}
+                            <div className={`w-full sm:w-1/2 relative rounded-xl overflow-hidden flex-shrink-0 bg-black ${
+                                atelier.mediaUrl && atelier.mediaUrl.includes('instagram') 
+                                  ? 'aspect-[4/5] max-h-[320px]' // Format vertical propre pour Insta
+                                  : 'aspect-video' // Format 16:9 parfait pour YouTube
+                            }`}>
+                                {atelier.mediaUrl && (atelier.mediaUrl.includes('youtube') || atelier.mediaUrl.includes('instagram')) ? (
+                                    <iframe
+                                        src={atelier.mediaUrl}
+                                        title={atelier.titre}
+                                        className="w-full h-full absolute inset-0"
+                                        scrolling="no" 
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowFullScreen
+                                    />
+                                ) : (
+                                    <img
+                                        src={atelier.mediaUrl}
+                                        alt={atelier.titre}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                            </div>
+
 
 
                             {/* Zone Contenu */}
@@ -80,6 +100,7 @@ export default function Ateliers_Carreaux() {
                                 </div>    
 
 
+
                                 {/* Section Atelier passe & Bouton */}
                                 <div className="mt-4 pt-3 border-t border-[#bc96e6] flex items-center justify-between gap-2">
                                     <div className="flex flex-col">
@@ -88,6 +109,7 @@ export default function Ateliers_Carreaux() {
                                         <span className="text-xs font-medium text-white/85 mt-0.5">
                                             {atelier.atelierPasse}</span>
                                     </div>
+
 
 
                                     {/* Lien de redirection */}
