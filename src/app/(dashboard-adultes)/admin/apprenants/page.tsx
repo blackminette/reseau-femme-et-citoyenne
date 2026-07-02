@@ -117,6 +117,7 @@ export default function SuiviApprenantsPage() {
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-slate-50 min-h-screen">
+            {/* En-tête */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Suivi des Apprenants</h1>
@@ -124,6 +125,27 @@ export default function SuiviApprenantsPage() {
                 </div>
             </div>
 
+            {/* --- BLOC STATISTIQUES GLOBALES --- */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Apprenants</span>
+                    <span className="text-3xl font-extrabold text-slate-900 mt-2">{apprenants.length}</span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Étudiants (Adultes)</span>
+                    <span className="text-3xl font-extrabold text-indigo-600 mt-2">
+                        {apprenants.filter(u => u.role === 'ETUDIANT').length}
+                    </span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Enfants</span>
+                    <span className="text-3xl font-extrabold text-slate-700 mt-2">
+                        {apprenants.filter(u => u.role === 'ENFANT').length}
+                    </span>
+                </div>
+            </div>
+
+            {/* Barre de recherche et filtres */}
             <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
