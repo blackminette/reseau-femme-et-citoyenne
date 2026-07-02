@@ -292,57 +292,60 @@ export default function SuiviApprenantsPage() {
                 isOpen={modalViewIsOpen}
                 onClose={() => setModalViewIsOpen(false)}
                 title={`Historique de progression : ${selectedApprenant?.prenom} ${selectedApprenant?.nom?.toUpperCase()}`}
+                size="max-w-5xl" // <-- Ici, on force la modal à devenir très large uniquement pour cette page !
             >
-                <div className="p-1 space-y-4 max-w-4xl max-h-[75vh] overflow-y-auto">
+                <div className="p-1 space-y-4 w-full max-h-[75vh] overflow-y-auto">
                     {!selectedApprenant?.ScoreQuiz || selectedApprenant.ScoreQuiz.length === 0 ? (
                         <div className="p-8 text-center text-slate-400 font-medium">
                             Cet apprenant n'a pas encore validé d'exercices ou de quiz.
                         </div>
                     ) : (
                         <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
-                            <table className="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
-                                        <th className="p-3"><div className="flex items-center gap-1.5"><Layers size={14} /> Parcours</div></th>
-                                        <th className="p-3"><div className="flex items-center gap-1.5"><BookOpen size={14} /> Module</div></th>
-                                        <th className="p-3">Exercice / Cours</th>
-                                        <th className="p-3 text-center">Score</th>
-                                        <th className="p-3"><div className="flex items-center gap-1.5"><Calendar size={14} /> Date</div></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                                    {[...selectedApprenant.ScoreQuiz]
-                                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                                        .map((sq: any) => (
-                                            <tr key={sq.id} className="hover:bg-slate-50/70 transition-colors">
-                                                <td className="p-3 text-xs">
-                                                    <span className="bg-violet-50 text-violet-700 border border-violet-100 px-2 py-0.5 rounded-md font-bold">
-                                                        {formatParcours(sq.exercice?.cours?.module?.parcours)}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-slate-900 max-w-[180px] truncate" title={sq.exercice?.cours?.module?.titre}>
-                                                    {sq.exercice?.cours?.module?.titre || <span className="text-slate-400 italic text-xs">Inconnu</span>}
-                                                </td>
-                                                <td className="p-3 text-slate-600 max-w-[200px] truncate">
-                                                    <div className="font-semibold text-slate-800">{sq.exercice?.titre}</div>
-                                                    <div className="text-xs text-slate-400 truncate">{sq.exercice?.cours?.titre}</div>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs border ${getScoreStyle(sq.score)}`}>
-                                                        {sq.score} %
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-xs text-slate-400 whitespace-nowrap">
-                                                    {new Date(sq.createdAt).toLocaleDateString('fr-FR', {
-                                                        day: 'numeric',
-                                                        month: 'short',
-                                                        year: 'numeric'
-                                                    })}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse text-sm table-auto">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                                            <th className="p-3 w-[15%]"><div className="flex items-center gap-1.5"><Layers size={14} /> Parcours</div></th>
+                                            <th className="p-3 w-[25%]"><div className="flex items-center gap-1.5"><BookOpen size={14} /> Module</div></th>
+                                            <th className="p-3 w-[35%]">Exercice / Cours</th>
+                                            <th className="p-3 w-[12%] text-center">Score</th>
+                                            <th className="p-3 w-[13%]"><div className="flex items-center gap-1.5"><Calendar size={14} /> Date</div></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                                        {[...selectedApprenant.ScoreQuiz]
+                                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                            .map((sq: any) => (
+                                                <tr key={sq.id} className="hover:bg-slate-50/70 transition-colors">
+                                                    <td className="p-3 text-xs whitespace-nowrap">
+                                                        <span className="bg-violet-50 text-violet-700 border border-violet-100 px-2 py-0.5 rounded-md font-bold">
+                                                            {formatParcours(sq.exercice?.cours?.module?.parcours)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 text-slate-900 font-semibold">
+                                                        {sq.exercice?.cours?.module?.titre || <span className="text-slate-400 italic text-xs">Inconnu</span>}
+                                                    </td>
+                                                    <td className="p-3 text-slate-600">
+                                                        <div className="font-semibold text-slate-800 break-words">{sq.exercice?.titre}</div>
+                                                        <div className="text-xs text-slate-400 break-words">{sq.exercice?.cours?.titre}</div>
+                                                    </td>
+                                                    <td className="p-3 text-center whitespace-nowrap">
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs border ${getScoreStyle(sq.score)}`}>
+                                                            {sq.score} %
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 text-xs text-slate-400 whitespace-nowrap">
+                                                        {new Date(sq.createdAt).toLocaleDateString('fr-FR', {
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
