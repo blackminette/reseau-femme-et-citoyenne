@@ -5,8 +5,7 @@ import React, { useEffect, useState } from 'react';
 import {
     listerLesApprenants,
 } from './actions';
-import Modal from '@/components/Modal';
-import { Eye, Pencil, Trash2, Search, ArrowUpDown, ChevronDown, UserCheck, UserX } from 'lucide-react';
+import { Search, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ETUDIANT: 'bg-indigo-50 text-indigo-700 border-indigo-200',
@@ -20,14 +19,9 @@ export default function SuiviApprenantsPage() {
     const [roleFilter, setRoleFilter] = useState('TOUS');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-    // Modals
-    const [selectedApprenant, setSelectedApprenant] = useState<any>(null);
-    const [modalViewIsOpen, setModalViewIsOpen] = useState(false);
-    const [modalEditIsOpen, setModalEditIsOpen] = useState(false);
-
-    // Form states
-    const [editForm, setEditForm] = useState({ nom: '', prenom: '', telephone: '', role: '' });
-    const [isLoading, setIsLoading] = useState(false);
+    // États pour la pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         chargerApprenants();
@@ -35,6 +29,7 @@ export default function SuiviApprenantsPage() {
 
     useEffect(() => {
         filtrerEtTrier();
+        setCurrentPage(1);
     }, [apprenants, searchQuery, roleFilter, sortConfig]);
 
     const chargerApprenants = async () => {
@@ -84,6 +79,12 @@ export default function SuiviApprenantsPage() {
         }
         setSortConfig({ key, direction });
     };
+
+    const totalItems = filteredApprenants.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredApprenants.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-slate-50 min-h-screen">
@@ -135,14 +136,14 @@ export default function SuiviApprenantsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                            {filteredApprenants.length === 0 ? (
+                            {currentItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-slate-400 font-medium bg-slate-50/50">
+                                    <td colSpan={4} className="p-8 text-center text-slate-400 font-medium bg-slate-50/50">
                                         Aucun apprenant trouvé.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredApprenants.map((u) => (
+                                currentItems.map((u) => (
                                     <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
                                         <td className="p-4 font-semibold text-slate-900">
                                             {u.nom.toUpperCase()} {u.prenom}
@@ -168,6 +169,63 @@ export default function SuiviApprenantsPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Barre de pagination */}
+                {totalItems > 0 && (
+                    <div className="p-4 border-t border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-600 font-medium">
+                        <div className="flex items-center gap-4">
+                            <span className="text-xs text-slate-500">
+                                Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, totalItems)} sur {totalItems} apprenant(s)
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-slate-400">Lignes :</span>
+                                <select
+                                    value={itemsPerPage}
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="bg-white border border-slate-200 text-xs rounded px-1.5 py-0.5 focus:outline-none focus:border-violet-500 text-slate-700 font-bold cursor-pointer"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${currentPage === page
+                                        ? 'bg-violet-600 text-white shadow-sm'
+                                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
