@@ -11,10 +11,10 @@ import {
     Users,
     CalendarDays,
     GraduationCap,
-    Inbox,
     ClipboardCheck,
     ChevronRight,
-    LogOut
+    LogOut,
+    UserCheck
 } from 'lucide-react';
 
 interface SidebarLinkProps {
@@ -126,9 +126,9 @@ export default function AdminSideMenu() {
                     icon={<Users className="h-4 w-4" />}
                 />
                 <SidebarLink
-                    href="/admin/messagerie"
-                    label="Messagerie"
-                    icon={<Inbox className="h-4 w-4" />}
+                    href="/admin/apprenants"
+                    label="Suivi apprenants"
+                    icon={<UserCheck className="h-4 w-4" />}
                 />
             </div>
 
