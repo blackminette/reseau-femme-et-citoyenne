@@ -6,7 +6,7 @@ import {
     listerLesApprenants,
 } from './actions';
 import Modal from '@/components/Modal';
-import { Eye, Search, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, GraduationCap, CheckCircle } from 'lucide-react';
+import { Eye, Search, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, CheckCircle, Calendar, BookOpen, Layers } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ETUDIANT: 'bg-indigo-50 text-indigo-700 border-indigo-200',
@@ -72,7 +72,6 @@ export default function SuiviApprenantsPage() {
                 let aValue = a[sortConfig.key];
                 let bValue = b[sortConfig.key];
 
-                // Gérer les valeurs nulles (ex: pas encore de score)
                 if (aValue === null || aValue === undefined) return sortConfig.direction === 'asc' ? 1 : -1;
                 if (bValue === null || bValue === undefined) return sortConfig.direction === 'asc' ? -1 : 1;
 
@@ -96,18 +95,24 @@ export default function SuiviApprenantsPage() {
         setSortConfig({ key, direction });
     };
 
+    // Calculs pour la pagination
     const totalItems = filteredApprenants.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredApprenants.slice(indexOfFirstItem, indexOfLastItem);
 
-    // Fonction utilitaire pour obtenir la couleur du score
     const getScoreStyle = (score: number | null) => {
         if (score === null) return 'bg-slate-100 text-slate-400 border-slate-200';
         if (score >= 70) return 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold';
         if (score >= 40) return 'bg-amber-50 text-amber-700 border-amber-200 font-bold';
         return 'bg-rose-50 text-rose-700 border-rose-200 font-bold';
+    };
+
+    // Formater l'affichage textuel du parcours
+    const formatParcours = (parcoursArray: string[]) => {
+        if (!parcoursArray || parcoursArray.length === 0) return 'Non spécifié';
+        return parcoursArray.map(p => p.charAt(0) + p.slice(1).toLowerCase()).join(', ');
     };
 
     return (
@@ -282,10 +287,64 @@ export default function SuiviApprenantsPage() {
                 )}
             </div>
 
-            {/* Modal de prévisualisation - Vide pour l'instant, on y mettra l'approche B */}
-            <Modal isOpen={modalViewIsOpen} onClose={() => setModalViewIsOpen(false)} title="Détail de l'apprenant">
-                <div className="p-4">
-                    <p className="text-sm text-slate-500">Prêt pour l'approche B.</p>
+            {/* Modal de prévisualisation - Historique détaillé */}
+            <Modal
+                isOpen={modalViewIsOpen}
+                onClose={() => setModalViewIsOpen(false)}
+                title={`Historique de progression : ${selectedApprenant?.prenom} ${selectedApprenant?.nom?.toUpperCase()}`}
+            >
+                <div className="p-1 space-y-4 max-w-4xl max-h-[75vh] overflow-y-auto">
+                    {!selectedApprenant?.ScoreQuiz || selectedApprenant.ScoreQuiz.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 font-medium">
+                            Cet apprenant n'a pas encore validé d'exercices ou de quiz.
+                        </div>
+                    ) : (
+                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
+                            <table className="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                                        <th className="p-3"><div className="flex items-center gap-1.5"><Layers size={14} /> Parcours</div></th>
+                                        <th className="p-3"><div className="flex items-center gap-1.5"><BookOpen size={14} /> Module</div></th>
+                                        <th className="p-3">Exercice / Cours</th>
+                                        <th className="p-3 text-center">Score</th>
+                                        <th className="p-3"><div className="flex items-center gap-1.5"><Calendar size={14} /> Date</div></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                                    {[...selectedApprenant.ScoreQuiz]
+                                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                        .map((sq: any) => (
+                                            <tr key={sq.id} className="hover:bg-slate-50/70 transition-colors">
+                                                <td className="p-3 text-xs">
+                                                    <span className="bg-violet-50 text-violet-700 border border-violet-100 px-2 py-0.5 rounded-md font-bold">
+                                                        {formatParcours(sq.exercice?.cours?.module?.parcours)}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-slate-900 max-w-[180px] truncate" title={sq.exercice?.cours?.module?.titre}>
+                                                    {sq.exercice?.cours?.module?.titre || <span className="text-slate-400 italic text-xs">Inconnu</span>}
+                                                </td>
+                                                <td className="p-3 text-slate-600 max-w-[200px] truncate">
+                                                    <div className="font-semibold text-slate-800">{sq.exercice?.titre}</div>
+                                                    <div className="text-xs text-slate-400 truncate">{sq.exercice?.cours?.titre}</div>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs border ${getScoreStyle(sq.score)}`}>
+                                                        {sq.score} %
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-xs text-slate-400 whitespace-nowrap">
+                                                    {new Date(sq.createdAt).toLocaleDateString('fr-FR', {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                        year: 'numeric'
+                                                    })}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </Modal>
         </div>
