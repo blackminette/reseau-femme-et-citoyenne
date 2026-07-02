@@ -4,8 +4,10 @@ import pg from 'pg';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-// Charge le fichier .env
-dotenv.config({ path: '.env.local' });
+// Charge d'abord .env puis .env.local s'il existe afin de couvrir les deux
+// conventions de configuration utilisées dans le dépôt.
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
 
 // Configure le pool de connexion PostgreSQL natif
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -20,6 +22,251 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const NAPOLEON_TITLES = ['Napoléon', 'Napoleon', 'Éducation Civique', 'Education Civique'];
+const NAPOLEON_MODULE_DESCRIPTION = "Comprendre un personnage clé de l'histoire française";
+
+const NAPOLEON_COURS = [
+  {
+    titre: 'Découvrir Napoléon',
+    ordreDansModule: 1,
+    contenu: [
+      {
+        titre: 'Qui était Napoléon ?',
+        texte: "Napoléon Bonaparte est une grande figure de l'histoire de France. Il a d'abord été général, puis il est devenu Premier Consul et ensuite Empereur des Français. Pour l'étudier sérieusement, il faut regarder à la fois ses réussites et ses limites."
+      }
+    ],
+  },
+  {
+    titre: 'Napoléon et son époque',
+    ordreDansModule: 2,
+    contenu: [
+      {
+        titre: 'Une période de changements',
+        texte: "Napoléon a vécu pendant une période de grands changements en France. Après la Révolution, il a pris le pouvoir et a dirigé le pays. Son époque a vu des réformes importantes, comme l'organisation de l'administration et du droit."
+      }
+    ],
+  },
+  {
+    titre: 'Comprendre avec méthode',
+    ordreDansModule: 3,
+    contenu: [
+      {
+        titre: 'Analyser un personnage historique',
+        texte: "Pour comprendre Napoléon, on doit poser des questions précises : dans quel contexte agit-il, quelles décisions prend-il, qui en profite, qui en souffre et quelles sont les limites de son pouvoir ? L'histoire s'explique avec des faits, pas avec des impressions."
+      }
+    ],
+  },
+  {
+    titre: 'Les limites à connaître',
+    ordreDansModule: 4,
+    contenu: [
+      {
+        titre: 'Regarder aussi les limites',
+        texte: "Le Code civil a structuré une partie du droit, mais il donnait moins de droits aux femmes qu'aux hommes. Napoléon a aussi concentré beaucoup de pouvoir et le rétablissement de l'esclavage en 1802 est contraire aux valeurs actuelles de liberté et d'égalité."
+      }
+    ],
+  },
+] as const;
+
+const NAPOLEON_EXERCICES = [
+  {
+    titre: "Remettre les grandes étapes dans l'ordre",
+    ordre: 1,
+    type: 'IMAGES_ORDRE',
+    instructions: "Range les événements de la vie politique de Napoléon du plus ancien au plus récent.",
+    contenu: {
+      correctOrder: [
+        'Général pendant la Révolution française',
+        'Premier Consul',
+        'Empereur des Français',
+        'Exil après sa chute'
+      ],
+      initialOrder: [
+        'Empereur des Français',
+        'Général pendant la Révolution française',
+        'Exil après sa chute',
+        'Premier Consul'
+      ]
+    }
+  },
+  {
+    titre: 'Quiz Napoléon',
+    ordre: 2,
+    type: 'QUIZ',
+    instructions: 'Réponds aux questions pour vérifier ce que tu as retenu.',
+    contenu: [
+      {
+        q: "Comment s'appelle la fonction de Napoléon avant de devenir Empereur ?",
+        options: ['Président', 'Premier Consul', 'Roi de France', 'Ministre'],
+        answer: 1,
+        explication: "Après le coup d'État de 1799, Napoléon devient Premier Consul."
+      },
+      {
+        q: "Napoléon a surtout dirigé la France après...",
+        options: ['La Révolution française', 'La Première Guerre mondiale', 'La Seconde Guerre mondiale', 'La guerre froide'],
+        answer: 0,
+        explication: "Napoléon prend le pouvoir dans la période qui suit la Révolution française."
+      },
+      {
+        q: "Pourquoi faut-il étudier Napoléon avec rigueur ?",
+        options: ['Pour le transformer en héros parfait', 'Pour oublier son époque', 'Pour comprendre ses réussites et ses limites', 'Parce qu’il n’a rien changé'],
+        answer: 2,
+        explication: "Un personnage historique se comprend en regardant les faits, le contexte et les conséquences."
+      },
+      {
+        q: "Quel est un exemple de conséquence liée à son époque ?",
+        options: ['Des guerres très nombreuses en Europe', 'La disparition totale de l’État', 'La fin de toute administration', 'L’arrêt de l’histoire'],
+        answer: 0,
+        explication: "Son règne a été marqué par des guerres à grande échelle en Europe."
+      },
+      {
+        q: "Que doit faire un élève quand il étudie l’histoire ?",
+        options: ['Répéter des slogans', 'Chercher des faits et des sources', 'Éviter les dates', 'Inventer des conclusions'],
+        answer: 1,
+        explication: "L'histoire demande des faits, du contexte et des sources fiables."
+      }
+    ]
+  }
+] as const;
+
+async function nettoyerNapoleonSeed() {
+  const allChildModules = await prisma.module.findMany({
+    where: {
+      public: 'ENFANT'
+    },
+    include: {
+      cours: {
+        include: {
+          exercices: true
+        }
+      }
+    }
+  });
+
+  const existingModules = allChildModules.filter((module) =>
+    NAPOLEON_TITLES.includes(module.titre) || module.parcours.includes('EDUCATION_CIVIQUE')
+  );
+
+  if (existingModules.length === 0) {
+    return null;
+  }
+
+  const targetModule = existingModules[0];
+  const exerciceIds = existingModules.flatMap((mod) =>
+    mod.cours.flatMap((cours) => cours.exercices.map((exercice) => exercice.id))
+  );
+  const coursIds = existingModules.flatMap((mod) => mod.cours.map((cours) => cours.id));
+
+  if (exerciceIds.length > 0) {
+    await prisma.scoreQuiz.deleteMany({
+      where: {
+        exerciceId: { in: exerciceIds }
+      }
+    });
+  }
+
+  if (coursIds.length > 0) {
+    await prisma.programme.deleteMany({
+      where: {
+        coursId: { in: coursIds }
+      }
+    });
+    await prisma.cours.deleteMany({
+      where: {
+        id: { in: coursIds }
+      }
+    });
+  }
+
+  const extraModuleIds = existingModules.slice(1).map((mod) => mod.id);
+  if (extraModuleIds.length > 0) {
+    await prisma.module.deleteMany({
+      where: {
+        id: { in: extraModuleIds }
+      }
+    });
+  }
+
+  return targetModule.id;
+}
+
+async function resetSerialSequence(tableName: string) {
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"${tableName}"', 'id'), COALESCE((SELECT MAX(id) FROM "${tableName}"), 0) + 1, false);`
+  );
+}
+
+async function resetNapoleonSequences() {
+  await resetSerialSequence('Module');
+  await resetSerialSequence('Cours');
+  await resetSerialSequence('Exercice');
+  await resetSerialSequence('Programme');
+  await resetSerialSequence('ScoreQuiz');
+}
+
+async function seedNapoleonModule(intervenanteId: string) {
+  const targetModuleId = await nettoyerNapoleonSeed();
+  await resetNapoleonSequences();
+  const napoleonModule = targetModuleId
+    ? await prisma.module.update({
+      where: { id: targetModuleId },
+      data: {
+        titre: 'Napoléon',
+        description: NAPOLEON_MODULE_DESCRIPTION,
+        parcours: ['EDUCATION_CIVIQUE'],
+        difficulte: 'MOYEN',
+        public: 'ENFANT',
+        isPublished: true
+      }
+    })
+    : await prisma.module.create({
+      data: {
+        titre: 'Napoléon',
+        description: NAPOLEON_MODULE_DESCRIPTION,
+        parcours: ['EDUCATION_CIVIQUE'],
+        difficulte: 'MOYEN',
+        public: 'ENFANT',
+        isPublished: true
+      }
+    });
+
+  const coursCrees: Array<{ id: number; titre: string }> = [];
+
+  for (const cours of NAPOLEON_COURS) {
+    const createdCours = await prisma.cours.create({
+      data: {
+        titre: cours.titre,
+        intervenanteId,
+        contenu: cours.contenu as unknown as object,
+        moduleId: napoleonModule.id,
+        ordreDansModule: cours.ordreDansModule,
+      }
+    });
+
+    coursCrees.push({
+      id: createdCours.id,
+      titre: createdCours.titre
+    });
+  }
+
+  for (const exercice of NAPOLEON_EXERCICES) {
+    const targetCours = exercice.ordre === 1 ? coursCrees[2] : coursCrees[3];
+
+    await prisma.exercice.create({
+      data: {
+        titre: exercice.titre,
+        instructions: exercice.instructions,
+        type: exercice.type,
+        contenu: exercice.contenu as unknown as object,
+        ordre: exercice.ordre,
+        coursId: targetCours.id
+      }
+    });
+  }
+
+  console.log(`🧩 Module [Napoléon] seedé avec ${NAPOLEON_COURS.length} cours et ${NAPOLEON_EXERCICES.length} exercices.`);
+}
+
 async function main() {
   console.log('🌱 (Seeding) Début de la synchronisation Supabase + Prisma...');
 
@@ -28,6 +275,7 @@ async function main() {
     {
       email: 'admin@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'admin',
       nom: 'IPSSI',
       prenom: 'Johanna',
       role: 'ADMIN',
@@ -36,6 +284,7 @@ async function main() {
     {
       email: 'membre@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'membre',
       nom: 'Martin',
       prenom: 'Lucas',
       role: 'MEMBRE',
@@ -44,6 +293,7 @@ async function main() {
     {
       email: 'partenaire@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'partenaire',
       nom: 'Dubois',
       prenom: 'Thomas',
       role: 'PARTENAIRE',
@@ -52,6 +302,7 @@ async function main() {
     {
       email: 'intervenante@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'intervenante',
       nom: 'Robert',
       prenom: 'Sarah',
       role: 'INTERVENANTE',
@@ -60,6 +311,7 @@ async function main() {
     {
       email: 'enfant@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'enfant',
       nom: 'Petit',
       prenom: 'Chloé',
       role: 'ENFANT',
@@ -68,6 +320,7 @@ async function main() {
     {
       email: 'benevole@rfc06.fr',
       motDePasse: 'PassAsso123!',
+      username: 'benevole',
       nom: 'Lemoine',
       prenom: 'Antoine',
       role: 'BENEVOLE',
@@ -115,6 +368,7 @@ async function main() {
       create: {
         id: supabaseAuthId,
         email: user.email,
+        username: user.username,
         nom: user.nom,
         prenom: user.prenom,
         role: user.role,
@@ -122,158 +376,25 @@ async function main() {
       },
     });
 
-    console.log(`👤 Compte [${user.role}] pour ${user.prenom} ${user.nom} synchronisé !`);
+    console.log(`👤 Compte [${user.role}] pour ${user.prenom} ${user.nom} synchronisé ! (Mdp: ${user.motDePasse})`);
   }
 
-  // --- LOGIQUE DE CALCUL DYNAMIQUE DE LA SEMAINE COURANTE ---
-  const aujourdhui = new Date();
-  const diff = aujourdhui.getDay() === 0 ? 6 : aujourdhui.getDay() - 1;
-  
-  // Calcul du lundi de cette semaine à minuit pile
-  const lundiCourant = new Date(aujourdhui);
-  lundiCourant.setDate(aujourdhui.getDate() - diff);
-  lundiCourant.setHours(0, 0, 0, 0);
-
-  // Helper pour générer des dates de manière lisible (Espace corrigé ici)
-  const getDatePourJourEtHeure = (joursDepuisLundi: number, heures: number, minutes: number = 0) => {
-    const d = new Date(lundiCourant);
-    d.setDate(lundiCourant.getDate() + joursDepuisLundi);
-    d.setHours(heures, minutes, 0, 0);
-    return d;
-  };
-
-  console.log('🌱 (Seeding) Injection des lieux et ateliers dynamiques pour cette semaine...');
-
-  const lieuMedia = await prisma.lieu.upsert({
-    where: { adresseIdBan: 'ban-id-12345' },
-    update: {},
-    create: {
-      nom: 'Espace Créatif (Média 1)',
-      adresseTexte: '12 Rue des Fleurs, 06000 Nice',
-      adresseIdBan: 'ban-id-12345',
-      estExterieur: false,
+  const intervenante = await prisma.utilisateur.findFirst({
+    where: {
+      role: { in: ['INTERVENANTE', 'INTERVENANT'] }
     },
-  });
-
-  const lieuLab = await prisma.lieu.upsert({
-    where: { adresseIdBan: 'ban-id-67890' },
-    update: {},
-    create: {
-      nom: 'Salle Lab Tech 2',
-      adresseTexte: '45 Avenue de la République, 06000 Nice',
-      adresseIdBan: 'ban-id-67890',
-      estExterieur: false,
-    },
-  });
-
-  // Nettoyage complet des anciennes réservations et ateliers avant injection
-  await prisma.reservation.deleteMany({});
-  await prisma.atelier.deleteMany({});
-
-  // B. Ajout des Ateliers de test calculés dynamiquement sur la semaine actuelle
-  const ateliersData = [
-    // === LUNDI ===
-    {
-      titre: 'Arts Plastiques & Recyclage',
-      description: 'Donner une seconde vie aux objets. Dès 6 ans.',
-      dateDebut: getDatePourJourEtHeure(0, 14), // 0 = Lundi, 14h
-      dateFin: getDatePourJourEtHeure(0, 16),   // Lundi, 16h
-      placesMax: 12,
-      lieuId: lieuLab.id,
-    },
-
-    // === MARDI ===
-    {
-      titre: 'Conte & bricolage',
-      description: '3 - 5 ans. Doudou bienvenu.',
-      dateDebut: getDatePourJourEtHeure(1, 10), // 1 = Mardi, 10h
-      dateFin: getDatePourJourEtHeure(1, 12),   // Mardi, 12h
-      placesMax: 10,
-      lieuId: lieuMedia.id,
-    },
-
-    // === MERCREDI ===
-    {
-      titre: 'Éveil Musical Ludique',
-      description: 'Découverte des rythmes et instruments (3 - 5 ans).',
-      dateDebut: getDatePourJourEtHeure(2, 10), // 2 = Mercredi, 10h
-      dateFin: getDatePourJourEtHeure(2, 12),   // Mercredi, 12h
-      placesMax: 10,
-      lieuId: lieuMedia.id,
-    },
-    {
-      titre: 'Création de Jeux Scratch',
-      description: 'Niveau Poussins (3 - 5 ans).',
-      dateDebut: getDatePourJourEtHeure(2, 14), // Mercredi, 14h
-      dateFin: getDatePourJourEtHeure(2, 16),   // Mercredi, 16h
-      placesMax: 15,
-      lieuId: lieuMedia.id,
-    },
-    {
-      titre: 'Robotique & Kits Arduino',
-      description: 'Découverte ludique.',
-      dateDebut: getDatePourJourEtHeure(2, 16, 30), // Mercredi, 16h30
-      dateFin: getDatePourJourEtHeure(2, 18),      // Mercredi, 18h
-      placesMax: 15,
-      lieuId: lieuLab.id,
-    },
-
-    // === JEUDI ===
-    {
-      titre: 'Couture & Customisation',
-      description: 'Apprends à personnaliser tes vêtements. Dès 8 ans.',
-      dateDebut: getDatePourJourEtHeure(3, 16, 30), // 3 = Jeudi, 16h30
-      dateFin: getDatePourJourEtHeure(3, 18),      // Jeudi, 18h
-      placesMax: 8,
-      lieuId: lieuLab.id,
-    },
-
-    // === VENDREDI ===
-    {
-      titre: 'Théâtre & Improvisation',
-      description: 'Jeux d’expression et de confiance en soi.',
-      dateDebut: getDatePourJourEtHeure(4, 16, 30), // 4 = Vendredi, 16h30
-      dateFin: getDatePourJourEtHeure(4, 18),      // Vendredi, 18h
-      placesMax: 12,
-      lieuId: lieuMedia.id,
-    },
-
-    // === SAMEDI ===
-    {
-      titre: 'Atelier Pâtisserie Créative',
-      description: 'Confection et décoration de cupcakes.',
-      dateDebut: getDatePourJourEtHeure(5, 10), // 5 = Samedi, 10h
-      dateFin: getDatePourJourEtHeure(5, 12),   // Samedi, 12h
-      placesMax: 10,
-      lieuId: lieuLab.id,
-    },
-    {
-      titre: 'Initiation Peinture',
-      description: 'Expression créative libre.',
-      dateDebut: getDatePourJourEtHeure(5, 14), // Samedi, 14h
-      dateFin: getDatePourJourEtHeure(5, 16),   // Samedi, 16h
-      placesMax: 12,
-      lieuId: lieuLab.id,
-    },
-    {
-      titre: 'BD & Dessin Manga',
-      description: 'Techniques d’encrage et création de personnage.',
-      dateDebut: getDatePourJourEtHeure(5, 16, 30), // Samedi, 16h30
-      dateFin: getDatePourJourEtHeure(5, 18),      // Samedi, 18h
-      placesMax: 15,
-      lieuId: lieuMedia.id,
+    orderBy: {
+      createdAt: 'asc'
     }
-  ];
+  });
 
-  // Insertion séquentielle
-  for (const item of ateliersData) {
-    await prisma.atelier.create({
-      data: item,
-    });
+  if (!intervenante) {
+    throw new Error("Impossible de seed Napoléon : aucun compte intervenante n'a été trouvé.");
   }
 
-  console.log('✅ Données de planning injectées dynamiquement pour la semaine en cours !');
-  console.log('✅ Seeding terminé avec succès !');
+  await seedNapoleonModule(intervenante.id);
+
+  console.log('✅ Seeding terminé avec succès et prêt pour le login local !');
 }
 
 main()

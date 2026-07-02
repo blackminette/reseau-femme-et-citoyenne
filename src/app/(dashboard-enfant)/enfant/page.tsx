@@ -44,7 +44,7 @@ export default async function EnfantDashboard() {
     const enfant = profile || MOCK_ENFANT;
 
     // Map modules with dynamic progress
-    const listModules = modulesRes && modulesRes.modules && modulesRes.modules.length > 0
+    const listModules = (modulesRes && modulesRes.modules && modulesRes.modules.length > 0
         ? modulesRes.modules.map(mod => {
             const meta = METADATA_MAP[mod.slug as keyof typeof METADATA_MAP] || { Icon: BookOpen, from: "#6d5ba8", to: "#5b4a98" };
             return {
@@ -56,8 +56,9 @@ export default async function EnfantDashboard() {
                 from: meta.from,
                 to: meta.to
             };
-        })
-        : MOCK_MODULES;
+          })
+        : MOCK_MODULES
+    ).filter((mod) => mod.slug !== "napoleon" && mod.id !== "napoleon");
 
     const isMock = !modulesRes || modulesRes.source === 'mock';
 
@@ -328,7 +329,7 @@ export default async function EnfantDashboard() {
                         <div className="flex flex-col items-center justify-center py-8 text-center min-h-[150px]">
                             <TrendingUp className="h-9 w-9 text-violet-300 animate-pulse" />
                             <p className="mt-2 text-xs text-violet-500 font-semibold">Aucune activité récente.</p>
-                            <p className="text-[10px] text-violet-400 mt-1">Tes leçons complétées s'afficheront ici !</p>
+                            <p className="text-[10px] text-violet-400 mt-1">Tes leçons complétées s&apos;afficheront ici !</p>
                         </div>
                     )}
                 </div>

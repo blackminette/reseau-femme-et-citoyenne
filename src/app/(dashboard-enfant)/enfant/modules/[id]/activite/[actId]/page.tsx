@@ -1,16 +1,20 @@
 // * src/app/(dashboard-enfant)/enfant/modules/[id]/activite/[actId]/page.tsx
 'use client';
 
-import React, { useState, useRef, useEffect, use } from 'react';
+import React, { useState, useEffect, use } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-    ChevronLeft, Star, Trophy, Check, RotateCcw,
-    Sparkles, BookOpen, HelpCircle,
-    ArrowRight, CheckCircle2, XCircle, MoveUp, MoveDown
+    Star, Check, RotateCcw,
+    Sparkles, CheckCircle2, XCircle, MoveUp, MoveDown
 } from 'lucide-react';
 import { MODULES } from '@/lib/enfant-data';
-import { obtenirDetailsActiviteDepuisDB, sauvegarderResultatActivite, obtenirDetailsModuleDepuisDB } from '../../../actions';
+import {
+    obtenirDetailsActiviteDepuisDB,
+    obtenirDetailsModuleDepuisDB,
+    sauvegarderResultatActivite
+} from '../../../actions';
 
 // Types
 type Question = {
@@ -19,6 +23,56 @@ type Question = {
     answer: number;
     explication: string;
 };
+
+type MatchItem = {
+    id: string;
+    text: string;
+};
+
+type MatchExerciseData = {
+    left: MatchItem[];
+    right: MatchItem[];
+    pairs: Record<string, string>;
+};
+
+type OrderExerciseData = {
+    initialOrder: string[];
+    correctOrder: string[];
+};
+
+type InputQuestion = {
+    label: string;
+    placeholder: string;
+    key: string;
+    correct: string[];
+};
+
+type InputExerciseData = {
+    questions: InputQuestion[];
+};
+
+type SortItem = {
+    id: string;
+    text: string;
+    category: string;
+};
+
+type SortCategory = {
+    id: string;
+    title: string;
+    bg: string;
+};
+
+type SortExerciseData = {
+    items: SortItem[];
+    categories: SortCategory[];
+};
+
+type ExerciseContent =
+    | { type: 'match'; data: MatchExerciseData }
+    | { type: 'order'; data: OrderExerciseData }
+    | { type: 'input'; data: InputExerciseData }
+    | { type: 'sort'; data: SortExerciseData };
 
 type ModuleContent = {
     titreGlobal: string;
@@ -53,8 +107,8 @@ type ModuleContent = {
     exercice: {
         titre: string;
         type: 'match' | 'order' | 'input' | 'sort';
-        data: any;
-    };
+        data: ExerciseContent['data'];
+    } & ExerciseContent;
     quiz: Question[];
 };
 
@@ -160,17 +214,17 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
         },
         step3: {
             soustitre: "Récapitulons !",
-            texte: "Napoléon est une figure historique importante, mais on doit l'analyser avec méthode : contexte, actions, conséquences et limites.",
+            texte: "Napoléon est une figure historique importante, mais on doit l'analyser avec méthode : on observe le contexte, on compare les décisions, on mesure les conséquences et on garde en tête les limites du pouvoir.",
             pointsCles: [
-                "Il a dirigé la France après la Révolution.",
-                "Il a mis en place des réformes durables.",
-                "Son pouvoir s'est aussi accompagné de guerres."
+                "Le contexte historique change la manière de lire ses actions.",
+                "Une réforme peut avoir des effets utiles et des limites en même temps.",
+                "L'histoire demande des faits précis, pas une admiration aveugle."
             ],
             bulles: [
-                "Qui était-il ?",
-                "Que fait-il en France ?",
-                "Quelles sont ses réformes ?",
-                "Quelles sont ses limites ?"
+                "Quel est le contexte ?",
+                "Quelles décisions prend-il ?",
+                "Quels effets voit-on ?",
+                "Quelles limites faut-il noter ?"
             ],
             illustration: "🏛️"
         },
@@ -562,23 +616,226 @@ const MODULES_ADVENTURES: Record<string, ModuleContent> = {
     }
 };
 
+type DetailedActivity = NonNullable<Awaited<ReturnType<typeof obtenirDetailsActiviteDepuisDB>>>;
+
+function getFirstSentence(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+    const match = trimmed.match(/^[^.?!]+[.?!]?/);
+    return (match?.[0] || trimmed).trim();
+}
+
+function getNapoleonInitialStepIndex(actId: string) {
+    const match = actId.match(/^cours_(\d+)$/);
+    if (!match) return 0;
+
+    const courseNumber = Number.parseInt(match[1], 10);
+    if (Number.isNaN(courseNumber) || courseNumber <= 1) {
+        return 0;
+    }
+
+    if (courseNumber === 2) {
+        return 1;
+    }
+
+    return 2;
+}
+
+function extractLesson(detail: DetailedActivity | null | undefined) {
+    const fallbackTitle = detail?.titre || '';
+    const rawContent = detail && Array.isArray(detail.contenu) ? detail.contenu : [];
+    const first = rawContent[0] as { titre?: string; texte?: string } | undefined;
+
+    return {
+        title: first?.titre || fallbackTitle,
+        text: first?.texte || detail?.instructions || ''
+    };
+}
+
+function buildNapoleonContentFromDb(
+    moduleDetails: NonNullable<Awaited<ReturnType<typeof obtenirDetailsModuleDepuisDB>>>,
+    activitiesDetails: Array<DetailedActivity | null>
+): ModuleContent {
+    const lessons = activitiesDetails.filter((activity): activity is DetailedActivity => activity !== null && activity.type === 'LECON');
+    const exercises = activitiesDetails.filter((activity): activity is DetailedActivity => activity !== null && activity.type !== 'LECON');
+
+    const lesson1 = extractLesson(lessons[0]);
+    const lesson2 = extractLesson(lessons[1]);
+    const lesson3 = extractLesson(lessons[2]);
+    const lesson4 = extractLesson(lessons[3]);
+    const fallback = MODULES_ADVENTURES.napoleon;
+
+    const orderExercise = exercises.find((exercise) => exercise.type === 'ORDER');
+    const quizExercise = exercises.find((exercise) => exercise.type === 'QUIZ');
+
+    const orderData = orderExercise && typeof orderExercise.contenu === 'object' ? orderExercise.contenu : fallback.exercice.data;
+    const quizData = Array.isArray(quizExercise?.contenu) ? quizExercise.contenu : fallback.quiz;
+
+    const step2Retenir = [
+        getFirstSentence(lesson2.text),
+        getFirstSentence(lesson3.text),
+        getFirstSentence(lesson4.text)
+    ].filter((item): item is string => Boolean(item));
+
+    return {
+        titreGlobal: moduleDetails.label,
+        description: moduleDetails.description || fallback.description,
+        themeColor: fallback.themeColor,
+        step1: {
+            titre: fallback.step1.titre,
+            soustitre: lesson1.title || fallback.step1.soustitre,
+            texte: lesson1.text || fallback.step1.texte,
+            emoji: fallback.step1.emoji,
+            aRetenir: lesson1.text || fallback.step1.aRetenir
+        },
+        step2: {
+            soustitre: fallback.step2.soustitre,
+            boxTitre: lesson2.title || fallback.step2.boxTitre,
+            texte: lesson2.text || fallback.step2.texte,
+            emoji: fallback.step2.emoji,
+            aRetenir: step2Retenir.length > 0 ? step2Retenir : fallback.step2.aRetenir
+        },
+        step3: {
+            soustitre: fallback.step3.soustitre,
+            texte: [lesson3.text, lesson4.text].filter(Boolean).join(' ') || fallback.step3.texte,
+            pointsCles: [
+                lesson3.text ? getFirstSentence(lesson3.text) : '',
+                lesson4.text ? getFirstSentence(lesson4.text) : '',
+                "L'histoire demande de la précision, pas du mythe."
+            ].filter((item): item is string => Boolean(item)),
+            bulles: [
+                lesson3.title || 'Contexte',
+                lesson4.title || 'Limites',
+                'Analyser avec méthode',
+                'Comparer les faits'
+            ],
+            illustration: fallback.step3.illustration
+        },
+        exercice: {
+            titre: orderExercise?.titre || fallback.exercice.titre,
+            type: 'order',
+            data: orderData as OrderExerciseData
+        },
+        quiz: quizData as Question[]
+    };
+}
+
 type PageParams = Promise<{ id: string; actId: string }>;
 
 export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
     const router = useRouter();
+    const [resolvedModuleId, setResolvedModuleId] = useState<string | null>(
+        MODULES_ADVENTURES[id] ? id : null
+    );
 
     // Détermination du module ID de l'aventure (sert à cibler le bon contenu statique)
-    const activeModuleId = MODULES_ADVENTURES[id] ? id : 'lecture';
-    const content = MODULES_ADVENTURES[activeModuleId];
-    const imageModuleId = activeModuleId === 'napoleon' ? 'civique' : activeModuleId;
-
-    const step1ImagePath = activeModuleId === 'robotique' ? '/images/enfants/quiz_robot.png' : `/images/enfants/${imageModuleId}_decouvrir.png`;
-    const step2ImagePath = activeModuleId === 'robotique' ? '/images/enfants/robotic_arm.png' : `/images/enfants/${imageModuleId}_observer.png`;
-
-    const [loading, setLoading] = useState(true);
-    const [stepIndex, setStepIndex] = useState(0); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
+    const isNapoleonModule = resolvedModuleId === 'napoleon';
+    const activeModuleId = resolvedModuleId ?? 'lecture';
+    const [napoleonContent, setNapoleonContent] = useState<ModuleContent>(MODULES_ADVENTURES.napoleon);
+    const content = isNapoleonModule ? napoleonContent : (MODULES_ADVENTURES[activeModuleId] ?? MODULES_ADVENTURES.lecture);
+    const isModuleResolutionPending = !MODULES_ADVENTURES[id] && resolvedModuleId === null;
+    const [stepIndex, setStepIndex] = useState(() => (
+        isNapoleonModule ? getNapoleonInitialStepIndex(actId) : 0
+    )); // 0: Découvrir, 1: Observer, 2: Comprendre, 3: Exercice, 4: Quiz, 5: Résultat
     const [showConfetti, setShowConfetti] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function resolveModuleFromDb() {
+            if (MODULES_ADVENTURES[id]) {
+                if (!cancelled) {
+                    setResolvedModuleId(id);
+                }
+                return;
+            }
+
+            try {
+                const moduleDetails = await obtenirDetailsModuleDepuisDB(id);
+                if (cancelled) return;
+
+                if (moduleDetails?.slug === 'napoleon' || moduleDetails?.label?.toLowerCase().includes('napoléon')) {
+                    setResolvedModuleId('napoleon');
+                } else if (moduleDetails?.slug && MODULES_ADVENTURES[moduleDetails.slug]) {
+                    setResolvedModuleId(moduleDetails.slug);
+                } else if (moduleDetails?.slug) {
+                    setResolvedModuleId(moduleDetails.slug);
+                } else {
+                    setResolvedModuleId('lecture');
+                }
+            } catch {
+                if (!cancelled) {
+                    setResolvedModuleId('lecture');
+                }
+            }
+        }
+
+        resolveModuleFromDb();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadNapoleonContent() {
+            if (!isNapoleonModule) {
+                return;
+            }
+
+            try {
+                const moduleDetails = await obtenirDetailsModuleDepuisDB('napoleon');
+                if (!moduleDetails || cancelled) {
+                    return;
+                }
+
+                const activitiesDetails = await Promise.all(
+                    moduleDetails.activites.map((activity) => obtenirDetailsActiviteDepuisDB(activity.id))
+                );
+
+                if (cancelled) {
+                    return;
+                }
+
+                setNapoleonContent(buildNapoleonContentFromDb(moduleDetails, activitiesDetails));
+                setStepIndex(getNapoleonInitialStepIndex(actId));
+            } catch (error) {
+                console.warn('[Napoleon] Utilisation du contenu de secours pendant le chargement DB.', error);
+            }
+        }
+
+        loadNapoleonContent();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isNapoleonModule, id, actId]);
+
+    const napoleonImages = {
+        step1: '/images/enfants/napoleon/napoleon_lecon_1_qui_etait_napoleon.png',
+        step2: '/images/enfants/napoleon/napoleon_lecon_2_napoleon_et_son_epoque.png',
+        step3: '/images/enfants/napoleon/napoleon_lecon_3_comprendre_avec_methode.png',
+        step4: '/images/enfants/napoleon/napoleon_lecon_4_les_limites_a_connaitre.png',
+        exercice: '/images/enfants/napoleon/napoleon_exercice_remettre_dans_l_ordre.png',
+        quiz: '/images/enfants/napoleon/napoleon_quiz_reviser_napoleon.png',
+    } as const;
+
+    const step1ImagePath = isNapoleonModule
+        ? napoleonImages.step1
+        : activeModuleId === 'robotique'
+            ? '/images/enfants/quiz_robot.png'
+            : `/images/enfants/${activeModuleId}_decouvrir.png`;
+    const step2ImagePath = isNapoleonModule
+        ? napoleonImages.step2
+        : activeModuleId === 'robotique'
+            ? '/images/enfants/robotic_arm.png'
+            : `/images/enfants/${activeModuleId}_observer.png`;
+    const step3NapoleonImages = isNapoleonModule ? [napoleonImages.step3, napoleonImages.step4] : [];
+    const step4ImagePath = isNapoleonModule ? napoleonImages.exercice : '/images/enfants/exercice_generic.png';
+    const quizImagePath = isNapoleonModule ? napoleonImages.quiz : '/images/enfants/quiz_robot.png';
 
     // États pour l'Exercice Interactif
     const [exerciceChecked, setExerciceChecked] = useState(false);
@@ -589,7 +846,10 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const [matches, setMatches] = useState<Record<string, string>>({});
 
     // --- États Exercice 'order' (Anglais / Robotique) ---
-    const [orderedItems, setOrderedItems] = useState<string[]>([]);
+    const [orderedItemsState, setOrderedItemsState] = useState<string[] | null>(null);
+    const orderedItems = content.exercice.type === 'order'
+        ? (orderedItemsState ?? [...content.exercice.data.initialOrder])
+        : [];
 
     // --- États Exercice 'input' (Lecture) ---
     const [inputAnswers, setInputAnswers] = useState<Record<string, string>>({});
@@ -604,25 +864,26 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const [score, setScore] = useState(0);
     const [showExplanation, setShowExplanation] = useState(false);
 
-    // Charger le module initial
-    useEffect(() => {
-        if (!id) return;
-
-        // Initialiser l'exercice en fonction du type
-        if (content.exercice.type === 'order') {
-            setOrderedItems([...content.exercice.data.initialOrder]);
-        }
-        setLoading(false);
-    }, [id, activeModuleId]);
-
     // Lancer des confettis lors du résultat final
     useEffect(() => {
         if (stepIndex === 5) {
-            setShowConfetti(true);
-            const timer = setTimeout(() => setShowConfetti(false), 5000);
-            return () => clearTimeout(timer);
+            const showTimer = window.setTimeout(() => setShowConfetti(true), 0);
+            const hideTimer = window.setTimeout(() => setShowConfetti(false), 5000);
+            return () => {
+                window.clearTimeout(showTimer);
+                window.clearTimeout(hideTimer);
+            };
         }
     }, [stepIndex]);
+
+    if (isModuleResolutionPending) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center text-violet-900">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+                <p className="mt-4 text-violet-500">Chargement de ton aventure...</p>
+            </div>
+        );
+    }
 
     // ─── LOGIQUE EXERCICE : MATCH ───
     const handleSelectLeft = (leftId: string) => {
@@ -647,7 +908,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     };
 
     const verifyMatch = () => {
-        const expected = content.exercice.data.pairs;
+        const expected = (content.exercice.data as MatchExerciseData).pairs;
         const totalExpected = Object.keys(expected).length;
         let correctCount = 0;
 
@@ -670,11 +931,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         const temp = newOrder[index];
         newOrder[index] = newOrder[targetIndex];
         newOrder[targetIndex] = temp;
-        setOrderedItems(newOrder);
+        setOrderedItemsState(newOrder);
     };
 
     const verifyOrder = () => {
-        const expected = content.exercice.data.correctOrder;
+        const expected = (content.exercice.data as OrderExerciseData).correctOrder;
         let isCorrect = true;
         for (let i = 0; i < expected.length; i++) {
             if (orderedItems[i] !== expected[i]) {
@@ -687,7 +948,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     };
 
     const handleResetOrder = () => {
-        setOrderedItems([...content.exercice.data.initialOrder]);
+        setOrderedItemsState([...(content.exercice.data as OrderExerciseData).initialOrder]);
         setExerciceChecked(false);
         setExerciceSuccess(false);
     };
@@ -702,7 +963,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     };
 
     const verifyInput = () => {
-        const questionsList = content.exercice.data.questions;
+        const questionsList = (content.exercice.data as InputExerciseData).questions;
         let allCorrect = true;
 
         for (const q of questionsList) {
@@ -727,7 +988,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
     // ─── LOGIQUE EXERCICE : SORT ───
     const handleSortItem = (categoryId: string) => {
         if (exerciceChecked) return;
-        const items = content.exercice.data.items;
+        const items = (content.exercice.data as SortExerciseData).items;
         const currentItem = items[activeSortItemIndex];
 
         setSortedItems(prev => ({
@@ -808,15 +1069,6 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
         router.push(`/enfant/modules/${id}`);
     };
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 text-center text-violet-900">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent"></div>
-                <p className="mt-4 text-violet-500">Chargement de ton aventure...</p>
-            </div>
-        );
-    }
-
     const steps = [
         { label: "Leçon 1/3", desc: "Découvrir" },
         { label: "Leçon 2/3", desc: "Observer" },
@@ -868,13 +1120,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 return (
                                     <React.Fragment key={i}>
                                         <div className="flex items-center gap-1.5">
-                                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black transition-all ${
-                                                isActive
+                                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black transition-all ${isActive
                                                     ? 'bg-violet-600 text-white ring-4 ring-violet-100 scale-105'
                                                     : isDone
                                                         ? 'bg-emerald-500 text-white'
                                                         : 'bg-slate-100 text-slate-400'
-                                            }`}>
+                                                }`}>
                                                 {isDone ? <Check className="h-3 w-3" /> : i + 1}
                                             </span>
                                             <span className={`font-black hidden sm:inline ${isActive ? 'text-violet-900' : 'text-slate-400'}`}>
@@ -919,7 +1170,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                             <p className="text-xs text-slate-700 font-bold leading-normal">{content.step1.exempleText}</p>
                                         </div>
                                         {content.step1.exempleImage && (
-                                            <img src={content.step1.exempleImage} alt="Exemple" className="h-14 w-14 object-contain rounded-lg shrink-0" />
+                                            <Image src={content.step1.exempleImage} alt="Exemple" width={56} height={56} className="h-14 w-14 object-contain rounded-lg shrink-0" />
                                         )}
                                     </div>
                                 ) : (
@@ -935,9 +1186,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
                             {/* Right Side Illustration */}
                             <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
-                                <img
+                                <Image
                                     src={step1ImagePath}
                                     alt={content.step1.soustitre}
+                                    width={520}
+                                    height={260}
                                     className="max-h-[260px] object-contain rounded-2xl hover:scale-102 transition-transform duration-500"
                                 />
                             </div>
@@ -969,7 +1222,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         </div>
                                         <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
                                             <span className="text-xl mb-1">💻</span>
-                                            <span className="text-[9px] font-black text-slate-800 leading-tight">2. Il traite l'info</span>
+                                            <span className="text-[9px] font-black text-slate-800 leading-tight">2. Il traite l&apos;info</span>
                                         </div>
                                         <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
                                             <span className="text-xl mb-1">⚙️</span>
@@ -982,9 +1235,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             {/* Right Side: Image + À retenir */}
                             <div className="flex flex-col gap-5 justify-between h-full">
                                 <div className="bg-violet-50/40 border border-violet-100 rounded-3xl p-5 flex items-center justify-center shadow-inner min-h-[160px] max-h-[200px] overflow-hidden">
-                                    <img
+                                    <Image
                                         src={step2ImagePath}
                                         alt={content.step2.boxTitre}
+                                        width={320}
+                                        height={150}
                                         className="max-h-[150px] object-contain rounded-xl animate-pulse"
                                         style={{ animationDuration: '3s' }}
                                     />
@@ -1052,9 +1307,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 {activeModuleId === 'robotique' ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-violet-50/20 border border-violet-100 rounded-3xl p-5 shadow-inner">
                                         <div className="flex justify-center">
-                                            <img
+                                            <Image
                                                 src="/images/enfants/quiz_robot.png"
                                                 alt="Robot parts"
+                                                width={320}
+                                                height={180}
                                                 className="max-h-[180px] object-contain"
                                             />
                                         </div>
@@ -1072,6 +1329,43 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                                 <p className="text-[8px] text-blue-700 font-bold leading-tight">Ils réalisent des actions.</p>
                                             </div>
                                         </div>
+                                    </div>
+                                ) : activeModuleId === 'napoleon' ? (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {step3NapoleonImages.map((src, index) => (
+                                                <div
+                                                    key={src}
+                                                    className="relative min-h-[150px] overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm"
+                                                >
+                                                    <Image
+                                                        src={src}
+                                                        alt={index === 0
+                                                            ? 'Méthode pour analyser un personnage historique'
+                                                            : 'Illustration des limites du pouvoir et des libertés'}
+                                                        fill
+                                                        className="object-contain p-3"
+                                                        sizes="(min-width: 640px) 18vw, 100vw"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {content.step3.bulles.map((b, idx) => (
+                                                <div key={idx} className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-3 shadow-xs relative">
+                                                    <span className="absolute -top-2 -left-2 text-xs">💬</span>
+                                                    <p className="text-[10px] font-black text-violet-950 leading-relaxed">{b}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {content.step3.objectif && (
+                                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 flex gap-2 items-center mt-3">
+                                                <span className="text-xl">🎯</span>
+                                                <p className="text-[10px] font-extrabold text-emerald-800 whitespace-pre-line leading-normal">{content.step3.objectif}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <>
@@ -1109,23 +1403,22 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 {content.exercice.type === 'match' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            {content.exercice.data.left.map((item: any) => {
+                                            {((content.exercice.data as MatchExerciseData).left).map((item: MatchItem) => {
                                                 const isSelected = selectedLeft === item.id;
                                                 const matchedRightId = matches[item.id];
-                                                const matchedRight = content.exercice.data.right.find((r: any) => r.id === matchedRightId);
+                                                const matchedRight = (content.exercice.data as MatchExerciseData).right.find((r: MatchItem) => r.id === matchedRightId);
 
                                                 return (
                                                     <button
                                                         key={item.id}
                                                         disabled={exerciceChecked}
                                                         onClick={() => handleSelectLeft(item.id)}
-                                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs ${
-                                                            isSelected
+                                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs ${isSelected
                                                                 ? 'border-violet-600 bg-violet-50 text-violet-900 shadow-sm'
                                                                 : matchedRightId
                                                                     ? 'border-emerald-200 bg-emerald-50/20 text-slate-800'
                                                                     : 'border-slate-100 bg-slate-50/50 text-slate-700 hover:border-slate-300'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <span>{item.text}</span>
                                                         {matchedRight && (
@@ -1139,20 +1432,19 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         </div>
 
                                         <div className="space-y-2">
-                                            {content.exercice.data.right.map((item: any) => {
+                                            {((content.exercice.data as MatchExerciseData).right).map((item: MatchItem) => {
                                                 const isMatchTarget = Object.values(matches).includes(item.id);
                                                 return (
                                                     <button
                                                         key={item.id}
                                                         disabled={exerciceChecked || !selectedLeft}
                                                         onClick={() => handleSelectRight(item.id)}
-                                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all font-semibold text-xs ${
-                                                            isMatchTarget
+                                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all font-semibold text-xs ${isMatchTarget
                                                                 ? 'border-emerald-300 bg-emerald-50/20 text-emerald-800 font-bold'
                                                                 : selectedLeft
                                                                     ? 'border-violet-200 hover:border-violet-400 bg-violet-50/10 text-slate-700'
                                                                     : 'border-slate-100 bg-slate-50/50 text-slate-400 cursor-not-allowed'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {item.text}
                                                     </button>
@@ -1197,7 +1489,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 {/* Input Exercise */}
                                 {content.exercice.type === 'input' && (
                                     <div className="space-y-4 max-w-xl">
-                                        {content.exercice.data.questions.map((q: any, idx: number) => (
+                                        {(content.exercice.data as InputExerciseData).questions.map((q: InputQuestion, idx: number) => (
                                             <div key={idx} className="space-y-1">
                                                 <label className="block text-xs font-black text-violet-900">{q.label}</label>
                                                 <input
@@ -1218,11 +1510,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     <div className="max-w-xl">
                                         {activeSortItemIndex < content.exercice.data.items.length && !exerciceChecked ? (
                                             <div className="text-center space-y-4 bg-slate-50 border border-slate-100 p-5 rounded-2xl mb-4">
-                                                <p className="text-base font-black text-violet-950">
-                                                    "{content.exercice.data.items[activeSortItemIndex].text}"
+                                                    <p className="text-base font-black text-violet-950">
+                                                    &quot;{(content.exercice.data as SortExerciseData).items[activeSortItemIndex].text}&quot;
                                                 </p>
                                                 <div className="flex justify-center gap-3">
-                                                    {content.exercice.data.categories.map((cat: any) => (
+                                                    {((content.exercice.data as SortExerciseData).categories).map((cat: SortCategory) => (
                                                         <button
                                                             key={cat.id}
                                                             onClick={() => handleSortItem(cat.id)}
@@ -1240,11 +1532,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                         )}
 
                                         <div className="grid grid-cols-2 gap-3 text-left">
-                                            {content.exercice.data.categories.map((cat: any) => (
+                                            {((content.exercice.data as SortExerciseData).categories).map((cat: SortCategory) => (
                                                 <div key={cat.id} className={`rounded-xl border p-3 ${cat.bg}`}>
                                                     <h5 className="font-black text-[10px] mb-2">{cat.title}</h5>
                                                     <ul className="space-y-1 text-[10px] font-bold">
-                                                        {content.exercice.data.items.map((item: any) => {
+                                                        {((content.exercice.data as SortExerciseData).items).map((item: SortItem) => {
                                                             if (sortedItems[item.id] !== cat.id) return null;
                                                             return (
                                                                 <li key={item.id} className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
@@ -1261,11 +1553,10 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
                                 {/* RÉSULTAT EXERCICE */}
                                 {exerciceChecked && (
-                                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                                        exerciceSuccess
+                                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${exerciceSuccess
                                             ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                                             : 'bg-rose-50 border-rose-200 text-rose-800'
-                                    }`}>
+                                        }`}>
                                         {exerciceSuccess ? (
                                             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                                         ) : (
@@ -1289,19 +1580,31 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/20 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px] overflow-hidden">
                                 {activeModuleId === 'robotique' ? (
                                     <div className="flex flex-col items-center text-center">
-                                        <img
+                                        <Image
                                             src="/images/enfants/exercice_generic.png"
                                             alt="Activité robotique"
+                                            width={320}
+                                            height={160}
                                             className="max-h-[160px] object-contain rounded-2xl"
                                         />
                                         <div className="mt-4 bg-white border border-violet-100 px-3 py-1.5 rounded-2xl text-[10px] font-black text-violet-700 shadow-xs">
                                             Quel est le bon ordre ? 🤔
                                         </div>
                                     </div>
+                                ) : activeModuleId === 'napoleon' ? (
+                                    <Image
+                                        src={step4ImagePath}
+                                        alt="Exercice de chronologie sur Napoléon"
+                                        width={360}
+                                        height={180}
+                                        className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
+                                    />
                                 ) : (
-                                    <img
+                                    <Image
                                         src="/images/enfants/exercice_generic.png"
                                         alt="Activité"
+                                        width={360}
+                                        height={180}
                                         className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
                                     />
                                 )}
@@ -1377,9 +1680,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
 
                             {/* Right Side: Robot helper */}
                             <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px]">
-                                <img
-                                    src="/images/enfants/quiz_robot.png"
-                                    alt="Robot assistant"
+                                <Image
+                                    src={quizImagePath}
+                                    alt={activeModuleId === 'napoleon' ? 'Quiz de révision sur Napoléon' : 'Robot assistant'}
+                                    width={320}
+                                    height={160}
                                     className="max-h-[160px] object-contain animate-bounce"
                                     style={{ animationDuration: '3s' }}
                                 />
@@ -1394,9 +1699,11 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                     {stepIndex === 5 && (
                         <div className="text-center max-w-xl mx-auto space-y-6">
                             <div className="flex justify-center">
-                                <img
+                                <Image
                                     src="/images/enfants/result_robot.png"
                                     alt="Félicitations !"
+                                    width={360}
+                                    height={180}
                                     className="max-h-[180px] object-contain animate-bounce"
                                     style={{ animationDuration: '4s' }}
                                 />
@@ -1420,7 +1727,7 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     {score === 10 && "Excellent ! Un score parfait de champion ! 🌟"}
                                     {score >= 8 && score < 10 && "Super travail ! Tu as très bien compris ! 👏"}
                                     {score >= 5 && score < 8 && "Pas mal ! Revois la leçon pour faire encore mieux ! 👍"}
-                                    {score < 5 && "Recommence l'aventure pour améliorer ton score. Courage ! 💪"}
+                                    {score < 5 && "Recommence l&apos;aventure pour améliorer ton score. Courage ! 💪"}
                                 </p>
                             </div>
 
@@ -1432,9 +1739,8 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                     return (
                                         <Star
                                             key={starIdx}
-                                            className={`h-6 w-6 ${
-                                                isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-100'
-                                            }`}
+                                            className={`h-6 w-6 ${isGold ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-100'
+                                                }`}
                                         />
                                     );
                                 })}
@@ -1477,9 +1783,8 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                                 <button
                                     key={dotIdx}
                                     onClick={() => setStepIndex(dotIdx)}
-                                    className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
-                                        stepIndex === dotIdx ? 'bg-violet-600 w-6' : 'bg-slate-200'
-                                    }`}
+                                    className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${stepIndex === dotIdx ? 'bg-violet-600 w-6' : 'bg-slate-200'
+                                        }`}
                                 />
                             ))}
                         </div>
@@ -1555,12 +1860,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             >
                                 <RotateCcw className="h-4 w-4 inline-block mr-1" /> Recommencer
                             </button>
-                            <button
-                                onClick={handleSaveAdventure}
-                                className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md transition-all"
-                            >
-                                Continuer l'aventure →
-                            </button>
+                                <button
+                                    onClick={handleSaveAdventure}
+                                    className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-black text-white hover:from-emerald-600 hover:to-green-700 shadow-md transition-all"
+                                >
+                                Continuer l&apos;aventure →
+                                </button>
                         </div>
                     )}
                 </div>
@@ -1592,13 +1897,12 @@ export default function EnfantActivityPage({ params }: { params: PageParams }) {
                             <React.Fragment key={step.idx}>
                                 {sIdx > 0 && <span className="text-slate-300">→</span>}
                                 <div
-                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
-                                        isActive
+                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${isActive
                                             ? 'text-indigo-600 bg-indigo-50 font-black scale-105'
                                             : isCompleted
                                                 ? 'text-slate-700 font-bold'
                                                 : 'text-slate-350 opacity-60'
-                                    }`}
+                                        }`}
                                 >
                                     <span>{step.icon}</span>
                                     <span>{step.label}</span>

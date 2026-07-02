@@ -1,7 +1,7 @@
 // * src/app/(dashboard-enfant)/enfant/modules/actions.ts
 'use server';
 
-import { Prisma, Parcours } from '@prisma/client';
+import { Parcours } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
@@ -16,6 +16,31 @@ function mapTitreToSlug(titre: string): string {
     if (t.includes('napoléon') || t.includes('napoleon')) return 'napoleon';
     if (t.includes('éco') || t.includes('eco')) return 'eco';
     return 'lecture'; // fallback
+}
+
+function getFirstSentence(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+    const match = trimmed.match(/^[^.?!]+[.?!]?/);
+    return (match?.[0] || trimmed).trim();
+}
+
+function getCoursePreview(cours: { titre: string; contenu?: unknown }) {
+    const contenu = cours.contenu;
+
+    if (Array.isArray(contenu)) {
+        const firstBloc = contenu[0] as { titre?: string; texte?: string } | undefined;
+        const title = firstBloc?.titre?.trim();
+        const text = firstBloc?.texte?.trim();
+        if (title && text) {
+            return `${title} - ${getFirstSentence(text)}`;
+        }
+        if (text) {
+            return getFirstSentence(text);
+        }
+    }
+
+    return `Découvre les notions clés de ${cours.titre}.`;
 }
 
 // Helper to handle and log DB connection errors cleanly
@@ -430,7 +455,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             activites.push({
                 id: coursKey,
                 titre: crs.titre,
-                description: "Découvre et apprends les notions clés de cette leçon !",
+                description: getCoursePreview(crs),
                 type: 'lecon',
                 statut: 'verrouille',
                 score: undefined,
@@ -826,17 +851,6 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
                 description: mod.description || '',
                 progression: pct,
                 slug: mapTitreToSlug(mod.titre)
-            });
-        }
-
-        if (slug === 'civique' && !mapped.some((mod) => mod.slug === 'napoleon')) {
-            mapped.unshift({
-                id: 'napoleon',
-                dbId: null,
-                label: 'Napoléon',
-                description: "Comprendre un personnage clé de l'histoire française.",
-                progression: 0,
-                slug: 'napoleon'
             });
         }
 

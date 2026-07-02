@@ -1,9 +1,33 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
 import Modal from '@/components/Modal';
 import { Eye, Pencil, Trash2, Search, Filter, ArrowUpDown, ChevronDown } from 'lucide-react';
+
+type MembreTuteur = {
+    nom: string;
+    prenom: string;
+};
+
+type MembreStatistiques = {
+    enfants: number;
+    reservations: number;
+    coursAnimes: number;
+    dons: number;
+};
+
+type MembreAdmin = {
+    id: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone: string | null;
+    role: string;
+    createdAt: string | Date;
+    tuteur?: MembreTuteur | null;
+    _count: MembreStatistiques;
+};
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -16,9 +40,9 @@ const ROLE_STYLES: Record<string, string> = {
 };
 
 export default function AdminMembresPage() {
-    const [membres, setMembres] = useState<any[]>([]);
+    const [membres, setMembres] = useState<MembreAdmin[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [membreSelectionne, setMembreSelectionne] = useState<any | null>(null);
+    const [membreSelectionne, setMembreSelectionne] = useState<MembreAdmin | null>(null);
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
@@ -48,7 +72,8 @@ export default function AdminMembresPage() {
         };
     }, [search]);
 
-    async function chargerMembres() {
+    const chargerMembres = useCallback(async () => {
+        await Promise.resolve();
         setIsLoading(true);
         const termeRecherche = filter || debouncedSearch;
         const reponse = await listerLesUtilisateurs(trie, termeRecherche);
@@ -56,7 +81,7 @@ export default function AdminMembresPage() {
         if (reponse.success && reponse.data) {
             if (filter && debouncedSearch) {
                 const searchLower = debouncedSearch.toLowerCase();
-                const dataFiltree = reponse.data.filter((m: any) =>
+                const dataFiltree = reponse.data.filter((m: MembreAdmin) =>
                     m.nom?.toLowerCase().includes(searchLower) ||
                     m.prenom?.toLowerCase().includes(searchLower) ||
                     m.email?.toLowerCase().includes(searchLower)
@@ -67,14 +92,18 @@ export default function AdminMembresPage() {
             }
         }
         setIsLoading(false);
-    }
+    }, [debouncedSearch, filter, trie]);
 
     // Le tableau se rafraîchit dès qu'un filtre, le texte ou le tri change
     useEffect(() => {
-        chargerMembres();
-    }, [filter, debouncedSearch, trie]);
+        const timer = window.setTimeout(() => {
+            void chargerMembres();
+        }, 0);
 
-    const ouvrirModalModifier = (membre: any) => {
+        return () => window.clearTimeout(timer);
+    }, [chargerMembres]);
+
+    const ouvrirModalModifier = (membre: MembreAdmin) => {
         setMembreSelectionne(membre);
         setFormData({
             nom: membre.nom || '',
@@ -232,11 +261,6 @@ export default function AdminMembresPage() {
                                                     <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
                                                         {membre.role?.toLowerCase()}
                                                     </span>
-                                                    {membre.role === 'ENFANT' && membre.niveau && (
-                                                        <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
-                                                            {membre.niveau}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </td>
 
@@ -316,11 +340,6 @@ export default function AdminMembresPage() {
                                 <span className="px-2.5 py-1 bg-violet-600 text-white rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
                                     {membreSelectionne.role}
                                 </span>
-                                {membreSelectionne.role === 'ENFANT' && membreSelectionne.niveau && (
-                                    <span className="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded text-xs font-medium">
-                                        {membreSelectionne.niveau.replace('_', ' ')}
-                                    </span>
-                                )}
                             </div>
                         </div>
 

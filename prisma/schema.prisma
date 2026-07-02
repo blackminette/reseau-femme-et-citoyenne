@@ -14,6 +14,7 @@ model Utilisateur {
   telephone String?
   role      String            @default("MEMBRE")
   createdAt DateTime          @default(now())
+  username  String            @unique
 
   reservations    Reservation[]
   dons            Don[]

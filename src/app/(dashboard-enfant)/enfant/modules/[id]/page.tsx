@@ -28,43 +28,6 @@ type Activite = {
 
 type Params = Promise<{ id: string }>;
 
-function getMockActivitesForModule(id: string): Activite[] {
-    if (id !== 'napoleon') {
-        return [];
-    }
-
-    return [
-        {
-            id: '1',
-            titre: 'Découvrir Napoléon',
-            description: "Comprendre qui il était et pourquoi il est une figure importante de l'histoire française.",
-            type: 'lecon',
-            statut: 'a_faire',
-        },
-        {
-            id: '2',
-            titre: 'Napoléon et son époque',
-            description: "Lire le texte pour voir ce qu'il a changé et ce que son époque a produit.",
-            type: 'lecon',
-            statut: 'verrouille',
-        },
-        {
-            id: '3',
-            titre: 'Les limites à connaître',
-            description: "Relever les points essentiels sur le Code civil, les droits des femmes et l'esclavage.",
-            type: 'exercice',
-            statut: 'verrouille',
-        },
-        {
-            id: '4',
-            titre: 'Quiz Napoléon',
-            description: "Vérifier ce que tu as retenu avec des questions courtes.",
-            type: 'quiz',
-            statut: 'verrouille',
-        },
-    ];
-}
-
 function isActivityCompleted(actId: string): boolean {
     if (typeof window === 'undefined') {
         return false;
@@ -84,18 +47,17 @@ function isActivityCompleted(actId: string): boolean {
 }
 
 function hydrateSequentialActivities(activities: Activite[]): Activite[] {
-    let unlockedNext = false;
+    let unlockedNext = true;
 
     return activities.map((activity) => {
         const completed = isActivityCompleted(activity.id);
 
         if (completed) {
-            unlockedNext = true;
             return { ...activity, statut: 'termine' as const };
         }
 
-        if (!unlockedNext) {
-            unlockedNext = true;
+        if (unlockedNext) {
+            unlockedNext = false;
             return { ...activity, statut: 'a_faire' as const };
         }
 
@@ -132,18 +94,20 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     const dbMod = await obtenirDetailsModuleDepuisDB(id);
                     if (dbMod) {
                         const hydratedActivities = hydrateSequentialActivities(dbMod.activites as Activite[]);
-                        const completedCount = hydratedActivities.filter((activity) => activity.statut === 'termine').length;
+                        const visibleActivities = dbMod.slug === 'napoleon'
+                            ? hydratedActivities.filter((activity) => activity.type === 'lecon').slice(0, 1)
+                            : hydratedActivities;
+                        const completedCount = visibleActivities.filter((activity) => activity.statut === 'termine').length;
                         setDbModule(dbMod);
-                        setActivites(hydratedActivities);
-                        setProgression(Math.max(dbMod.progression, Math.round((completedCount / hydratedActivities.length) * 100)));
+                        setActivites(visibleActivities);
+                        setProgression(
+                            visibleActivities.length > 0
+                                ? Math.round((completedCount / visibleActivities.length) * 100)
+                                : 0
+                        );
                     } else {
-                        const fallbackActivites = getMockActivitesForModule(id);
-                        if (fallbackActivites.length > 0) {
-                            const hydratedActivities = hydrateSequentialActivities(fallbackActivites);
-                            const completedCount = hydratedActivities.filter((activity) => activity.statut === 'termine').length;
-                            setActivites(hydratedActivities);
-                            setProgression(Math.round((completedCount / hydratedActivities.length) * 100));
-                        }
+                        setActivites([]);
+                        setProgression(0);
                     }
                 }
             } catch (err) {
@@ -206,16 +170,6 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
 
                 {/* Barre du haut */}
                 <div className="relative mt-2 flex flex-wrap items-center justify-between gap-5">
-                    <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block sm:w-32 md:w-40">
-                        <Image
-                            src="/images/enfants/napoleon-watermark.svg"
-                            alt=""
-                            width={720}
-                            height={640}
-                            aria-hidden
-                            className="h-auto w-full select-none opacity-35 blur-[0.1px]"
-                        />
-                    </div>
                     <div className="relative z-10">
                         <h1 className="flex items-center gap-2.5 text-[26px] font-extrabold tracking-tight text-violet-950">
                             <span
@@ -248,7 +202,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             {modulesList.map((mod) => (
                                 <Link
                                     key={mod.id}
-                                    href={`/enfant/modules/${mod.slug || mod.id}`}
+                                    href={`/enfant/modules/${mod.dbId ?? mod.slug ?? mod.id}`}
                                     className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-300"
                                 >
                                     <div
@@ -386,18 +340,18 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                             </p>
                         </div>
 
-                        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-4 shadow-sm">
-                                <div className="text-[11px] font-black uppercase tracking-widest text-orange-500">Leçon</div>
-                                <div className="mt-1 text-sm font-bold text-slate-900">Découvrir</div>
+                        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-3 shadow-sm sm:p-4">
+                                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500 sm:text-[11px]">Leçon</div>
+                                <div className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">Découvrir</div>
                             </div>
-                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-4 shadow-sm">
-                                <div className="text-[11px] font-black uppercase tracking-widest text-orange-500">Quiz</div>
-                                <div className="mt-1 text-sm font-bold text-slate-900">Réviser</div>
+                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-3 shadow-sm sm:p-4">
+                                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500 sm:text-[11px]">Quiz</div>
+                                <div className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">Réviser</div>
                             </div>
-                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-4 shadow-sm">
-                                <div className="text-[11px] font-black uppercase tracking-widest text-orange-500">Révisions</div>
-                                <div className="mt-1 text-sm font-bold text-slate-900">Mémoriser</div>
+                            <div className="rounded-2xl border border-orange-100 bg-white/80 p-3 shadow-sm sm:p-4">
+                                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500 sm:text-[11px]">Révisions</div>
+                                <div className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">Mémoriser</div>
                             </div>
                         </div>
                     </div>

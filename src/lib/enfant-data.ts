@@ -23,7 +23,6 @@ export const MODULES: Module[] = [
     { id: "robotique", label: "Robotique", Icon: Cpu, progression: 0, from: "#9b8cff", to: "#6d5ba8" },
     { id: "anglais", label: "Anglais", Icon: Languages, progression: 0, from: "#ec407a", to: "#880e4f" },
     { id: "civique", label: "Éducation civique", Icon: Landmark, progression: 0, from: "#ffa726", to: "#e65100" },
-    { id: "napoleon", label: "Napoléon", Icon: Crown, progression: 0, from: "#f59e0b", to: "#7c2d12" },
     { id: "eco", label: "Éco-citoyenneté", Icon: Leaf, progression: 0, from: "#26a69a", to: "#00695c" },
 ];
 
