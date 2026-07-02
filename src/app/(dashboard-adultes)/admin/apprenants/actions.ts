@@ -2,8 +2,6 @@
 'use server'
 
 import { prisma } from '@/lib/prisma';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { revalidatePath } from 'next/cache';
 
 export async function listerLesApprenants() {
     try {
@@ -31,6 +29,32 @@ export async function listerLesApprenants() {
                     select: {
                         nom: true,
                         prenom: true,
+                    }
+                },
+                ScoreQuiz: {
+                    select: {
+                        id: true,
+                        score: true,
+                        createdAt: true,
+                        exercice: {
+                            select: {
+                                id: true,
+                                titre: true,
+                                cours: {
+                                    select: {
+                                        id: true,
+                                        titre: true,
+                                        module: {
+                                            select: {
+                                                id: true,
+                                                titre: true,
+                                                parcours: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

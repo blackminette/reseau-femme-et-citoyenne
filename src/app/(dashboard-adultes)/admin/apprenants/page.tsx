@@ -5,7 +5,8 @@ import React, { useEffect, useState } from 'react';
 import {
     listerLesApprenants,
 } from './actions';
-import { Search, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import Modal from '@/components/Modal';
+import { Eye, Search, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, GraduationCap, CheckCircle } from 'lucide-react';
 
 const ROLE_STYLES: Record<string, string> = {
     ETUDIANT: 'bg-indigo-50 text-indigo-700 border-indigo-200',
@@ -19,9 +20,13 @@ export default function SuiviApprenantsPage() {
     const [roleFilter, setRoleFilter] = useState('TOUS');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-    // États pour la pagination
+    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    // Modals
+    const [selectedApprenant, setSelectedApprenant] = useState<any>(null);
+    const [modalViewIsOpen, setModalViewIsOpen] = useState(false);
 
     useEffect(() => {
         chargerApprenants();
@@ -35,7 +40,14 @@ export default function SuiviApprenantsPage() {
     const chargerApprenants = async () => {
         const res = await listerLesApprenants();
         if (res.success && res.data) {
-            setApprenants(res.data);
+            const donneesFormatees = res.data.map((u: any) => {
+                const totalQuiz = u.ScoreQuiz?.length || 0;
+                const scoreMoyen = totalQuiz > 0
+                    ? Math.round(u.ScoreQuiz.reduce((acc: number, curr: any) => acc + curr.score, 0) / totalQuiz)
+                    : null;
+                return { ...u, totalQuiz, scoreMoyen };
+            });
+            setApprenants(donneesFormatees);
         }
     };
 
@@ -59,6 +71,10 @@ export default function SuiviApprenantsPage() {
             resultat.sort((a, b) => {
                 let aValue = a[sortConfig.key];
                 let bValue = b[sortConfig.key];
+
+                // Gérer les valeurs nulles (ex: pas encore de score)
+                if (aValue === null || aValue === undefined) return sortConfig.direction === 'asc' ? 1 : -1;
+                if (bValue === null || bValue === undefined) return sortConfig.direction === 'asc' ? -1 : 1;
 
                 if (typeof aValue === 'string') {
                     return sortConfig.direction === 'asc'
@@ -85,6 +101,14 @@ export default function SuiviApprenantsPage() {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredApprenants.slice(indexOfFirstItem, indexOfLastItem);
+
+    // Fonction utilitaire pour obtenir la couleur du score
+    const getScoreStyle = (score: number | null) => {
+        if (score === null) return 'bg-slate-100 text-slate-400 border-slate-200';
+        if (score >= 70) return 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold';
+        if (score >= 40) return 'bg-amber-50 text-amber-700 border-amber-200 font-bold';
+        return 'bg-rose-50 text-rose-700 border-rose-200 font-bold';
+    };
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-slate-50 min-h-screen">
@@ -132,13 +156,20 @@ export default function SuiviApprenantsPage() {
                                 <th className="p-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('role')}>
                                     <div className="flex items-center gap-1.5">Type <ArrowUpDown size={14} /></div>
                                 </th>
+                                <th className="p-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('totalQuiz')}>
+                                    <div className="flex items-center gap-1.5">Quiz faits <ArrowUpDown size={14} /></div>
+                                </th>
+                                <th className="p-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('scoreMoyen')}>
+                                    <div className="flex items-center gap-1.5">Moyenne Globale <ArrowUpDown size={14} /></div>
+                                </th>
                                 <th className="p-4">Contact / Responsable</th>
+                                <th className="p-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                             {currentItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-slate-400 font-medium bg-slate-50/50">
+                                    <td colSpan={7} className="p-8 text-center text-slate-400 font-medium bg-slate-50/50">
                                         Aucun apprenant trouvé.
                                     </td>
                                 </tr>
@@ -154,6 +185,17 @@ export default function SuiviApprenantsPage() {
                                                 {u.role}
                                             </span>
                                         </td>
+                                        <td className="p-4 font-medium text-slate-600">
+                                            <div className="flex items-center gap-1.5">
+                                                <CheckCircle size={15} className="text-slate-400" />
+                                                {u.totalQuiz} quiz
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs border ${getScoreStyle(u.scoreMoyen)}`}>
+                                                {u.scoreMoyen !== null ? `${u.scoreMoyen} %` : 'Aucun quiz'}
+                                            </span>
+                                        </td>
                                         <td className="p-4 text-slate-600">
                                             {u.role === 'ENFANT' && u.tuteur ? (
                                                 <span className="text-xs bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
@@ -162,6 +204,18 @@ export default function SuiviApprenantsPage() {
                                             ) : (
                                                 u.telephone || <span className="text-slate-400 text-xs">Non renseigné</span>
                                             )}
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedApprenant(u);
+                                                    setModalViewIsOpen(true);
+                                                }}
+                                                className="p-1.5 text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
+                                                title="Voir l'historique détaillé"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -227,6 +281,13 @@ export default function SuiviApprenantsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Modal de prévisualisation - Vide pour l'instant, on y mettra l'approche B */}
+            <Modal isOpen={modalViewIsOpen} onClose={() => setModalViewIsOpen(false)} title="Détail de l'apprenant">
+                <div className="p-4">
+                    <p className="text-sm text-slate-500">Prêt pour l'approche B.</p>
+                </div>
+            </Modal>
         </div>
     );
 }
