@@ -38,22 +38,13 @@ export default async function EnfantModulesPage() {
 
     return (
         <div className="text-violet-900">
-            {/* ─── Barre du haut : titre + chip enfant ─── */}
+            {/* ─── Barre du haut : titre ─── */}
             <div className="flex flex-wrap items-center justify-between gap-5">
                 <div>
                     <h1 className="flex items-center gap-2 text-[26px] font-bold tracking-tight text-violet-950">
                         <BookOpen className="h-6 w-6 text-violet-600" aria-hidden /> Mes parcours
                     </h1>
                     <p className="text-[13px] text-violet-600">Choisis un parcours pour t'amuser, faire des exercices et gagner des badges !</p>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
-                        {enfant.initiales}
-                    </div>
-                    <div className="leading-tight">
-                        <div className="text-[13px] font-bold text-violet-950">{enfant.prenom} {enfant.nom}</div>
-                        <div className="text-[11px] text-violet-500">{enfant.age} ans</div>
-                    </div>
                 </div>
             </div>
 

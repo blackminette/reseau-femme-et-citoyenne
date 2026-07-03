@@ -56,8 +56,27 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // Si déjà connecté et tente d'aller sur /login -> Redirection vers l'accueil
+    // Si déjà connecté et tente d'aller sur /login -> Redirection vers son dashboard
     if (pathname === '/login') {
+        // On récupère d'abord le rôle
+        let userRole: UserRole | null = null;
+        if (user.email) {
+            try {
+                const { data: profile } = await supabase
+                    .from('Utilisateur')
+                    .select('role')
+                    .eq('email', user.email)
+                    .single();
+                if (profile) {
+                    userRole = profile.role as UserRole;
+                }
+            } catch (e) {
+                console.warn("[Middleware] Échec de la récupération du rôle", e);
+            }
+        }
+        if (userRole) {
+            return redirectUserToDefaultDashboard(userRole, url);
+        }
         url.pathname = '/';
         return NextResponse.redirect(url);
     }

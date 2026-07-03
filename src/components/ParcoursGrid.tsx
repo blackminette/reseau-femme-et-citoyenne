@@ -33,48 +33,7 @@ export default function ParcoursGrid({ initialModules }: ParcoursGridProps) {
     useEffect(() => {
         async function hydrateRealProgress() {
             try {
-                const dbRes = await obtenirModulesDepuisDB();
-                if (dbRes && dbRes.source === 'db' && dbRes.modules) {
-                    // Group database modules by their parcours slug
-                    const parcoursProgress: Record<string, { total: number; completed: number }> = {
-                        lecture: { total: 0, completed: 0 },
-                        numerique: { total: 0, completed: 0 },
-                        robotique: { total: 0, completed: 0 },
-                        anglais: { total: 0, completed: 0 },
-                        civique: { total: 0, completed: 0 },
-                        eco: { total: 0, completed: 0 }
-                    };
-
-                    // For each module, check its activities and check localStorage
-                    for (const mod of dbRes.modules as any[]) {
-                        const slug = mod.slug || 'lecture';
-                        const actIds = mod.activiteIds || [];
-                        if (parcoursProgress[slug] && actIds.length > 0) {
-                            parcoursProgress[slug].total += actIds.length;
-                            for (const actId of actIds) {
-                                const saved = localStorage.getItem(`rfc_enfant_act_${actId}`);
-                                if (saved) {
-                                    const parsed = JSON.parse(saved);
-                                    if (parsed?.completed) {
-                                        parcoursProgress[slug].completed++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Update modules state with calculated progression
-                    setModules((prev) => prev.map((m) => {
-                        const progressInfo = parcoursProgress[m.slug];
-                        if (progressInfo && progressInfo.total > 0) {
-                            return {
-                                ...m,
-                                progression: Math.round((progressInfo.completed / progressInfo.total) * 100)
-                            };
-                        }
-                        return m;
-                    }));
-                }
+                // Real DB progress is already fetched and populated correctly inside listModules on the server page
             } catch (err) {
                 console.error("Error hydrating parcours stats:", err);
             }

@@ -16,6 +16,8 @@ model Utilisateur {
   createdAt       DateTime            @default(now())
   tuteurId        String?
   username        String              @unique
+  isActive        Boolean             @default(true)
+  avatar          String?             @default("🦊 bg-[#b6e3f4]")
   ateliersPrives  Atelier[]           @relation("PartenaireAtelier")
   suggestions     BoiteAIdees[]
   coursAnimes     Cours[]             @relation("IntervenanteCours")
@@ -23,10 +25,22 @@ model Utilisateur {
   messagesEnvoyes MessageContact[]
   reservations    Reservation[]
   ScoreQuiz       ScoreQuiz[]
-  tentatives      TentativeExercice[]
   temoignages     Temoignage[]
+  tentatives      TentativeExercice[]
+  completionsCours CompletionCours[]
   tuteur          Utilisateur?        @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
   enfants         Utilisateur[]       @relation("ParentEnfant")
+  badges          Badge[]
+}
+
+model Badge {
+  id          Int         @id @default(autoincrement())
+  label       String
+  iconName    String
+  desc        String
+  createdAt   DateTime    @default(now())
+  etudiantId  String
+  Utilisateur Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
 }
 
 model Atelier {
@@ -51,7 +65,7 @@ model Lieu {
   id           String    @id @default(cuid())
   nom          String
   adresseTexte String
-  adresseIdBan String    @unique
+  adresseIdBan String    @unique @default("")
   estExterieur Boolean   @default(false)
   ateliers     Atelier[]
 }
@@ -81,16 +95,18 @@ model Module {
 }
 
 model Cours {
-  id              Int         @id @default(autoincrement())
+  id              Int               @id @default(autoincrement())
   titre           String
-  estPublic       Boolean     @default(true)
-  createdAt       DateTime    @default(now())
+  estPublic       Boolean           @default(true)
+  createdAt       DateTime          @default(now())
   intervenanteId  String
-  contenu         Json        @default("[]")
+  contenu         Json              @default("[]")
   moduleId        Int
-  ordreDansModule Int         @default(1)
-  intervenante    Utilisateur @relation("IntervenanteCours", fields: [intervenanteId], references: [id], onDelete: Cascade)
-  module          Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  ordreDansModule Int               @default(1)
+  difficulte      Difficulte        @default(FACILE)
+  completions     CompletionCours[]
+  intervenante    Utilisateur       @relation("IntervenanteCours", fields: [intervenanteId], references: [id], onDelete: Cascade)
+  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   exercices       Exercice[]
   programmes      Programme[]
 }
@@ -101,9 +117,10 @@ model Exercice {
   instructions String
   type         String
   contenu      Json                @default("[]")
-  competence   String?             // Ex: "Gestion des dossiers", "Recherche"
   coursId      Int
   ordre        Int                 @default(1)
+  competence   String?
+  difficulte   Difficulte          @default(FACILE)
   cours        Cours               @relation(fields: [coursId], references: [id], onDelete: Cascade)
   scores       ScoreQuiz[]
   tentatives   TentativeExercice[]
@@ -122,11 +139,11 @@ model ScoreQuiz {
 model TentativeExercice {
   id                Int         @id @default(autoincrement())
   createdAt         DateTime    @default(now())
-  score             Int         // Nombre de bonnes réponses
-  totalQuestions    Int         // Nombre total de questions
+  score             Int
+  totalQuestions    Int
   bonnesReponses    Int
   mauvaisesReponses Int
-  dureeSecondes     Int?        // Temps estimé ou mesuré
+  dureeSecondes     Int?
   assistee          Boolean     @default(false)
   etudiantId        String
   exerciceId        Int
@@ -139,6 +156,17 @@ model Programme {
   datePlanification DateTime
   coursId           Int
   cours             Cours    @relation(fields: [coursId], references: [id])
+}
+
+model CompletionCours {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  etudiantId  String
+  coursId     Int
+  Utilisateur Utilisateur @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  cours       Cours       @relation(fields: [coursId], references: [id], onDelete: Cascade)
+
+  @@unique([etudiantId, coursId])
 }
 
 model BoiteAIdees {

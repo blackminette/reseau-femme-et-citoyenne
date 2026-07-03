@@ -27,6 +27,9 @@ export default async function EnfantBadgesPage() {
         recommandations: []
     };
 
+    const dbBadgesList = (enfant as any).badges || [];
+    const dbBadgesMap = new Map<string, boolean>(dbBadgesList.map((b: any) => [b.label, true]));
+
     // Map DB status to badges
     const listBadges = [
         { 
@@ -34,7 +37,7 @@ export default async function EnfantBadgesPage() {
             label: '1ers pas', 
             Icon: Target, 
             desc: 'Terminer sa première activité.', 
-            obtenu: recentScores && recentScores.length > 0,
+            obtenu: dbBadgesMap.has("1ers pas"),
             instruction: "Termine n'importe quelle leçon ou réponds à un quiz pour débloquer ce badge !"
         },
         { 
@@ -42,7 +45,7 @@ export default async function EnfantBadgesPage() {
             label: 'Score parfait', 
             Icon: Star, 
             desc: 'Obtenir une note maximale à un quiz.', 
-            obtenu: recentScores && recentScores.some(s => s.parfait),
+            obtenu: dbBadgesMap.has("Score parfait"),
             instruction: "Réponds correctement à toutes les questions d'un quiz !"
         },
         { 
@@ -50,7 +53,7 @@ export default async function EnfantBadgesPage() {
             label: 'Assidu', 
             Icon: Trophy, 
             desc: 'Compléter la majorité du parcours.', 
-            obtenu: enfant.progression >= 80,
+            obtenu: dbBadgesMap.has("Assidu"),
             instruction: "Valide des leçons et des quiz pour atteindre 80% de progression globale !"
         },
         { 
@@ -58,7 +61,7 @@ export default async function EnfantBadgesPage() {
             label: 'Expert', 
             Icon: Crown, 
             desc: 'Compléter tout le parcours.', 
-            obtenu: enfant.progression === 100,
+            obtenu: dbBadgesMap.has("Expert"),
             instruction: "Atteins 100% de progression sur tout ton parcours d'apprentissage !"
         },
     ];
@@ -78,22 +81,13 @@ export default async function EnfantBadgesPage() {
                 </Link>
             </div>
 
-            {/* ─── Barre du haut : titre + chip enfant ─── */}
+            {/* ─── Barre du haut : titre ─── */}
             <div className="flex flex-wrap items-center justify-between gap-5">
                 <div>
                     <h1 className="flex items-center gap-2.5 text-[26px] font-bold tracking-tight text-violet-950">
                         <Award className="h-6 w-6 text-violet-600 animate-bounce" aria-hidden /> Mes badges
                     </h1>
                     <p className="text-[13px] text-violet-600">Retrouve ici toutes les récompenses que tu as gagnées en apprenant !</p>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
-                        {enfant.initiales}
-                    </div>
-                    <div className="leading-tight">
-                        <div className="text-[13px] font-bold text-violet-950">{enfant.prenom} {enfant.nom}</div>
-                        <div className="text-[11px] text-violet-500">{enfant.age} ans</div>
-                    </div>
                 </div>
             </div>
 

@@ -6,6 +6,7 @@ import { getSupabaseServer } from '@/lib/supabase';
 import EnfantNavbar from '@/components/EnfantNavbar';
 import { deconnexionUtilisateur } from '@/app/auth/auth';
 import ChildMobileNav from '@/components/ChildMobileNav';
+import DynamicChildAvatar from '@/components/DynamicChildAvatar';
 
 export const metadata = {
     title: 'AtelierKids - Espace Enfant',
@@ -19,6 +20,7 @@ export default async function EnfantLayout({
 }) {
     // Récupérer le prénom de l'enfant connecté
     let childName = "Alex";
+    let childAvatar = "🦊 bg-[#b6e3f4]";
     try {
         const supabase = await getSupabaseServer();
         const { data: { user } } = await supabase.auth.getUser();
@@ -28,6 +30,9 @@ export default async function EnfantLayout({
             });
             if (dbUser) {
                 childName = dbUser.prenom;
+                if (dbUser.avatar) {
+                    childAvatar = dbUser.avatar;
+                }
             }
         }
     } catch (e) {
@@ -61,21 +66,7 @@ export default async function EnfantLayout({
 
                 {/* Profil utilisateur & bouton Déconnexion */}
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-violet-100 shadow-xs">
-                            <img 
-                                src="https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4" 
-                                alt="Avatar"
-                                className="h-full w-full object-cover"
-                            />
-                        </div>
-                        <div className="text-left hidden sm:block leading-tight">
-                            <div className="text-[9px] text-slate-400 font-bold">Bonjour !</div>
-                            <div className="text-xs font-extrabold text-slate-800 flex items-center gap-0.5">
-                                {childName} <span className="text-[10px] text-slate-400">▼</span>
-                            </div>
-                        </div>
-                    </div>
+                    <DynamicChildAvatar initialName={childName} initialAvatar={childAvatar} />
 
                     <form action={deconnexionUtilisateur}>
                         <button

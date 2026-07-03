@@ -7,6 +7,7 @@ import {
 import Link from "next/link";
 import { obtenirProfilEnfant, obtenirModulesDepuisDB, obtenirActiviteRecente, obtenirParcoursStats } from "./modules/actions";
 import ParcoursGrid from "@/components/ParcoursGrid";
+import ChildAvatarEditor from "@/components/ChildAvatarEditor";
 
 export const metadata = {
     title: "Mon espace",
@@ -45,51 +46,53 @@ export default async function EnfantDashboard() {
         recommandations: []
     };
 
-    // Map modules with dynamic progress based on the 6 static Parcours (identical to Mes Parcours page)
-    const listModules = Object.entries(METADATA_MAP).map(([slug, meta]) => {
-        // Find stats matching slug key
-        const progression = stats[slug] || 0;
+    // Map modules dynamically based on whatever Parcours are found in stats or DB
+    const listModules = Object.keys(stats).map((slug) => {
+        const meta = METADATA_MAP[slug as keyof typeof METADATA_MAP] || {
+            label: slug.charAt(0).toUpperCase() + slug.slice(1),
+            Icon: BookOpen,
+            from: "#6d5ba8",
+            to: "#5b4a98"
+        };
         return {
             id: slug,
             slug: slug,
             label: meta.label,
-            progression: progression,
+            progression: stats[slug] || 0,
             from: meta.from,
             to: meta.to
         };
     });
 
-    const isMock = !modulesRes || modulesRes.source === 'mock';
+    // Map recent activities/results from DB directly
+    const listResultats = recentScores.map(s => ({
+        id: s.id,
+        Icon: ICON_MAP_ACT[s.type as keyof typeof ICON_MAP_ACT] || HelpCircle,
+        titre: s.nomActivite,
+        date: s.date,
+        score: s.score,
+        parfait: s.parfait
+    }));
 
-    // Map recent activities/results
-    const listResultats = !isMock
-        ? recentScores.map(s => ({
-            id: s.id,
-            Icon: ICON_MAP_ACT[s.type as keyof typeof ICON_MAP_ACT] || HelpCircle,
-            titre: s.nomActivite,
-            date: s.date,
-            score: s.score,
-            parfait: s.parfait
-        }))
-        : [];
+    const listActivite = recentScores.map(s => ({
+        id: s.id,
+        Icon: s.parfait ? Star : Check,
+        titre: s.titre,
+        module: s.module,
+        date: s.date,
+        score: s.score,
+        parfait: s.parfait
+    }));
 
-    const listActivite = !isMock
-        ? recentScores.map(s => ({
-            id: s.id,
-            Icon: s.parfait ? Star : Check,
-            titre: s.titre,
-            module: s.module,
-            date: s.date,
-            score: s.score,
-            parfait: s.parfait
-        }))
-        : [];
+    // Dynamic Badges from database
+    const dbBadgesList = (enfant as any).badges || [];
+    const dbBadgesMap = new Map<string, boolean>(dbBadgesList.map((b: any) => [b.label, true]));
 
     const listBadges = [
-        { label: "1ers pas", Icon: Target, desc: "Terminer sa première activité.", obtenu: recentScores && recentScores.length > 0 },
-        { label: "Score parfait", Icon: Star, desc: "Obtenir une note maximale.", obtenu: recentScores && recentScores.some(s => s.parfait) },
-        { label: "Assidu", Icon: Trophy, desc: "Compléter 10 activités au total.", obtenu: enfant.progression >= 80 },
-        { label: "Expert", Icon: Crown, desc: "Obtenir 5 scores parfaits.", obtenu: enfant.progression === 100 },
+        { label: "1ers pas", Icon: Target, desc: "Terminer sa première activité.", obtenu: dbBadgesMap.has("1ers pas") },
+        { label: "Score parfait", Icon: Star, desc: "Obtenir une note maximale.", obtenu: dbBadgesMap.has("Score parfait") },
+        { label: "Assidu", Icon: Trophy, desc: "Compléter 10 activités au total.", obtenu: dbBadgesMap.has("Assidu") },
+        { label: "Expert", Icon: Crown, desc: "Obtenir 5 scores parfaits.", obtenu: dbBadgesMap.has("Expert") },
     ];
 
     const dernierBadge = listBadges.find(b => b.obtenu) || null;
@@ -97,20 +100,14 @@ export default async function EnfantDashboard() {
     return (
         <div className="text-violet-900">
 
-            {/* ─── Barre du haut : titre + chip enfant ─── */}
+            {/* ─── Barre du haut : titre ─── */}
             <div className="flex flex-wrap items-center justify-between gap-5">
                 <div>
                     <h1 className="text-[26px] font-bold tracking-tight text-violet-950">Bonjour {enfant.prenom} !</h1>
                     <p className="text-[13px] text-violet-600">Tu as {enfant.age} ans — continue comme ça, tu fais des progrès incroyables !</p>
                 </div>
-                <div className="flex items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 shadow-[0_2px_12px_rgba(109,91,168,0.07)]">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
-                        {enfant.initiales}
-                    </div>
-                    <div className="leading-tight">
-                        <div className="text-[13px] font-bold text-violet-950">{enfant.prenom} {enfant.nom}</div>
-                        <div className="text-[11px] text-violet-500">{enfant.age} ans</div>
-                    </div>
+                <div className="flex items-center gap-3">
+                    <ChildAvatarEditor initialAvatar={(enfant as any).avatar} />
                 </div>
             </div>
 
@@ -175,10 +172,17 @@ export default async function EnfantDashboard() {
                                 <div className="space-y-1.5">
                                     {enfant.difficultes && enfant.difficultes.length > 0 && enfant.difficultes.some((d: any) => d.pourcentage < 80) ? (
                                         enfant.difficultes.filter((d: any) => d.pourcentage < 80).map((d: any, idx: number) => (
-                                            <div key={idx} className="bg-rose-50/40 border border-rose-100/70 rounded-xl px-3 py-2 flex justify-between items-center text-xs">
-                                                <span className="font-bold text-slate-800">{d.module}</span>
-                                                <span className="bg-rose-500 text-white px-2 py-0.5 rounded-full font-black text-[10px]">{d.pourcentage}%</span>
-                                            </div>
+                                            <Link 
+                                                key={idx} 
+                                                href={`/enfant/modules/${d.parcours}`}
+                                                className="block bg-rose-50/40 border border-rose-100/70 hover:border-rose-300 rounded-xl px-3 py-2 flex justify-between items-center text-xs transition-colors group"
+                                            >
+                                                <span className="font-bold text-slate-800 group-hover:text-rose-600 transition-colors">{d.module}</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="bg-rose-500 text-white px-2 py-0.5 rounded-full font-black text-[10px]">{d.pourcentage}%</span>
+                                                    <span className="text-[10px] text-rose-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">S'entraîner →</span>
+                                                </div>
+                                            </Link>
                                         ))
                                     ) : (
                                         <div className="bg-emerald-50/50 border border-emerald-150 rounded-xl p-3 text-center text-xs font-semibold text-emerald-700">
