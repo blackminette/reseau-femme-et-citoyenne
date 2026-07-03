@@ -37,7 +37,6 @@ export async function loginAction(formData: any) {
                 data: {
                     id: authData.user.id, // Synchronisation de l'ID
                     email: email,
-                    username: email.split('@')[0],
                     nom: authData.user.user_metadata?.nom || 'Nom par défaut',
                     prenom: authData.user.user_metadata?.prenom || 'Prénom par défaut',
                     role: 'MEMBRE' // Rôle par défaut

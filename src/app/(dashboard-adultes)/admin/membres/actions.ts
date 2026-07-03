@@ -1,26 +1,14 @@
-// * src/app/(dashboard-adultes)/admin/membres/actions.ts
+// * src/app/(dashboard-adultes)/(dashboard)/admin/membres/actions.ts
 'use server'
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
-export async function listerLesUtilisateurs(trie: string, filtre?: string) {
+export async function listerTousLesUtilisateurs() {
     try {
-        const whereCondition: any = {};
-
-        if (filtre) {
-            whereCondition.OR = [
-                { role: filtre },
-                { nom: { contains: filtre, mode: 'insensitive' } },
-                { prenom: { contains: filtre, mode: 'insensitive' } },
-                { email: { contains: filtre, mode: 'insensitive' } },
-            ];
-        }
-
         const utilisateurs = await prisma.utilisateur.findMany({
-            where: whereCondition,
             orderBy: {
-                createdAt: trie === 'CROISSANT' ? 'asc' : 'desc',
+                createdAt: 'desc', // Ordre décroissant
             },
             select: {
                 id: true,
@@ -30,6 +18,7 @@ export async function listerLesUtilisateurs(trie: string, filtre?: string) {
                 telephone: true,
                 role: true,
                 createdAt: true,
+                niveau: true,
                 _count: {
                     select: {
                         enfants: true,

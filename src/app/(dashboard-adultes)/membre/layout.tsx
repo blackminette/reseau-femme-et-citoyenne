@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/membre/layout.tsx
+// * src/app/(dashboard-adultes)/(dashboard)/membre/layout.tsx
 
 import React from 'react';
 import MemberSideMenu from '@/components/MemberSideMenu';
@@ -17,14 +17,14 @@ export default function MembreLayout({
     return (
         <div className="min-h-screen bg-slate-50">
 
-            {/* Barre latérale fixe à gauche, sous le header global (h-16), jusqu'en bas */}
-            <aside className="fixed top-16 bottom-0 left-0 z-40 w-64 overflow-y-auto border-r border-violet-200 bg-white p-5">
+            {/* Barre latérale fixe à gauche (Prend strictement 1/6 de la largeur) */}
+            <aside className="w-1/6 fixed inset-y-16 left-0 bg-white border-r border-slate-200 z-40 p-4">
                 <MemberSideMenu />
             </aside>
 
-            {/* Zone de droite décalée de la largeur du menu (w-64 = 16rem) */}
-            <main className="ml-64 p-8">
-                <div className="mx-auto max-w-6xl">
+            {/* Zone de droite décalée de force par une marge équivalente à la largeur du menu (1/6 = 16.666667%) */}
+            <main className="ml-[16.666667%] p-8">
+                <div className="max-w-5xl mx-auto">
                     {children}
                 </div>
             </main>

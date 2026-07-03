@@ -1,4 +1,4 @@
-// * src/app/(dashboard-adultes)/admin/actions.ts
+// * src/app/(dashboard-adultes)/(dashboard)/admin/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
@@ -25,18 +25,5 @@ export async function compterContenu() {
     } catch (error) {
         console.error('Erreur lors du comptage du contenu :', error);
         return { success: false, data: null }
-    }
-}
-
-export async function recupererModulesPedagogiques() {
-    try {
-        const result = await prisma.module.findMany({
-            orderBy: {
-                createdAt: "asc"
-            }
-        })
-        return { success: true, data: result }
-    } catch (error) {
-        return { success: false, error: "Erreur lors de la récupération des modules." }
     }
 }
