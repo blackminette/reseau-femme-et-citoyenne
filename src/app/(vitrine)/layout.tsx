@@ -1,13 +1,15 @@
-import React from 'react';
+// * src/app/(vitrine)/layout.tsx
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
-export default function VitrineLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function VitrineLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex min-h-screen flex-col bg-[#eedeff] text-[#2b1459]">
-            <main className="flex-1">{children}</main>
-        </div>
+        <>
+            <Header />
+            <main className="grow flex flex-col">
+                {children}
+            </main>
+            <Footer />
+        </>
     );
 }
