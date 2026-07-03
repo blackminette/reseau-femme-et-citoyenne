@@ -13,6 +13,7 @@ import {
 } from './actions';
 import Modal from '@/components/Modal';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -34,6 +35,7 @@ export default function AdminMembresPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [pageActuelle, setPageActuelle] = useState(1);
     const [membresParPage, setMembresParPage] = useState(20);
+    const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
     const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
     const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
@@ -68,11 +70,26 @@ export default function AdminMembresPage() {
 
     useEffect(() => {
         chargerMembres();
+
     }, []);
 
     useEffect(() => {
         setPageActuelle(1);
     }, [recherche, rolesSelectionnes, statutFiltre]);
+
+    useEffect(() => {
+        const fetchCurrentAdmin = async () => {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user) {
+                    setCurrentAdminId(user.id);
+                }
+            } catch (err) {
+                console.error("Erreur lors de la récupération de la session Admin:", err);
+            }
+        };
+        fetchCurrentAdmin();
+    }, []);
 
     const chargerMembres = async () => {
         setIsLoading(true);
@@ -94,6 +111,11 @@ export default function AdminMembresPage() {
     };
 
     const handleActive = async (id: string, currentStatus: boolean) => {
+        if (id === currentAdminId) {
+            alert("Action impossible : Vous ne pouvez pas désactiver votre propre compte.");
+            return;
+        }
+
         const statutActuel = currentStatus ?? true;
         const actionTexte = statutActuel ? 'désactiver' : 'activer';
 
@@ -175,6 +197,11 @@ export default function AdminMembresPage() {
 
     const handleSupprimer = async () => {
         if (!membreSelectionne) return;
+
+        if (membreSelectionne.id === currentAdminId) {
+            alert("Action impossible : Vous ne pouvez pas supprimer votre propre compte.");
+            return;
+        }
 
         const result = await supprimerUtilisateur(membreSelectionne.id);
         if (result.success) {
@@ -469,6 +496,7 @@ export default function AdminMembresPage() {
                                                     type="checkbox"
                                                     checked={selectedIds.includes(membre.id)}
                                                     onChange={() => handleSelectRow(membre.id)}
+                                                    disabled={membre.id === currentAdminId}
                                                     className="rounded border-slate-300 text-violet-600 focus:ring-violet-500 h-4 w-4 cursor-pointer"
                                                 />
                                             </td>
@@ -532,8 +560,9 @@ export default function AdminMembresPage() {
                                                 <div className="flex justify-end items-center gap-2">
                                                     <button
                                                         onClick={() => handleActive(membre.id, membre.isActive)}
-                                                        title={estActif ? "Désactiver le membre" : "Activer le membre"}
-                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer ${estActif
+                                                        disabled={membre.id === currentAdminId}
+                                                        title={membre.id === currentAdminId ? "Vous ne pouvez pas désactiver votre propre compte" : (estActif ? "Désactiver le membre" : "Activer le membre")}
+                                                        className={`p-2 rounded-lg transition-all transform hover:scale-110 cursor-pointer disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed ${estActif
                                                             ? "text-emerald-600 hover:bg-emerald-50"
                                                             : "text-amber-600 bg-amber-50/70 border border-amber-200 hover:bg-amber-100 shadow-sm"
                                                             }`}
@@ -569,8 +598,9 @@ export default function AdminMembresPage() {
                                                             setMembreSelectionne(membre);
                                                             setModalSupprimerIsOpen(true);
                                                         }}
-                                                        title="Supprimer le membre"
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer"
+                                                        disabled={membre.id === currentAdminId}
+                                                        title={membre.id === currentAdminId ? "Vous ne pouvez pas supprimer votre propre compte" : "Supprimer le membre"}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-110 cursor-pointer disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>

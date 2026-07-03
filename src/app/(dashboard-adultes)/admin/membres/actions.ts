@@ -67,6 +67,15 @@ export async function supprimerUtilisateur(id: string) {
     try {
         const supabase = await getSupabaseAdmin();
 
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+        if (currentUser && id === currentUser.id) {
+            return {
+                success: false,
+                error: "Sécurité critique : Vous ne pouvez pas supprimer le compte avec lequel vous êtes actuellement connecté."
+            };
+        }
+
         const { error: authError } = await supabase.auth.admin.deleteUser(id);
 
         if (authError) {
@@ -292,9 +301,12 @@ export async function supprimerUtilisateursEnMasse(ids: string[]) {
     try {
         const supabase = await getSupabaseAdmin();
 
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        const idsFiltres = currentUser ? ids.filter(id => id !== currentUser.id) : ids;
+
         const idsSupprimesAvecSucces: string[] = [];
 
-        for (const id of ids) {
+        for (const id of idsFiltres) {
             const { error: authError } = await supabase.auth.admin.deleteUser(id);
 
             if (authError) {
