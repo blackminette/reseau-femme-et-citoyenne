@@ -10,8 +10,6 @@ export async function reserverAtelier(prevState: any, formData: FormData) {
   const telephone = formData.get('telephone') as string;
   const modePaiement = formData.get('modePaiement') as string;
 
-  // Conversion de l'ID : si vide ou null, on force 'undefined' 
-  // pour que Prisma ignore le champ (obligatoire pour les invités)
   const utilisateurId = (rawUtilisateurId && rawUtilisateurId !== "") ? rawUtilisateurId : undefined;
 
   try {

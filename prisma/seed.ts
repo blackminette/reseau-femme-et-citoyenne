@@ -348,26 +348,26 @@ async function main() {
     { 
       titre: "Atelier Bricolage", 
       dateDebut: new Date('2026-06-29T10:00:00'), 
-      dateFin: new Date('2026-06-29T12:00:00'), 
+      dateFin: new Date('2026-06-29T12:00:00'),
       placesMax: 10
     },
     { 
       titre: "Cours de Dessin", 
       dateDebut: new Date('2026-07-01T14:00:00'), 
-      dateFin: new Date('2026-07-01T16:00:00'), 
+      dateFin: new Date('2026-07-01T16:00:00'),
       placesMax: 8
     },
     { 
       titre: "Éveil Musical", 
       dateDebut: new Date('2026-07-03T10:00:00'), 
-      dateFin: new Date('2026-07-03T12:00:00'), 
+      dateFin: new Date('2026-07-03T12:00:00'),
       placesMax: 12
     },
     { 
       titre: "Atelier Poterie", 
       dateDebut: new Date('2026-07-04T14:00:00'), 
-      dateFin: new Date('2026-07-04T16:00:00'), 
-      placesMax: 15
+      dateFin: new Date('2026-07-04T16:00:00'),
+      placesMax: 1
     }
   ];
 
