@@ -52,7 +52,6 @@ model Lieu {
   id           String    @id @default(cuid())
   nom          String
   adresseTexte String
-  adresseIdBan String    @unique
   estExterieur Boolean   @default(false)
   ateliers     Atelier[]
 }
