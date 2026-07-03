@@ -1,4 +1,13 @@
+"use client"; // À mettre tout en haut du fichier si absent
+
+import { useEffect } from 'react';
+
+
 export default function MentionsLegalesPage() {
+    useEffect(() => {
+    window.scrollTo(0, 0);
+    }, []);
+
     return (
         <main className="max-w-4xl mx-auto px-4 py-12 text-gray-800">
             <h1 className="text-3xl font-bold mb-8 text-[#260936]">Mentions Légales</h1>

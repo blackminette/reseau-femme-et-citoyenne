@@ -7,6 +7,9 @@
  * ainsi que les informations légales et le copyright.
  */
 
+import Link from 'next/link';
+
+
 export default function Footer() {
     return (
         <footer className="border-t border-[#bc96e6]/30 bg-[#260936] px-6 py-12 text-sm text-[#eedeff] relative overflow-hidden">
@@ -59,10 +62,10 @@ export default function Footer() {
                 <div>
                     <p className="font-bold text-lg text-white mb-4">Navigation</p>
                     <div className="flex flex-col gap-3 font-medium">
-                        <a href="/mentions-legales" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
+                        <Link href="/mentions-legales" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
                             <span className="h-1 w-1 bg-[#bc96e6] rounded-full"></span>
                             Mentions légales
-                        </a>
+                        </Link>
                         <a href="/confidentialite" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
                             <span className="h-1 w-1 bg-[#bc96e6] rounded-full"></span>
                             Confidentialité
