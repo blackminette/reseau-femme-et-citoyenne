@@ -4,7 +4,6 @@ import React, { type Dispatch, type SetStateAction } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Check, CheckCircle2, MoveDown, MoveUp, RotateCcw, Sparkles, Star, XCircle } from 'lucide-react';
-import { MODULES } from '@/lib/enfant-data';
 import type {
     InputExerciseData,
     InputQuestion,
@@ -63,6 +62,25 @@ type ActivityAdventureViewProps = {
   setScore: Dispatch<SetStateAction<number>>;
 };
 
+type VisualPlaceholderProps = {
+  icon: string;
+  title: string;
+  text: string;
+  className?: string;
+};
+
+function VisualPlaceholder({ icon, title, text, className = '' }: VisualPlaceholderProps) {
+  return (
+    <div className={`flex h-full w-full items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-white/80 p-4 text-center shadow-xs ${className}`}>
+      <div className="space-y-2">
+        <div className="text-3xl">{icon}</div>
+        <div className="text-xs font-black uppercase tracking-widest text-violet-500">{title}</div>
+        <p className="text-[11px] font-semibold leading-relaxed text-slate-500">{text}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function ActivityAdventureView(props: ActivityAdventureViewProps) {
   const {
     id,
@@ -111,7 +129,6 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
     setScore,
   } = props;
 
-  const staticModInfo = MODULES.find((m) => m.id === id) || { from: '#6d5ba8', to: '#5b4a98' };
   const steps = [
     { label: 'Leçon 1/3', desc: 'Découvrir' },
     { label: 'Leçon 2/3', desc: 'Observer' },
@@ -139,8 +156,7 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
                     {/* Module Info */}
                     <div className="flex items-center gap-3">
                         <div
-                            className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-lg font-bold"
-                            style={{ backgroundImage: `linear-gradient(135deg, ${staticModInfo.from}, ${staticModInfo.to})` }}
+                            className={`h-10 w-10 rounded-xl flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${content.themeColor}`}
                         >
                             📚
                         </div>
@@ -201,7 +217,7 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
                                     </p>
                                 </div>
 
-                                {/* Exemple Box (si spécifié, ex: aspirateur robot pour la robotique) */}
+                                {/* Exemple Box */}
                                 {content.step1.exempleText ? (
                                     <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between gap-4 mt-4">
                                         <div className="space-y-1">
@@ -224,7 +240,8 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
                             </div>
 
                             {/* Right Side Illustration */}
-                                <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
+                            <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/50 border border-violet-100/50 rounded-3xl p-6 flex items-center justify-center shadow-inner min-h-[300px] max-h-[360px] overflow-hidden">
+                                {content.step1.imageUrl ?? step1ImagePath ? (
                                     <Image
                                         src={content.step1.imageUrl ?? step1ImagePath}
                                         alt={content.step1.soustitre}
@@ -232,6 +249,14 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
                                         height={260}
                                         className="max-h-[260px] object-contain rounded-2xl hover:scale-102 transition-transform duration-500"
                                     />
+                                ) : (
+                                    <VisualPlaceholder
+                                        className="max-w-sm"
+                                        icon="📘"
+                                        title={content.step1.soustitre}
+                                        text={content.step1.texte}
+                                    />
+                                )}
                             </div>
                         </div>
                     )}
@@ -252,36 +277,28 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
                                     </p>
                                 </div>
 
-                                {/* Ligne de diagramme horizontal spécifique pour le fonctionnement du robot */}
-                                {activeModuleId === 'robotique' && (
-                                    <div className="pl-6 mt-4 grid grid-cols-3 gap-2 border-t border-yellow-200/50 pt-4 text-center font-sans">
-                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
-                                            <span className="text-xl mb-1">👁️</span>
-                                            <span className="text-[9px] font-black text-slate-800 leading-tight">1. Il reçoit une info</span>
-                                        </div>
-                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
-                                            <span className="text-xl mb-1">💻</span>
-                                            <span className="text-[9px] font-black text-slate-800 leading-tight">2. Il traite l&apos;info</span>
-                                        </div>
-                                        <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col items-center">
-                                            <span className="text-xl mb-1">⚙️</span>
-                                            <span className="text-[9px] font-black text-slate-800 leading-tight">3. Il agit</span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
 
                             {/* Right Side: Image + À retenir */}
                             <div className="flex flex-col gap-5 justify-between h-full">
                                 <div className="bg-violet-50/40 border border-violet-100 rounded-3xl p-5 flex items-center justify-center shadow-inner min-h-[160px] max-h-[200px] overflow-hidden">
-                                    <Image
-                                        src={content.step2.imageUrl ?? step2ImagePath}
-                                        alt={content.step2.boxTitre}
-                                        width={320}
-                                        height={150}
-                                        className="max-h-[150px] object-contain rounded-xl animate-pulse"
-                                        style={{ animationDuration: '3s' }}
-                                    />
+                                    {content.step2.imageUrl ?? step2ImagePath ? (
+                                        <Image
+                                            src={content.step2.imageUrl ?? step2ImagePath}
+                                            alt={content.step2.boxTitre}
+                                            width={320}
+                                            height={150}
+                                            className="max-h-[150px] object-contain rounded-xl animate-pulse"
+                                            style={{ animationDuration: '3s' }}
+                                        />
+                                    ) : (
+                                        <VisualPlaceholder
+                                            className="max-w-xs min-h-[120px]"
+                                            icon="🧭"
+                                            title={content.step2.boxTitre}
+                                            text={content.step2.texte}
+                                        />
+                                    )}
                                 </div>
 
                                 <div className="bg-violet-50 border border-violet-100 p-5 rounded-2xl">
@@ -343,33 +360,7 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
 
                             {/* Right Side: thought bubbles + image OR Robot labels diagram */}
                             <div className="space-y-4">
-                                {activeModuleId === 'robotique' ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-violet-50/20 border border-violet-100 rounded-3xl p-5 shadow-inner">
-                                        <div className="flex justify-center">
-                                            <Image
-                                                src="/images/enfants/quiz_robot.png"
-                                                alt="Robot parts"
-                                                width={320}
-                                                height={180}
-                                                className="max-h-[180px] object-contain"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="bg-emerald-50 border-l-4 border-emerald-400 p-2 rounded-r-lg">
-                                                <h5 className="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Capteurs</h5>
-                                                <p className="text-[8px] text-emerald-700 font-bold leading-tight">Ils perçoivent le monde.</p>
-                                            </div>
-                                            <div className="bg-orange-50 border-l-4 border-orange-400 p-2 rounded-r-lg">
-                                                <h5 className="text-[9px] font-black text-orange-800 uppercase tracking-widest">Unité de contrôle</h5>
-                                                <p className="text-[8px] text-orange-700 font-bold leading-tight">Elle réfléchit et prend des décisions.</p>
-                                            </div>
-                                            <div className="bg-blue-50 border-l-4 border-blue-400 p-2 rounded-r-lg">
-                                                <h5 className="text-[9px] font-black text-blue-800 uppercase tracking-widest">Actionneurs</h5>
-                                                <p className="text-[8px] text-blue-700 font-bold leading-tight">Ils réalisent des actions.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : activeModuleId === 'napoleon' ? (
+                                {activeModuleId === 'napoleon' ? (
                                     <div className="space-y-4">
                                         {(() => {
                                             const napoleonStepImages = content.step3.imageUrl
@@ -624,20 +615,7 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
 
                             {/* Right Side Decoration */}
                             <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/20 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px] overflow-hidden">
-                                {activeModuleId === 'robotique' ? (
-                                    <div className="flex flex-col items-center text-center">
-                                        <Image
-                                            src="/images/enfants/exercice_generic.png"
-                                            alt="Activité robotique"
-                                            width={320}
-                                            height={160}
-                                            className="max-h-[160px] object-contain rounded-2xl"
-                                        />
-                                        <div className="mt-4 bg-white border border-violet-100 px-3 py-1.5 rounded-2xl text-[10px] font-black text-violet-700 shadow-xs">
-                                            Quel est le bon ordre ? 🤔
-                                        </div>
-                                    </div>
-                                ) : activeModuleId === 'napoleon' ? (
+                                {activeModuleId === 'napoleon' ? (
                                     <Image
                                         src={step4ImagePath}
                                         alt="Exercice de chronologie sur Napoléon"
@@ -646,12 +624,11 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
                                         className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
                                     />
                                 ) : (
-                                    <Image
-                                        src="/images/enfants/exercice_generic.png"
-                                        alt="Activité"
-                                        width={360}
-                                        height={180}
-                                        className="max-h-[180px] object-contain rounded-2xl hover:scale-102 transition-transform duration-300"
+                                    <VisualPlaceholder
+                                        className="max-w-sm min-h-[180px]"
+                                        icon="🧩"
+                                        title="Exercice en préparation"
+                                        text="Cette activité sera chargée depuis la base de données."
                                     />
                                 )}
                             </div>
@@ -726,16 +703,25 @@ export default function ActivityAdventureView(props: ActivityAdventureViewProps)
 
                             {/* Right Side: Robot helper */}
                             <div className="lg:col-span-4 flex flex-col items-center justify-center bg-violet-50/30 border border-violet-100 rounded-3xl p-6 shadow-inner max-h-[300px]">
-                                <Image
-                                    src={quizImagePath}
-                                    alt={activeModuleId === 'napoleon' ? 'Quiz de révision sur Napoléon' : 'Robot assistant'}
-                                    width={320}
-                                    height={160}
-                                    className="max-h-[160px] object-contain animate-bounce"
-                                    style={{ animationDuration: '3s' }}
-                                />
+                                {quizImagePath ? (
+                                    <Image
+                                        src={quizImagePath}
+                                        alt="Quiz de révision sur Napoléon"
+                                        width={320}
+                                        height={160}
+                                        className="max-h-[160px] object-contain animate-bounce"
+                                        style={{ animationDuration: '3s' }}
+                                    />
+                                ) : (
+                                    <VisualPlaceholder
+                                        className="max-w-sm min-h-[160px]"
+                                        icon="🧩"
+                                        title="Quiz en préparation"
+                                        text="Les questions de ce module seront chargées depuis la base de données."
+                                    />
+                                )}
                                 <span className="text-[9px] font-black text-violet-500 mt-3 uppercase tracking-widest bg-white border border-violet-100 px-3 py-1 rounded-full shadow-xs">
-                                    Aide Robot 🤖
+                                    Aide du module
                                 </span>
                             </div>
                         </div>
