@@ -94,9 +94,7 @@ export default function EnfantModuleDetailPage({ params }: { params: Params }) {
                     const dbMod = await obtenirDetailsModuleDepuisDB(id);
                     if (dbMod) {
                         const hydratedActivities = hydrateSequentialActivities(dbMod.activites as Activite[]);
-                        const visibleActivities = dbMod.slug === 'napoleon'
-                            ? hydratedActivities.filter((activity) => activity.type === 'lecon').slice(0, 1)
-                            : hydratedActivities;
+                        const visibleActivities = hydratedActivities;
                         const completedCount = visibleActivities.filter((activity) => activity.statut === 'termine').length;
                         setDbModule(dbMod);
                         setActivites(visibleActivities);
