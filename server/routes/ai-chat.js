@@ -1,11 +1,36 @@
+/**
+ * @file ai-chat.js
+ * @route POST /api/ai-chat
+ * @description Assistant pédagogique Milo — propulsé par Google Gemini 2.0 Flash.
+ *
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │  ARCHITECTURE DU PROMPT SYSTÈME                                 │
+ * │                                                                 │
+ * │  1. [ÉCRAN]    Question exacte visible sur l'écran de l'enfant  │
+ * │                → source de vérité absolue (envoyée par le quiz) │
+ * │  2. [CIBLÉE]   Question mentionnée par n° dans le message       │
+ * │                → fallback quand pas de données écran            │
+ * │  3. [PERSONA]  Identité, ton et règles de Milo                  │
+ * │  4. [STADE]    Niveau d'aide 1→4 + état émotionnel détecté      │
+ * │  5. [PROFIL]   Âge, niveau, badges, scores récents              │
+ * │  6. [CONTENU]  Module actif en détail + résumé des autres       │
+ * └─────────────────────────────────────────────────────────────────┘
+ */
+
 'use strict';
+
 const express = require('express');
-const { requireAuth } = require('../session');
+const { requireAuth }            = require('../session');
 const { publicChild, contentItem } = require('../helpers');
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
+/** Clés internes des modules (ordre d'affichage dans le prompt) */
 const MODULE_KEYS = ['lecture', 'numerique', 'robotique', 'anglais', 'civique', 'eco'];
+
+/** Libellés lisibles par l'IA pour chaque module */
 const MODULE_LABELS = {
   lecture:   'Lecture & compréhension',
   numerique: 'Numérique',
@@ -15,27 +40,66 @@ const MODULE_LABELS = {
   eco:       'Éco-citoyenneté',
 };
 
-// Tips pédagogiques par module
+/**
+ * Stratégies pédagogiques par module.
+ * Ces conseils sont injectés dans le prompt pour orienter la façon dont
+ * Milo choisit ses analogies et ses exemples.
+ */
 const MODULE_TIPS = {
-  lecture:   'Pour la lecture : aide l\'enfant à identifier les mots-clés, le sujet de la phrase, l\'idée principale. Encourage la reformulation avec ses propres mots.',
-  numerique: 'Pour le numérique : utilise des analogies du quotidien (IP = adresse postale, fichier = boîte, programme = recette de cuisine). Décompose les concepts abstraits.',
-  robotique: 'Pour la robotique : décompose toujours le problème en petites étapes séquentielles. Utilise l\'analogie "donner des instructions précises à quelqu\'un qui ne réfléchit pas".',
-  anglais:   'Pour l\'anglais : donne des indices sur la structure grammaticale en français, puis encourage l\'enfant à formuler en anglais. Valide l\'effort phonétique même approximatif.',
-  civique:   'Pour l\'éducation civique : relie toujours les concepts abstraits à des situations concrètes (droits, devoirs, vie en société). Utilise des exemples de l\'école ou de la famille.',
-  eco:       'Pour l\'éco-citoyenneté : part de gestes quotidiens simples (tri, transport, eau) pour expliquer les grands enjeux environnementaux. Valorise chaque petit geste.',
+  lecture:
+    "Aide l'enfant à identifier les mots-clés, le sujet et l'idée principale. " +
+    "Encourage la reformulation avec ses propres mots. " +
+    "Pour les synonymes/antonymes : partir d'exemples du quotidien ('joyeux c'est comme happy en anglais, le contraire c'est triste').",
+  numerique:
+    "Utilise des analogies du quotidien : IP = adresse postale, fichier = boîte, " +
+    "programme = recette de cuisine, réseau = autoroute. Décompose les concepts abstraits en images concrètes.",
+  robotique:
+    "Décompose toujours en petites étapes séquentielles. " +
+    "Analogie clé : 'donner des instructions très précises à quelqu'un qui ne réfléchit pas seul'. " +
+    "Si l'enfant bloque sur une boucle, demande-lui combien de fois il ferait l'action à la main.",
+  anglais:
+    "Donne des indices sur la structure grammaticale EN FRANÇAIS d'abord, " +
+    "puis encourage l'enfant à formuler en anglais. " +
+    "Valide l'effort phonétique même approximatif. Ne corrige jamais l'accent, seulement le sens.",
+  civique:
+    "Relie toujours les concepts abstraits à des situations concrètes : école, famille, quartier. " +
+    "Exemples : droits = ce que tu peux faire, devoirs = ce que tu dois faire pour les autres.",
+  eco:
+    "Pars de gestes quotidiens simples (tri, transport, eau, énergie) pour expliquer les grands enjeux. " +
+    "Valorise chaque petit geste. Évite la culpabilisation — préfère la fierté d'agir.",
 };
+
+// ─── Initialisation du module ─────────────────────────────────────────────────
 
 module.exports = function aiChatRoutes(db) {
   const router = express.Router();
 
+  // Le client Gemini est instancié une seule fois par processus (pas à chaque requête)
+  // pour économiser des ressources et éviter les instanciations répétées.
+  let _geminiClient = null;
+  function getGeminiClient() {
+    if (!_geminiClient) {
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      _geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    return _geminiClient;
+  }
+
+  // Requêtes SQLite préparées une fois → meilleures performances
+  const stmtChild    = db.prepare('SELECT * FROM children WHERE id = ?');
+  const stmtContents = db.prepare('SELECT * FROM contents WHERE module = ? ORDER BY is_custom, created_at');
+
+  // ─── Chargement des données ──────────────────────────────────────────────────
+
+  /**
+   * Charge toutes les activités de tous les modules depuis la BDD.
+   * @returns {{ [moduleKey]: { quizzes, exercises, lessons } }}
+   */
   function loadAllModules() {
     const out = {};
     for (const key of MODULE_KEYS) {
-      const rows = db.prepare(
-        'SELECT * FROM contents WHERE module = ? ORDER BY is_custom, created_at'
-      ).all(key);
       const mod = { quizzes: [], exercises: [], lessons: [] };
-      for (const row of rows) {
+      for (const row of stmtContents.all(key)) {
         const item = contentItem(row);
         if (row.type === 'quizzes')   mod.quizzes.push(item);
         if (row.type === 'exercises') mod.exercises.push(item);
@@ -46,51 +110,214 @@ module.exports = function aiChatRoutes(db) {
     return out;
   }
 
+  /**
+   * Construit le contexte complet de l'enfant (profil + scores + modules).
+   * @param {Express.Request} req
+   */
+  function buildChildContext(req) {
+    const child   = publicChild(db, stmtChild.get(req.auth.id));
+    const modules = loadAllModules();
+
+    // Enrichit les scores avec le titre de l'activité (lisible par l'IA)
+    const scores = (child.scores || []).map(s => {
+      const mod   = modules[s.module];
+      const found = mod && [...mod.quizzes, ...mod.exercises].find(x => x.id === s.ref);
+      return { ...s, activityTitle: found ? found.title : (s.ref || 'activité inconnue') };
+    });
+
+    // Moyenne par module pour identifier les points forts/faibles
+    const moduleStats = {};
+    for (const s of scores) {
+      if (!moduleStats[s.module]) moduleStats[s.module] = { sum: 0, count: 0 };
+      moduleStats[s.module].sum   += (s.score / s.total) * 100;
+      moduleStats[s.module].count += 1;
+    }
+    for (const key of Object.keys(moduleStats)) {
+      moduleStats[key].avg = Math.round(moduleStats[key].sum / moduleStats[key].count);
+    }
+
+    return { enfant: { prenom: child.prenom, age: child.age }, scores, moduleStats, badges: child.badges, modules };
+  }
+
+  // ─── Helpers de recherche ────────────────────────────────────────────────────
+
+  /**
+   * Trouve une activité (quiz ou exercice) par son identifiant dans tous les modules.
+   * @returns {{ module: string, activity: object } | null}
+   */
+  function findActivity(modules, activityId) {
+    if (!activityId) return null;
+    for (const key of MODULE_KEYS) {
+      const mod   = modules[key];
+      const found = mod && [...mod.quizzes, ...mod.exercises].find(x => x.id === activityId);
+      if (found) return { module: key, activity: found };
+    }
+    return null;
+  }
+
+  /**
+   * Trouve la question N°qNum dans une activité précise (priorité),
+   * ou en comptant globalement sur tout le module (fallback).
+   * @returns {{ activityTitle, question, choices, correct } | null}
+   */
+  function findPinnedQuestion(modules, moduleKey, qNum, activityId) {
+    if (!qNum) return null;
+
+    // Priorité 1 : cherche Q(qNum) dans l'activité spécifiquement ouverte par l'enfant
+    if (activityId) {
+      const fa = findActivity(modules, activityId);
+      const q  = fa && (fa.activity.questions || [])[qNum - 1];
+      if (q) return buildQuestionResult(fa.activity.title, q, qNum);
+    }
+
+    // Fallback : comptage global sur tout le module
+    if (!moduleKey || !modules[moduleKey]) return null;
+    let idx = 0;
+    for (const activity of [...modules[moduleKey].quizzes, ...modules[moduleKey].exercises]) {
+      for (let i = 0; i < (activity.questions || []).length; i++) {
+        if (++idx === qNum) return buildQuestionResult(activity.title, activity.questions[i], i + 1);
+      }
+    }
+    return null;
+  }
+
+  /** Formate un objet question en résultat exploitable par le prompt. */
+  function buildQuestionResult(activityTitle, q, localIndex) {
+    const correct = q.c && q.a !== undefined ? q.c[q.a] : null;
+    return {
+      activityTitle,
+      localIndex,
+      question: q.q,
+      choices: (q.c || []).map((c, i) => `  ${String.fromCharCode(65 + i)}) ${c}${i === q.a ? ' [CORRECT]' : ''}`),
+      correct,
+    };
+  }
+
+  // ─── Formatage du contenu pour le prompt ────────────────────────────────────
+
+  /** Formate une liste de questions Q/R pour injection dans le prompt. */
   function formatQuestions(questions) {
-    if (!Array.isArray(questions)) return '';
+    if (!Array.isArray(questions) || !questions.length) return '';
     return questions.map((q, i) => {
       const choices = (q.c || []).map((c, ci) => {
         const letter = String.fromCharCode(65 + ci);
-        const mark = ci === q.a ? ' [CORRECT]' : '';
-        return `  ${letter}) ${c}${mark}`;
+        return `  ${letter}) ${c}${ci === q.a ? ' [CORRECT]' : ''}`;
       }).join('\n');
       return `  Q${i + 1}: ${q.q}\n${choices}`;
     }).join('\n\n');
   }
 
-  // Détecte un numéro de question dans le message de l'enfant (retourne entier 1-based ou null)
-  function extractQuestionNumber(message) {
+  /**
+   * Formate le contenu des modules pour le prompt.
+   *
+   * Stratégie :
+   *   - Si un module est identifié (focusModule) → envoi complet de ce module,
+   *     résumé en 1 ligne pour les autres (évite que Gemini se perde dans du contenu hors-sujet).
+   *   - Si aucun module connu → envoi complet de tous les modules
+   *     (fallback sécurisé : mieux que de laisser Gemini inventer).
+   */
+  function formatModulesForPrompt(modules, focusModule) {
+    const lines = [];
+
+    if (!focusModule) {
+      lines.push('(Module non identifié — contenu de tous les modules envoyé)\n');
+      for (const key of MODULE_KEYS) {
+        const mod = modules[key];
+        if (!mod) continue;
+        lines.push(`\n### ${MODULE_LABELS[key]}`);
+        for (const quiz of mod.quizzes) {
+          lines.push(`[Quiz "${quiz.title}"]`);
+          lines.push(formatQuestions(quiz.questions) || '  (aucune question)');
+          lines.push('');
+        }
+        for (const ex of mod.exercises) {
+          lines.push(`[Exercice "${ex.title}"]`);
+          if (ex.text) lines.push(`  Texte : "${ex.text.slice(0, 300).replace(/\n/g, ' ')}…"`);
+          lines.push(formatQuestions(ex.questions) || '');
+          lines.push('');
+        }
+      }
+      return lines.join('\n');
+    }
+
+    for (const key of MODULE_KEYS) {
+      const mod = modules[key];
+      if (!mod) continue;
+
+      if (key !== focusModule) {
+        // Résumé minimaliste pour les modules hors-focus
+        const nQ = [...mod.quizzes, ...mod.exercises]
+          .reduce((s, a) => s + (a.questions?.length || 0), 0);
+        lines.push(`• ${MODULE_LABELS[key]} — ${nQ} question(s)`);
+        continue;
+      }
+
+      lines.push(`\n### MODULE ACTUEL : ${MODULE_LABELS[key]}`);
+      lines.push('(Questions + réponses correctes — base de connaissance de Milo pour ce module)\n');
+
+      for (const quiz of mod.quizzes) {
+        lines.push(`[Quiz "${quiz.title}" — id: ${quiz.id}]`);
+        lines.push(formatQuestions(quiz.questions) || '  (aucune question)');
+        lines.push('');
+      }
+      for (const ex of mod.exercises) {
+        lines.push(`[Exercice "${ex.title}" — id: ${ex.id}]`);
+        if (ex.text) lines.push(`  Texte : "${ex.text.slice(0, 500).replace(/\n/g, ' ')}"`);
+        lines.push(formatQuestions(ex.questions) || '');
+        lines.push('');
+      }
+      if (mod.lessons.length) {
+        lines.push('[Leçons disponibles :]');
+        for (const l of mod.lessons) lines.push(`  • "${l.title}"`);
+      }
+    }
+    return lines.join('\n');
+  }
+
+  // ─── Analyse du message ──────────────────────────────────────────────────────
+
+  /**
+   * Détecte le numéro de question mentionné dans le message de l'enfant.
+   * Supporte les formes : "question 2", "Q2", "numéro 3", "deuxième", "2ème question"…
+   * @returns {number|null} Numéro 1-basé ou null si non trouvé.
+   */
+  function extractQuestionNumber(msg) {
     const patterns = [
       /question\s*n[o°]?\s*(\d+)/i,
       /question\s+(\d+)/i,
       /exercice?\s+(\d+)/i,
-      /q\s*(\d+)\b/i,
+      /\bq\s*(\d+)\b/i,
       /num[eé]ro\s+(\d+)/i,
-      /n[o°]\s*(\d+)/i,
-      /(\d+)(?:e|ème|eme|er|ère|re)\s+question/i,
+      /\bn[o°]\s*(\d+)/i,
+      /(\d+)\s*(?:e|ème|eme|er|ère|re)\s*question/i,
     ];
     for (const re of patterns) {
-      const m = message.match(re);
+      const m = msg.match(re);
       if (m) return parseInt(m[1], 10);
     }
-    const ordinals = { 'premi': 1, 'deuxi': 2, 'troisi': 3, 'quatri': 4, 'cinqui': 5, 'sixi': 6 };
-    const low = message.toLowerCase();
-    for (const [prefix, num] of Object.entries(ordinals)) {
-      if (low.includes(prefix)) return num;
+    // Ordinaux en toutes lettres
+    const ordinals = { premi: 1, deuxi: 2, troisi: 3, quatri: 4, cinqui: 5, sixi: 6 };
+    const low = msg.toLowerCase();
+    for (const [prefix, n] of Object.entries(ordinals)) {
+      if (low.includes(prefix)) return n;
     }
     return null;
   }
 
-  // Détecte la mention d'un module dans le message de l'enfant
-  function detectModuleFromMessage(message) {
-    const low = message.toLowerCase();
+  /**
+   * Tente de détecter le module mentionné dans le message quand l'URL ne le précise pas.
+   * Utile quand l'enfant parle depuis la page d'accueil : "je comprends rien au module robotique".
+   * @returns {string|null} Clé de module ou null.
+   */
+  function detectModuleFromMessage(msg) {
+    const low = msg.toLowerCase();
     const aliases = {
-      lecture:   ['lecture', 'lire', 'texte', 'compréhension', 'comprehension'],
-      numerique: ['numérique', 'numerique', 'informatique', 'ordinateur', 'internet'],
-      robotique: ['robotique', 'robot', 'programme', 'séquence', 'sequence', 'algo'],
-      anglais:   ['anglais', 'english', 'traduction'],
-      civique:   ['civique', 'citoyenneté', 'citoyennete', 'droits', 'devoirs', 'société'],
-      eco:       ['éco', 'eco', 'environnement', 'nature', 'planète', 'planete', 'recyclage'],
+      lecture:   ['lecture', 'lire', 'texte', 'compréhension', 'comprehension', 'synonyme', 'antonyme', 'contraire'],
+      numerique: ['numérique', 'numerique', 'informatique', 'ordinateur', 'internet', 'réseau', 'adresse ip'],
+      robotique: ['robotique', 'robot', 'programme', 'séquence', 'sequence', 'algorithme', 'algo', 'boucle', 'instruction'],
+      anglais:   ['anglais', 'english', 'traduction', 'traduire', 'vocabulary', 'grammaire'],
+      civique:   ['civique', 'citoyenneté', 'citoyennete', 'droits', 'devoirs', 'société', 'loi', 'démocratie'],
+      eco:       ['éco', 'eco', 'environnement', 'nature', 'planète', 'planete', 'recyclage', 'climat', 'énergie'],
     };
     for (const [key, words] of Object.entries(aliases)) {
       if (words.some(w => low.includes(w))) return key;
@@ -98,158 +325,37 @@ module.exports = function aiChatRoutes(db) {
     return null;
   }
 
-  // Trouve la question N : cherche d'abord dans l'activité courante (activityId), puis dans tout le module
-  function findPinnedQuestion(modules, moduleKey, qNum, activityId) {
-    if (!qNum) return null;
-
-    // Priorité 1 : activité spécifique ouverte par l'enfant
-    if (activityId) {
-      const fa = findActivity(modules, activityId);
-      if (fa) {
-        const qs = fa.activity.questions || [];
-        const q = qs[qNum - 1];
-        if (q) {
-          const correct = q.c && q.a !== undefined ? q.c[q.a] : null;
-          return {
-            activityTitle: fa.activity.title,
-            localIndex: qNum,
-            question: q.q,
-            choices: (q.c || []).map((c, ci) => `${String.fromCharCode(65+ci)}) ${c}${ci===q.a?' [CORRECT]':''}`),
-            correct,
-          };
-        }
-      }
-    }
-
-    // Priorité 2 : module connu, comptage global
-    if (!moduleKey) return null;
-    const mod = modules[moduleKey];
-    if (!mod) return null;
-    let idx = 0;
-    for (const activity of [...mod.quizzes, ...mod.exercises]) {
-      for (let i = 0; i < (activity.questions || []).length; i++) {
-        idx++;
-        if (idx === qNum) {
-          const q = activity.questions[i];
-          const correct = q.c && q.a !== undefined ? q.c[q.a] : null;
-          return {
-            activityTitle: activity.title,
-            localIndex: i + 1,
-            question: q.q,
-            choices: (q.c || []).map((c, ci) => `${String.fromCharCode(65+ci)}) ${c}${ci===q.a?' [CORRECT]':''}`),
-            correct,
-          };
-        }
-      }
-    }
-    return null;
+  /**
+   * Extrait la mauvaise réponse choisie par l'enfant depuis son message.
+   * Ex : "j'ai répondu 'sombre' mais c'était faux" → "sombre"
+   * Permet à Milo d'expliquer POURQUOI ce choix précis est incorrect.
+   * @returns {string|null}
+   */
+  function extractWrongAnswer(msg) {
+    const m = msg.match(/(?:j'?ai répondu|j'?ai choisi|j'?ai mis|j'?ai dit)\s*[«"']?([^«"',!?\.]+)[»"']?\s*(?:mais|et|or|pourtant)/i);
+    return m ? m[1].trim() : null;
   }
 
-  // Formate les modules pour le prompt
-  // Si focusModule connu → ce module en détail, les autres en résumé (1 ligne)
-  // Si focusModule inconnu → tous les modules en détail (fallback sécurisé)
-  function formatModulesForPrompt(modules, focusModule) {
-    const lines = [];
+  /**
+   * Détecte le stade d'aide optimal selon l'historique et le contenu du message.
+   *
+   * Stades :
+   *   1 → Premier contact : écouter, questionner (pas d'indice encore)
+   *   2 → Première piste  : analogie, rappel de règle (sans révéler la réponse)
+   *   3 → Indice ciblé   : pointe directement le blocage précis
+   *   4 → Explication complète : révèle la réponse + raisonnement complet
+   *
+   * @returns {1|2|3|4}
+   */
+  function getExplorationStage(history, msg) {
+    const low = msg.toLowerCase();
 
-    if (!focusModule) {
-      // Fallback : tout envoyer pour que l'IA ne parte pas dans l'imagination
-      lines.push('(Aucun module détecté — contenu complet de tous les modules ci-dessous)\n');
-      for (const key of MODULE_KEYS) {
-        const mod = modules[key];
-        if (!mod) continue;
-        lines.push(`\n### ${MODULE_LABELS[key]}`);
-        if (mod.quizzes.length) {
-          for (const quiz of mod.quizzes) {
-            lines.push(`[Quiz "${quiz.title}"]`);
-            lines.push(formatQuestions(quiz.questions));
-            lines.push('');
-          }
-        }
-        if (mod.exercises.length) {
-          for (const ex of mod.exercises) {
-            lines.push(`[Exercice "${ex.title}"]`);
-            if (ex.text) lines.push(`  Texte : "${ex.text.slice(0, 300).replace(/\n/g, ' ')}"`);
-            if (ex.questions) lines.push(formatQuestions(ex.questions));
-            lines.push('');
-          }
-        }
-      }
-      return lines.join('\n');
-    }
+    // Signaux explicites qui court-circuitent le comptage de tours
+    if (/encore un indice/i.test(low))                               return 3;
+    if (/c['']?était faux|c'?est faux|mauvais|pas la bonne/i.test(low)) return 2;
+    if (/toujours pas|je comprends toujours|encore bloqué/i.test(low))  return 3;
 
-    // Module connu : détail complet pour ce module, résumé pour les autres
-    for (const key of MODULE_KEYS) {
-      const mod = modules[key];
-      if (!mod) continue;
-
-      if (key !== focusModule) {
-        const nQ = mod.quizzes.reduce((s, q) => s + (q.questions?.length || 0), 0)
-                 + mod.exercises.reduce((s, e) => s + (e.questions?.length || 0), 0);
-        lines.push(`• ${MODULE_LABELS[key]} — ${nQ} question(s)`);
-        continue;
-      }
-
-      lines.push(`\n### MODULE ACTUEL : ${MODULE_LABELS[key]}`);
-      lines.push('(Questions + réponses correctes — utilise-les pour guider l\'enfant)\n');
-
-      for (const quiz of mod.quizzes) {
-        lines.push(`[Quiz "${quiz.title}" — id: ${quiz.id}]`);
-        lines.push(formatQuestions(quiz.questions));
-        lines.push('');
-      }
-      for (const ex of mod.exercises) {
-        lines.push(`[Exercice "${ex.title}" — id: ${ex.id}]`);
-        if (ex.text) lines.push(`  Texte : "${ex.text.slice(0, 500).replace(/\n/g, ' ')}"`);
-        if (ex.questions) lines.push(formatQuestions(ex.questions));
-        lines.push('');
-      }
-      if (mod.lessons.length) {
-        lines.push('[Leçons :]');
-        for (const lesson of mod.lessons) lines.push(`  • "${lesson.title}"`);
-      }
-    }
-    return lines.join('\n');
-  }
-
-  function buildContext(req) {
-    const child = publicChild(db, db.prepare('SELECT * FROM children WHERE id = ?').get(req.auth.id));
-    const modules = loadAllModules();
-
-    const scoresEnriched = (child.scores || []).map(s => {
-      const mod = modules[s.module];
-      let activityTitle = s.ref || 'activité inconnue';
-      if (mod) {
-        const found = [...mod.quizzes, ...mod.exercises].find(x => x.id === s.ref);
-        if (found) activityTitle = found.title;
-      }
-      return { ...s, activityTitle };
-    });
-
-    const moduleStats = {};
-    for (const s of scoresEnriched) {
-      if (!moduleStats[s.module]) moduleStats[s.module] = { sum: 0, count: 0 };
-      moduleStats[s.module].sum += (s.score / s.total) * 100;
-      moduleStats[s.module].count++;
-    }
-    for (const key of Object.keys(moduleStats)) {
-      moduleStats[key].avg = Math.round(moduleStats[key].sum / moduleStats[key].count);
-    }
-
-    return {
-      enfant: { prenom: child.prenom, age: child.age },
-      scores: scoresEnriched,
-      moduleStats,
-      badges: child.badges,
-      modules,
-    };
-  }
-
-  // Stade d'exploration selon l'historique (approche collaborative)
-  function getExplorationStage(history, message) {
-    // "Encore un indice" → on saute directement au stade 3 (indice ciblé)
-    if (/encore un indice/i.test(message)) return 3;
-    // "J'ai répondu X mais c'était faux" → stade 2 (on analyse l'erreur)
-    if (/c['']était faux|c'est faux|mauvais|pas la bonne/i.test(message)) return 2;
+    // Comptage des tours IA pour escalader progressivement
     const aiTurns = history.filter(m => m.role === 'assistant').length;
     if (aiTurns === 0) return 1;
     if (aiTurns === 1) return 2;
@@ -257,224 +363,256 @@ module.exports = function aiChatRoutes(db) {
     return 4;
   }
 
-  // Détecte l'état émotionnel du message
+  /**
+   * Détecte l'état émotionnel du message pour adapter le ton de Milo.
+   * Couvre le langage SMS courant des enfants (jsp, sé pa, chui perdu…).
+   * @returns {'success'|'frustrated'|'confused'|'neutral'}
+   */
   function detectEmotion(msg) {
-    const m = msg.toLowerCase();
-    if (/j'?ai trouv|c'?est [çca]a|j'?ai compris|jai compris|j'?y suis|c'?est bon/.test(m)) return 'success';
-    if (/comprend(s)? (rien|pas)|nul(le)?|trop dur|c'?est dur|j'?arrive pas|impossible|abandonne|j'?en peux plus|sais pas quoi/.test(m)) return 'frustrated';
-    if (/quoi[?!]|hein[?!]|\?\?\?|pas s[uû]r|comprend pas la question|c['']?est quoi/.test(m)) return 'confused';
+    const low = msg.toLowerCase();
+    if (/j'?ai trouv|c'?est [çca]a|j'?ai compris|jai compris|j'?y suis|c'?est bon|trop bien|j'?ai eu/.test(low))
+      return 'success';
+    if (/comprend(s)? (rien|pas)|nul(le)?|trop dur|c'?est dur|j'?arrive pas|impossible|abandonne|j'?en peux plus|chui nul|je suis nul|jai la flemme|je veux plus/.test(low))
+      return 'frustrated';
+    if (/quoi[?!]|hein[?!]|\?\?\?|pas s[uû]r|comprend pas la question|c['']?est quoi|jsp|sé pa|sais pas|je sais pas|chui perdu|perdu|comprends rien/.test(low))
+      return 'confused';
     return 'neutral';
   }
 
+  /**
+   * Calcule le niveau global de l'enfant à partir de tous ses scores.
+   * @returns {{ label: string, avg: number|null }}
+   */
   function detectNiveauGlobal(scores) {
     if (!scores.length) return { label: 'débutant', avg: null };
     const avg = Math.round(scores.reduce((s, e) => s + (e.score / e.total) * 100, 0) / scores.length);
-    if (avg >= 85) return { label: 'expert', avg };
-    if (avg >= 70) return { label: 'avancé', avg };
-    if (avg >= 50) return { label: 'intermédiaire', avg };
-    return { label: 'en difficulté', avg };
+    if (avg >= 85) return { label: 'expert',          avg };
+    if (avg >= 70) return { label: 'avancé',          avg };
+    if (avg >= 50) return { label: 'intermédiaire',   avg };
+    return            { label: 'en difficulté',        avg };
   }
 
-  // Cherche une activité spécifique par ID dans tous les modules
-  function findActivity(modules, activityId) {
-    if (!activityId) return null;
-    for (const key of MODULE_KEYS) {
-      const mod = modules[key];
-      if (!mod) continue;
-      const found = [...mod.quizzes, ...mod.exercises].find(x => x.id === activityId);
-      if (found) return { module: key, activity: found };
-    }
-    return null;
-  }
+  // ─── Construction du prompt système ─────────────────────────────────────────
 
-  function systemPrompt(context, currentModule, activityId, history, message, currentQuestion) {
+  /**
+   * Construit le prompt système complet envoyé à Gemini.
+   * Ce prompt est recalculé à chaque requête pour refléter l'état temps-réel.
+   *
+   * @param {object}  context         - Données enfant + modules (buildChildContext)
+   * @param {string|null} currentModule  - Module URL (?m=...)
+   * @param {string|null} activityId     - Activité URL (?id=...)
+   * @param {Array}   history         - Historique de la conversation
+   * @param {string}  message         - Dernier message de l'enfant
+   * @param {object|null} currentQuestion - Question affichée sur l'écran (envoyée par le quiz)
+   */
+  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion) {
     const { enfant, scores, moduleStats, badges, modules } = context;
-    const niveau = detectNiveauGlobal(scores);
-    const stage  = getExplorationStage(history, message);
+
+    // — Analyses du contexte —
+    const niveau  = detectNiveauGlobal(scores);
+    const stage   = getExplorationStage(history, message);
     const emotion = detectEmotion(message);
+    const wrongAnswer = extractWrongAnswer(message);
 
     const strongModules = Object.entries(moduleStats).filter(([, s]) => s.avg >= 70).map(([k]) => MODULE_LABELS[k]);
-    const weakModules   = Object.entries(moduleStats).filter(([, s]) => s.avg < 50).map(([k]) => MODULE_LABELS[k]);
+    const weakModules   = Object.entries(moduleStats).filter(([, s]) => s.avg  < 50).map(([k]) => MODULE_LABELS[k]);
 
-    // Détermine l'activité courante (via activityId de l'URL)
-    const focusActivity = findActivity(modules, activityId);
-
-    // Détermine le module actif : URL > activityId > message texte
+    // — Résolution du module actif (URL > activité > texte du message) —
+    const focusActivity  = findActivity(modules, activityId);
     const resolvedModule = currentModule
       || (focusActivity ? focusActivity.module : null)
       || detectModuleFromMessage(message);
 
-    const currentModuleLabel = resolvedModule ? MODULE_LABELS[resolvedModule] : null;
-    const moduleTip = resolvedModule ? MODULE_TIPS[resolvedModule] || '' : '';
+    const moduleTip   = resolvedModule ? MODULE_TIPS[resolvedModule] || '' : '';
+    const moduleLabel = resolvedModule ? MODULE_LABELS[resolvedModule] : null;
 
-    let activityContext = '';
+    // — Contexte de l'activité en cours —
+    let activityBlock = '';
     if (focusActivity) {
       const qs = formatQuestions(focusActivity.activity.questions);
-      activityContext = `\n📌 ACTIVITÉ EN COURS : "${focusActivity.activity.title}" (${MODULE_LABELS[focusActivity.module]})\n${qs ? 'Questions de cette activité :\n' + qs : ''}\n`;
+      activityBlock = [
+        `\n📌 ACTIVITÉ EN COURS : "${focusActivity.activity.title}" (${MODULE_LABELS[focusActivity.module]})`,
+        qs ? `Questions de cette activité :\n${qs}` : '',
+      ].filter(Boolean).join('\n') + '\n';
     }
 
-    // Détecte si l'enfant mentionne un numéro de question précis
-    const mentionedQNum = extractQuestionNumber(message);
-    const pinnedQ = mentionedQNum ? findPinnedQuestion(modules, resolvedModule, mentionedQNum, activityId) : null;
-
-    // Bloc "question affichée à l'écran" — source de vérité absolue quand disponible
+    // — Bloc ÉCRAN : source de vérité absolue (question visible par l'enfant) —
     let screenBlock = '';
-    if (currentQuestion && currentQuestion.text && Array.isArray(currentQuestion.choices)) {
-      const cq = currentQuestion;
-      const choiceLines = cq.choices.map((c, i) => {
+    if (currentQuestion?.text && Array.isArray(currentQuestion.choices)) {
+      const { text, choices, correctIndex, displayNumber, total } = currentQuestion;
+      const correct = typeof correctIndex === 'number' ? choices[correctIndex] : null;
+      const choiceLines = choices.map((c, i) => {
         const letter = String.fromCharCode(65 + i);
-        const mark = i === cq.correctIndex ? ' ✅ [BONNE RÉPONSE]' : '';
-        return `  ${letter}) ${c}${mark}`;
+        return `  ${letter}) ${c}${i === correctIndex ? '  ✅ BONNE RÉPONSE' : ''}`;
       }).join('\n');
-      const correct = typeof cq.correctIndex === 'number' ? cq.choices[cq.correctIndex] : null;
+
+      const wrongNote = wrongAnswer
+        ? `\nL'enfant a choisi "${wrongAnswer}" — explique spécifiquement POURQUOI ce choix est incorrect,\npuis guide-le vers "${correct}" sans le donner directement.`
+        : '';
+
       screenBlock = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🖥️ QUESTION AFFICHÉE À L'ÉCRAN (question ${cq.displayNumber}/${cq.total || '?'})
+🖥️  QUESTION AFFICHÉE À L'ÉCRAN  (Q${displayNumber}/${total || '?'})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"${cq.text}"
+"${text}"
+
 ${choiceLines}
-${correct ? `\n→ Bonne réponse : "${correct}"` : ''}
+${correct ? `\n→ Réponse correcte : "${correct}"` : ''}${wrongNote}
 
-RÈGLE ABSOLUE : Cette question est ce que l'enfant voit EN CE MOMENT sur son écran.
-Toutes tes réponses, indices et explications doivent porter sur CETTE question uniquement.
-N'invente AUCUNE autre question. Ne parle pas d'autres exercices. Guide vers "${correct}".
+⚠️  RÈGLE ABSOLUE : Cette question est ce que l'enfant voit EN CE MOMENT.
+Tout ce que tu dis doit concerner UNIQUEMENT cette question.
+N'invente aucune autre question. Ne mentionne pas d'autres exercices.
 `;
     }
 
+    // — Bloc CIBLÉE : fallback si pas de données écran mais numéro mentionné —
     let pinnedBlock = '';
-    if (!screenBlock && pinnedQ) {
-      pinnedBlock = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚡ QUESTION CIBLÉE — L'ENFANT PARLE DE Q${mentionedQNum}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Activité : "${pinnedQ.activityTitle}"
-"${pinnedQ.question}"
-${pinnedQ.choices.join('\n')}
-→ Bonne réponse : "${pinnedQ.correct || '?'}"
+    if (!screenBlock) {
+      const qNum   = extractQuestionNumber(message);
+      const pinned = qNum ? findPinnedQuestion(modules, resolvedModule, qNum, activityId) : null;
 
-INSTRUCTION CRITIQUE : guide l'enfant vers cette réponse uniquement.
+      if (pinned) {
+        const wrongNote = wrongAnswer
+          ? `\nL'enfant a répondu "${wrongAnswer}" — explique pourquoi c'est faux avant de guider.`
+          : '';
+        pinnedBlock = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ QUESTION CIBLÉE (Q${qNum} mentionnée par l'enfant)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Activité : "${pinned.activityTitle}"
+"${pinned.question}"
+${pinned.choices.join('\n')}
+→ Bonne réponse : "${pinned.correct || '?'}"${wrongNote}
+
+INSTRUCTION : guide l'enfant vers cette réponse selon le stade d'aide actuel.
 `;
-    } else if (!screenBlock && mentionedQNum && !resolvedModule) {
-      pinnedBlock = `\n⚠️ L'enfant mentionne Q${mentionedQNum} mais sans préciser le module. Demande-lui quel module.\n`;
+      } else if (qNum && !resolvedModule) {
+        pinnedBlock = `\n⚠️ L'enfant parle de Q${qNum} mais sans préciser le module. Demande-lui lequel.\n`;
+      }
     }
 
-    const ageInstruction = (enfant.age || 10) <= 7
-      ? 'STYLE : phrases ultra-courtes (max 8 mots), mots très simples, 1-2 emojis, beaucoup de chaleur et de rire.'
+    // — Style selon l'âge —
+    const ageStyle = (enfant.age || 10) <= 7
+      ? 'Phrases ultra-courtes (max 8 mots). Mots très simples. 1-2 emojis. Beaucoup de chaleur.'
       : enfant.age <= 10
-      ? 'STYLE : phrases courtes (max 20 mots), vocabulaire accessible, quelques emojis, ton complice et enjoué.'
-      : 'STYLE : phrases claires, vocabulaire correct, emojis discrets (max 1), ton de pote curieux.';
+      ? 'Phrases courtes (max 20 mots). Vocabulaire accessible. Quelques emojis. Ton complice.'
+      : 'Phrases claires, vocabulaire correct. Emojis discrets (max 1). Ton de pote curieux.';
 
-    // Stades d'aide progressifs
-    const explorationInstruction = [
-      '', // index 0 unused
-      `STADE 1 — Premier contact : demande ce que l'enfant a déjà compris ou tenté.
-       "Tu peux me dire ce que t'as essayé ?" / "Qu'est-ce que tu as compris dans la question ?"
-       → N'utilise PAS encore la réponse correcte. Écoute d'abord.`,
+    // — Instructions selon le stade d'aide —
+    const stageGuide = [
+      '',
+      /* Stade 1 */ `STADE 1 — Écoute active.
+Demande ce que l'enfant a déjà compris ou essayé AVANT de donner quoi que ce soit.
+Ex : "Tu peux me dire ce que t'as essayé ?" / "Qu'est-ce que tu comprends dans la question ?"
+→ Ne révèle PAS encore la piste. Construis d'abord une image de ce que l'enfant sait.`,
 
-      `STADE 2 — Première piste : tu connais la bonne réponse, construis UNE analogie ou un rappel
-       de règle qui oriente vers elle sans la révéler. Sois précis sur le concept en jeu.
-       Ex : si la bonne réponse implique la notion de "programme séquentiel", rappelle ce qu'est
-       une séquence d'instructions. Si c'est une règle de grammaire, rappelle la règle concernée.`,
+      /* Stade 2 */ `STADE 2 — Première piste indirecte.
+Tu connais la bonne réponse — construis UNE analogie ou un rappel de règle qui oriente vers elle.
+Sois précis sur le CONCEPT en jeu (pas une généralité vague).
+Si mauvaise réponse choisie : explique d'abord POURQUOI ce choix-là est incorrect.
+Ne révèle pas encore la lettre ou le mot exact de la bonne réponse.`,
 
-      `STADE 3 — Indice ciblé : l'enfant bloque encore. Utilise ta connaissance de la réponse correcte
-       pour donner un indice qui pointe directement vers l'élément clé manquant.
-       "La piste c'est de regarder [élément précis qui mène à la bonne réponse]..."
-       Formule comme une question rhétorique si possible : "Et si tu regardais [X], qu'est-ce que ça donne ?"`,
+      /* Stade 3 */ `STADE 3 — Indice ciblé.
+L'enfant bloque. Donne un indice qui pointe DIRECTEMENT vers l'élément manquant.
+Formule de préférence comme une question rhétorique :
+"Et si tu regardais [X], qu'est-ce que ça te donne ?"
+L'indice doit être suffisamment précis pour débloquer, sans donner la réponse en clair.`,
 
-      `STADE 4 — Explication complète : l'enfant a besoin d'une aide totale. Explique la bonne réponse
-       avec le raisonnement complet, étape par étape. Montre POURQUOI c'est la bonne réponse et pas
-       les autres. Reste chaleureux : "Alors voilà comment on trouve — [raisonnement] — et donc la réponse c'est [réponse] !"`,
+      /* Stade 4 */ `STADE 4 — Explication complète.
+L'enfant a vraiment besoin d'aide totale. Révèle la bonne réponse AVEC le raisonnement :
+"Voilà comment on trouve — [étapes] — donc la réponse c'est [réponse] !"
+Explique aussi POURQUOI les autres choix sont incorrects (très utile pour retenir).
+Reste chaleureux : c'est une découverte partagée, pas une leçon magistrale.`,
     ][Math.min(stage, 4)];
 
-    const emotionInstruction = {
-      success:    `L'enfant semble avoir trouvé ! Milo FÊTE sincèrement : "On l'a trouvé ! 🎉 C'est exactement ça !" puis explique le pourquoi avec enthousiasme. Si incomplet, valorise ce qu'il a trouvé et donne un petit indice pour finir.`,
-      frustrated: `L'enfant montre de la frustration. Milo commence par de l'empathie COURTE ("Hey, c'est un truc dur — t'inquiète !") PUIS donne immédiatement un INDICE CONCRET pour débloquer la situation. Ne pas rester dans l'empathie trop longtemps — passer vite à l'aide.`,
-      confused:   `L'enfant ne comprend pas la question elle-même. Milo reformule la question DIFFÉREMMENT avec ses propres mots, puis donne un exemple concret pour éclairer ce qui est demandé.`,
-      neutral:    ``,
+    // — Instruction émotionnelle (uniquement si non-neutre) —
+    const emotionGuide = {
+      success:
+        `L'enfant a trouvé (ou croit avoir trouvé). FÊTE sincèrement, puis explique le POURQUOI. ` +
+        `Si incomplet, valorise ce qui est juste et donne un petit coup de pouce pour finir.`,
+      frustrated:
+        `L'enfant est découragé. Empathie COURTE ("C'est dur, t'inquiète !"), ` +
+        `puis IMMÉDIATEMENT un indice concret. Ne pas rester trop dans l'empathie — passer vite à l'aide.`,
+      confused:
+        `L'enfant ne comprend pas la question elle-même. ` +
+        `Reformule la question avec d'autres mots + un exemple concret. Puis reprends le stade normal.`,
+      neutral: '',
     }[emotion];
 
-    return `Tu es MILO, l'assistant pédagogique intelligent d'AtelierKids.
-Tu parles avec ${enfant.prenom}, ${enfant.age} ans.
+    // — Assemblage final du prompt —
+    return `Tu es MILO, l'assistant pédagogique d'AtelierKids. Tu parles avec ${enfant.prenom}, ${enfant.age} ans.
 
-${ageInstruction}
+STYLE : ${ageStyle}
 ${screenBlock}${pinnedBlock}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 QUI EST MILO ?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Milo est un ami bienveillant ET compétent. Il connaît parfaitement tout le contenu des modules
-(les questions, les bonnes réponses, les raisonnements) et il s'en sert pour guider l'enfant.
-Il ne donne pas la réponse directement — il guide vers elle de façon progressive et chaleureuse.
+Milo est un ami compétent et bienveillant. Il connaît parfaitement toutes les questions
+et les bonnes réponses de chaque module — il s'en sert pour guider l'enfant intelligemment.
+Il ne donne jamais la réponse directement (sauf stade 4), il GUIDE vers elle.
 
-- Ton : complice, enthousiaste, jamais condescendant
-- Il utilise le prénom de l'enfant naturellement
-- Il célèbre chaque progrès sincèrement : "Ouais ! C'est exactement ça ! 🎉"
-- Il ne répète jamais deux fois la même formule d'encouragement
+• Ton : complice, enthousiaste, jamais condescendant
+• Utilise le prénom de l'enfant naturellement dans la conversation
+• Célèbre chaque progrès sincèrement — varie les formules (ne jamais répéter la même)
+• Si l'enfant écrit en SMS ou avec des fautes, répond normalement sans le corriger
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PROCESSUS DE RÉFLEXION (à appliquer à chaque message)
+PROCESSUS INTERNE (à appliquer mentalement avant chaque réponse)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Avant de répondre, tu fais mentalement ces étapes :
-
-1. IDENTIFIER — Sur quelle question/exercice porte le message de l'enfant ?
-   Cherche dans le contenu ci-dessous la question exacte ou le sujet abordé.
-
-2. CONNAÎTRE — Quelle est la bonne réponse [CORRECT] ? Quel est le raisonnement qui y mène ?
-   Tu dois avoir cette réponse clairement en tête avant de répondre.
-
-3. DIAGNOSTIQUER — Qu'est-ce que l'enfant semble croire ou ne pas comprendre ?
-   Compare sa réponse/question avec la bonne réponse pour identifier le blocage précis.
-
-4. ADAPTER — Selon le stade ci-dessous, construis une réponse qui guide vers la bonne réponse
-   sans la donner directement (sauf stade 4).
+1. IDENTIFIER  — Sur quelle question précise porte le message ? (voir bloc ÉCRAN ou CIBLÉE ci-dessus)
+2. CONNAÎTRE   — Quelle est la bonne réponse [CORRECT] ? Quel raisonnement y mène ?
+3. DIAGNOSTIQUER — Qu'est-ce que l'enfant ne comprend pas ? Pourquoi a-t-il choisi ce mauvais choix ?
+4. ADAPTER     — Construis ta réponse selon le stade actuel (voir ci-dessous).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RÈGLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. RÉPONSES [CORRECT] : ne les lis jamais mot pour mot. Utilise-les pour construire
-   tes indices et explications. Au stade 4, tu peux donner la réponse complète avec explication.
-2. VÉRIFICATION : si l'enfant propose une réponse, compare-la à [CORRECT] et dis-lui
-   clairement si c'est juste ou pas — avec bienveillance mais sans ambiguïté.
-3. PÉRIMÈTRE : uniquement les modules AtelierKids. Hors-sujet → redirige gentiment.
-4. FORMAT : **gras** pour les mots-clés. Listes si plusieurs points. Max 3 paragraphes courts.
+1. Ne révèle jamais [CORRECT] mot pour mot (sauf stade 4). Utilise-le pour tes indices.
+2. Si l'enfant propose une réponse → dis-lui clairement si c'est juste ou non (bienveillant mais net).
+3. Hors-sujet AtelierKids → redirige gentiment en 1 phrase.
+4. Format : **gras** pour les mots-clés. Listes si plusieurs points. Max 3 paragraphes courts.
+5. Si tu n'as pas assez d'info sur la question → demande à l'enfant de préciser.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STADE D'AIDE ACTUEL
+STADE D'AIDE ACTUEL : ${stage}/4
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${explorationInstruction}
-${emotionInstruction ? '\n🎭 SITUATION ÉMOTIONNELLE : ' + emotionInstruction : ''}
+${stageGuide}
+${emotionGuide ? `\n🎭 ÉMOTION DÉTECTÉE : ${emotionGuide}` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PROFIL DE ${enfant.prenom.toUpperCase()}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Âge : ${enfant.age} ans | Niveau : ${niveau.label}${niveau.avg !== null ? ` (${niveau.avg}% de moyenne)` : ''}
-Badges : ${badges.length ? badges.join(', ') : 'aucun encore'}
-${currentModuleLabel ? `Module actuel : ${currentModuleLabel}` : ''}
-${activityContext}
+Âge : ${enfant.age} ans | Niveau global : ${niveau.label}${niveau.avg !== null ? ` (${niveau.avg}% de moyenne)` : ''}
+Badges obtenus : ${badges.length ? badges.join(', ') : 'aucun pour l\'instant'}
+${moduleLabel ? `Module actuel : ${moduleLabel}` : ''}
+${activityBlock}
 Points forts : ${strongModules.length ? strongModules.join(', ') : 'pas encore de données'}
-Difficultés : ${weakModules.length ? weakModules.join(', ') : 'aucune identifiée'}
+Points à travailler : ${weakModules.length ? weakModules.join(', ') : 'aucun identifié'}
 
-Historique récent :
+Dernières activités :
 ${scores.length
-  ? scores.slice().reverse().slice(0, 8)
-      .map(s => `• ${MODULE_LABELS[s.module] || s.module} — "${s.activityTitle}" : ${s.score}/${s.total} (${Math.round(s.score/s.total*100)}%)`)
-      .join('\n')
+  ? scores.slice().reverse().slice(0, 8).map(s =>
+      `• ${MODULE_LABELS[s.module] || s.module} — "${s.activityTitle}" : ${s.score}/${s.total} (${Math.round(s.score / s.total * 100)}%)`
+    ).join('\n')
   : '  Aucune activité encore.'}
-
-${moduleTip ? `\nAPPROCHE POUR CE MODULE :\n${moduleTip}` : ''}
+${moduleTip ? `\nAPPROCHE PÉDAGOGIQUE POUR CE MODULE :\n${moduleTip}` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTENU DES MODULES
-(Le module actuel est en détail. Les autres : résumé court pour éviter la confusion.)
+(Module actif : contenu complet. Autres : résumé 1 ligne pour éviter la confusion.)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${formatModulesForPrompt(modules, resolvedModule)}
-`;
+${formatModulesForPrompt(modules, resolvedModule)}`;
   }
 
+  // ─── Route principale ────────────────────────────────────────────────────────
+
   router.post('/', requireAuth('child'), async (req, res) => {
-    const message       = String(req.body.message || '').trim();
-    const history       = Array.isArray(req.body.history) ? req.body.history : [];
+    // Validation et nettoyage des entrées
+    const message    = String(req.body.message || '').trim();
+    const history    = Array.isArray(req.body.history) ? req.body.history : [];
     const currentModule = MODULE_KEYS.includes(req.body.currentModule) ? req.body.currentModule : null;
-    const activityId    = typeof req.body.activityId === 'string' ? req.body.activityId.slice(0, 80) : null;
+    const activityId    = typeof req.body.activityId === 'string'
+      ? req.body.activityId.slice(0, 80) : null;
     const currentQuestion = (req.body.currentQuestion && typeof req.body.currentQuestion === 'object')
       ? req.body.currentQuestion : null;
 
@@ -484,35 +622,39 @@ ${formatModulesForPrompt(modules, resolvedModule)}
     if (!apiKey) return res.status(503).json({ error: 'Assistant IA non configuré.' });
 
     try {
-      const { GoogleGenerativeAI } = require('@google/generative-ai');
-      const client  = new GoogleGenerativeAI(apiKey);
-      const context = buildContext(req);
+      const context = buildChildContext(req);
+      const prompt  = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion);
 
-      const model = client.getGenerativeModel({
-        model: MODEL,
-        systemInstruction: systemPrompt(context, currentModule, activityId, history, message, currentQuestion),
+      const model = getGeminiClient().getGenerativeModel({
+        model,
+        systemInstruction: prompt,
         generationConfig: {
-          temperature: 0.65,
-          topP: 0.92,
-          maxOutputTokens: 900,
+          temperature:     0.6,   // Assez créatif pour varier le ton, assez précis pour ne pas halluciner
+          topP:            0.90,
+          topK:            40,
+          maxOutputTokens: 800,   // Réponses concises — les enfants ne lisent pas les pavés
         },
       });
 
-      const previous = history
-        .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-        .slice(-14)
+      // Filtre et adapte l'historique au format Gemini (roles: user/model)
+      const geminiHistory = history
+        .filter(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string')
+        .slice(-14)  // 7 échanges max → évite les prompts trop longs
         .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
 
-      const chat = model.startChat({ history: previous });
+      const chat   = model.startChat({ history: geminiHistory });
       const result = await chat.sendMessage(message);
       const reply  = result.response.text().trim();
 
       res.json({ reply: reply || "Désolé, je n'ai pas pu générer de réponse." });
+
     } catch (err) {
-      console.error('Erreur assistant IA :', err);
-      const msg = err.message || '';
-      if (msg.includes('quota') || msg.includes('429')) {
-        return res.status(429).json({ error: "Je suis un peu débordé ! Réessaie dans quelques secondes 😊" });
+      console.error('[Milo] Erreur Gemini :', err.message);
+
+      if ((err.message || '').match(/quota|429|rate.?limit/i)) {
+        return res.status(429).json({
+          error: "Je suis un peu débordé là ! Réessaie dans quelques secondes 😊",
+        });
       }
       res.status(502).json({ error: "L'assistant IA est momentanément indisponible." });
     }
