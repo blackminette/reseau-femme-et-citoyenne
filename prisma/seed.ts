@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
 // Charge le fichier .env
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
 // Configure le pool de connexion PostgreSQL natif
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -14,10 +14,10 @@ const adapter = new PrismaPg(pool);
 // Initialise Prisma avec l'adaptateur exigé par la v7
 const prisma = new PrismaClient({ adapter });
 
-// Initialisation du client Supabase avec la clé d'administration (Service Role Key)
+// Initialisation du client Supabase avec la clé anonyme
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 async function main() {
@@ -115,6 +115,7 @@ async function main() {
       create: {
         id: supabaseAuthId,
         email: user.email,
+        username: user.email.split('@')[0],
         nom: user.nom,
         prenom: user.prenom,
         role: user.role,
