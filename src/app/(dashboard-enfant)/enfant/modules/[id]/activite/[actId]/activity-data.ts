@@ -162,74 +162,6 @@ export const GENERIC_ADVENTURE_FALLBACK: ModuleContent = {
         }
     ]
 };
-// Data pour chaque module
-export const MODULES_ADVENTURES: Record<string, ModuleContent> = {
-    napoleon: {
-        titreGlobal: "Napoléon",
-        description: "Comprendre un personnage clé de l'histoire française",
-        themeColor: "from-amber-500 to-rose-600",
-        step1: {
-            titre: "Découvrir",
-            soustitre: "Qui était Napoléon ?",
-            texte: "Napoléon Bonaparte est une grande figure de l'histoire de France. Il a d'abord été général, puis il est devenu Premier Consul et ensuite Empereur des Français. Pour l'étudier sérieusement, il faut regarder à la fois ses réussites et ses limites.",
-            emoji: "🎩 🇫🇷 📜",
-            aRetenir: "Napoléon a marqué l'histoire française, mais un personnage historique se juge avec des faits, pas avec des slogans."
-        },
-        step2: {
-            soustitre: "Lis attentivement le texte suivant.",
-            boxTitre: "Napoléon et son époque",
-            texte: "Napoléon Bonaparte a vécu pendant une période de grands changements en France. Après la Révolution, il a pris le pouvoir et a dirigé le pays. Son époque a vu des réformes importantes, comme l'organisation de l'administration et du droit. Mais son règne s'est aussi accompagné de guerres très nombreuses en Europe. Pour comprendre Napoléon, il faut donc distinguer les réformes utiles, le pouvoir personnel et les conflits.",
-            emoji: "⚖️ 🗺️ 🏛️",
-            aRetenir: [
-                "Napoléon est lié à une période de grands changements.",
-                "Il faut comparer ses actions et leurs conséquences.",
-                "L'histoire demande de la précision, pas du mythe."
-            ]
-        },
-        step3: {
-            soustitre: "Récapitulons !",
-            texte: "Napoléon est une figure historique importante, mais on doit l'analyser avec méthode : on observe le contexte, on compare les décisions, on mesure les conséquences et on garde en tête les limites du pouvoir.",
-            pointsCles: [
-                "Le contexte historique change la manière de lire ses actions.",
-                "Une réforme peut avoir des effets utiles et des limites en même temps.",
-                "L'histoire demande des faits précis, pas une admiration aveugle."
-            ],
-            bulles: [
-                "Quel est le contexte ?",
-                "Quelles décisions prend-il ?",
-                "Quels effets voit-on ?",
-                "Quelles limites faut-il noter ?"
-            ],
-            illustration: "🏛️"
-        },
-        exercice: {
-            titre: "Remets les grandes étapes de la vie politique de Napoléon dans le bon ordre.",
-            type: 'order',
-            data: {
-                correctOrder: [
-                    "Général pendant la Révolution française",
-                    "Premier Consul",
-                    "Empereur des Français",
-                    "Exil après sa chute"
-                ],
-                initialOrder: [
-                    "Empereur des Français",
-                    "Général pendant la Révolution française",
-                    "Exil après sa chute",
-                    "Premier Consul"
-                ]
-            }
-        },
-        quiz: [
-            { q: "Comment s'appelle la fonction de Napoléon avant de devenir Empereur ?", options: ["Président", "Premier Consul", "Roi de France", "Ministre"], answer: 1, explication: "Après le coup d'État de 1799, Napoléon devient Premier Consul." },
-            { q: "Napoléon a surtout dirigé la France après...", options: ["La Révolution française", "La Première Guerre mondiale", "La Seconde Guerre mondiale", "La guerre froide"], answer: 0, explication: "Napoléon prend le pouvoir dans la période qui suit la Révolution française." },
-            { q: "Pourquoi faut-il étudier Napoléon avec rigueur ?", options: ["Pour le transformer en héros parfait", "Pour oublier son époque", "Pour comprendre ses réussites et ses limites", "Parce qu'il n'a rien changé"], answer: 2, explication: "Un personnage historique se comprend en regardant les faits, les réformes et les conséquences." },
-            { q: "Quel est un exemple de conséquence liée à son époque ?", options: ["Des guerres très nombreuses en Europe", "La disparition totale de l'État", "La fin de toute administration", "L'arrêt de l'histoire"], answer: 0, explication: "Son règne a été marqué par des guerres à grande échelle en Europe." },
-            { q: "Que doit faire un élève quand il étudie l'histoire ?", options: ["Répéter des slogans", "Chercher des faits et des sources", "Éviter les dates", "Inventer des conclusions"], answer: 1, explication: "L'histoire demande des faits, du contexte et des sources fiables." }
-        ]
-    },
-};
-
 export type DetailedActivity = NonNullable<Awaited<ReturnType<typeof obtenirDetailsActiviteDepuisDB>>>;
 
 export function getFirstSentence(text: string) {
@@ -328,7 +260,7 @@ export function buildNapoleonContentFromDb(
     const lesson2 = extractLesson(lessons[1]);
     const lesson3 = extractLesson(lessons[2]);
     const lesson4 = extractLesson(lessons[3]);
-    const fallback = MODULES_ADVENTURES.napoleon;
+    const fallback = GENERIC_ADVENTURE_FALLBACK;
 
     const orderExercise = exercises.find((exercise) => exercise.type === 'ORDER');
     const quizExercise = exercises.find((exercise) => exercise.type === 'QUIZ');
