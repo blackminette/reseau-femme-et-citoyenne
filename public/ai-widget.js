@@ -56,7 +56,7 @@
   #aiw-close:hover { background:rgba(255,255,255,.28); }
 
   /* ── Thread ── */
-  #aiw-thread { flex:1; overflow-y:auto; padding:14px 14px 8px; background:#faf9fc; display:flex; flex-direction:column; gap:10px; min-height:220px; scroll-behavior:smooth; }
+  #aiw-thread { flex:1; overflow-y:auto; padding:14px 14px 8px; background:#faf9fc; display:flex; flex-direction:column; gap:10px; min-height:220px; }
   #aiw-thread::-webkit-scrollbar { width:4px; }
   #aiw-thread::-webkit-scrollbar-thumb { background:#ddd; border-radius:4px; }
 
@@ -66,7 +66,7 @@
   #aiw-speech::after  { content:''; position:absolute; bottom:-11px; left:50%; transform:translateX(-50%); border:7px solid transparent; border-top-color:#ddd4f5; }
   #aiw-speech::before { content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#fff; z-index:1; }
   #aiw-cursor { display:inline-block; width:2px; height:13px; background:#9b8cff; border-radius:2px; vertical-align:middle; animation:aiw-pulse .7s step-end infinite; margin-left:2px; }
-  #aiw-char-wrap { animation:aiw-bob 2.8s ease-in-out infinite; filter:drop-shadow(0 10px 24px rgba(90,72,170,.24)); }
+  #aiw-char-wrap { width:130px; height:200px; animation:aiw-bob 2.8s ease-in-out infinite; filter:drop-shadow(0 10px 24px rgba(90,72,170,.24)); flex-shrink:0; }
   #aiw-char-wrap[data-state="think"] { animation:aiw-think-bob .9s ease-in-out infinite; }
   #aiw-char-wrap[data-state="cheer"] { animation:aiw-bounce .5s ease forwards; }
   #aiw-hint { font-family:'Poppins',sans-serif; font-size:11.5px; color:#bbb; text-align:center; margin-top:3px; }
@@ -493,6 +493,10 @@
     return d;
   }
 
+  function scrollBottom() {
+    requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+  }
+
   function addBubble(role, text) {
     clearWelcome();
     const row = document.createElement('div'); row.className='aiw-row '+(role==='user'?'out':'');
@@ -500,7 +504,7 @@
     const bub = document.createElement('div'); bub.className='aiw-bubble '+(role==='user'?'out':'in');
     if (role==='assistant') bub.innerHTML = renderMd(text);
     else bub.textContent = text;
-    row.appendChild(bub); thread.appendChild(row); thread.scrollTop=thread.scrollHeight;
+    row.appendChild(bub); thread.appendChild(row); scrollBottom();
     return bub;
   }
 
@@ -508,25 +512,61 @@
     const isCelebrate = /bravo|félicit|génial|excellent|parfait|t['']as trouv|c['']est exact/i.test(reply);
     const isHint = /pense|rappelle|essaie|réfléchi|imagine|as-tu|ensemble|qu['']est-ce/i.test(reply) || reply.length > 120;
     let opts;
-    if (isCelebrate) opts = ['🎉 Super merci !', 'On continue ?', '❓ Autre question'];
-    else if (isHint)  opts = ['👍 Compris !', 'Encore un indice', '❓ Autre question'];
-    else              opts = ['On cherche encore ?', '❓ Autre question'];
+    if (isCelebrate) opts = ['🎉 Super merci !', '❓ Autre question'];
+    else if (isHint)  opts = ['Encore un indice', '❓ Autre question'];
+    else              opts = ['❓ Autre question'];
 
     const qr = document.createElement('div'); qr.className='aiw-qr';
-    opts.forEach(r => {
-      const b = document.createElement('button'); b.className='aiw-qr-btn'; b.textContent=r;
-      b.addEventListener('click', () => { qr.remove(); document.getElementById('aiw-input').value=r; sendMsg(); });
+    opts.forEach(label => {
+      const b = document.createElement('button'); b.className='aiw-qr-btn'; b.textContent=label;
+      b.addEventListener('click', () => {
+        qr.remove();
+        // "Encore un indice" : envoie la question courante pour que Milo ne se perde pas
+        if (label === 'Encore un indice' && window.MILO_CURRENT_QUESTION) {
+          const q = window.MILO_CURRENT_QUESTION;
+          document.getElementById('aiw-input').value =
+            `Encore un indice pour la question ${q.displayNumber} : "${q.text}"`;
+        } else {
+          document.getElementById('aiw-input').value = label;
+        }
+        sendMsg();
+      });
       qr.appendChild(b);
     });
-    thread.appendChild(qr); thread.scrollTop=thread.scrollHeight;
+    thread.appendChild(qr); scrollBottom();
   }
+
+  // Appelé quand l'enfant passe à la question suivante
+  window.miloNewQuestion = function() {
+    history = [];
+    thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
+    addBubble('assistant', 'Passons à la suivante ! 🚀 Dis-moi si tu bloques.');
+    scrollBottom();
+  };
+
+  // Appelé quand l'enfant choisit la mauvaise réponse
+  window.miloWrongAnswer = function(questionText, wrongChoice) {
+    if (!open) return; // Ne pas ouvrir le widget de force, juste notifier s'il est ouvert
+    thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
+    const msg = `J'ai répondu "${wrongChoice}" mais c'était faux… Tu peux m'expliquer pourquoi ?`;
+    document.getElementById('aiw-input').value = msg;
+    sendMsg();
+  };
+
+  // Appelé quand l'enfant trouve la bonne réponse
+  window.miloCorrectAnswer = function() {
+    if (!open) return;
+    thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
+    addBubble('assistant', '🎉 Bonne réponse ! Continue comme ça !');
+    scrollBottom();
+  };
 
   function addTyping() {
     clearWelcome();
     const row = document.createElement('div'); row.id='aiw-typing'; row.className='aiw-typing-row';
     row.appendChild(makeFaceSm());
     const bub = document.createElement('div'); bub.className='aiw-typing-bub'; bub.innerHTML='<span class="aiw-dot"></span><span class="aiw-dot"></span><span class="aiw-dot"></span>';
-    row.appendChild(bub); thread.appendChild(row); thread.scrollTop=thread.scrollHeight; return row;
+    row.appendChild(bub); thread.appendChild(row); scrollBottom(); return row;
   }
 
   // ── Envoi ─────────────────────────────────────────────────────────────────
@@ -546,7 +586,7 @@
     try {
       res = await (typeof askAssistant==='function'
         ? askAssistant(msg, history, currentModule, activityId)
-        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule,activityId})}).then(r=>r.json()));
+        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule,activityId,currentQuestion:window.MILO_CURRENT_QUESTION||null})}).then(r=>r.json()));
     } catch { res={error:'Serveur injoignable.'}; }
 
     typing.remove();

@@ -138,6 +138,8 @@ function renderQuestion() {
   document.getElementById('quiz-feedback').className = 'quiz-feedback';
   document.getElementById('next-btn').className = 'quiz-next-btn';
 
+  window.MILO_CURRENT_QUESTION = { displayNumber: idx+1, total, text: q.q, choices: q.c, correctIndex: q.a };
+
   const card = document.querySelector('.quiz-question-card');
   card.style.animation = 'none'; void card.offsetWidth; card.style.animation = 'slideIn 0.3s ease';
 }
@@ -155,11 +157,13 @@ function selectAnswer(i) {
     btns[i].classList.add('correct','bounce');
     fb.textContent = '✅ Bonne réponse !';
     fb.className = 'quiz-feedback correct show';
+    if (typeof window.miloCorrectAnswer === 'function') window.miloCorrectAnswer();
   } else {
     btns[i].classList.add('wrong','shake');
     btns[q.a].classList.add('correct');
     fb.textContent = `❌ La bonne réponse était : ${q.c[q.a]}`;
     fb.className = 'quiz-feedback wrong show';
+    if (typeof window.miloWrongAnswer === 'function') window.miloWrongAnswer(q.q, q.c[i]);
   }
   document.getElementById('score-live').textContent = `✅ ${score}`;
   const btn = document.getElementById('next-btn');
@@ -170,7 +174,10 @@ function selectAnswer(i) {
 function nextQuestion() {
   idx++;
   if (idx >= questions.length) endEx();
-  else renderQuestion();
+  else {
+    renderQuestion();
+    if (typeof window.miloNewQuestion === 'function') window.miloNewQuestion();
+  }
 }
 
 async function endEx() {
