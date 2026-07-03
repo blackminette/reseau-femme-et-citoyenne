@@ -31,7 +31,10 @@ const NAPOLEON_COURS = [
     ordreDansModule: 1,
     contenu: [
       {
+        numeroPage: 1,
         titre: 'Qui était Napoléon ?',
+        texteExplicatif: "Napoléon Bonaparte est une grande figure de l'histoire de France. Il a d'abord été général, puis il est devenu Premier Consul et ensuite Empereur des Français. Pour l'étudier sérieusement, il faut regarder à la fois ses réussites et ses limites.",
+        imageUrl: '/images/enfants/napoleon/napoleon_lecon_1_qui_etait_napoleon.png',
         texte: "Napoléon Bonaparte est une grande figure de l'histoire de France. Il a d'abord été général, puis il est devenu Premier Consul et ensuite Empereur des Français. Pour l'étudier sérieusement, il faut regarder à la fois ses réussites et ses limites."
       }
     ],
@@ -41,7 +44,10 @@ const NAPOLEON_COURS = [
     ordreDansModule: 2,
     contenu: [
       {
+        numeroPage: 2,
         titre: 'Une période de changements',
+        texteExplicatif: "Napoléon a vécu pendant une période de grands changements en France. Après la Révolution, il a pris le pouvoir et a dirigé le pays. Son époque a vu des réformes importantes, comme l'organisation de l'administration et du droit.",
+        imageUrl: '/images/enfants/napoleon/napoleon_lecon_2_napoleon_et_son_epoque.png',
         texte: "Napoléon a vécu pendant une période de grands changements en France. Après la Révolution, il a pris le pouvoir et a dirigé le pays. Son époque a vu des réformes importantes, comme l'organisation de l'administration et du droit."
       }
     ],
@@ -51,7 +57,10 @@ const NAPOLEON_COURS = [
     ordreDansModule: 3,
     contenu: [
       {
+        numeroPage: 3,
         titre: 'Analyser un personnage historique',
+        texteExplicatif: "Pour comprendre Napoléon, on doit poser des questions précises : dans quel contexte agit-il, quelles décisions prend-il, qui en profite, qui en souffre et quelles sont les limites de son pouvoir ? L'histoire s'explique avec des faits, pas avec des impressions.",
+        imageUrl: '/images/enfants/napoleon/napoleon_lecon_3_comprendre_avec_methode.png',
         texte: "Pour comprendre Napoléon, on doit poser des questions précises : dans quel contexte agit-il, quelles décisions prend-il, qui en profite, qui en souffre et quelles sont les limites de son pouvoir ? L'histoire s'explique avec des faits, pas avec des impressions."
       }
     ],
@@ -61,7 +70,10 @@ const NAPOLEON_COURS = [
     ordreDansModule: 4,
     contenu: [
       {
+        numeroPage: 4,
         titre: 'Regarder aussi les limites',
+        texteExplicatif: "Le Code civil a structuré une partie du droit, mais il donnait moins de droits aux femmes qu'aux hommes. Napoléon a aussi concentré beaucoup de pouvoir et le rétablissement de l'esclavage en 1802 est contraire aux valeurs actuelles de liberté et d'égalité.",
+        imageUrl: '/images/enfants/napoleon/napoleon_lecon_4_les_limites_a_connaitre.png',
         texte: "Le Code civil a structuré une partie du droit, mais il donnait moins de droits aux femmes qu'aux hommes. Napoléon a aussi concentré beaucoup de pouvoir et le rétablissement de l'esclavage en 1802 est contraire aux valeurs actuelles de liberté et d'égalité."
       }
     ],
@@ -70,6 +82,8 @@ const NAPOLEON_COURS = [
 
 const NAPOLEON_EXERCICES = [
   {
+    id: 'exercice-ordre-napoleon',
+    numeroPage: 1,
     titre: "Remettre les grandes étapes dans l'ordre",
     ordre: 1,
     type: 'IMAGES_ORDRE',
@@ -90,38 +104,60 @@ const NAPOLEON_EXERCICES = [
     }
   },
   {
+    id: 'quiz-napoleon',
+    numeroPage: 2,
     titre: 'Quiz Napoléon',
     ordre: 2,
     type: 'QUIZ',
     instructions: 'Réponds aux questions pour vérifier ce que tu as retenu.',
     contenu: [
       {
+        id: 'q1',
+        numeroPage: 1,
+        question: "Comment s'appelle la fonction de Napoléon avant de devenir Empereur ?",
         q: "Comment s'appelle la fonction de Napoléon avant de devenir Empereur ?",
         options: ['Président', 'Premier Consul', 'Roi de France', 'Ministre'],
+        reponseCorrecte: 'Premier Consul',
         answer: 1,
         explication: "Après le coup d'État de 1799, Napoléon devient Premier Consul."
       },
       {
+        id: 'q2',
+        numeroPage: 2,
+        question: "Napoléon a surtout dirigé la France après...",
         q: "Napoléon a surtout dirigé la France après...",
         options: ['La Révolution française', 'La Première Guerre mondiale', 'La Seconde Guerre mondiale', 'La guerre froide'],
+        reponseCorrecte: 'La Révolution française',
         answer: 0,
         explication: "Napoléon prend le pouvoir dans la période qui suit la Révolution française."
       },
       {
+        id: 'q3',
+        numeroPage: 3,
+        question: "Pourquoi faut-il étudier Napoléon avec rigueur ?",
         q: "Pourquoi faut-il étudier Napoléon avec rigueur ?",
         options: ['Pour le transformer en héros parfait', 'Pour oublier son époque', 'Pour comprendre ses réussites et ses limites', 'Parce qu’il n’a rien changé'],
+        reponseCorrecte: 'Pour comprendre ses réussites et ses limites',
         answer: 2,
         explication: "Un personnage historique se comprend en regardant les faits, le contexte et les conséquences."
       },
       {
+        id: 'q4',
+        numeroPage: 4,
+        question: "Quel est un exemple de conséquence liée à son époque ?",
         q: "Quel est un exemple de conséquence liée à son époque ?",
         options: ['Des guerres très nombreuses en Europe', 'La disparition totale de l’État', 'La fin de toute administration', 'L’arrêt de l’histoire'],
+        reponseCorrecte: 'Des guerres très nombreuses en Europe',
         answer: 0,
         explication: "Son règne a été marqué par des guerres à grande échelle en Europe."
       },
       {
+        id: 'q5',
+        numeroPage: 5,
+        question: "Que doit faire un élève quand il étudie l’histoire ?",
         q: "Que doit faire un élève quand il étudie l’histoire ?",
         options: ['Répéter des slogans', 'Chercher des faits et des sources', 'Éviter les dates', 'Inventer des conclusions'],
+        reponseCorrecte: 'Chercher des faits et des sources',
         answer: 1,
         explication: "L'histoire demande des faits, du contexte et des sources fiables."
       }
@@ -328,8 +364,6 @@ async function main() {
     }
   ];
 
-  let intervenanteId = '';
-
 // --- AJOUT D'ATELIERS DU 29 JUIN AU 4 JUILLET 2026 ---
   console.log('📅 Ajout des ateliers spécifiques (29 juin - 4 juillet)...');
 
@@ -394,7 +428,8 @@ async function main() {
     if (authError) {
       if (authError.message.includes('already exists') || authError.message.includes('email_exists')) {
         const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-        const userExistant = listData?.users.find(u => u.email === user.email);
+        const usersExistants = (listData?.users ?? []) as Array<{ id: string; email: string | null }>;
+        const userExistant = usersExistants.find((u) => u.email === user.email);
         
         if (!userExistant) {
           console.error(`❌ Impossible de récupérer l'UUID existant pour ${user.email}`);
@@ -407,10 +442,6 @@ async function main() {
       }
     } else {
       supabaseAuthId = authData.user.id;
-    }
-
-    if (user.role === 'INTERVENANTE') {
-      intervenanteId = supabaseAuthId;
     }
 
     await prisma.utilisateur.upsert({

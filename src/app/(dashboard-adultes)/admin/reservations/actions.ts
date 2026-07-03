@@ -38,6 +38,16 @@ export async function recupererToutesLesReservations(): Promise<ActionResponse<R
 
         const dataFormatee: ReservationFormatee[] = reservations.map(res => {
             const u = res.utilisateur;
+            if (!u) {
+                return {
+                    id: res.id.toString(),
+                    membreNom: 'Réservation sans utilisateur',
+                    atelierNom: res.atelier.titre,
+                    dateAtelier: res.atelier.dateDebut.toISOString().split('T')[0],
+                    heureAtelier: res.atelier.dateDebut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                    statut: res.statut as 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+                };
+            }
             let membreNom = `${u.prenom} ${u.nom}`;
             let enfantNom: string | undefined = undefined;
 
