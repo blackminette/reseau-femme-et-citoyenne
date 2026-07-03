@@ -28,6 +28,7 @@ export async function enregistrerDon(data: {
                     nom: nom,
                     prenom: prenom,
                     role: 'DONATEUR',
+                    username: email.toLowerCase().split('@')[0] + '_' + Date.now(),
                 }
             });
         }

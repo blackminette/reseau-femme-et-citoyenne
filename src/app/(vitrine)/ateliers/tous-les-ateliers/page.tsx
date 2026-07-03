@@ -1,114 +1,98 @@
+import React from 'react';
 import Link from 'next/link';
+import { Quicksand } from 'next/font/google';
 
+//import Header from '@/components/Header';
+//import Footer from '@/components/Footer';
 
-const ateliersData = [
+const quicksand = Quicksand({ 
+    subsets: ['latin'],
+    weight: ['400', '700'] 
+});
+
+const listeAteliers = [
     {
-        id: 1,
-        titre: "Atelier mosaique",
-        description: "Un atelier interactif pour développer votre potentiel creatif.",
-        atelierPasse: "15 Juin 2026 à 10h00",
-        slug: "atelier-mosaique",
-        mediaUrl: "#",
+        id : 1,
+        titre : "Titre",
+        description : "description",
+        prochainAtelier : "prochain atelier",
     },
     {
-        id: 2,
-        titre: "Atelier jardinnage",
-        description: "S'amuser tout en apprenant et en etant dans la nature.",
-        atelierPasse: "11 Juin 2026 à 14h00",
-        slug: "atelier-jardinnage",
-        mediaUrl: "#",
+        id : 2,
+        titre : "Titre",
+        description : "description",
+        prochainAtelier : "prochain atelier",
     },
     {
-        id: 3,
-        titre: "Atelier Numérique & Code",
-        description: "Initiation aux outils digitaux et aux bases du développement web pour toutes.",
-        atelierPasse: "15 Juin 2026 à 14h00",
-        slug: "numerique-et-code",
-        mediaUrl: "#",
+        id : 3,
+        titre : "Titre",
+        description : "description",
+        prochainAtelier : "prochain atelier",
     },
     {
-        id: 4,
-        titre: "Prise de Parole en Public",
-        description: "Maîtrisez votre voix, votre posture et apprenez à captiver votre auditoire en toute sérénité.",
-        atelierPasse: "19 Juillet 2026 à 15h00",
-        slug: "prise-de-parole",
-        mediaUrl: "#",
-    },
+        id : 4,
+        titre : "Titre",
+        description : "description",
+        prochainAtelier : "prochain atelier",
+    }
 ];
 
 
-
-export default function Ateliers_Carreaux() {
+export default function TousNosAteliers(){
     return (
-        <section className="bg-[#eedeff] py-16 px-4 sm:px-6 lg:px-8 min-h-screen">
-            <div className="max-w-6xl mx-auto">
+        <>
 
-                {/* En-tête */}
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-[#260936] inline-block border-b-2 border-gray-900 pb-1">
-                        Nos Ateliers</h2>
-                    <p className="mt-4 text-black max-w-xl mx-auto">
-                        Découvrez nos ateliers, échangez avec des personnes passionés et développez vos compétences.</p>
-                </div>    
+            {/* Fond violet */}
+            <div className='bg-[#eedeff] min-h-screen py-16 px-4'>
+                <div className='w-7xl mx-auto'>
 
-
-                {/* Grille */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {ateliersData.map((atelier) => (
-                        <div 
-                            key={atelier.id} 
-                            className="bg-[#260936] rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-stretch"
-                        >
-                            {/* Zone Média (Image ou Vidéo) */}
-                            <div className="w-full sm:w-2/5 min-h-[160px] relative rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                                <img 
-                                    src={atelier.mediaUrl} 
-                                    alt={atelier.titre}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>  
+                    {/* Titre principal */}
+                    <h1 className='text-5xl font-bold text-center text-transparent leading-none 
+                    bg-gradient-to-r from-[#260936] via-[#260936] via-35% to-[#ffd166] to-70% 
+                    bg-clip-text uppercase'>Tous nos ateliers</h1>
 
 
-                            {/* Zone Contenu */}
-                            <div className="w-full sm:w-3/5 flex flex-col justify-between py-1">
-                                <div>
-                                    {/* Section Titre & Description */}
-                                    <h3 className="text-lg font-bold text-[#ffd166] hover:text-[#bc96e6]/80 transition-colors">
-                                        {atelier.titre}</h3>
-                                    <p className="text-sm text-white/85 mt-2 line-clamp-2">
-                                        {atelier.description}</p>
-                                </div>    
+                    {/* Grille avec les encadres des ateliers */}
+                    <section className="mx-8 my-32 rounded-[2.5rem] bg-[#260936] p-8 md:p-20 text-center text-white shadow-2xl max-w-[90rem] xl:mx-auto relative">
+                        <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+                            <svg width="100%" height="100%">
+                                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" /></pattern>
+                                    <rect width="100%" height="100%" fill="url(#grid)" /></svg>
+                        </div> 
 
 
-                                {/* Section Atelier passe & Bouton */}
-                                <div className="mt-4 pt-3 border-t border-[#bc96e6] flex items-center justify-between gap-2">
-                                    <div className="flex flex-col">
-                                        <span className="text-[11px] font-semibold text-[#eedeff]/80 uppercase tracking-wider">
-                                            Date de l'atelier passe</span>
-                                        <span className="text-xs font-medium text-white/85 mt-0.5">
-                                            {atelier.atelierPasse}</span>
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-8 w-full justify-items-center'>
+                            {listeAteliers.map((atelier) => (
+                                <div key={atelier.id} className='bg-[#bc96e6]/20 rounded-2xl overflow-hidden w-full max-w-md aspect-[4/3] p-8 flex flex-col 
+                                justify-between items-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]'>
+
+                                    {/* Encadré pointillé pour l'image */}
+                                    <div className="w-full h-1/2 rounded-[0.3rem] bg-white/10 border border-dashed border-black flex flex-col justify-center items-center"></div>
+
+
+                                    {/* Bloc Texte : Titre + Description sous l'image */}
+                                    <div className="flex flex-col gap-1 my-3 justify-center">
+                                        <h3 className="text-lg font-semibold text-[#ffd166]">{atelier.titre}</h3>
+                                        <p className="text-sm font-normal md:text-base text-[#eedeff]/80 line-clamp-2 px-2">{atelier.description}</p>
                                     </div>
 
 
-                                    {/* Lien de redirection */}
-                                    <Link 
-                                        href={`/ateliers/${atelier.slug}`}
-                                        className="inline-flex items-center justify-center bg-[#ffd166] text-[#260936] hover:bg-[#bc96e6] hover:text-white text-xs font-medium px-4 py-2 rounded-xl transition-colors whitespace-nowrap shadow-sm"
+                                    {/* Bloc Prochain Atelier */}
+                                    <Link href='/ateliers/planning' //je dois remplacer plus tard avec le vrai lien 
+                                    className="flex flex-col items-center gap-0.5 mt-auto group transition-all"
                                     >
-                                        Prochain atelier
+                                        <p className="text-xs font-semibold text-[#ffd166] group-hover:text-[#260936]">{atelier.prochainAtelier}</p>
+                                        <span className="text-xs font-light text-[#ffd166] group-hover:text-[#260936] mt-0.5 font-mono">v</span>
                                     </Link>
-
                                 </div>
-
-                            </div>  
-
+                            ))}
                         </div>
+                    </section>
 
-                    ))}
-
-                </div>   
-        
+                </div>
             </div>
-        </section>
+
+        </>
     );
 }

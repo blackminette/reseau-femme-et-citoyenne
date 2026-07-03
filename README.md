@@ -34,19 +34,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Intégration HelloAsso & Webhooks
-
-Pour que les dons effectués via le formulaire HelloAsso soient automatiquement enregistrés en base de données, il est nécessaire de configurer un webhook dans votre espace HelloAsso.
-
-### Configuration du Webhook HelloAsso :
-1. Connectez-vous à votre compte **HelloAsso**.
-2. Rendez-vous dans **Mon compte** ➔ **Intégrations et API** ➔ **Webhooks**.
-3. Ajoutez une nouvelle URL de webhook pointant vers votre endpoint de production :
-   ```
-   https://<votre-domaine-de-production>.com/api/webhooks/helloasso
-   ```
-4. Sélectionnez l'événement à notifier : **Paiement** (Payment).
-5. Sauvegardez la configuration.
-
-Désormais, à chaque transaction réussie sur HelloAsso, les détails du donateur et du paiement seront synchronisés en base de données PostgreSQL/Supabase.

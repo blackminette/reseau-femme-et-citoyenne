@@ -1,6 +1,7 @@
 // * src/app/(dashboard-enfant)/enfant/modules/actions.ts
 'use server';
 
+import { Prisma, Parcours } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
@@ -8,12 +9,24 @@ import { getSupabaseServer } from '@/lib/supabase';
 function mapTitreToSlug(titre: string): string {
     const t = titre.toLowerCase();
     if (t.includes('lecture')) return 'lecture';
-    if (t.includes('numérique') || t.includes('numerique')) return 'numerique';
-    if (t.includes('robotique')) return 'robotique';
+    if (t.includes('numérique') || t.includes('numerique') || t.includes('scratch') || t.includes('code') || t.includes('web') || t.includes('html')) return 'numerique';
+    if (t.includes('robotique') || t.includes('robot')) return 'robotique';
     if (t.includes('anglais')) return 'anglais';
-    if (t.includes('civique')) return 'civique';
+    if (t.includes('civique') || t.includes('citoyen')) return 'civique';
+    if (t.includes('napoléon') || t.includes('napoleon')) return 'napoleon';
     if (t.includes('éco') || t.includes('eco')) return 'eco';
-    return 'lecture'; // fallback
+    // Clean and return the title itself as slug if it's a specific custom module name
+    return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || 'module';
+}
+
+// Helper to handle and log DB connection errors cleanly
+function gererErreurBaseDeDonnees(nomFonction: string, err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('getaddrinfo') || msg.includes('ECONNREFUSED') || msg.includes('pooler') || msg.includes('Can\'t reach database')) {
+        console.warn(`[Base de données Hors Ligne] ${nomFonction}: Impossible de se connecter à la base de données. Utilisation des fallbacks.`);
+    } else {
+        console.error(`Erreur ${nomFonction}:`, err);
+    }
 }
 
 // Helper to safely resolve student ID
@@ -27,13 +40,17 @@ async function obtenirEtudiantId(): Promise<string> {
     } catch (e) {
         console.warn("[Actions Enfant] Impossible de récupérer la session Supabase, utilisation du fallback:", e);
     }
-
+    
     // Fallback: chercher le premier compte ENFANT
-    const defaultEnfant = await prisma.utilisateur.findFirst({
-        where: { role: 'ENFANT' }
-    });
-
-    return defaultEnfant?.id || 'mock-uuid-enfant';
+    try {
+        const defaultEnfant = await prisma.utilisateur.findFirst({
+            where: { role: 'ENFANT' }
+        });
+        return defaultEnfant?.id || 'mock-uuid-enfant';
+    } catch (e) {
+        console.warn("[Actions Enfant] Impossible de se connecter à la base de données, utilisation du UUID fallback:", e);
+        return 'mock-uuid-enfant';
+    }
 }
 
 
@@ -130,25 +147,204 @@ export async function obtenirProfilEnfant() {
             if (perfectCount >= 1) badgesCount += 1; // Score parfait
             if (exercicesReussis >= 10) badgesCount += 1; // Assidu
             if (perfectCount >= 5) badgesCount += 1; // Expert
+
+            // Synchroniser les badges en base de données
+            const currentBadges = await prisma.badge.findMany({
+                where: { etudiantId: studentId }
+            });
+            const existingLabels = new Set(currentBadges.map(b => b.label));
+
+            const badgesToCreate = [];
+            if (exercicesReussis >= 1 && !existingLabels.has("1ers pas")) {
+                badgesToCreate.push({ label: "1ers pas", iconName: "Target", desc: "Terminer sa première activité.", etudiantId: studentId });
+            }
+            if (perfectCount >= 1 && !existingLabels.has("Score parfait")) {
+                badgesToCreate.push({ label: "Score parfait", iconName: "Star", desc: "Obtenir une note maximale.", etudiantId: studentId });
+            }
+            if (exercicesReussis >= 10 && !existingLabels.has("Assidu")) {
+                badgesToCreate.push({ label: "Assidu", iconName: "Trophy", desc: "Compléter 10 activités au total.", etudiantId: studentId });
+            }
+            if (perfectCount >= 5 && !existingLabels.has("Expert")) {
+                badgesToCreate.push({ label: "Expert", iconName: "Crown", desc: "Obtenir 5 scores parfaits.", etudiantId: studentId });
+            }
+
+            if (badgesToCreate.length > 0) {
+                await prisma.badge.createMany({
+                    data: badgesToCreate
+                });
+            }
+
+            // Récupérer le nombre total de badges depuis la base de données
+            const totalDbBadges = await prisma.badge.count({
+                where: { etudiantId: studentId }
+            });
+            badgesCount = totalDbBadges;
         }
+
+        // Analyser les difficultés et recommandations sur les exercices réels du profil
+        let recommandations = [];
+        let difficultes = [];
+
+        try {
+            // Récupérer toutes les tentatives détaillées de l'étudiant
+            const toutesTentatives = await prisma.tentativeExercice.findMany({
+                where: { etudiantId: studentId },
+                include: {
+                    exercice: {
+                        include: {
+                            cours: {
+                                include: {
+                                    module: true
+                                }
+                            }
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            // Grouper les résultats par compétence
+            const competenceStats: Record<string, { totalScore: number, totalQuestions: number, moduleTitre: string, slug: string, exIds: Set<number> }> = {};
+
+            for (const t of toutesTentatives) {
+                if (!t.exercice || !t.exercice.cours || !t.exercice.cours.module) continue;
+                const compName = t.exercice.competence || "Général";
+                const mod = t.exercice.cours.module;
+
+                if (!competenceStats[compName]) {
+                    competenceStats[compName] = {
+                        totalScore: 0,
+                        totalQuestions: 0,
+                        moduleTitre: mod.titre,
+                        slug: mapTitreToSlug(mod.titre),
+                        exIds: new Set()
+                    };
+                }
+
+                competenceStats[compName].totalScore += t.score;
+                competenceStats[compName].totalQuestions += t.totalQuestions;
+                competenceStats[compName].exIds.add(t.exerciceId);
+            }
+
+            // Calculer le taux de réussite par compétence
+            for (const [compName, stat] of Object.entries(competenceStats)) {
+                const ratioPct = stat.totalQuestions > 0 ? Math.round((stat.totalScore / stat.totalQuestions) * 100) : 100;
+                
+                difficultes.push({
+                    parcours: stat.slug,
+                    module: compName,
+                    pourcentage: ratioPct,
+                    texte: `Niveau de maîtrise : ${ratioPct}% en ${compName}.`
+                });
+
+                // Si la compétence est fragile ou en difficulté (< 80%), recommander de s'entraîner
+                if (ratioPct < 80) {
+                    recommandations.push({
+                        moduleSlug: stat.slug,
+                        titre: `Renforcer : ${compName}`,
+                        action: "S'entraîner",
+                        raison: `Ton taux de maîtrise actuel est de ${ratioPct}%`
+                    });
+                }
+            }
+
+            // Si aucune recommandation basée sur les erreurs, suggérer le premier cours ou exercice non complété dans le module courant le moins avancé ou le premier disponible
+            if (recommandations.length === 0) {
+                // Récupérer tous les modules publiés avec leurs cours et exercices
+                const tousLesModules = await prisma.module.findMany({
+                    where: {
+                        public: 'ENFANT',
+                        isPublished: true
+                    },
+                    include: {
+                        cours: {
+                            orderBy: { ordreDansModule: 'asc' },
+                            include: {
+                                exercices: {
+                                    orderBy: { ordre: 'asc' }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Récupérer la progression
+                const complCours = await prisma.completionCours.findMany({ where: { etudiantId: studentId } });
+                const complEx = await prisma.scoreQuiz.findMany({ where: { etudiantId: studentId } });
+                const complCoursIds = new Set(complCours.map(c => c.coursId));
+                const complExIds = new Set(complEx.map(s => s.exerciceId));
+
+                let matchFound = false;
+
+                for (const mod of tousLesModules) {
+                    for (const crs of mod.cours) {
+                        if (!complCoursIds.has(crs.id)) {
+                            recommandations.push({
+                                moduleSlug: mapTitreToSlug(mod.titre),
+                                titre: `Leçon : ${crs.titre}`,
+                                action: "Découvrir",
+                                raison: `Étape suivante de ton module "${mod.titre}" !`
+                            });
+                            matchFound = true;
+                            break;
+                        }
+                        for (const ex of crs.exercices) {
+                            if (!complExIds.has(ex.id)) {
+                                recommandations.push({
+                                    moduleSlug: mapTitreToSlug(mod.titre),
+                                    titre: `Exercice : ${ex.titre}`,
+                                    action: "Résoudre",
+                                    raison: `Teste tes acquis dans le module "${mod.titre}" !`
+                                });
+                                matchFound = true;
+                                break;
+                            }
+                        }
+                        if (matchFound) break;
+                    }
+                    if (matchFound) break;
+                }
+            }
+
+        } catch (e) {
+            console.error("Erreur calcul diagnostics recommandations:", e);
+        }
+
+        // Récupérer la liste des badges depuis la base de données
+        const databaseBadges = await prisma.badge.findMany({
+            where: { etudiantId: studentId }
+        });
 
         return {
             prenom: user.prenom,
             nom: user.nom,
-            age: 9, // default child age
+            age: 9,
             initiales: `${user.prenom[0] || ''}${user.nom[0] || ''}`.toUpperCase(),
             progression: progressionGlobale,
-            badgesObtenus: badgesCount || 1 // au moins 1 par défaut pour l'accueil
+            badgesObtenus: databaseBadges.length || badgesCount,
+            difficultes: difficultes,
+            recommandations: recommandations.slice(0, 2),
+            avatar: user.avatar || "🦊 bg-[#b6e3f4]",
+            badges: databaseBadges.map(b => ({
+                label: b.label,
+                iconName: b.iconName,
+                desc: b.desc,
+                obtenu: true
+            }))
         };
     } catch (e) {
-        console.error("Erreur obtenirProfilEnfant:", e);
+        gererErreurBaseDeDonnees("obtenirProfilEnfant", e);
         return {
             prenom: "Léa",
             nom: "Martin",
             age: 9,
             initiales: "LM",
             progression: 0,
-            badgesObtenus: 0
+            badgesObtenus: 0,
+            difficultes: [],
+            recommandations: [],
+            avatar: "🦊 bg-[#b6e3f4]",
+            badges: []
         };
     }
 }
@@ -203,19 +399,30 @@ export async function obtenirModulesDepuisDB() {
             const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
             const slug = mapTitreToSlug(mod.titre);
 
+            // Generate direct list of activity IDs for this module to avoid client loops
+            const actIds: string[] = [];
+            for (const crs of mod.cours) {
+                // Course ID mapping as 'cours_ID'
+                actIds.push(`cours_${crs.id}`);
+                for (const ex of crs.exercices) {
+                    actIds.push(ex.id.toString());
+                }
+            }
+
             mappedModules.push({
                 id: mod.id.toString(),
                 dbId: mod.id,
                 label: mod.titre,
                 description: mod.description || '',
                 progression: pct,
-                slug: slug
+                slug: slug,
+                activiteIds: actIds
             });
         }
 
         return { source: 'db', modules: mappedModules };
     } catch (e) {
-        console.error("Erreur obtenirModulesDepuisDB, fallback aux mocks:", e);
+        gererErreurBaseDeDonnees("obtenirModulesDepuisDB", e);
         return { source: 'mock', modules: [] };
     }
 }
@@ -269,8 +476,30 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
         let completedCount = 0;
 
         for (const crs of dbModule.cours) {
-            for (const ex of crs.exercices) {
+            // 1. Ajouter le cours (la leçon) elle-même comme activité !
+            const coursKey = `cours_${crs.id}`;
+            const completionRecord = await prisma.completionCours.findFirst({
+                where: {
+                    etudiantId: studentId,
+                    coursId: crs.id
+                }
+            });
+            const isCompleted = !!completionRecord;
+            if (isCompleted) completedCount++;
 
+            activites.push({
+                id: coursKey,
+                titre: crs.titre,
+                description: "Découvre et apprends les notions clés de cette leçon !",
+                type: 'lecon',
+                statut: isCompleted ? 'termine' : 'verrouille',
+                score: isCompleted ? "1/1" : undefined,
+                parfait: isCompleted,
+                dbCoursId: crs.id
+            });
+
+            // 2. Ajouter les exercices associés à ce cours
+            for (const ex of crs.exercices) {
                 const scoreRecord = await prisma.scoreQuiz.findFirst({
                     where: {
                         etudiantId: studentId,
@@ -287,11 +516,21 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
                 let scoreString = undefined;
                 let parfait = false;
 
-                if (scoreRecord && ex.type === 'QUIZ') {
+                const lowerType = ex.type.toUpperCase();
+                const isQuizType = lowerType === 'QUIZ' || lowerType === 'QCM' || lowerType === 'VRAI_FAUX';
+
+                if (scoreRecord && isQuizType) {
                     try {
-                        const questions = JSON.parse(ex.instructions);
-                        scoreString = `${scoreRecord.score}/${questions.length}`;
-                        parfait = scoreRecord.score === questions.length;
+                        const contenuParsed = typeof ex.contenu === 'string' ? JSON.parse(ex.contenu) : ex.contenu;
+                        const totalQuestions = Array.isArray(contenuParsed) ? contenuParsed.length : 0;
+                        if (totalQuestions > 0) {
+                            scoreString = `${scoreRecord.score}/${totalQuestions}`;
+                            parfait = scoreRecord.score === totalQuestions;
+                        } else {
+                            const questions = JSON.parse(ex.instructions);
+                            scoreString = `${scoreRecord.score}/${questions.length}`;
+                            parfait = scoreRecord.score === questions.length;
+                        }
                     } catch {
                         scoreString = `${scoreRecord.score}`;
                     }
@@ -300,11 +539,19 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
                     parfait = true;
                 }
 
+                let actType: 'lecon' | 'quiz' | 'exercice' = 'exercice';
+                if (isQuizType) {
+                    actType = 'quiz';
+                }
+
+                const descStr = ex.instructions || "";
+                const isInstructionJson = descStr.startsWith('[') || descStr.startsWith('{');
+
                 activites.push({
                     id: ex.id.toString(),
                     titre: ex.titre,
-                    description: ex.instructions.startsWith('[') ? "Réponds aux questions pour tester tes connaissances !" : ex.instructions,
-                    type: ex.type.toLowerCase() as 'lecon' | 'quiz' | 'exercice',
+                    description: isInstructionJson ? "Réponds aux questions pour tester tes connaissances !" : descStr,
+                    type: actType,
                     statut: (isTermine ? 'termine' : 'verrouille') as 'termine' | 'a_faire' | 'verrouille',
                     score: scoreString,
                     parfait: parfait,
@@ -314,17 +561,21 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             }
         }
 
-        // Déterminer l'état (verrouillé / à faire) dans l'ordre séquentiel
-        let unlockedNext = false;
-        const finalActivites = activites.map((act) => {
+        // Déterminer l'état (déblocage séquentiel strict)
+        let foundFirstUncompleted = false;
+        const finalActivites = activites.map((act, index) => {
+            const dbDifficulte = dbModule.cours.find((c: any) => c.id === act.dbCoursId)?.exercices.find((e: any) => e.id === act.dbExerciceId)?.difficulte 
+                || dbModule.cours.find((c: any) => c.id === act.dbCoursId)?.difficulte 
+                || 'FACILE';
+
             if (act.statut === 'termine') {
-                return act;
+                return { ...act, difficulte: dbDifficulte };
             }
-            if (!unlockedNext) {
-                unlockedNext = true;
-                return { ...act, statut: 'a_faire' as const };
+            if (!foundFirstUncompleted) {
+                foundFirstUncompleted = true;
+                return { ...act, statut: 'a_faire' as const, difficulte: dbDifficulte };
             }
-            return { ...act, statut: 'verrouille' as const };
+            return { ...act, statut: 'verrouille' as const, difficulte: dbDifficulte };
         });
 
         const total = finalActivites.length;
@@ -340,7 +591,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             activites: finalActivites
         };
     } catch (e) {
-        console.error("Erreur obtenirDetailsModuleDepuisDB:", e);
+        gererErreurBaseDeDonnees("obtenirDetailsModuleDepuisDB", e);
         return null;
     }
 }
@@ -348,6 +599,22 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
 // Action to get details of a specific activity
 export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
     try {
+        if (exerciceIdStr.startsWith('cours_')) {
+            const coursId = parseInt(exerciceIdStr.replace('cours_', ''));
+            const cours = await prisma.cours.findUnique({
+                where: { id: coursId }
+            });
+            if (!cours) return null;
+            return {
+                id: exerciceIdStr,
+                dbId: cours.id,
+                titre: cours.titre,
+                instructions: "Lis attentivement le cours !",
+                type: "LECON",
+                contenu: cours.contenu ? (typeof cours.contenu === 'string' ? JSON.parse(cours.contenu) : cours.contenu) : []
+            };
+        }
+
         const parsedId = parseInt(exerciceIdStr);
         let exercice = null;
 
@@ -364,18 +631,25 @@ export async function obtenirDetailsActiviteDepuisDB(exerciceIdStr: string) {
             return null;
         }
 
-        const cours = exercice.cours;
+        let mappedType = exercice.type.toUpperCase();
+        if (mappedType === 'QCM' || mappedType === 'VRAI_FAUX') {
+            mappedType = 'QUIZ';
+        } else if (mappedType === 'IMAGES_ORDRE') {
+            mappedType = 'ORDER';
+        } else if (mappedType === 'RELIE') {
+            mappedType = 'MATCH';
+        }
 
         return {
             id: exercice.id.toString(),
             dbId: exercice.id,
             titre: exercice.titre,
             instructions: exercice.instructions,
-            type: exercice.type, // 'LECON', 'QUIZ', 'DESSIN'
-            contenu: cours?.contenu ? (typeof cours.contenu === 'string' ? JSON.parse(cours.contenu) : cours.contenu) : []
+            type: mappedType, // 'LECON', 'QUIZ', 'MATCH', 'ORDER', 'DESSIN'
+            contenu: exercice.contenu ? (typeof exercice.contenu === 'string' ? JSON.parse(exercice.contenu) : exercice.contenu) : []
         };
     } catch (e) {
-        console.error("Erreur obtenirDetailsActiviteDepuisDB:", e);
+        gererErreurBaseDeDonnees("obtenirDetailsActiviteDepuisDB", e);
         return null;
     }
 }
@@ -415,8 +689,115 @@ export async function sauvegarderResultatActivite(exerciceIdStr: string, score: 
 
         return { success: true };
     } catch (e) {
-        console.error("Erreur sauvegarderResultatActivite:", e);
+        gererErreurBaseDeDonnees("sauvegarderResultatActivite", e);
         return { success: false, error: "Erreur lors de la sauvegarde" };
+    }
+}
+
+// Action to save lesson/course completion in DB
+export async function sauvegarderCompletionCours(coursIdStr: string) {
+    try {
+        const studentId = await obtenirEtudiantId();
+        const parsedId = parseInt(coursIdStr);
+        if (isNaN(parsedId)) {
+            return { success: false, error: "ID invalide" };
+        }
+
+        await prisma.completionCours.upsert({
+            where: {
+                etudiantId_coursId: {
+                    etudiantId: studentId,
+                    coursId: parsedId
+                }
+            },
+            update: {},
+            create: {
+                etudiantId: studentId,
+                coursId: parsedId
+            }
+        });
+        return { success: true };
+    } catch (e) {
+        gererErreurBaseDeDonnees("sauvegarderCompletionCours", e);
+        return { success: false, error: "Erreur lors de la sauvegarde" };
+    }
+}
+
+// Action to update user avatar in DB
+export async function modifierUtilisateurAvatar(avatarString: string) {
+    try {
+        const studentId = await obtenirEtudiantId();
+        await prisma.utilisateur.update({
+            where: { id: studentId },
+            data: { avatar: avatarString }
+        });
+        return { success: true };
+    } catch (e) {
+        gererErreurBaseDeDonnees("modifierUtilisateurAvatar", e);
+        return { success: false, error: "Impossible d'enregistrer l'avatar" };
+    }
+}
+
+// Action to save detailed attempt history
+export async function enregistrerTentativeExercice(
+    exerciceIdStr: string,
+    score: number,
+    totalQuestions: number,
+    bonnesReponses: number,
+    mauvaisesReponses: number,
+    dureeSecondes?: number,
+    assistee: boolean = false
+) {
+    try {
+        const studentId = await obtenirEtudiantId();
+        const parsedId = parseInt(exerciceIdStr);
+
+        if (isNaN(parsedId)) {
+            return { success: false, error: "ID invalide" };
+        }
+
+        await prisma.tentativeExercice.create({
+            data: {
+                etudiantId: studentId,
+                exerciceId: parsedId,
+                score,
+                totalQuestions,
+                bonnesReponses,
+                mauvaisesReponses,
+                dureeSecondes,
+                assistee
+            }
+        });
+
+        // Met également à jour le score global (sauvegarde du meilleur score)
+        const existingScore = await prisma.scoreQuiz.findFirst({
+            where: {
+                etudiantId: studentId,
+                exerciceId: parsedId
+            }
+        });
+
+        if (existingScore) {
+            if (score > existingScore.score) {
+                await prisma.scoreQuiz.update({
+                    where: { id: existingScore.id },
+                    data: { score: score }
+                });
+            }
+        } else {
+            await prisma.scoreQuiz.create({
+                data: {
+                    etudiantId: studentId,
+                    exerciceId: parsedId,
+                    score: score
+                }
+            });
+        }
+
+        return { success: true };
+    } catch (e) {
+        gererErreurBaseDeDonnees("enregistrerTentativeExercice", e);
+        return { success: false, error: "Erreur lors de l'enregistrement de la tentative" };
     }
 }
 
@@ -424,6 +805,8 @@ export async function sauvegarderResultatActivite(exerciceIdStr: string, score: 
 export async function obtenirActiviteRecente() {
     try {
         const studentId = await obtenirEtudiantId();
+        
+        // 1. Fetch scores (quiz & exercises)
         const scores = await prisma.scoreQuiz.findMany({
             where: { etudiantId: studentId },
             include: {
@@ -438,16 +821,32 @@ export async function obtenirActiviteRecente() {
                 }
             },
             orderBy: { createdAt: 'desc' },
-            take: 4
+            take: 10
         });
 
-        return scores.map(s => {
+        // 2. Fetch course completions (lessons)
+        const completions = await prisma.completionCours.findMany({
+            where: { etudiantId: studentId },
+            include: {
+                cours: {
+                    include: {
+                        module: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 10
+        });
+
+        // 3. Map both lists
+        const mappedScores = scores.map(s => {
             const ex = s.exercice;
             const modTitre = ex?.cours?.module?.titre || "Module";
             let scoreStr = "1/1";
             let parfait = true;
 
-            if (ex.type === 'QUIZ') {
+            const lowerType = ex?.type?.toUpperCase();
+            if (lowerType === 'QUIZ' || lowerType === 'QCM' || lowerType === 'VRAI_FAUX') {
                 try {
                     const questions = JSON.parse(ex.instructions);
                     scoreStr = `${s.score}/${questions.length}`;
@@ -458,23 +857,47 @@ export async function obtenirActiviteRecente() {
             }
 
             return {
-                id: s.id,
-                titre: ex.type === 'LECON' ? "Tu as terminé la leçon" : ex.type === 'QUIZ' ? "Tu as terminé le quiz" : "Tu as terminé le dessin",
-                nomActivite: ex.titre,
+                id: `score_${s.id}`,
+                createdAt: s.createdAt,
+                titre: lowerType === 'QUIZ' || lowerType === 'QCM' || lowerType === 'VRAI_FAUX' ? "Tu as réussi le quiz" : "Tu as réussi l'exercice",
+                nomActivite: ex?.titre || "Exercice",
                 module: modTitre,
                 date: new Date(s.createdAt).toLocaleDateString('fr-FR'),
                 score: scoreStr,
                 parfait: parfait,
-                type: ex.type
+                type: 'QUIZ'
             };
         });
+
+        const mappedCompletions = completions.map(c => {
+            const crs = c.cours;
+            const modTitre = crs?.module?.titre || "Module";
+            return {
+                id: `comp_${c.id}`,
+                createdAt: c.createdAt,
+                titre: "Tu as validé la leçon",
+                nomActivite: crs?.titre || "Leçon",
+                module: modTitre,
+                date: new Date(c.createdAt).toLocaleDateString('fr-FR'),
+                score: "1/1",
+                parfait: true,
+                type: 'LECON'
+            };
+        });
+
+        // 4. Merge, sort by createdAt descending and take top 4
+        const merged = [...mappedScores, ...mappedCompletions]
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 4);
+
+        return merged;
     } catch (e) {
-        console.error("Erreur obtenirActiviteRecente:", e);
+        gererErreurBaseDeDonnees("obtenirActiviteRecente", e);
         return [];
     }
 }
 
-// Action to get cumulative stats for the 6 Parcours
+// Action to get cumulative stats for all Parcours found in the database modules
 export async function obtenirParcoursStats() {
     try {
         const studentId = await obtenirEtudiantId();
@@ -493,15 +916,6 @@ export async function obtenirParcoursStats() {
             }
         });
 
-        const parcoursExercices: Record<string, Set<number>> = {
-            lecture: new Set(),
-            numerique: new Set(),
-            robotique: new Set(),
-            anglais: new Set(),
-            civique: new Set(),
-            eco: new Set()
-        };
-
         const ENUM_TO_SLUG: Record<string, string> = {
             COMPREHENSION_LECTURE: 'lecture',
             NUMERIQUE: 'numerique',
@@ -511,49 +925,62 @@ export async function obtenirParcoursStats() {
             ECO_CITOYENNETE: 'eco'
         };
 
+        const stats: Record<string, number> = {};
+
+        // Grouper les activités par parcours dynamique
         for (const mod of modules) {
             for (const enumVal of mod.parcours) {
-                const slug = ENUM_TO_SLUG[enumVal];
-                if (slug) {
-                    for (const crs of mod.cours) {
-                        for (const ex of crs.exercices) {
-                            parcoursExercices[slug].add(ex.id);
+                const slug = ENUM_TO_SLUG[enumVal] || enumVal.toLowerCase();
+                
+                if (!stats[slug]) {
+                    // Trouver tous les cours et exercices associés à ce parcours
+                    const allCoursIds = new Set<number>();
+                    const allExercicesIds = new Set<number>();
+
+                    // Parcourir tous les modules de ce parcours
+                    const siblingModules = modules.filter(m => m.parcours.includes(enumVal));
+                    for (const sm of siblingModules) {
+                        for (const crs of sm.cours) {
+                            allCoursIds.add(crs.id);
+                            for (const ex of crs.exercices) {
+                                allExercicesIds.add(ex.id);
+                            }
                         }
                     }
+
+                    const total = allCoursIds.size + allExercicesIds.size;
+                    let completed = 0;
+
+                    if (total > 0) {
+                        if (allExercicesIds.size > 0) {
+                            const scores = await prisma.scoreQuiz.findMany({
+                                where: {
+                                    etudiantId: studentId,
+                                    exerciceId: { in: Array.from(allExercicesIds) }
+                                }
+                            });
+                            completed += new Set(scores.map(s => s.exerciceId)).size;
+                        }
+                        if (allCoursIds.size > 0) {
+                            const comps = await prisma.completionCours.findMany({
+                                where: {
+                                    etudiantId: studentId,
+                                    coursId: { in: Array.from(allCoursIds) }
+                                }
+                            });
+                            completed += new Set(comps.map(c => c.coursId)).size;
+                        }
+                    }
+
+                    stats[slug] = total > 0 ? Math.round((completed / total) * 100) : 0;
                 }
             }
         }
 
-        const stats: Record<string, number> = {};
-
-        for (const [slug, exIds] of Object.entries(parcoursExercices)) {
-            const total = exIds.size;
-            let completed = 0;
-
-            if (total > 0) {
-                const scores = await prisma.scoreQuiz.findMany({
-                    where: {
-                        etudiantId: studentId,
-                        exerciceId: { in: Array.from(exIds) }
-                    }
-                });
-                completed = new Set(scores.map(s => s.exerciceId)).size;
-            }
-
-            stats[slug] = total > 0 ? Math.round((completed / total) * 100) : 0;
-        }
-
         return stats;
     } catch (e) {
-        console.error("Erreur obtenirParcoursStats:", e);
-        return {
-            lecture: 0,
-            numerique: 0,
-            robotique: 0,
-            anglais: 0,
-            civique: 0,
-            eco: 0
-        };
+        gererErreurBaseDeDonnees("obtenirParcoursStats", e);
+        return {};
     }
 }
 
@@ -561,8 +988,8 @@ export async function obtenirParcoursStats() {
 export async function obtenirModulesDuParcours(parcoursSlug: string) {
     try {
         const studentId = await obtenirEtudiantId();
-
-        let targetEnum: any = null;
+        
+        let targetEnum: Parcours | null = null;
         const slug = parcoursSlug.toLowerCase();
         if (slug === 'lecture') targetEnum = 'COMPREHENSION_LECTURE';
         else if (slug === 'numerique') targetEnum = 'NUMERIQUE';
@@ -593,38 +1020,64 @@ export async function obtenirModulesDuParcours(parcoursSlug: string) {
         const mapped = [];
         for (const mod of modules) {
             const exercicesIds = new Set<number>();
+            const coursIds = new Set<number>();
             for (const crs of mod.cours) {
+                coursIds.add(crs.id);
                 for (const ex of crs.exercices) {
                     exercicesIds.add(ex.id);
                 }
             }
 
-            const total = exercicesIds.size;
+            const total = exercicesIds.size + coursIds.size;
             let completed = 0;
 
             if (total > 0) {
-                const scores = await prisma.scoreQuiz.findMany({
-                    where: {
-                        etudiantId: studentId,
-                        exerciceId: { in: Array.from(exercicesIds) }
-                    }
-                });
-                completed = new Set(scores.map(s => s.exerciceId)).size;
+                if (exercicesIds.size > 0) {
+                    const scores = await prisma.scoreQuiz.findMany({
+                        where: {
+                            etudiantId: studentId,
+                            exerciceId: { in: Array.from(exercicesIds) }
+                        }
+                    });
+                    completed += new Set(scores.map(s => s.exerciceId)).size;
+                }
+                if (coursIds.size > 0) {
+                    const comps = await prisma.completionCours.findMany({
+                        where: {
+                            etudiantId: studentId,
+                            coursId: { in: Array.from(coursIds) }
+                        }
+                    });
+                    completed += new Set(comps.map(c => c.coursId)).size;
+                }
             }
 
             const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            // Generate direct list of activity IDs for this module to avoid client loops
+            const actIds: string[] = [];
+            for (const crs of mod.cours) {
+                // Course ID mapping as 'cours_ID'
+                actIds.push(`cours_${crs.id}`);
+                for (const ex of crs.exercices) {
+                    actIds.push(ex.id.toString());
+                }
+            }
 
             mapped.push({
                 id: mod.id.toString(),
                 dbId: mod.id,
                 label: mod.titre,
                 description: mod.description || '',
-                progression: pct
+                progression: pct,
+                slug: mapTitreToSlug(mod.titre),
+                activiteIds: actIds
             });
         }
+
         return mapped;
     } catch (e) {
-        console.error("Erreur obtenirModulesDuParcours:", e);
+        gererErreurBaseDeDonnees("obtenirModulesDuParcours", e);
         return [];
     }
 }
