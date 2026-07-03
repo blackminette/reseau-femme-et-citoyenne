@@ -43,6 +43,35 @@ function getCoursePreview(cours: { titre: string; contenu?: unknown }) {
     return `Découvre les notions clés de ${cours.titre}.`;
 }
 
+type DiagnosticRecommandation = {
+    id: string;
+    moduleSlug: string;
+    titre: string;
+    action: string;
+    raison: string;
+};
+
+type DiagnosticDifficulte = {
+    parcours: string;
+    module: string;
+    pourcentage: number;
+    texte: string;
+};
+
+type ModulePerformanceExercice = {
+    id: string | number;
+    titre: string;
+    ratioPct: number;
+};
+
+type ModulePerformanceEntry = {
+    totalScore: number;
+    maxScore: number;
+    moduleTitre: string;
+    slug: string;
+    exNonReussis: ModulePerformanceExercice[];
+};
+
 // Helper to handle and log DB connection errors cleanly
 function gererErreurBaseDeDonnees(nomFonction: string, err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -174,8 +203,8 @@ export async function obtenirProfilEnfant() {
         }
 
         // Analyser les difficultés et recommandations sur les exercices réels du profil
-        let recommandations = [];
-        let difficultes = [];
+        const recommandations: DiagnosticRecommandation[] = [];
+        const difficultes: DiagnosticDifficulte[] = [];
 
         try {
             const tousLesScores = await prisma.scoreQuiz.findMany({
@@ -194,7 +223,7 @@ export async function obtenirProfilEnfant() {
             });
 
             // Groupement par module pour identifier les zones de réussite et de difficultés
-            const modulePerformance: Record<number, { totalScore: number, maxScore: number, moduleTitre: string, slug: string, exNonReussis: any[] }> = {};
+            const modulePerformance: Record<number, ModulePerformanceEntry> = {};
 
             for (const s of tousLesScores) {
                 if (!s.exercice || !s.exercice.cours || !s.exercice.cours.module) continue;
@@ -240,7 +269,7 @@ export async function obtenirProfilEnfant() {
             }
 
             // Génération des diagnostics
-            for (const [modId, perf] of Object.entries(modulePerformance)) {
+            for (const perf of Object.values(modulePerformance)) {
                 const ratioPct = perf.maxScore > 0 ? Math.round((perf.totalScore / perf.maxScore) * 100) : 100;
                 
                 if (ratioPct < 70) {
@@ -254,7 +283,7 @@ export async function obtenirProfilEnfant() {
             }
 
             // Si l'enfant a des difficultés, on lui recommande de recommencer ces exercices précis
-            for (const [modId, perf] of Object.entries(modulePerformance)) {
+            for (const perf of Object.values(modulePerformance)) {
                 if (perf.exNonReussis.length > 0) {
                     for (const ex of perf.exNonReussis) {
                         recommandations.push({
