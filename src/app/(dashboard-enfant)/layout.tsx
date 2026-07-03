@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
@@ -11,6 +11,8 @@ export const metadata = {
     title: 'AtelierKids - Espace Enfant',
     description: 'Plateforme Pédagogique AtelierKids',
 };
+
+export const dynamic = 'force-dynamic';
 
 export default async function EnfantLayout({
     children,
@@ -63,9 +65,11 @@ export default async function EnfantLayout({
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-violet-100 shadow-xs">
-                            <img 
-                                src="https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4" 
+                            <Image
+                                src="https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4"
                                 alt="Avatar"
+                                width={36}
+                                height={36}
                                 className="h-full w-full object-cover"
                             />
                         </div>
