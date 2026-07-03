@@ -330,6 +330,57 @@ async function main() {
 
   let intervenanteId = '';
 
+// --- AJOUT D'ATELIERS DU 29 JUIN AU 4 JUILLET 2026 ---
+  console.log('📅 Ajout des ateliers spécifiques (29 juin - 4 juillet)...');
+
+  // Nettoyage préalable pour éviter les doublons ou erreurs de clé
+  await prisma.atelier.deleteMany({});
+  await prisma.lieu.deleteMany({});
+
+  const lieu = await prisma.lieu.create({
+    data: {
+      nom: "Centre Communautaire",
+      adresseTexte: "12 rue de la Paix, 06000 Nice"
+    }
+  });
+
+  const ateliersSpecifiques = [
+    { 
+      titre: "Atelier Bricolage", 
+      dateDebut: new Date('2026-06-29T10:00:00'), 
+      dateFin: new Date('2026-06-29T12:00:00'), 
+      placesMax: 10
+    },
+    { 
+      titre: "Cours de Dessin", 
+      dateDebut: new Date('2026-07-01T14:00:00'), 
+      dateFin: new Date('2026-07-01T16:00:00'), 
+      placesMax: 8
+    },
+    { 
+      titre: "Éveil Musical", 
+      dateDebut: new Date('2026-07-03T10:00:00'), 
+      dateFin: new Date('2026-07-03T12:00:00'), 
+      placesMax: 12
+    },
+    { 
+      titre: "Atelier Poterie", 
+      dateDebut: new Date('2026-07-04T14:00:00'), 
+      dateFin: new Date('2026-07-04T16:00:00'), 
+      placesMax: 15
+    }
+  ];
+
+  for (const atelier of ateliersSpecifiques) {
+    await prisma.atelier.create({
+      data: {
+        ...atelier,
+        description: "Atelier spécial été !",
+        lieuId: lieu.id
+      }
+    });
+  }
+
   // 2. Boucle pour créer sur Supabase Auth ET synchroniser dans Prisma
   for (const user of utilisateursDeTest) {
     let supabaseAuthId: string;
