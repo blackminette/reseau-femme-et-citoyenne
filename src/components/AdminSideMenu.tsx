@@ -5,6 +5,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { deconnexionUtilisateur } from '@/app/auth/auth';
 import {
     LayoutDashboard,
     Users,
@@ -12,7 +13,9 @@ import {
     GraduationCap,
     Inbox,
     ClipboardCheck,
-    ChevronRight
+    ChevronRight,
+    LogOut,
+    FileText
 } from 'lucide-react';
 
 interface SidebarLinkProps {
@@ -67,10 +70,20 @@ export default function AdminSideMenu() {
     return (
         <div className="w-full flex flex-col gap-6 select-none">
 
+            <div className="px-3 py-2 border-b border-violet-100 pb-4 mb-2 flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    A
+                </div>
+                <div className="truncate">
+                    <h2 className="text-sm font-bold text-violet-900 leading-none truncate">Console Admin</h2>
+                    <span className="text-[10px] font-medium text-violet-500 mt-0.5 block">Gestion Espace</span>
+                </div>
+            </div>
+
             {/* SECTION 1 : VUE D'ENSEMBLE */}
             <div className="flex flex-col gap-1 w-full">
                 <h3 className="text-xxs font-bold uppercase tracking-widest text-slate-400 mb-1 px-3">
-                    Vue d'ensemble
+                    Vue d&apos;ensemble
                 </h3>
                 <SidebarLink
                     href="/admin"
@@ -101,6 +114,11 @@ export default function AdminSideMenu() {
                     label="Pédagogie & Cours"
                     icon={<GraduationCap className="h-4 w-4" />}
                 />
+                <SidebarLink
+                    href="/admin/blog"
+                    label="Actualités"
+                    icon={<FileText className="h-4 w-4" />}
+                />
             </div>
 
             {/* SECTION 3 : RELATIONS HUMAINES */}
@@ -120,6 +138,17 @@ export default function AdminSideMenu() {
                 />
             </div>
 
+            <div className="pt-4 border-t border-violet-100 mt-auto">
+                <form action={deconnexionUtilisateur}>
+                    <button
+                        type="submit"
+                        className="w-full px-3 py-2.5 text-sm font-medium text-violet-600 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all duration-200 flex items-center gap-3 group text-left"
+                    >
+                        <LogOut className="h-4 w-4 text-violet-500 group-hover:text-amber-500 transition-colors shrink-0" />
+                        <span className="truncate">Déconnexion</span>
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }
