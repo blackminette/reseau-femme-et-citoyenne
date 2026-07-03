@@ -337,6 +337,31 @@ module.exports = function aiChatRoutes(db) {
   }
 
   /**
+   * Compte combien de fois l'enfant a déjà demandé de l'aide sur la question actuellement
+   * affichée (identifiée par ses 25 premiers caractères dans les messages user).
+   * Permet d'escalader le stade plus vite si l'enfant est bloqué depuis longtemps.
+   */
+  function countHintsForQuestion(history, questionText) {
+    if (!questionText) return 0;
+    const key = questionText.slice(0, 25).toLowerCase();
+    return history.filter(m => m.role === 'user' && (m.content || '').toLowerCase().includes(key)).length;
+  }
+
+  /**
+   * Extrait un résumé des indices déjà donnés par Milo (3 dernières réponses).
+   * Injecté dans le prompt pour éviter que Milo répète le même angle d'explication.
+   */
+  function extractPreviousHints(history) {
+    const miloTurns = history
+      .filter(m => m.role === 'assistant')
+      .map(m => (m.content || '').trim())
+      .filter(Boolean);
+    if (!miloTurns.length) return '';
+    const previews = miloTurns.slice(-3).map((t, i) => `  [${i + 1}] ${t.slice(0, 120).replace(/\n/g, ' ')}…`);
+    return '\nINDICES DÉJÀ DONNÉS (ne PAS répéter le même angle — trouver une approche différente) :\n' + previews.join('\n');
+  }
+
+  /**
    * Détecte le stade d'aide optimal selon l'historique et le contenu du message.
    *
    * Stades :
@@ -345,17 +370,23 @@ module.exports = function aiChatRoutes(db) {
    *   3 → Indice ciblé   : pointe directement le blocage précis
    *   4 → Explication complète : révèle la réponse + raisonnement complet
    *
+   * @param {string|null} questionText - Texte de la question affichée (pour compter les répétitions)
    * @returns {1|2|3|4}
    */
-  function getExplorationStage(history, msg) {
+  function getExplorationStage(history, msg, questionText) {
     const low = msg.toLowerCase();
 
     // Signaux explicites qui court-circuitent le comptage de tours
-    if (/encore un indice/i.test(low))                               return 3;
+    if (/encore un indice/i.test(low))                                   return 3;
     if (/c['']?était faux|c'?est faux|mauvais|pas la bonne/i.test(low)) return 2;
     if (/toujours pas|je comprends toujours|encore bloqué/i.test(low))  return 3;
 
-    // Comptage des tours IA pour escalader progressivement
+    // Si l'enfant a demandé de l'aide 3× sur cette même question → explication complète directe
+    const repeatCount = countHintsForQuestion(history, questionText);
+    if (repeatCount >= 3) return 4;
+    if (repeatCount >= 2) return 3;
+
+    // Sinon : escalade progressive selon le nombre de tours IA
     const aiTurns = history.filter(m => m.role === 'assistant').length;
     if (aiTurns === 0) return 1;
     if (aiTurns === 1) return 2;
@@ -409,10 +440,12 @@ module.exports = function aiChatRoutes(db) {
     const { enfant, scores, moduleStats, badges, modules } = context;
 
     // — Analyses du contexte —
-    const niveau  = detectNiveauGlobal(scores);
-    const stage   = getExplorationStage(history, message);
-    const emotion = detectEmotion(message);
+    const niveau      = detectNiveauGlobal(scores);
+    const screenText  = currentQuestion?.text || null;
+    const stage       = getExplorationStage(history, message, screenText);
+    const emotion     = detectEmotion(message);
     const wrongAnswer = extractWrongAnswer(message);
+    const hintsBlock  = extractPreviousHints(history);
 
     const strongModules = Object.entries(moduleStats).filter(([, s]) => s.avg >= 70).map(([k]) => MODULE_LABELS[k]);
     const weakModules   = Object.entries(moduleStats).filter(([, s]) => s.avg  < 50).map(([k]) => MODULE_LABELS[k]);
@@ -439,7 +472,7 @@ module.exports = function aiChatRoutes(db) {
     // — Bloc ÉCRAN : source de vérité absolue (question visible par l'enfant) —
     let screenBlock = '';
     if (currentQuestion?.text && Array.isArray(currentQuestion.choices)) {
-      const { text, choices, correctIndex, displayNumber, total } = currentQuestion;
+      const { text, choices, correctIndex, displayNumber, total, currentScore } = currentQuestion;
       const correct = typeof correctIndex === 'number' ? choices[correctIndex] : null;
       const choiceLines = choices.map((c, i) => {
         const letter = String.fromCharCode(65 + i);
@@ -450,6 +483,11 @@ module.exports = function aiChatRoutes(db) {
         ? `\nL'enfant a choisi "${wrongAnswer}" — explique spécifiquement POURQUOI ce choix est incorrect,\npuis guide-le vers "${correct}" sans le donner directement.`
         : '';
 
+      // Le score en cours permet à Milo d'adapter son encouragement ("déjà 4/6, super !")
+      const scoreNote = (typeof currentScore === 'number' && displayNumber > 1)
+        ? `\nScore session : ${currentScore}/${displayNumber - 1} bonnes réponses sur les questions précédentes.`
+        : '';
+
       screenBlock = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🖥️  QUESTION AFFICHÉE À L'ÉCRAN  (Q${displayNumber}/${total || '?'})
@@ -457,7 +495,7 @@ module.exports = function aiChatRoutes(db) {
 "${text}"
 
 ${choiceLines}
-${correct ? `\n→ Réponse correcte : "${correct}"` : ''}${wrongNote}
+${correct ? `\n→ Réponse correcte : "${correct}"` : ''}${wrongNote}${scoreNote}
 
 ⚠️  RÈGLE ABSOLUE : Cette question est ce que l'enfant voit EN CE MOMENT.
 Tout ce que tu dis doit concerner UNIQUEMENT cette question.
@@ -541,6 +579,7 @@ Reste chaleureux : c'est une découverte partagée, pas une leçon magistrale.`,
 
     // — Assemblage final du prompt —
     return `Tu es MILO, l'assistant pédagogique d'AtelierKids. Tu parles avec ${enfant.prenom}, ${enfant.age} ans.
+${hintsBlock}
 
 STYLE : ${ageStyle}
 ${screenBlock}${pinnedBlock}
@@ -572,6 +611,7 @@ RÈGLES
 3. Hors-sujet AtelierKids → redirige gentiment en 1 phrase.
 4. Format : **gras** pour les mots-clés. Listes si plusieurs points. Max 3 paragraphes courts.
 5. Si tu n'as pas assez d'info sur la question → demande à l'enfant de préciser.
+6. Si l'enfant dit "j'ai compris" / "merci" / "c'est bon" → célèbre brièvement, puis propose-lui de répondre seul à la question sans aide. Exemple : "Super ! Maintenant essaie de répondre sans moi — tu vas y arriver !"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STADE D'AIDE ACTUEL : ${stage}/4

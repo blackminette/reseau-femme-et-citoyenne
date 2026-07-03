@@ -122,13 +122,14 @@ function renderQuestion() {
   document.getElementById('quiz-feedback').textContent = '';
   document.getElementById('next-btn').className = 'quiz-next-btn';
 
-  // Expose la question courante à Milo
+  // Expose la question courante à Milo (score inclus pour qu'il encourage selon la progression)
   window.MILO_CURRENT_QUESTION = {
     displayNumber: currentIdx + 1,
     total,
     text: q.q,
     choices: q.c,
     correctIndex: q.a,
+    currentScore: score,
   };
 
   // Animation

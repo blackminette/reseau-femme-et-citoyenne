@@ -393,6 +393,24 @@
   function getUrlParam(k) { return new URLSearchParams(window.location.search).get(k) || null; }
   const MOD_LABELS = {lecture:'Lecture',numerique:'Numérique',robotique:'Robotique',anglais:'Anglais',civique:'Éd. civique',eco:'Éco-citoyenneté'};
 
+  // ── Persistance sessionStorage ────────────────────────────────────────────
+  // L'historique est sauvegardé par activité pour survivre aux navigations
+  // entre pages du même quiz (ex : enfant ouvre la leçon puis revient au quiz).
+  function _sessionKey() {
+    const id = getUrlParam('id') || getUrlParam('m') || window.location.pathname.split('/').pop();
+    return `milo_h_${id}`;
+  }
+  function saveHistory() {
+    try { sessionStorage.setItem(_sessionKey(), JSON.stringify(history.slice(-14))); } catch {}
+  }
+  function loadHistory() {
+    try {
+      const raw = sessionStorage.getItem(_sessionKey());
+      if (raw) history = JSON.parse(raw);
+    } catch {}
+  }
+  loadHistory();
+
   // ── Markdown léger ─────────────────────────────────────────────────────────
   function renderMd(raw) {
     let s = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -445,13 +463,24 @@
   }
 
   // ── Toggle panel ──────────────────────────────────────────────────────────
-  let open = false, history = [], unread = 0;
+  let open = false, history = [], unread = 0, _pendingWrongMsg = null;
   function togglePanel() {
     open = !open; panel.classList.toggle('open', open);
     if (open) {
-      unread = 0; document.getElementById('aiw-badge').style.display = 'none';
+      unread = 0;
+      const badge = document.getElementById('aiw-badge');
+      badge.style.display = 'none'; badge.style.background = '#e53935';
       setCharState('wave');
-      setTimeout(() => { document.getElementById('aiw-input').focus(); startTypewriter(); }, 300);
+      setTimeout(() => {
+        document.getElementById('aiw-input').focus();
+        startTypewriter();
+        // Message en attente (enfant s'est trompé pendant que le widget était fermé)
+        if (_pendingWrongMsg) {
+          document.getElementById('aiw-input').value = _pendingWrongMsg;
+          _pendingWrongMsg = null;
+          setTimeout(sendMsg, 700);
+        }
+      }, 300);
       if (!document.getElementById('aiw-chips').children.length) renderChips();
     }
   }
@@ -509,10 +538,12 @@
   }
 
   function addQuickReplies(reply) {
-    const isCelebrate = /bravo|félicit|génial|excellent|parfait|t['']as trouv|c['']est exact/i.test(reply);
-    const isHint = /pense|rappelle|essaie|réfléchi|imagine|as-tu|ensemble|qu['']est-ce/i.test(reply) || reply.length > 120;
+    const isCelebrate  = /bravo|félicit|génial|excellent|parfait|t['']as trouv|c['']est exact/i.test(reply);
+    const isErrorExpl  = /pas tout à fait|mauvais|incorrect|c'?était faux|erreur|en réalité|en fait|c'?est pour [çca]a|parce que/i.test(reply);
+    const isHint       = /pense|rappelle|essaie|réfléchi|imagine|as-tu|ensemble|qu['']est-ce/i.test(reply) || reply.length > 120;
     let opts;
-    if (isCelebrate) opts = ['🎉 Super merci !', '❓ Autre question'];
+    if (isCelebrate)  opts = ['🎉 Super merci !', '❓ Autre question'];
+    else if (isErrorExpl) opts = ['Je comprends maintenant ✅', 'Encore un indice', '❓ Autre question'];
     else if (isHint)  opts = ['Encore un indice', '❓ Autre question'];
     else              opts = ['❓ Autre question'];
 
@@ -521,6 +552,21 @@
       const b = document.createElement('button'); b.className='aiw-qr-btn'; b.textContent=label;
       b.addEventListener('click', () => {
         qr.remove();
+
+        // Confirmation de compréhension → célébration locale, pas d'appel API
+        if (label === 'Je comprends maintenant ✅') {
+          const cheers = [
+            '🎉 Trop bien ! L\'essentiel c\'est d\'avoir compris !',
+            '💪 Parfait ! Maintenant essaie de répondre seul — tu vas y arriver !',
+            '⭐ Top ! La prochaine question, tu l\'attaques en confiance !',
+            '🚀 Super ! C\'est comme ça qu\'on progresse !',
+          ];
+          addBubble('assistant', cheers[Math.floor(Math.random() * cheers.length)]);
+          setCharState('cheer', 2000);
+          scrollBottom();
+          return;
+        }
+
         // "Encore un indice" : envoie la question courante pour que Milo ne se perde pas
         if (label === 'Encore un indice' && window.MILO_CURRENT_QUESTION) {
           const q = window.MILO_CURRENT_QUESTION;
@@ -537,18 +583,37 @@
   }
 
   // Appelé quand l'enfant passe à la question suivante
+  const _NEXT_MSGS = [
+    'Passons à la suivante ! 🚀 Dis-moi si tu bloques.',
+    'Question suivante ! 💡 Je suis là si t\'as besoin d\'un indice.',
+    'On enchaîne ! 🎯 N\'hésite pas à me solliciter.',
+    'C\'est parti pour la prochaine ! 🌟 Je t\'écoute si ça coince.',
+    'Allez, on continue ! 🤖 Je reste disponible pour toi.',
+  ];
   window.miloNewQuestion = function() {
     history = [];
+    try { sessionStorage.removeItem(_sessionKey()); } catch {}
     thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
-    addBubble('assistant', 'Passons à la suivante ! 🚀 Dis-moi si tu bloques.');
+    const msg = _NEXT_MSGS[Math.floor(Math.random() * _NEXT_MSGS.length)];
+    addBubble('assistant', msg);
     scrollBottom();
   };
 
   // Appelé quand l'enfant choisit la mauvaise réponse
   window.miloWrongAnswer = function(questionText, wrongChoice) {
-    if (!open) return; // Ne pas ouvrir le widget de force, juste notifier s'il est ouvert
-    thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
     const msg = `J'ai répondu "${wrongChoice}" mais c'était faux… Tu peux m'expliquer pourquoi ?`;
+    if (!open) {
+      // Widget fermé → stocker le message + alerter visuellement sans forcer l'ouverture
+      _pendingWrongMsg = msg;
+      const badge = document.getElementById('aiw-badge');
+      badge.textContent = '!'; badge.style.background = '#e53935'; badge.style.display = 'flex';
+      // Petite vibration du bouton pour attirer l'attention
+      btn.style.animation = 'aiw-wiggle .45s ease';
+      setTimeout(() => { btn.style.animation = 'aiw-wiggle .45s ease .5s'; }, 500);
+      setTimeout(() => { btn.style.animation = ''; }, 1100);
+      return;
+    }
+    thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
     document.getElementById('aiw-input').value = msg;
     sendMsg();
   };
@@ -603,6 +668,7 @@
       addBubble('assistant', res.reply);
       addQuickReplies(res.reply);
       history.push({role:'user',content:msg}); history.push({role:'assistant',content:res.reply});
+      saveHistory();
 
       if (!open) {
         unread++; const b=document.getElementById('aiw-badge'); b.textContent=unread>9?'9+':unread; b.style.display='flex';

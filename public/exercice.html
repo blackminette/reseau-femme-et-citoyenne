@@ -138,7 +138,7 @@ function renderQuestion() {
   document.getElementById('quiz-feedback').className = 'quiz-feedback';
   document.getElementById('next-btn').className = 'quiz-next-btn';
 
-  window.MILO_CURRENT_QUESTION = { displayNumber: idx+1, total, text: q.q, choices: q.c, correctIndex: q.a };
+  window.MILO_CURRENT_QUESTION = { displayNumber: idx+1, total, text: q.q, choices: q.c, correctIndex: q.a, currentScore: score };
 
   const card = document.querySelector('.quiz-question-card');
   card.style.animation = 'none'; void card.offsetWidth; card.style.animation = 'slideIn 0.3s ease';
