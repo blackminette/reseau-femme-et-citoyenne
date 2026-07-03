@@ -1,4 +1,4 @@
-import { PrismaClient, Parcours, Difficulte } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import * as dotenv from 'dotenv';
@@ -19,8 +19,35 @@ const supabaseAdmin = createClient(
 );
 
 async function main() {
-  console.log('🌱 (Seeding) Début de la synchronisation Supabase + Prisma...');
+  console.log('🌱 [Seed] Début du nettoyage et de l\'initialisation des utilisateurs...');
 
+  // 1. Nettoyage de Supabase Auth (Suppression de TOUS les utilisateurs)
+  try {
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+      perPage: 1000
+    });
+
+    if (listError) throw listError;
+
+    if (users && users.length > 0) {
+      console.log(`❌ Suppression de ${users.length} utilisateur(s) de Supabase Auth...`);
+      for (const user of users) {
+        await supabaseAdmin.auth.admin.deleteUser(user.id);
+      }
+    }
+  } catch (err) {
+    console.error('⚠️ Erreur lors du nettoyage de Supabase Auth:', err);
+  }
+
+  // 2. Nettoyage des tables Prisma (Cascade configurée dans le schéma pour lier Utilisateur)
+  try {
+    console.log('❌ Nettoyage de la table Utilisateur de la base de données...');
+    await prisma.utilisateur.deleteMany({});
+  } catch (err) {
+    console.error('⚠️ Erreur lors du nettoyage de PostgreSQL:', err);
+  }
+
+  // 3. Définition des utilisateurs de test
   const utilisateursDeTest = [
     {
       email: 'admin@rfc06.fr',
@@ -87,226 +114,53 @@ async function main() {
     },
   ];
 
+  // 4. Création des utilisateurs
+  console.log('👥 Création des utilisateurs de test...');
   for (const u of utilisateursDeTest) {
-    let supabaseAuthId = '';
-
-    const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    if (listError) {
-      console.error('Erreur lors de la vérification de l’existence de l’utilisateur Supabase:', listError.message);
-      continue;
-    }
-
-    const existingUser = listData.users.find((user) => user.email === u.email);
-
-    if (existingUser) {
-      supabaseAuthId = existingUser.id;
-    } else {
+    try {
+      // Création dans Supabase Auth
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: u.email,
         password: u.motDePasse,
         email_confirm: true,
       });
 
-      if (authError) {
-        console.error(`Erreur d'inscription Supabase pour ${u.email}:`, authError.message);
+      if (authError || !authData.user) {
+        console.error(`⚠️ Impossible de créer ${u.email} sur Supabase Auth:`, authError?.message);
         continue;
       }
 
-      supabaseAuthId = authData.user.id;
+      // Création correspondante dans Prisma PostgreSQL
+      await prisma.utilisateur.create({
+        data: {
+          id: authData.user.id,
+          email: u.email,
+          username: u.username,
+          nom: u.nom,
+          prenom: u.prenom,
+          role: u.role,
+          telephone: u.telephone,
+          isActive: true,
+        },
+      });
+
+      console.log(`✅ Utilisateur créé : ${u.prenom} ${u.nom} (${u.role})`);
+    } catch (error) {
+      console.error(`⚠️ Échec de l'insertion pour l'utilisateur ${u.email}:`, error);
     }
-
-    await prisma.utilisateur.upsert({
-      where: { id: supabaseAuthId },
-      update: {
-        email: u.email,
-        username: u.username,
-        nom: u.nom,
-        prenom: u.prenom,
-        role: u.role,
-        telephone: u.telephone,
-      },
-      create: {
-        id: supabaseAuthId,
-        email: u.email,
-        username: u.username,
-        nom: u.nom,
-        prenom: u.prenom,
-        role: u.role,
-        telephone: u.telephone,
-      },
-    });
   }
 
-  const modulesDeTest = [
-    {
-      id: 1,
-      titre: 'Numérique (Adulte)',
-      description: 'Découvrez les bases fondamentales de l’informatique, la navigation sur Internet et la gestion sécurisée de vos e-mails pour gagner en autonomie au quotidien.',
-      parcours: [Parcours.NUMERIQUE_ADULTE],
-      difficulte: Difficulte.FACILE,
-      isPublished: true,
-    },
-    {
-      id: 2,
-      titre: 'Expression & Compréhension Orale',
-      description: 'Améliorez votre aisance à l’oral, enrichissez votre vocabulaire du quotidien et développez votre confiance à travers des mises en situation pratiques et interactives.',
-      parcours: [Parcours.ORAL],
-      difficulte: Difficulte.MOYEN,
-      isPublished: true,
-    },
-    {
-      id: 3,
-      titre: 'Numérique (Enfant)',
-      description: 'Une initiation ludique aux outils numériques à travers des ateliers créatifs pour comprendre les écrans sans danger.',
-      parcours: [Parcours.NUMERIQUE],
-      difficulte: Difficulte.FACILE,
-      isPublished: true,
-    },
-    {
-      id: 4,
-      titre: 'Robotique Ludique',
-      description: 'Découvrez la programmation et l’assemblage de petits robots pour développer la logique et l’esprit d’équipe.',
-      parcours: [Parcours.ROBOTIQUE],
-      difficulte: Difficulte.DIFFICILE,
-      isPublished: true,
-    },
-    {
-      id: 5,
-      titre: 'Anglais (Junior)',
-      description: 'Apprentissage immersif de la langue anglaise par le chant, le jeu et le dialogue adapté aux jeunes.',
-      parcours: [Parcours.ANGLAIS],
-      difficulte: Difficulte.FACILE,
-      isPublished: true,
-    },
-    {
-      id: 6,
-      titre: 'Éco-Citoyenneté',
-      description: 'Sensibilisation aux enjeux environnementaux et découverte des écogestes au quotidien de façon interactive.',
-      parcours: [Parcours.ECO_CITOYENNETE],
-      difficulte: Difficulte.FACILE,
-      isPublished: true,
-    },
-    {
-      id: 7,
-      titre: 'Éducation Civique',
-      description: 'Comprendre les institutions, les valeurs républicaines et les bases de la vie en société.',
-      parcours: [Parcours.EDUCATION_CIVIQUE],
-      difficulte: Difficulte.MOYEN,
-      isPublished: true,
-    },
-    {
-      id: 8,
-      titre: 'Compréhension Lecture',
-      description: 'Ateliers de soutien à la lecture, analyse d’histoires simples et renforcement de l’expression écrite.',
-      parcours: [Parcours.COMPREHENSION_LECTURE],
-      difficulte: Difficulte.MOYEN,
-      isPublished: true,
-    },
-  ];
-
-  for (const m of modulesDeTest) {
-    await prisma.module.upsert({
-      where: { id: m.id },
-      update: {
-        titre: m.titre,
-        description: m.description,
-        parcours: m.parcours,
-        difficulte: m.difficulte,
-        isPublished: m.isPublished,
-      },
-      create: {
-        id: m.id,
-        titre: m.titre,
-        description: m.description,
-        parcours: m.parcours,
-        difficulte: m.difficulte,
-        isPublished: m.isPublished,
-      },
-    });
-  }
-
-  const actualitesDeTest = [
-    {
-      titre: 'Reprise des ateliers numériques',
-      tag: 'Événement',
-      datePublication: new Date(),
-      extrait: 'Les inscriptions pour les sessions d’accompagnement numérique adultes et enfants sont désormais ouvertes. Places limitées.',
-      ctaLabel: 'S’inscrire',
-      ctaHref: '/ateliers',
-      ordre: 1,
-      estPublic: true,
-    },
-    {
-      titre: 'Lancement du module Robotique',
-      tag: 'Nouveauté',
-      datePublication: new Date(),
-      extrait: 'Dès mercredi prochain, découvrez notre tout nouveau parcours pédagogique robotique destiné aux juniors.',
-      ctaLabel: 'Voir le parcours',
-      ctaHref: '/ateliers',
-      ordre: 2,
-      estPublic: true,
-    },
-    {
-      titre: 'Assemblée Générale Annuelle',
-      tag: 'Vie associative',
-      datePublication: new Date(),
-      extrait: 'Tous les membres, bénévoles et partenaires sont invités à participer à notre bilan annuel le 15 du mois prochain à 18h.',
-      ctaLabel: 'En savoir plus',
-      ctaHref: '/contact',
-      ordre: 3,
-      estPublic: true,
-    },
-    {
-      titre: 'Nouveau partenariat éducatif',
-      tag: 'Partenariat',
-      datePublication: new Date(),
-      extrait: 'L’association continue de structurer ses contenus et ses actions pour proposer des repères clairs, utiles et accessibles à tous.',
-      ctaLabel: 'Découvrir',
-      ctaHref: '/contact',
-      ordre: 4,
-      estPublic: true,
-    },
-  ];
-
-  for (const actualite of actualitesDeTest) {
-    await prisma.actualite.upsert({
-      where: { id: actualite.ordre },
-      update: {
-        titre: actualite.titre,
-        tag: actualite.tag,
-        datePublication: actualite.datePublication,
-        extrait: actualite.extrait,
-        ctaLabel: actualite.ctaLabel,
-        ctaHref: actualite.ctaHref,
-        ordre: actualite.ordre,
-        estPublic: actualite.estPublic,
-      },
-      create: {
-        id: actualite.ordre,
-        titre: actualite.titre,
-        tag: actualite.tag,
-        datePublication: actualite.datePublication,
-        extrait: actualite.extrait,
-        ctaLabel: actualite.ctaLabel,
-        ctaHref: actualite.ctaHref,
-        ordre: actualite.ordre,
-        estPublic: actualite.estPublic,
-      },
-    });
-  }
-
-  if (supabaseAdmin) {
-    console.log('✅ Seeding terminé avec succès et prêt pour le login local !');
-  } else {
-    console.log('... Fin');
-  }
+  console.log('🌱 [Seed] Initialisation des utilisateurs terminée avec succès !');
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Erreur lors du seeding :', e);
-    process.exit(1);
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect();
+    await pool.end();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    await pool.end();
+    process.exit(1);
   });
