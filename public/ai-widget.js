@@ -1,7 +1,8 @@
 // ── Widget assistant IA — AtelierKids ────────────────────────────────────────
 (function () {
   'use strict';
-  if (window.location.pathname.endsWith('assistant.html')) return;
+  const STANDALONE = window.location.pathname.endsWith('assistant.html')
+    || new URLSearchParams(window.location.search).get('assistant') === '1';
 
   // ── Styles ────────────────────────────────────────────────────────────────
   const style = document.createElement('style');
@@ -141,6 +142,36 @@
   #aiw-footer a:hover { text-decoration:underline; }
   @media(max-width:420px){ #aiw-panel{width:calc(100vw - 18px);right:9px;bottom:92px;} #aiw-btn{right:12px;bottom:12px;} }
   `;
+  if (STANDALONE) {
+    style.textContent += `
+  body.aiw-standalone {
+    margin: 0;
+    min-height: 100vh;
+    background: #faf9fc;
+  }
+  body.aiw-standalone #aiw-btn { display: none !important; }
+  body.aiw-standalone #aiw-panel {
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    bottom: 0;
+    right: 0;
+    transform: none;
+    opacity: 1;
+    pointer-events: all;
+  }
+  body.aiw-standalone #aiw-panel.open {
+    transform: none;
+    opacity: 1;
+    pointer-events: all;
+  }
+  body.aiw-standalone #aiw-close { display: none; }
+  body.aiw-standalone #aiw-thread { min-height: 0; }
+  body.aiw-standalone #aiw-header { position: sticky; top: 0; z-index: 1; }
+    `;
+  }
   document.head.appendChild(style);
 
   // ── SVG Robot Milo — visage (button / header / bulles) ───────────────────
@@ -388,6 +419,11 @@
 
   document.body.appendChild(btn);
   document.body.appendChild(panel);
+  if (STANDALONE) {
+    document.body.classList.add('aiw-standalone');
+    btn.hidden = true;
+    panel.classList.add('open');
+  }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function getUrlParam(k) { return new URLSearchParams(window.location.search).get(k) || null; }
@@ -396,6 +432,7 @@
   // ── Persistance sessionStorage ────────────────────────────────────────────
   // L'historique est sauvegardé par activité pour survivre aux navigations
   // entre pages du même quiz (ex : enfant ouvre la leçon puis revient au quiz).
+  let open = STANDALONE, history = [], unread = 0, _pendingWrongMsg = null;
   function _sessionKey() {
     const id = getUrlParam('id') || getUrlParam('m') || window.location.pathname.split('/').pop();
     return `milo_h_${id}`;
@@ -406,8 +443,14 @@
   function loadHistory() {
     try {
       const raw = sessionStorage.getItem(_sessionKey());
-      if (raw) history = JSON.parse(raw);
-    } catch {}
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      history = Array.isArray(parsed)
+        ? parsed.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        : [];
+    } catch {
+      history = [];
+    }
   }
   loadHistory();
 
@@ -463,7 +506,6 @@
   }
 
   // ── Toggle panel ──────────────────────────────────────────────────────────
-  let open = false, history = [], unread = 0, _pendingWrongMsg = null;
   function togglePanel() {
     open = !open; panel.classList.toggle('open', open);
     if (open) {
