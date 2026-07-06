@@ -1,14 +1,37 @@
-// * src/app/(dashboard-adultes)/(dashboard)/admin/membres/actions.ts
+// * src/app/(dashboard-adultes)/admin/membres/actions.ts
 'use server'
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
-export async function listerTousLesUtilisateurs() {
+type FiltresUtilisateur = Prisma.UtilisateurWhereInput;
+
+type DonneesUtilisateur = {
+    nom?: string;
+    prenom?: string;
+    email?: string;
+    telephone?: string | null;
+    role?: string;
+};
+
+export async function listerLesUtilisateurs(trie: string, filtre?: string) {
     try {
+        const whereCondition: FiltresUtilisateur = {};
+
+        if (filtre) {
+            whereCondition.OR = [
+                { role: filtre },
+                { nom: { contains: filtre, mode: 'insensitive' } },
+                { prenom: { contains: filtre, mode: 'insensitive' } },
+                { email: { contains: filtre, mode: 'insensitive' } },
+            ];
+        }
+
         const utilisateurs = await prisma.utilisateur.findMany({
+            where: whereCondition,
             orderBy: {
-                createdAt: 'desc', // Ordre décroissant
+                createdAt: trie === 'CROISSANT' ? 'asc' : 'desc',
             },
             select: {
                 id: true,
@@ -18,7 +41,6 @@ export async function listerTousLesUtilisateurs() {
                 telephone: true,
                 role: true,
                 createdAt: true,
-                niveau: true,
                 _count: {
                     select: {
                         enfants: true,
@@ -43,7 +65,7 @@ export async function listerTousLesUtilisateurs() {
     }
 }
 
-export async function modifierUtilisateur(id: string, nouvelleDonnees: any) {
+export async function modifierUtilisateur(id: string, nouvelleDonnees: DonneesUtilisateur) {
     try {
         const membreModifie = await prisma.utilisateur.update({
             where: { id: id },

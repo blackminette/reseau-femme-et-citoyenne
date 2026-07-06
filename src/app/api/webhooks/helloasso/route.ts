@@ -16,20 +16,30 @@ export async function POST(req: Request) {
             const montantEuros = amount / 100;
 
             // Enregistrement du don dans votre base de données
-            // Note : L'ID de l'utilisateur est parfois difficile à récupérer via Webhook seul
-            // Sauf si vous avez passé l'ID utilisateur dans le champ 'payer' ou 'metadata'
-            const don = await prisma.don.create({
-                data: {
-                    type: 'FINANCIER',
-                    status: 'RECEIVED',
-                    montant: montantEuros,
-                    description: `Don via HelloAsso - ${payer.firstName} ${payer.lastName}`,
-                    // Si vous avez réussi à mapper l'utilisateur :
-                    // utilisateurId: body.data.metadata.utilisateurId || "anon",
+            // Note : L'ID de l'utilisateur est requis dans le schéma Don.
+            // Nous essayons de trouver l'utilisateur par son email.
+            let utilisateurId: string | undefined = undefined;
+            if (payer && payer.email) {
+                const user = await prisma.utilisateur.findUnique({
+                    where: { email: payer.email }
+                });
+                if (user) {
+                    utilisateurId = user.id;
                 }
-            });
+            }
 
-            console.log("[Webhook HelloAsso] Don enregistré avec succès :", don.id);
+            if (utilisateurId) {
+                const don = await prisma.don.create({
+                    data: {
+                        montant: montantEuros,
+                        statut: 'COMPLETED',
+                        utilisateurId: utilisateurId,
+                    }
+                });
+                console.log("[Webhook HelloAsso] Don enregistré avec succès :", don.id);
+            } else {
+                console.warn(`[Webhook HelloAsso] Aucun utilisateur trouvé avec l'email du payeur (${payer?.email || 'non fourni'}). Le don de ${montantEuros} € n'a pas pu être enregistré en base car utilisateurId est obligatoire.`);
+            }
         }
 
         return NextResponse.json({ received: true }, { status: 200 });
