@@ -20,6 +20,7 @@
 'use strict';
 
 const express = require('express');
+const { safeJson, publicChild, contentItem } = require('../ai-chat-utils');
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -67,17 +68,6 @@ const MODULE_TIPS = {
     "Valorise chaque petit geste. Évite la culpabilisation — préfère la fierté d'agir.",
 };
 
-function safeJson(value, fallback) {
-  if (value == null) return fallback;
-  if (Array.isArray(value) || typeof value === 'object') return value;
-  if (typeof value !== 'string') return fallback;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
-
 function requireAuth(role) {
   return (req, res, next) => {
     if (!req.auth) {
@@ -87,41 +77,6 @@ function requireAuth(role) {
       return res.status(403).json({ error: 'Accès refusé.' });
     }
     return next();
-  };
-}
-
-function publicChild(_db, row) {
-  if (!row) {
-    return {
-      prenom: '',
-      age: null,
-      badges: [],
-      scores: [],
-    };
-  }
-
-  const scores = safeJson(row.scores, []);
-  const badges = safeJson(row.badges, []);
-
-  return {
-    ...row,
-    scores: Array.isArray(scores) ? scores : [],
-    badges: Array.isArray(badges) ? badges : [],
-  };
-}
-
-function contentItem(row) {
-  if (!row) return null;
-
-  return {
-    ...row,
-    id: row.id,
-    title: row.title ?? row.titre ?? row.name ?? row.label ?? '',
-    type: row.type ?? row.kind ?? '',
-    text: row.text ?? row.texte ?? row.description ?? '',
-    questions: Array.isArray(row.questions)
-      ? row.questions
-      : safeJson(row.questions, []),
   };
 }
 
@@ -171,7 +126,7 @@ module.exports = function aiChatRoutes(db) {
    * @param {Express.Request} req
    */
   function buildChildContext(req) {
-    const child   = publicChild(db, stmtChild.get(req.auth.id));
+    const child   = publicChild(stmtChild.get(req.auth.id));
     const modules = loadAllModules();
 
     // Enrichit les scores avec le titre de l'activité (lisible par l'IA)
