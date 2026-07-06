@@ -20,8 +20,6 @@
 'use strict';
 
 const express = require('express');
-const { requireAuth }            = require('../session');
-const { publicChild, contentItem } = require('../helpers');
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -68,6 +66,64 @@ const MODULE_TIPS = {
     "Pars de gestes quotidiens simples (tri, transport, eau, énergie) pour expliquer les grands enjeux. " +
     "Valorise chaque petit geste. Évite la culpabilisation — préfère la fierté d'agir.",
 };
+
+function safeJson(value, fallback) {
+  if (value == null) return fallback;
+  if (Array.isArray(value) || typeof value === 'object') return value;
+  if (typeof value !== 'string') return fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function requireAuth(role) {
+  return (req, res, next) => {
+    if (!req.auth) {
+      return res.status(401).json({ error: 'Non autorisé.' });
+    }
+    if (role && req.auth.role && req.auth.role !== role) {
+      return res.status(403).json({ error: 'Accès refusé.' });
+    }
+    return next();
+  };
+}
+
+function publicChild(_db, row) {
+  if (!row) {
+    return {
+      prenom: '',
+      age: null,
+      badges: [],
+      scores: [],
+    };
+  }
+
+  const scores = safeJson(row.scores, []);
+  const badges = safeJson(row.badges, []);
+
+  return {
+    ...row,
+    scores: Array.isArray(scores) ? scores : [],
+    badges: Array.isArray(badges) ? badges : [],
+  };
+}
+
+function contentItem(row) {
+  if (!row) return null;
+
+  return {
+    ...row,
+    id: row.id,
+    title: row.title ?? row.titre ?? row.name ?? row.label ?? '',
+    type: row.type ?? row.kind ?? '',
+    text: row.text ?? row.texte ?? row.description ?? '',
+    questions: Array.isArray(row.questions)
+      ? row.questions
+      : safeJson(row.questions, []),
+  };
+}
 
 // ─── Initialisation du module ─────────────────────────────────────────────────
 
@@ -665,8 +721,8 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
       const context = buildChildContext(req);
       const prompt  = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion);
 
-      const model = getGeminiClient().getGenerativeModel({
-        model,
+      const geminiModel = getGeminiClient().getGenerativeModel({
+        model: MODEL,
         systemInstruction: prompt,
         generationConfig: {
           temperature:     0.6,   // Assez créatif pour varier le ton, assez précis pour ne pas halluciner
@@ -682,7 +738,7 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
         .slice(-14)  // 7 échanges max → évite les prompts trop longs
         .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
 
-      const chat   = model.startChat({ history: geminiHistory });
+      const chat   = geminiModel.startChat({ history: geminiHistory });
       const result = await chat.sendMessage(message);
       const reply  = result.response.text().trim();
 
