@@ -415,7 +415,7 @@
       <textarea id="aiw-input" placeholder="Dis-moi ce qui te bloque…" rows="1"></textarea>
       <button id="aiw-send"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
     </div>
-    <div id="aiw-footer"><a href="assistant.html">Ouvrir en plein écran ↗</a></div>`;
+    <div id="aiw-footer"><a href="/assistant.html">Ouvrir en plein écran ↗</a></div>`;
 
   document.body.appendChild(btn);
   document.body.appendChild(panel);
