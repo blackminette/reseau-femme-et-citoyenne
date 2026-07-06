@@ -263,7 +263,7 @@ export default function ListeExercice() {
                                     >
                                         <option value="QCM">Questionnaire à choix multiples (QCM)</option>
                                         <option value="IMAGES_ORDRE">Rangement d'images dans l'ordre</option>
-                                        <option value="QUESTION_OUVERTE">Question ouverte (Réponse écrite)</option>
+                                        <option value="VRAI_FAUX">Vrai / Faux</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
                                         <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">

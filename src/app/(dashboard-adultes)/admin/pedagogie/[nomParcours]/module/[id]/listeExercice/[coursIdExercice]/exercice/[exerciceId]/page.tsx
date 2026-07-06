@@ -8,6 +8,7 @@ import { ChevronRight, MoveRight, MoveLeft, Pencil, Plus, Trash2, ArrowUp, Arrow
 import { getExercice, modifierTitreExercice, modifierContenuExercice } from './actions';
 import Modal from '@/components/Modal';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { options } from '@fullcalendar/core/preact.js';
 
 interface PageExercice {
     id: string | number;         // "q1" ou des nombres/timestamp
@@ -520,13 +521,15 @@ export default function AdminModifieExercicePage() {
                                 </div>
                             ))}
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => handleSauvegarderPage('options', [...(page.options || []), `Nouvelle Option ${(page.options || []).length + 1}`])}
-                            className="text-xs text-violet-600 hover:text-violet-800 font-semibold flex items-center gap-1 mt-2 cursor-pointer"
-                        >
-                            <Plus className="w-3.5 h-3.5" /> Ajouter un choix alternatif
-                        </button>
+                        {(!page.options || page.options.length < 4) && (
+                            <button
+                                type="button"
+                                onClick={() => handleSauvegarderPage('options', [...(page.options || []), `Nouvelle Option ${(page.options || []).length + 1}`])}
+                                className="text-xs text-violet-600 hover:text-violet-800 font-semibold flex items-center gap-1 mt-2 cursor-pointer"
+                            >
+                                <Plus className="w-3.5 h-3.5" /> Ajouter un choix alternatif
+                            </button>
+                        )}
                     </div>
                 );
         }
