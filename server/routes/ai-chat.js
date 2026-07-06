@@ -20,7 +20,7 @@
 'use strict';
 
 const express = require('express');
-const { safeJson, publicChild, contentItem } = require('../ai-chat-utils');
+const { safeJson, publicChild, contentItem, sameId } = require('../ai-chat-utils');
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ module.exports = function aiChatRoutes(db) {
     // Enrichit les scores avec le titre de l'activité (lisible par l'IA)
     const scores = (child.scores || []).map(s => {
       const mod   = modules[s.module];
-      const found = mod && [...mod.quizzes, ...mod.exercises].find(x => x.id === s.ref);
+      const found = mod && [...mod.quizzes, ...mod.exercises].find(x => sameId(x.id, s.ref));
       return { ...s, activityTitle: found ? found.title : (s.ref || 'activité inconnue') };
     });
 
@@ -160,7 +160,7 @@ module.exports = function aiChatRoutes(db) {
     if (!activityId) return null;
     for (const key of MODULE_KEYS) {
       const mod   = modules[key];
-      const found = mod && [...mod.quizzes, ...mod.exercises].find(x => x.id === activityId);
+      const found = mod && [...mod.quizzes, ...mod.exercises].find(x => sameId(x.id, activityId));
       if (found) return { module: key, activity: found };
     }
     return null;

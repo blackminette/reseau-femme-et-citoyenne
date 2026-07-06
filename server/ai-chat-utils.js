@@ -46,8 +46,14 @@ function contentItem(row) {
   };
 }
 
+function sameId(left, right) {
+  if (left == null || right == null) return false;
+  return String(left) === String(right);
+}
+
 module.exports = {
   safeJson,
   publicChild,
   contentItem,
+  sameId,
 };
