@@ -89,6 +89,21 @@ module.exports = function aiChatRoutes(db) {
   const stmtChild    = db.prepare('SELECT * FROM children WHERE id = ?');
   const stmtContents = db.prepare('SELECT * FROM contents WHERE module = ? ORDER BY is_custom, created_at');
 
+  // Mémoire persistante de Milo — concepts expliqués à l'enfant
+  // julianday() permet de calculer les jours écoulés côté SQLite (évite les problèmes de timezone JS)
+  const stmtLoadMemories = db.prepare(`
+    SELECT *, CAST((julianday('now') - julianday(last_seen)) AS INTEGER) AS days_ago
+    FROM milo_memory WHERE child_id = ? ORDER BY last_seen DESC LIMIT 30
+  `);
+  const stmtGetMemory    = db.prepare(`SELECT id FROM milo_memory WHERE child_id = ? AND concept_low = ?`);
+  const stmtInsertMemory = db.prepare(`
+    INSERT OR IGNORE INTO milo_memory (child_id, module, concept, concept_low, context, summary)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const stmtUpdateMemory = db.prepare(`
+    UPDATE milo_memory SET times_seen = times_seen + 1, last_seen = datetime('now') WHERE id = ?
+  `);
+
   // ─── Chargement des données ──────────────────────────────────────────────────
 
   /**
@@ -347,6 +362,67 @@ module.exports = function aiChatRoutes(db) {
     return history.filter(m => m.role === 'user' && (m.content || '').toLowerCase().includes(key)).length;
   }
 
+  // ─── Mémoire persistante ────────────────────────────────────────────────────
+
+  /**
+   * Charge les 30 derniers souvenirs Milo pour un enfant.
+   * `days_ago` est calculé par SQLite (évite les décalages de fuseau horaire JS).
+   */
+  function loadMemories(childId) {
+    return stmtLoadMemories.all(childId);
+  }
+
+  /**
+   * Enregistre un concept expliqué par Milo, ou incrémente le compteur si déjà connu.
+   * La déduplication est insensible à la casse via `concept_low`.
+   */
+  function saveMemory(childId, module, concept, context, summary) {
+    const low = concept.toLowerCase().trim();
+    const existing = stmtGetMemory.get(childId, low);
+    if (existing) {
+      stmtUpdateMemory.run(existing.id);
+    } else {
+      stmtInsertMemory.run(childId, module || null, concept, low, context || null, summary || null);
+    }
+  }
+
+  /**
+   * Formate les souvenirs pour injection dans le prompt système.
+   *
+   * Sélection :
+   *   - Concepts "pertinents" : leur mot apparaît dans la question ou le message actuel
+   *   - 5 souvenirs les plus récents en complément
+   *   - Maximum 10 entrées pour ne pas surcharger le contexte Gemini
+   */
+  function buildMemoryPrompt(memories, message, questionText, prenom) {
+    if (!memories.length) return '';
+
+    const searchText  = ((message || '') + ' ' + (questionText || '')).toLowerCase();
+    const relevant    = memories.filter(m => searchText.includes(m.concept_low));
+    const relevantIds = new Set(relevant.map(m => m.id));
+    const recent      = memories.filter(m => !relevantIds.has(m.id)).slice(0, 5);
+    const toShow      = [...relevant, ...recent].slice(0, 10);
+    if (!toShow.length) return '';
+
+    const lines = toShow.map(m => {
+      const when     = m.days_ago === 0 ? "aujourd'hui" : m.days_ago === 1 ? 'hier' : `il y a ${m.days_ago} jours`;
+      const seenNote = m.times_seen > 1 ? `, revu ${m.times_seen - 1}× depuis` : '';
+      const modNote  = m.module ? ` (${MODULE_LABELS[m.module] || m.module})` : '';
+      const flag     = relevantIds.has(m.id) ? ' ⬅ pertinent' : '';
+      return `• "${m.concept}"${modNote} — expliqué ${when}${seenNote}${flag}`;
+    });
+
+    return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 MÉMOIRE PARTAGÉE — concepts déjà expliqués à ${prenom}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${lines.join('\n')}
+
+→ Concept ⬅ pertinent : fais le lien naturellement — "Tu te rappelles quand on avait parlé de [concept] ?"
+→ Concept revu 3+ fois : l'enfant le connaît sûrement — teste-le : "C'est quoi [concept] selon toi ?"
+→ Ne réexplique jamais un concept listé comme si c'était la première fois.`;
+  }
+
   /**
    * Extrait un résumé des indices déjà donnés par Milo (3 dernières réponses).
    * Injecté dans le prompt pour éviter que Milo répète le même angle d'explication.
@@ -497,7 +573,7 @@ ${lines.join('\n')}`;
    * @param {string}  message         - Dernier message de l'enfant
    * @param {object|null} currentQuestion - Question affichée sur l'écran (envoyée par le quiz)
    */
-  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning) {
+  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning, memories) {
     const { enfant, scores, moduleStats, badges, modules } = context;
 
     // — Analyses du contexte —
@@ -508,6 +584,7 @@ ${lines.join('\n')}`;
     const wrongAnswer     = extractWrongAnswer(message);
     const hintsBlock      = extractPreviousHints(history);
     const learningProfile = buildLearningProfile(sessionLearning);
+    const memoryBlock     = buildMemoryPrompt(memories || [], message, screenText, enfant.prenom);
 
     const strongModules = Object.entries(moduleStats).filter(([, s]) => s.avg >= 70).map(([k]) => MODULE_LABELS[k]);
     const weakModules   = Object.entries(moduleStats).filter(([, s]) => s.avg  < 50).map(([k]) => MODULE_LABELS[k]);
@@ -641,7 +718,7 @@ Reste chaleureux : c'est une découverte partagée, pas une leçon magistrale.`,
 
     // — Assemblage final du prompt —
     return `Tu es MILO, l'assistant pédagogique d'AtelierKids. Tu parles avec ${enfant.prenom}, ${enfant.age} ans.
-${learningProfile}${hintsBlock}
+${memoryBlock}${learningProfile}${hintsBlock}
 
 STYLE : ${ageStyle}
 ${screenBlock}${pinnedBlock}
@@ -674,6 +751,7 @@ RÈGLES
 4. Format : **gras** pour les mots-clés. Listes si plusieurs points. Max 3 paragraphes courts.
 5. Si tu n'as pas assez d'info sur la question → demande à l'enfant de préciser.
 6. Si l'enfant dit "j'ai compris" / "merci" / "c'est bon" → célèbre brièvement, puis propose-lui de répondre seul à la question sans aide. Exemple : "Super ! Maintenant essaie de répondre sans moi — tu vas y arriver !"
+7. MÉMORISATION : Si tu expliques un concept/mot/règle NOUVEAU (absent de la mémoire ci-dessus), ajoute exactement à la TOUTE FIN de ta réponse : [MEM:le_concept]. Un seul tag par réponse. Exemples : [MEM:synonyme], [MEM:boucle], [MEM:droits du citoyen]. N'ajoute ce tag que si c'est vraiment la 1ère explication — pas pour des rappels ou des reformulations.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STADE D'AIDE ACTUEL : ${stage}/4
@@ -726,8 +804,16 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
     if (!apiKey) return res.status(503).json({ error: 'Assistant IA non configuré.' });
 
     try {
-      const context = buildChildContext(req);
-      const prompt  = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning);
+      const context  = buildChildContext(req);
+      const memories = loadMemories(req.auth.id);
+
+      // Résolution du module actif (nécessaire aussi pour sauvegarder les souvenirs)
+      const focusAct       = findActivity(context.modules, activityId);
+      const resolvedModule = currentModule
+        || (focusAct ? focusAct.module : null)
+        || detectModuleFromMessage(message);
+
+      const prompt = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning, memories);
 
       const model = getGeminiClient().getGenerativeModel({
         model,
@@ -748,7 +834,27 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
 
       const chat   = model.startChat({ history: geminiHistory });
       const result = await chat.sendMessage(message);
-      const reply  = result.response.text().trim();
+      const raw    = result.response.text().trim();
+
+      // Extraire et strip le tag mémoire [MEM:concept] inséré par Gemini
+      const memMatch = raw.match(/\[MEM:([^\]]{1,50})\]/);
+      const concept  = memMatch ? memMatch[1].trim() : null;
+      const reply    = raw.replace(/\s*\[MEM:[^\]]*\]/g, '').trim();
+
+      // Enregistrer le nouveau concept en base (silencieux en cas d'erreur pour ne pas bloquer l'enfant)
+      if (concept) {
+        try {
+          saveMemory(
+            req.auth.id,
+            resolvedModule,
+            concept,
+            currentQuestion?.text?.slice(0, 100) || null,
+            reply.slice(0, 250)
+          );
+        } catch (e) {
+          console.warn('[Milo] Mémoire non sauvegardée :', e.message);
+        }
+      }
 
       res.json({ reply: reply || "Désolé, je n'ai pas pu générer de réponse." });
 
