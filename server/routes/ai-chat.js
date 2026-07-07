@@ -362,6 +362,58 @@ module.exports = function aiChatRoutes(db) {
   }
 
   /**
+   * Construit un bloc de profil d'apprentissage basé sur les stats de session.
+   * Injecté dans le prompt pour que Milo adapte son point d'entrée pédagogique
+   * à ce que l'enfant a montré sur les questions précédentes du même quiz.
+   *
+   * @param {{ hints: number[], avg: number, streak: number, correctAfterHelp: number } | null} stats
+   * @returns {string}
+   */
+  function buildLearningProfile(stats) {
+    if (!stats || !Array.isArray(stats.hints) || !stats.hints.length) return '';
+
+    const { hints, avg = 0, streak = 0, correctAfterHelp = 0 } = stats;
+    const n = hints.length;
+    const lines = [];
+
+    // Profil selon la moyenne d'indices par question
+    if (n >= 2) {
+      if (avg >= 3) {
+        lines.push(`L'enfant a besoin de beaucoup d'aide : ${avg} indices en moyenne sur ${n} question(s).`);
+        lines.push("→ Ne lui demande PAS 'qu'est-ce que tu as essayé ?' — ça le frustre. Commence directement par une analogie concrète. Va droit au but dès le 1er message.");
+      } else if (avg >= 2) {
+        lines.push(`L'enfant a besoin de quelques indices : ${avg} en moyenne sur ${n} question(s).`);
+        lines.push("→ Stade 1 très court (une seule question de relance max), puis passe vite à l'analogie.");
+      } else if (avg <= 0.5 && n >= 3) {
+        lines.push(`L'enfant est en confiance : seulement ${avg} indice(s) en moyenne sur ${n} question(s).`);
+        lines.push("→ S'il demande de l'aide maintenant, c'est qu'il est vraiment bloqué. Va directement à l'essentiel.");
+      }
+    }
+
+    // Série de réponses correctes sans aide
+    if (streak >= 7) {
+      lines.push(`⭐ SÉRIE EXCEPTIONNELLE : ${streak} bonnes réponses d'affilée sans aide ! Mentionne-la avec enthousiasme.`);
+    } else if (streak >= 5) {
+      lines.push(`🚀 SÉRIE : ${streak} bonnes réponses sans aide ! C'est impressionnant — valorise-le.`);
+    } else if (streak >= 3) {
+      lines.push(`🔥 ${streak} de suite sans aide — l'enfant est en feu. Un mot dessus pour l'encourager.`);
+    }
+
+    // Hints efficaces → l'enfant progresse grâce aux explications
+    if (correctAfterHelp >= 3) {
+      lines.push(`L'enfant a réussi ${correctAfterHelp} fois après avoir reçu de l'aide → il retient et applique bien. Valorise cette capacité à apprendre !`);
+    }
+
+    if (!lines.length) return '';
+
+    return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📈 PROFIL D'APPRENTISSAGE (session en cours — ${n} question(s) analysée(s))
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${lines.join('\n')}`;
+  }
+
+  /**
    * Détecte le stade d'aide optimal selon l'historique et le contenu du message.
    *
    * Stades :
@@ -370,10 +422,11 @@ module.exports = function aiChatRoutes(db) {
    *   3 → Indice ciblé   : pointe directement le blocage précis
    *   4 → Explication complète : révèle la réponse + raisonnement complet
    *
-   * @param {string|null} questionText - Texte de la question affichée (pour compter les répétitions)
+   * @param {string|null} questionText    - Texte de la question affichée (pour compter les répétitions)
+   * @param {object|null} sessionLearning - Profil de session (pour sauter les stades inutiles)
    * @returns {1|2|3|4}
    */
-  function getExplorationStage(history, msg, questionText) {
+  function getExplorationStage(history, msg, questionText, sessionLearning) {
     const low = msg.toLowerCase();
 
     // Signaux explicites qui court-circuitent le comptage de tours
@@ -386,8 +439,16 @@ module.exports = function aiChatRoutes(db) {
     if (repeatCount >= 3) return 4;
     if (repeatCount >= 2) return 3;
 
-    // Sinon : escalade progressive selon le nombre de tours IA
     const aiTurns = history.filter(m => m.role === 'assistant').length;
+
+    // Adaptation au profil de session : si l'enfant a besoin de ≥3 indices en moyenne
+    // sur les questions précédentes, sauter le stade 1 (écoute) dès le premier contact —
+    // lui demander "qu'est-ce que tu as essayé ?" le frustre plus que ça ne l'aide.
+    const avgHints = sessionLearning?.avg || 0;
+    const prevQuestions = sessionLearning?.hints?.length || 0;
+    if (prevQuestions >= 2 && avgHints >= 3 && aiTurns === 0) return 2;
+
+    // Escalade progressive standard
     if (aiTurns === 0) return 1;
     if (aiTurns === 1) return 2;
     if (aiTurns <= 3) return 3;
@@ -436,16 +497,17 @@ module.exports = function aiChatRoutes(db) {
    * @param {string}  message         - Dernier message de l'enfant
    * @param {object|null} currentQuestion - Question affichée sur l'écran (envoyée par le quiz)
    */
-  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion) {
+  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning) {
     const { enfant, scores, moduleStats, badges, modules } = context;
 
     // — Analyses du contexte —
-    const niveau      = detectNiveauGlobal(scores);
-    const screenText  = currentQuestion?.text || null;
-    const stage       = getExplorationStage(history, message, screenText);
-    const emotion     = detectEmotion(message);
-    const wrongAnswer = extractWrongAnswer(message);
-    const hintsBlock  = extractPreviousHints(history);
+    const niveau          = detectNiveauGlobal(scores);
+    const screenText      = currentQuestion?.text || null;
+    const stage           = getExplorationStage(history, message, screenText, sessionLearning);
+    const emotion         = detectEmotion(message);
+    const wrongAnswer     = extractWrongAnswer(message);
+    const hintsBlock      = extractPreviousHints(history);
+    const learningProfile = buildLearningProfile(sessionLearning);
 
     const strongModules = Object.entries(moduleStats).filter(([, s]) => s.avg >= 70).map(([k]) => MODULE_LABELS[k]);
     const weakModules   = Object.entries(moduleStats).filter(([, s]) => s.avg  < 50).map(([k]) => MODULE_LABELS[k]);
@@ -579,7 +641,7 @@ Reste chaleureux : c'est une découverte partagée, pas une leçon magistrale.`,
 
     // — Assemblage final du prompt —
     return `Tu es MILO, l'assistant pédagogique d'AtelierKids. Tu parles avec ${enfant.prenom}, ${enfant.age} ans.
-${hintsBlock}
+${learningProfile}${hintsBlock}
 
 STYLE : ${ageStyle}
 ${screenBlock}${pinnedBlock}
@@ -655,6 +717,8 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
       ? req.body.activityId.slice(0, 80) : null;
     const currentQuestion = (req.body.currentQuestion && typeof req.body.currentQuestion === 'object')
       ? req.body.currentQuestion : null;
+    const sessionLearning = (req.body.sessionLearning && typeof req.body.sessionLearning === 'object')
+      ? req.body.sessionLearning : null;
 
     if (!message) return res.status(400).json({ error: 'Message vide.' });
 
@@ -663,7 +727,7 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
 
     try {
       const context = buildChildContext(req);
-      const prompt  = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion);
+      const prompt  = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning);
 
       const model = getGeminiClient().getGenerativeModel({
         model,
