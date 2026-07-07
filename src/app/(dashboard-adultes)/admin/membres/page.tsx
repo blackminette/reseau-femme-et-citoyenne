@@ -177,7 +177,16 @@ export default function AdminMembresPage() {
 
     const handleCreerSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+        if (!usernameRegex.test(creerForm.username)) {
+            alert("Le nom d'utilisateur doit contenir uniquement des lettres, des chiffres ou des caractères de soulignement (_).");
+            return;
+        }
+
         const result = await creerUtilisateur(creerForm);
+
         if (result.success) {
             setModalCreerIsOpen(false);
             setCreerForm({
@@ -252,6 +261,14 @@ export default function AdminMembresPage() {
     const handleLotSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+
+        const prefixeRegex = /^[a-zA-Z_]+$/;
+
+        if (!prefixeRegex.test(lotForm.prefixe)) {
+            alert("Le préfixe doit contenir uniquement des lettres ou des caractères de soulignement (_).");
+            setIsLoading(false);
+            return;
+        }
 
         const result = await creerUtilisateursEnLot(lotForm);
 
@@ -843,13 +860,15 @@ export default function AdminMembresPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Identifiant unique (Username)</label>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Identifiant (Lettres, chiffres, _ )</label>
                             <input
                                 type="text"
                                 value={creerForm.username}
                                 onChange={(e) => setCreerForm({ ...creerForm, username: e.target.value })}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                                placeholder="ex: jdupont"
+                                placeholder="ex: j_dupont99"
+                                pattern="^[a-zA-Z0-9_]+$"
+                                title="L'identifiant doit contenir uniquement des lettres (sans accents), des chiffres ou des underscores (_)."
                                 required
                             />
                         </div>
@@ -929,17 +948,19 @@ export default function AdminMembresPage() {
             <Modal isOpen={modalLotIsOpen} onClose={() => setModalLotIsOpen(false)} title="Création de comptes en lot">
                 <form onSubmit={handleLotSubmit} className="space-y-4">
                     <p className="text-xs text-slate-500 bg-slate-50 p-3 border border-slate-100 rounded-xl leading-relaxed">
-                        Cette option permet de créer plusieurs comptes d'un coup. Si vous indiquez le préfixe <code className="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-violet-700">etudiant</code>, les comptes créés auront pour identifiants <code className="font-mono">@etudiant1</code>, <code className="font-mono">@etudiant2</code>, etc. Le mot de passe initial sera automatiquement configuré sur <span className="font-semibold text-slate-700">"Password123!"</span> et l'accès obligera un changement à la première connexion.
+                        Cette option permet de créer plusieurs comptes d'un coup. Le préfixe doit contenir <span className="font-semibold text-violet-700">uniquement des lettres ou des caractères de soulignement (_)</span> (pas de chiffres, d'espaces ou de caractères spéciaux). Si vous indiquez <code className="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-violet-700">etudiant_lycee</code>, les comptes créés auront pour identifiants <code className="font-mono">@etudiant_lycee1</code>, <code className="font-mono">@etudiant_lycee2</code>, etc. Le mot de passe initial sera automatiquement configuré sur <span className="font-semibold text-slate-700">"Password123!"</span> et l'accès obligera un changement à la première connexion.
                     </p>
 
                     <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Préfixe générique (Nom & Identifiant)</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Préfixe générique (Lettres et _ uniquement)</label>
                         <input
                             type="text"
                             value={lotForm.prefixe}
                             onChange={(e) => setLotForm({ ...lotForm, prefixe: e.target.value })}
                             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                            placeholder="ex: etudiant ou benevole"
+                            placeholder="ex: etudiant ou classe_a"
+                            pattern="^[a-zA-Z_]+$"
+                            title="Le préfixe doit contenir uniquement des lettres (sans accents) ou des underscores (_)."
                             required
                         />
                     </div>

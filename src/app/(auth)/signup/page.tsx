@@ -49,6 +49,12 @@ export function SignupForm({
             return;
         }
 
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!usernameRegex.test(username)) {
+            setError("Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres et _ uniquement).");
+            return;
+        }
+
         if (password !== confirmPassword) {
             setError("Les mots de passe ne correspondent pas.");
             return;
@@ -78,7 +84,6 @@ export function SignupForm({
                 setError(result.error || "Une erreur est survenue.");
             }
         } catch (err) {
-            setIsLoading(false);
             setError("Une erreur inattendue est survenue.");
             console.error(err);
         } finally {
