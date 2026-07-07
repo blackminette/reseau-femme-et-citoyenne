@@ -89,7 +89,7 @@ export default function Ateliers_Carreaux() {
                             {/* Zone Contenu */}
                             <div className="w-full flex flex-col justify-between flex-grow gap-4">
                                 <div>
-                                    
+
                                   {/* Section Titre & Description */}
                                     <h3 className="text-lg font-bold text-[#ffd166] hover:text-[#bc96e6]/80 transition-colors">
                                         {atelier.titre}
@@ -113,7 +113,7 @@ export default function Ateliers_Carreaux() {
 
                                     {/* Lien de redirection */}
                                     <Link
-                                        href={`/ateliers/${atelier.slug}`}
+                                        href={`/ateliers/reservation`}
                                         className="inline-flex items-center justify-center bg-[#ffd166] text-[#260936] hover:bg-[#bc96e6] hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
                                     >
                                         Prochain atelier
