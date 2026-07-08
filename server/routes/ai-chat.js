@@ -68,6 +68,27 @@ const MODULE_TIPS = {
     "Valorise chaque petit geste. Évite la culpabilisation — préfère la fierté d'agir.",
 };
 
+function buildFallbackReply({ message, currentModule, currentQuestion, context }) {
+  const moduleLabel = currentModule ? (MODULE_LABELS[currentModule] || currentModule) : 'ton module';
+  const questionText = currentQuestion?.text || currentQuestion?.question || '';
+  const age = context?.enfant?.age ? ` Tu as ${context.enfant.age} ans, donc je reste simple et direct.` : '';
+  const lower = String(message || '').toLowerCase();
+
+  if (lower.includes('bloque') || lower.includes('bloqué') || lower.includes('bloquee') || lower.includes('bloquée')) {
+    return `On reprend calmement sur ${moduleLabel}. ${questionText ? `La consigne est: ${questionText} ` : ''}Fais trois choses: 1) lis la consigne, 2) repère ce qu'on te demande, 3) réponds d'abord avec l'idée la plus simple.${age}`;
+  }
+
+  if (lower.includes('exercice') || lower.includes('quiz') || lower.includes('question')) {
+    return `Pour ${moduleLabel}, commence par supprimer les réponses impossibles, puis cherche l'indice dans la leçon ou la consigne. Si tu veux, envoie-moi la question exacte et je te guide étape par étape.${age}`;
+  }
+
+  if (lower.includes('bonjour') || lower.includes('salut')) {
+    return `Salut ! On avance ensemble sur ${moduleLabel}. Dis-moi ce que tu vois ou ce qui te bloque, et je t'aide simplement et sans te noyer.${age}`;
+  }
+
+  return `Je ne peux pas interroger Gemini maintenant, mais je peux quand même t'aider sur ${moduleLabel}. Dis-moi la consigne exacte ou le point qui te bloque, et je te guide pas à pas.${age}`;
+}
+
 function requireAuth(role) {
   return (req, res, next) => {
     if (!req.auth) {
@@ -873,8 +894,11 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
       console.error('[Milo] Erreur Gemini :', err.message);
 
       if ((err.message || '').match(/quota|429|rate.?limit/i)) {
-        return res.status(429).json({
-          error: "Je suis un peu débordé là ! Réessaie dans quelques secondes 😊",
+        const context = buildChildContext(req);
+        return res.json({
+          reply: buildFallbackReply({ message, currentModule, currentQuestion, context }),
+          degraded: true,
+          reason: 'gemini_quota',
         });
       }
       res.status(502).json({ error: "L'assistant IA est momentanément indisponible." });

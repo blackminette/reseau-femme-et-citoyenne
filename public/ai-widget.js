@@ -549,7 +549,16 @@
   document.getElementById('aiw-close').addEventListener('click', togglePanel);
 
   // ── Status ────────────────────────────────────────────────────────────────
+  let _statusResetTimer = null;
   function setStatus(txt) { const el=document.getElementById('aiw-header-status'); if(el) el.textContent=txt; }
+  function setTransientStatus(txt, ms = 2200, fallback = 'Prêt à explorer ensemble !') {
+    if (_statusResetTimer) clearTimeout(_statusResetTimer);
+    setStatus(txt);
+    _statusResetTimer = setTimeout(() => {
+      setStatus(fallback);
+      _statusResetTimer = null;
+    }, ms);
+  }
 
   // ── Thread ────────────────────────────────────────────────────────────────
   const thread = document.getElementById('aiw-thread');
@@ -757,6 +766,7 @@
     } else {
       const isCelebrate = /bravo|félicit|génial|excellent|parfait|t['']as trouv|c['']est exact/i.test(res.reply);
       if (isCelebrate) { setCharState('cheer', 3000); setStatus('Trop bien ! 🎉'); }
+      else if (res.degraded) { setCharState('idle'); setTransientStatus('Mode secours actif', 2600); }
       else { setCharState('idle'); setStatus('Prêt à explorer ensemble !'); }
 
       addBubble('assistant', res.reply);
