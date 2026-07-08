@@ -454,6 +454,25 @@
   }
   loadHistory();
 
+  // ── Profil d'apprentissage de session ─────────────────────────────────────
+  // Milo observe combien d'indices l'enfant a besoin par question et s'adapte :
+  // enfant qui bloque toujours → skip stade 1, analogie directe.
+  // enfant en série → célébration streak.
+  // hints efficaces → continue sur la même approche.
+  function _learningKey() {
+    const id = getUrlParam('id') || getUrlParam('m') || 'global';
+    return `milo_learn_${id}`;
+  }
+  function getSessionLearning() {
+    try { return JSON.parse(sessionStorage.getItem(_learningKey()) || '{}'); } catch { return {}; }
+  }
+  function saveSessionLearning(data) {
+    try { sessionStorage.setItem(_learningKey(), JSON.stringify(data)); } catch {}
+  }
+
+  let _questionHints = 0;   // indices demandés pour la question en cours
+  let _questionClean = true; // pas de mauvaise réponse sur la question en cours
+
   // ── Markdown léger ─────────────────────────────────────────────────────────
   function renderMd(raw) {
     let s = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -633,6 +652,15 @@
     'Allez, on continue ! 🤖 Je reste disponible pour toi.',
   ];
   window.miloNewQuestion = function() {
+    // Enregistrer les stats de la question qui vient de se terminer
+    const learn = getSessionLearning();
+    learn.hints = [...(learn.hints || []), _questionHints].slice(-8);
+    learn.avg   = Math.round(learn.hints.reduce((a, b) => a + b, 0) / learn.hints.length * 10) / 10;
+    saveSessionLearning(learn);
+
+    // Réinitialiser pour la prochaine question
+    _questionHints = 0;
+    _questionClean = true;
     history = [];
     try { sessionStorage.removeItem(_sessionKey()); } catch {}
     thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
@@ -643,13 +671,18 @@
 
   // Appelé quand l'enfant choisit la mauvaise réponse
   window.miloWrongAnswer = function(questionText, wrongChoice) {
+    _questionClean = false;
+    // Réinitialise le streak dans le profil de session
+    const learn = getSessionLearning();
+    learn.streak = 0;
+    saveSessionLearning(learn);
+
     const msg = `J'ai répondu "${wrongChoice}" mais c'était faux… Tu peux m'expliquer pourquoi ?`;
     if (!open) {
       // Widget fermé → stocker le message + alerter visuellement sans forcer l'ouverture
       _pendingWrongMsg = msg;
       const badge = document.getElementById('aiw-badge');
       badge.textContent = '!'; badge.style.background = '#e53935'; badge.style.display = 'flex';
-      // Petite vibration du bouton pour attirer l'attention
       btn.style.animation = 'aiw-wiggle .45s ease';
       setTimeout(() => { btn.style.animation = 'aiw-wiggle .45s ease .5s'; }, 500);
       setTimeout(() => { btn.style.animation = ''; }, 1100);
@@ -662,9 +695,28 @@
 
   // Appelé quand l'enfant trouve la bonne réponse
   window.miloCorrectAnswer = function() {
+    const learn = getSessionLearning();
+    if (_questionClean && _questionHints === 0) {
+      // Réponse correcte du premier coup, sans aide → série en cours
+      learn.streak = (learn.streak || 0) + 1;
+    } else {
+      learn.streak = 0;
+      if (_questionHints > 0) {
+        // A eu besoin d'aide mais a quand même réussi → preuve que les indices marchent
+        learn.correctAfterHelp = (learn.correctAfterHelp || 0) + 1;
+      }
+    }
+    saveSessionLearning(learn);
+
     if (!open) return;
     thread.querySelectorAll('.aiw-qr').forEach(el => el.remove());
-    addBubble('assistant', '🎉 Bonne réponse ! Continue comme ça !');
+    // Message de célébration personnalisé selon la série
+    const streak = learn.streak || 0;
+    let msg = '🎉 Bonne réponse ! Continue comme ça !';
+    if (streak === 3)  msg = '🔥 3 d\'affilée ! Tu es en feu !';
+    if (streak === 5)  msg = '🚀 5 bonnes réponses sans aide ! Incroyable !';
+    if (streak >= 7)   msg = `⭐ ${streak} de suite ! Tu n'as même plus besoin de moi !`;
+    addBubble('assistant', msg);
     scrollBottom();
   };
 
@@ -693,7 +745,7 @@
     try {
       res = await (typeof askAssistant==='function'
         ? askAssistant(msg, history, currentModule, activityId)
-        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule,activityId,currentQuestion:window.MILO_CURRENT_QUESTION||null})}).then(r=>r.json()));
+        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule,activityId,currentQuestion:window.MILO_CURRENT_QUESTION||null,sessionLearning:getSessionLearning()})}).then(r=>r.json()));
     } catch { res={error:'Serveur injoignable.'}; }
 
     typing.remove();
@@ -711,6 +763,7 @@
       addQuickReplies(res.reply);
       history.push({role:'user',content:msg}); history.push({role:'assistant',content:res.reply});
       saveHistory();
+      _questionHints++; // comptabilise cet échange comme un indice demandé
 
       if (!open) {
         unread++; const b=document.getElementById('aiw-badge'); b.textContent=unread>9?'9+':unread; b.style.display='flex';

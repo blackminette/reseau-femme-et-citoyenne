@@ -100,6 +100,21 @@ module.exports = function aiChatRoutes(db) {
   const stmtChild    = db.prepare('SELECT * FROM children WHERE id = ?');
   const stmtContents = db.prepare('SELECT * FROM contents WHERE module = ? ORDER BY is_custom, created_at');
 
+  // Mémoire persistante de Milo — concepts expliqués à l'enfant
+  // julianday() permet de calculer les jours écoulés côté SQLite (évite les problèmes de timezone JS)
+  const stmtLoadMemories = db.prepare(`
+    SELECT *, CAST((julianday('now') - julianday(last_seen)) AS INTEGER) AS days_ago
+    FROM milo_memory WHERE child_id = ? ORDER BY last_seen DESC LIMIT 30
+  `);
+  const stmtGetMemory    = db.prepare(`SELECT id FROM milo_memory WHERE child_id = ? AND concept_low = ?`);
+  const stmtInsertMemory = db.prepare(`
+    INSERT OR IGNORE INTO milo_memory (child_id, module, concept, concept_low, context, summary)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const stmtUpdateMemory = db.prepare(`
+    UPDATE milo_memory SET times_seen = times_seen + 1, last_seen = datetime('now') WHERE id = ?
+  `);
+
   // ─── Chargement des données ──────────────────────────────────────────────────
 
   /**
@@ -358,6 +373,67 @@ module.exports = function aiChatRoutes(db) {
     return history.filter(m => m.role === 'user' && (m.content || '').toLowerCase().includes(key)).length;
   }
 
+  // ─── Mémoire persistante ────────────────────────────────────────────────────
+
+  /**
+   * Charge les 30 derniers souvenirs Milo pour un enfant.
+   * `days_ago` est calculé par SQLite (évite les décalages de fuseau horaire JS).
+   */
+  function loadMemories(childId) {
+    return stmtLoadMemories.all(childId);
+  }
+
+  /**
+   * Enregistre un concept expliqué par Milo, ou incrémente le compteur si déjà connu.
+   * La déduplication est insensible à la casse via `concept_low`.
+   */
+  function saveMemory(childId, module, concept, context, summary) {
+    const low = concept.toLowerCase().trim();
+    const existing = stmtGetMemory.get(childId, low);
+    if (existing) {
+      stmtUpdateMemory.run(existing.id);
+    } else {
+      stmtInsertMemory.run(childId, module || null, concept, low, context || null, summary || null);
+    }
+  }
+
+  /**
+   * Formate les souvenirs pour injection dans le prompt système.
+   *
+   * Sélection :
+   *   - Concepts "pertinents" : leur mot apparaît dans la question ou le message actuel
+   *   - 5 souvenirs les plus récents en complément
+   *   - Maximum 10 entrées pour ne pas surcharger le contexte Gemini
+   */
+  function buildMemoryPrompt(memories, message, questionText, prenom) {
+    if (!memories.length) return '';
+
+    const searchText  = ((message || '') + ' ' + (questionText || '')).toLowerCase();
+    const relevant    = memories.filter(m => searchText.includes(m.concept_low));
+    const relevantIds = new Set(relevant.map(m => m.id));
+    const recent      = memories.filter(m => !relevantIds.has(m.id)).slice(0, 5);
+    const toShow      = [...relevant, ...recent].slice(0, 10);
+    if (!toShow.length) return '';
+
+    const lines = toShow.map(m => {
+      const when     = m.days_ago === 0 ? "aujourd'hui" : m.days_ago === 1 ? 'hier' : `il y a ${m.days_ago} jours`;
+      const seenNote = m.times_seen > 1 ? `, revu ${m.times_seen - 1}× depuis` : '';
+      const modNote  = m.module ? ` (${MODULE_LABELS[m.module] || m.module})` : '';
+      const flag     = relevantIds.has(m.id) ? ' ⬅ pertinent' : '';
+      return `• "${m.concept}"${modNote} — expliqué ${when}${seenNote}${flag}`;
+    });
+
+    return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 MÉMOIRE PARTAGÉE — concepts déjà expliqués à ${prenom}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${lines.join('\n')}
+
+→ Concept ⬅ pertinent : fais le lien naturellement — "Tu te rappelles quand on avait parlé de [concept] ?"
+→ Concept revu 3+ fois : l'enfant le connaît sûrement — teste-le : "C'est quoi [concept] selon toi ?"
+→ Ne réexplique jamais un concept listé comme si c'était la première fois.`;
+  }
+
   /**
    * Extrait un résumé des indices déjà donnés par Milo (3 dernières réponses).
    * Injecté dans le prompt pour éviter que Milo répète le même angle d'explication.
@@ -373,6 +449,58 @@ module.exports = function aiChatRoutes(db) {
   }
 
   /**
+   * Construit un bloc de profil d'apprentissage basé sur les stats de session.
+   * Injecté dans le prompt pour que Milo adapte son point d'entrée pédagogique
+   * à ce que l'enfant a montré sur les questions précédentes du même quiz.
+   *
+   * @param {{ hints: number[], avg: number, streak: number, correctAfterHelp: number } | null} stats
+   * @returns {string}
+   */
+  function buildLearningProfile(stats) {
+    if (!stats || !Array.isArray(stats.hints) || !stats.hints.length) return '';
+
+    const { hints, avg = 0, streak = 0, correctAfterHelp = 0 } = stats;
+    const n = hints.length;
+    const lines = [];
+
+    // Profil selon la moyenne d'indices par question
+    if (n >= 2) {
+      if (avg >= 3) {
+        lines.push(`L'enfant a besoin de beaucoup d'aide : ${avg} indices en moyenne sur ${n} question(s).`);
+        lines.push("→ Ne lui demande PAS 'qu'est-ce que tu as essayé ?' — ça le frustre. Commence directement par une analogie concrète. Va droit au but dès le 1er message.");
+      } else if (avg >= 2) {
+        lines.push(`L'enfant a besoin de quelques indices : ${avg} en moyenne sur ${n} question(s).`);
+        lines.push("→ Stade 1 très court (une seule question de relance max), puis passe vite à l'analogie.");
+      } else if (avg <= 0.5 && n >= 3) {
+        lines.push(`L'enfant est en confiance : seulement ${avg} indice(s) en moyenne sur ${n} question(s).`);
+        lines.push("→ S'il demande de l'aide maintenant, c'est qu'il est vraiment bloqué. Va directement à l'essentiel.");
+      }
+    }
+
+    // Série de réponses correctes sans aide
+    if (streak >= 7) {
+      lines.push(`⭐ SÉRIE EXCEPTIONNELLE : ${streak} bonnes réponses d'affilée sans aide ! Mentionne-la avec enthousiasme.`);
+    } else if (streak >= 5) {
+      lines.push(`🚀 SÉRIE : ${streak} bonnes réponses sans aide ! C'est impressionnant — valorise-le.`);
+    } else if (streak >= 3) {
+      lines.push(`🔥 ${streak} de suite sans aide — l'enfant est en feu. Un mot dessus pour l'encourager.`);
+    }
+
+    // Hints efficaces → l'enfant progresse grâce aux explications
+    if (correctAfterHelp >= 3) {
+      lines.push(`L'enfant a réussi ${correctAfterHelp} fois après avoir reçu de l'aide → il retient et applique bien. Valorise cette capacité à apprendre !`);
+    }
+
+    if (!lines.length) return '';
+
+    return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📈 PROFIL D'APPRENTISSAGE (session en cours — ${n} question(s) analysée(s))
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${lines.join('\n')}`;
+  }
+
+  /**
    * Détecte le stade d'aide optimal selon l'historique et le contenu du message.
    *
    * Stades :
@@ -381,10 +509,11 @@ module.exports = function aiChatRoutes(db) {
    *   3 → Indice ciblé   : pointe directement le blocage précis
    *   4 → Explication complète : révèle la réponse + raisonnement complet
    *
-   * @param {string|null} questionText - Texte de la question affichée (pour compter les répétitions)
+   * @param {string|null} questionText    - Texte de la question affichée (pour compter les répétitions)
+   * @param {object|null} sessionLearning - Profil de session (pour sauter les stades inutiles)
    * @returns {1|2|3|4}
    */
-  function getExplorationStage(history, msg, questionText) {
+  function getExplorationStage(history, msg, questionText, sessionLearning) {
     const low = msg.toLowerCase();
 
     // Signaux explicites qui court-circuitent le comptage de tours
@@ -397,8 +526,16 @@ module.exports = function aiChatRoutes(db) {
     if (repeatCount >= 3) return 4;
     if (repeatCount >= 2) return 3;
 
-    // Sinon : escalade progressive selon le nombre de tours IA
     const aiTurns = history.filter(m => m.role === 'assistant').length;
+
+    // Adaptation au profil de session : si l'enfant a besoin de ≥3 indices en moyenne
+    // sur les questions précédentes, sauter le stade 1 (écoute) dès le premier contact —
+    // lui demander "qu'est-ce que tu as essayé ?" le frustre plus que ça ne l'aide.
+    const avgHints = sessionLearning?.avg || 0;
+    const prevQuestions = sessionLearning?.hints?.length || 0;
+    if (prevQuestions >= 2 && avgHints >= 3 && aiTurns === 0) return 2;
+
+    // Escalade progressive standard
     if (aiTurns === 0) return 1;
     if (aiTurns === 1) return 2;
     if (aiTurns <= 3) return 3;
@@ -447,16 +584,18 @@ module.exports = function aiChatRoutes(db) {
    * @param {string}  message         - Dernier message de l'enfant
    * @param {object|null} currentQuestion - Question affichée sur l'écran (envoyée par le quiz)
    */
-  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion) {
+  function buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning, memories) {
     const { enfant, scores, moduleStats, badges, modules } = context;
 
     // — Analyses du contexte —
-    const niveau      = detectNiveauGlobal(scores);
-    const screenText  = currentQuestion?.text || null;
-    const stage       = getExplorationStage(history, message, screenText);
-    const emotion     = detectEmotion(message);
-    const wrongAnswer = extractWrongAnswer(message);
-    const hintsBlock  = extractPreviousHints(history);
+    const niveau          = detectNiveauGlobal(scores);
+    const screenText      = currentQuestion?.text || null;
+    const stage           = getExplorationStage(history, message, screenText, sessionLearning);
+    const emotion         = detectEmotion(message);
+    const wrongAnswer     = extractWrongAnswer(message);
+    const hintsBlock      = extractPreviousHints(history);
+    const learningProfile = buildLearningProfile(sessionLearning);
+    const memoryBlock     = buildMemoryPrompt(memories || [], message, screenText, enfant.prenom);
 
     const strongModules = Object.entries(moduleStats).filter(([, s]) => s.avg >= 70).map(([k]) => MODULE_LABELS[k]);
     const weakModules   = Object.entries(moduleStats).filter(([, s]) => s.avg  < 50).map(([k]) => MODULE_LABELS[k]);
@@ -590,7 +729,7 @@ Reste chaleureux : c'est une découverte partagée, pas une leçon magistrale.`,
 
     // — Assemblage final du prompt —
     return `Tu es MILO, l'assistant pédagogique d'AtelierKids. Tu parles avec ${enfant.prenom}, ${enfant.age} ans.
-${hintsBlock}
+${memoryBlock}${learningProfile}${hintsBlock}
 
 STYLE : ${ageStyle}
 ${screenBlock}${pinnedBlock}
@@ -623,6 +762,7 @@ RÈGLES
 4. Format : **gras** pour les mots-clés. Listes si plusieurs points. Max 3 paragraphes courts.
 5. Si tu n'as pas assez d'info sur la question → demande à l'enfant de préciser.
 6. Si l'enfant dit "j'ai compris" / "merci" / "c'est bon" → célèbre brièvement, puis propose-lui de répondre seul à la question sans aide. Exemple : "Super ! Maintenant essaie de répondre sans moi — tu vas y arriver !"
+7. MÉMORISATION : Si tu expliques un concept/mot/règle NOUVEAU (absent de la mémoire ci-dessus), ajoute exactement à la TOUTE FIN de ta réponse : [MEM:le_concept]. Un seul tag par réponse. Exemples : [MEM:synonyme], [MEM:boucle], [MEM:droits du citoyen]. N'ajoute ce tag que si c'est vraiment la 1ère explication — pas pour des rappels ou des reformulations.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STADE D'AIDE ACTUEL : ${stage}/4
@@ -666,6 +806,8 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
       ? req.body.activityId.slice(0, 80) : null;
     const currentQuestion = (req.body.currentQuestion && typeof req.body.currentQuestion === 'object')
       ? req.body.currentQuestion : null;
+    const sessionLearning = (req.body.sessionLearning && typeof req.body.sessionLearning === 'object')
+      ? req.body.sessionLearning : null;
 
     if (!message) return res.status(400).json({ error: 'Message vide.' });
 
@@ -673,8 +815,16 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
     if (!apiKey) return res.status(503).json({ error: 'Assistant IA non configuré.' });
 
     try {
-      const context = buildChildContext(req);
-      const prompt  = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion);
+      const context  = buildChildContext(req);
+      const memories = loadMemories(req.auth.id);
+
+      // Résolution du module actif (nécessaire aussi pour sauvegarder les souvenirs)
+      const focusAct       = findActivity(context.modules, activityId);
+      const resolvedModule = currentModule
+        || (focusAct ? focusAct.module : null)
+        || detectModuleFromMessage(message);
+
+      const prompt = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning, memories);
 
       const geminiModel = getGeminiClient().getGenerativeModel({
         model: MODEL,
@@ -695,7 +845,27 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
 
       const chat   = geminiModel.startChat({ history: geminiHistory });
       const result = await chat.sendMessage(message);
-      const reply  = result.response.text().trim();
+      const raw    = result.response.text().trim();
+
+      // Extraire et strip le tag mémoire [MEM:concept] inséré par Gemini
+      const memMatch = raw.match(/\[MEM:([^\]]{1,50})\]/);
+      const concept  = memMatch ? memMatch[1].trim() : null;
+      const reply    = raw.replace(/\s*\[MEM:[^\]]*\]/g, '').trim();
+
+      // Enregistrer le nouveau concept en base (silencieux en cas d'erreur pour ne pas bloquer l'enfant)
+      if (concept) {
+        try {
+          saveMemory(
+            req.auth.id,
+            resolvedModule,
+            concept,
+            currentQuestion?.text?.slice(0, 100) || null,
+            reply.slice(0, 250)
+          );
+        } catch (e) {
+          console.warn('[Milo] Mémoire non sauvegardée :', e.message);
+        }
+      }
 
       res.json({ reply: reply || "Désolé, je n'ai pas pu générer de réponse." });
 
