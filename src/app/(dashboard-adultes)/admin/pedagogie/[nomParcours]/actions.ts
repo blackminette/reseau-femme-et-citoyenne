@@ -3,7 +3,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { NiveauPedagogique, Parcours } from '@prisma/client';
+import { Parcours, Difficulte } from '@prisma/client';
 
 export async function listerTousLesModules(parcours: Parcours) {
     try {
@@ -17,8 +17,8 @@ export async function listerTousLesModules(parcours: Parcours) {
                 titre: true,
                 description: true,
                 isPublished: true,
-                niveauRequis: true,
                 parcours: true,
+                difficulte: true,
                 _count: {
                     select: { cours: true }
                 }
@@ -33,7 +33,7 @@ export async function listerTousLesModules(parcours: Parcours) {
 }
 
 export async function creerModule(
-    formData: { titre: string; description: string; niveauRequis?: NiveauPedagogique },
+    formData: { titre: string; description: string; difficulte: Difficulte },
     parcours: Parcours,
     nomParcours: string
 ) {
@@ -50,7 +50,7 @@ export async function creerModule(
                 titre: formData.titre.trim(),
                 description: formData.description?.trim() || null,
                 public: publicCible,
-                niveauRequis: formData.niveauRequis || NiveauPedagogique.NIVEAU_1,
+                difficulte: formData.difficulte,
                 parcours: [parcours]
             },
             include: {
@@ -70,7 +70,7 @@ export async function creerModule(
 }
 
 export async function modifierModule(
-    formData: { id: number; titre: string; description: string; niveauRequis?: NiveauPedagogique },
+    formData: { id: number; titre: string; description: string; difficulte: Difficulte },
     nomParcours: string
 ) {
     try {
@@ -85,7 +85,7 @@ export async function modifierModule(
             data: {
                 titre: formData.titre.trim(),
                 description: formData.description?.trim() || null,
-                niveauRequis: formData.niveauRequis,
+                difficulte: formData.difficulte,
             },
             include: {
                 _count: {

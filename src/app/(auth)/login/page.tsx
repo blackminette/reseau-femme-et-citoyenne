@@ -1,134 +1,170 @@
 // * src/app/(auth)/login/page.tsx
 'use client';
 
-/**
- * Page du formulaire de connexion de l'application.
- * Elle envoie les identifiants à une action serveur pour authentifier l'utilisateur,
- * puis elle synchronise manuellement la session obtenue avec le client Supabase
- * pour mettre à jour instantanément l'état du Header avant la redirection.
- */
-
 import React, { useState } from 'react';
-import { loginAction } from './actions';
-import { useRouter } from 'next/navigation';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import {
+    Field,
+    FieldGroup,
+    FieldLabel,
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { loginAction } from "./actions"
+import { useRouter } from 'next/navigation'
+import { supabaseClient } from '@/lib/supabaseClient'
+import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react'
 
-export default function LoginPage() {
-    const [email, setEmail] = useState('');
+export default function LoginPage({
+    className,
+    params,
+    searchParams,
+    ...props
+}: {
+    className?: string;
+    params?: any;
+    searchParams?: any;
+    [key: string]: any;
+}) {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const router = useRouter();
 
-    // Gestion de la soumission du formulaire
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
 
-        // Appel du traitement de connexion côté serveur
-        const result = await loginAction({ email, password });
+        try {
+            const result = await loginAction({ username, password });
 
-        if (result.success && result.role) {
-            console.log("Connexion serveur réussie !");
-
-            try {
-                // Récupération de la session créée par le serveur
-                const { data: { session } } = await supabaseClient.auth.getSession();
-
-                // Injection de la session côté client pour synchroniser le Header
-                if (session) {
+            if (result.success && result.role && result.session) {
+                try {
                     await supabaseClient.auth.setSession({
-                        access_token: session.access_token,
-                        refresh_token: session.refresh_token
+                        access_token: result.session.access_token,
+                        refresh_token: result.session.refresh_token
                     });
-                } else {
-                    await supabaseClient.auth.refreshSession();
+                } catch (syncError) {
+                    // Fail-safe silencieux pour l'environnement client
                 }
-            } catch (syncError) {
-                console.warn("Erreur de synchronisation client/serveur :", syncError);
+
+                router.refresh();
+                const destination = result.role === 'ADMIN' ? '/admin' : `/${result.role.toLowerCase()}`;
+
+                setTimeout(() => {
+                    router.push(destination);
+                }, 100);
+
+            } else {
+                setIsLoading(false);
+                setError(result.error || "Identifiants incorrects.");
             }
-
-            // Rafraîchissement des composants serveur de la page
-            router.refresh();
-
-            // Redirection vers le tableau de bord lié au rôle
-            const destination = `/${result.role.toLowerCase()}`;
-            router.push(destination);
-
-        } else {
+        } catch (err) {
             setIsLoading(false);
-            setError(result.error || "Une erreur est survenue lors de la connexion.");
+            setError("Une erreur serveur est survenue.");
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6">
-            <div className="max-w-md w-full bg-white rounded-xl shadow-md border border-slate-200 p-8">
+        <div className="min-h-[calc(100vh-6rem)] flex flex-col items-center justify-center p-6 md:p-10 bg-[#eedeff]">
+            <div className="flex w-full max-w-md flex-col gap-8">
+                <div className="flex flex-col items-center gap-3 self-center group cursor-default"></div>
+                <div className={cn("flex flex-col gap-6", className)} {...props}>
+                    <Card className="border-slate-200 bg-white text-slate-900 shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffd166] to-[#260936]" />
 
-                {/* En-tête de la carte */}
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-slate-800">Bienvenue</h1>
-                    <p className="text-slate-500 text-sm mt-1">
-                        Connectez-vous pour accéder à votre espace personnalisé
-                    </p>
+                        <CardHeader className="space-y-1 text-center pt-10">
+                            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">Connexion</CardTitle>
+                            <CardDescription className="text-slate-500 text-sm font-medium">
+                                Heureux de vous revoir parmi nous.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="px-8 pb-10">
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100 flex items-center gap-3">
+                                    <div className="size-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                                    {error}
+                                </div>
+                            )}
+                            <form onSubmit={handleSubmit}>
+                                <FieldGroup className="gap-6">
+                                    <Field>
+                                        <FieldLabel htmlFor="username" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Nom d'utilisateur</FieldLabel>
+                                        <div className="relative group">
+                                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={18} />
+                                            <Input
+                                                id="username"
+                                                type="text"
+                                                placeholder="Ex: johanna_admin"
+                                                required
+                                                value={username}
+                                                onChange={(e) => setUsername(e.target.value)}
+                                                className="bg-slate-50 border-slate-200 text-slate-900 pl-11 focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all h-12 rounded-xl"
+                                            />
+                                        </div>
+                                    </Field>
+                                    <Field>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <FieldLabel htmlFor="password" className="text-slate-700 text-[11px] font-bold uppercase tracking-wider ml-1">Mot de passe</FieldLabel>
+                                            <button
+                                                type="button"
+                                                onClick={() => router.push('/forgot-password')}
+                                                className="text-xs text-[#260936] hover:text-[#6026a3] active:scale-95 transition-all font-bold duration-200 cursor-pointer"
+                                            >
+                                                Oublié ?
+                                            </button>
+                                        </div>
+                                        <div className="relative group">
+                                            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#260936] transition-colors" size={18} />
+                                            <Input
+                                                id="password"
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="bg-slate-50 border-slate-200 text-slate-900 pl-11 pr-11 focus:border-[#260936] focus:ring-1 focus:ring-[#260936] transition-all h-12 rounded-xl"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#260936] active:scale-90 transition-all duration-150 cursor-pointer"
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
+                                    </Field>
+                                    <Field className="pt-2">
+                                        <Button type="submit" disabled={isLoading} className="w-full bg-[#260936] hover:bg-[#6026a3] active:scale-[0.98] text-white font-bold h-12 transition-all shadow-lg shadow-[#260936]/10 rounded-xl text-sm uppercase tracking-wide duration-200 cursor-pointer">
+                                            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Se connecter"}
+                                        </Button>
+                                        <div className="text-center text-sm text-slate-500 mt-8">
+                                            Nouveau sur la plateforme ?{" "}
+                                            <button
+                                                type="button"
+                                                onClick={() => router.push('/signup')}
+                                                className="text-[#260936] hover:text-[#6026a3] active:scale-95 font-black underline underline-offset-4 transition-all duration-200 cursor-pointer"
+                                            >
+                                                Créer un compte
+                                            </button>
+                                        </div>
+                                    </Field>
+                                </FieldGroup>
+                            </form>
+                        </CardContent>
+                    </Card>
                 </div>
-
-                {/* Affichage de l'erreur */}
-                {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                        Attention : {error}
-                    </div>
-                )}
-
-                {/* Formulaire */}
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                            Adresse e-mail
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="exemple@association.fr"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-                            Mot de passe
-                        </label>
-                        <input
-                            id="password"
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm shadow transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                    >
-                        {isLoading ? 'Connexion en cours...' : 'Se connecter'}
-                    </button>
-                </form>
-
-                {/* Note informative de test */}
-                <div className="mt-6 p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800 text-center">
-                    Utilise les identifiants du Seeding (admin@rfc06.fr) pour valider le processus.
-                </div>
-
             </div>
         </div>
-    );
+    )
 }
