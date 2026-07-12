@@ -22,9 +22,14 @@ export async function enregistrerDon(data: {
         });
 
         if (!user) {
+            const baseUsername = email.toLowerCase().split('@')[0].replace(/[^a-z0-9]/g, '');
+            const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+            const generatedUsername = `${baseUsername}${randomSuffix}`;
+
             user = await prisma.utilisateur.create({
                 data: {
                     email: email.toLowerCase(),
+                    username: generatedUsername,
                     nom: nom,
                     prenom: prenom,
                     role: 'DONATEUR',
