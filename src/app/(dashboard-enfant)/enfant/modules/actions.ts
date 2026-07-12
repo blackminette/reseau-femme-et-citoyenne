@@ -294,6 +294,7 @@ export async function obtenirProfilEnfant() {
                 // Si la compétence est fragile ou en difficulté (< 80%), recommander de s'entraîner
                 if (ratioPct < 80) {
                     recommandations.push({
+                        id: `reco_${stat.slug}_${compName.replace(/\s+/g, '_')}`,
                         moduleSlug: stat.slug,
                         titre: `Renforcer : ${compName}`,
                         action: "S'entraîner",
