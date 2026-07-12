@@ -9,9 +9,10 @@ interface ModalProps {
     onClose: () => void;
     title: string;
     children: React.ReactNode;
+    size?: string;
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, size = 'max-w-lg' }: ModalProps) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -36,7 +37,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
 
             {/* La boîte blanche centrale (Fiche Profil) */}
-            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-10 flex flex-col max-h-[85vh]">
+            <div className={`relative w-full ${size} bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-10 flex flex-col max-h-[85vh]`}>
 
                 {/* En-tête de la Pop-up */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
