@@ -115,7 +115,7 @@ export async function obtenirDonneesPartenaire(partenaireId: string) {
             const dateStr = a.dateDebut.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
             const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
             return {
-                id: a.id.toString(),
+                id: a.id,
                 atelier: a.titre,
                 Icon: ClipboardList,
                 date: capitalizedDate,
@@ -131,7 +131,7 @@ export async function obtenirDonneesPartenaire(partenaireId: string) {
                 stats: { total: 3, validees: 2, enAttente: 1, messages: 0 },
                 demandes: [
                     {
-                        id: '1',
+                        id: 1,
                         atelier: 'Initiation Informatique',
                         Icon: ClipboardList,
                         date: 'Mardi 15 Juillet',
@@ -141,7 +141,7 @@ export async function obtenirDonneesPartenaire(partenaireId: string) {
                         demandeLe: '10/06/2026',
                     },
                     {
-                        id: '2',
+                        id: 2,
                         atelier: 'Atelier Robotique Enfant',
                         Icon: ClipboardList,
                         date: 'Mercredi 16 Juillet',
