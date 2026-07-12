@@ -112,6 +112,8 @@ export default function EnfantModuleDetailPage() {
             to: "#5b4a98"
         };
 
+        const IconComponent = meta.Icon as React.ComponentType<any>;
+
         return (
             <div className="text-violet-900">
                 {/* Bouton Retour */}
@@ -132,7 +134,7 @@ export default function EnfantModuleDetailPage() {
                                 className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
                                 style={{ backgroundImage: `linear-gradient(135deg, ${meta.from}, ${meta.to})` }}
                             >
-                                <meta.Icon className="h-5 w-5" aria-hidden />
+                                <IconComponent className="h-5 w-5" aria-hidden />
                             </span>
                             <span className="whitespace-nowrap">Parcours : {meta.label}</span>
                         </h1>
@@ -155,7 +157,7 @@ export default function EnfantModuleDetailPage() {
                                         style={{ backgroundImage: `linear-gradient(135deg, ${(mod as any).from || meta.from}dd, ${(mod as any).to || meta.to}dd)` }}
                                     >
                                         <div className="absolute top-3 left-3 h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white flex backdrop-blur-xs">
-                                            <meta.Icon className="h-4 w-4" />
+                                            <IconComponent className="h-4 w-4" />
                                         </div>
                                         <span className="px-3 text-center text-2xl font-extrabold leading-tight text-white/95 drop-shadow-sm">
                                             {mod.label}
@@ -189,7 +191,7 @@ export default function EnfantModuleDetailPage() {
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-violet-100 rounded-2xl p-8">
-                            <meta.Icon className="h-12 w-12 text-violet-300 animate-pulse mb-3" />
+                            <IconComponent className="h-12 w-12 text-violet-300 animate-pulse mb-3" />
                             <h4 className="text-sm font-bold text-violet-900">Aucun module disponible</h4>
                             <p className="text-xs text-violet-500 max-w-sm mt-1">Reviens plus tard ! Les modules de ce parcours seront bientôt publiés par l&apos;équipe pédagogique.</p>
                         </div>
@@ -215,6 +217,8 @@ export default function EnfantModuleDetailPage() {
         );
     }
 
+    const DisplayModuleIcon = displayModule.Icon as React.ComponentType<any>;
+
     return (
         <div className="text-violet-900">
             {/* ─── Bouton Retour ─── */}
@@ -238,7 +242,7 @@ export default function EnfantModuleDetailPage() {
                                 className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
                                 style={{ backgroundImage: `linear-gradient(135deg, ${displayModule.from}, ${displayModule.to})` }}
                             >
-                                <displayModule.Icon className="h-5 w-5" aria-hidden />
+                                <DisplayModuleIcon className="h-5 w-5" aria-hidden />
                             </span>
                             <span className="truncate">{(displayModule as any)?.label}</span>
                         </h1>
