@@ -8,7 +8,7 @@ export async function loginAction(formData: { email: string; password: string })
     const { email, password } = formData;
 
     try {
-        const fauxEmail = `${username.trim().toLowerCase()}@rfc06.fr`;
+        const fauxEmail = `${email.trim().toLowerCase()}@rfc06.fr`;
         const supabase = await getSupabaseServer();
 
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
