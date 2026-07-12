@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 import EnfantNavbar from '@/components/EnfantNavbar';
 import { deconnexionUtilisateur } from '@/app/auth/auth';
-import ChildMobileNav from '@/components/ChildMobileNav';
 import DynamicChildAvatar from '@/components/DynamicChildAvatar';
 
 export const metadata = {
@@ -44,10 +43,33 @@ export default async function EnfantLayout({
     return (
         <div className="min-h-screen bg-[#f6f8fc] flex flex-col font-sans">
 
-            {/* ─── NAVIGATION MOBILE ─── */}
-            <div className="sticky top-0 z-50 md:hidden">
-                <ChildMobileNav />
-            </div>
+            {/* ─── NAVIGATION MOBILE (HEADER ÉPURÉ) ─── */}
+            <header className="sticky top-0 z-50 md:hidden bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shadow-xs">
+                {/* Logo & Brand */}
+                <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-violet-700 font-black text-xs">
+                        AK
+                    </div>
+                    <div>
+                        <h1 className="text-xs font-black text-indigo-950 leading-none">AtelierKids</h1>
+                    </div>
+                </div>
+
+                {/* Profil & Déconnexion */}
+                <div className="flex items-center gap-3">
+                    <DynamicChildAvatar initialName={childName} initialAvatar={childAvatar} />
+
+                    <form action={deconnexionUtilisateur}>
+                        <button
+                            type="submit"
+                            className="bg-[#eb5757] hover:bg-[#e04f4f] text-white p-2 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center cursor-pointer animate-all"
+                            aria-label="Déconnexion"
+                        >
+                            <LogOut className="h-4 w-4" />
+                        </button>
+                    </form>
+                </div>
+            </header>
 
             {/* ─── BARRE DE NAVIGATION HORIZONTALE SUPÉRIEURE (DESKTOP) ─── */}
             <header className="hidden bg-white border-b border-slate-100 px-6 py-3 md:flex items-center justify-between sticky top-0 z-50 shadow-xs">
