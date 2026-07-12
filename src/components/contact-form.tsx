@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { Send } from 'lucide-react';
+import Link from 'next/link';
 
 
 export default function ContactForm() {
@@ -63,6 +64,7 @@ export default function ContactForm() {
             if (response.ok) {
               // On utilise le message de succès dynamique envoyé par le backend
                 setStatus({ submitting: false, success: data.message || "Message envoyé avec succès !", error: null });
+                setIsHuman(false);
                 setFormData({ name: '', email: '', subject: '', message: '' });
             } else {
                 // Si le serveur renvoie une erreur (ex: status 400), on extrait son propre message d'erreur
@@ -205,9 +207,10 @@ export default function ContactForm() {
                     />
                     <label htmlFor="rgpd" className="text-xs text-gray-500 leading-relaxed cursor-pointer select-none">
                         Je comprends et j'accepte que mes données soient conservées en toute sécurité conformément à la{' '}
-                        <a href="/mentions-legales#confidentialite" className="underline font-medium text-gray-900 hover:text-gray-700">
+                        <Link href="/mentions-legales#confidentialite" 
+                            className="underline font-medium text-gray-900 hover:text-gray-700">
                             politique de confidentialité
-                        </a>.
+                        </Link>.
                     </label>
                 </div>
 

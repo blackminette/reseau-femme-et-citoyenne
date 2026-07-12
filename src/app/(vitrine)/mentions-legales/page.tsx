@@ -1,12 +1,31 @@
-"use client"; // À mettre tout en haut du fichier si absent
+"use client";
 
 import { useEffect } from 'react';
 
-
 export default function MentionsLegalesPage() {
     useEffect(() => {
-    window.scrollTo(0, 0);
+        const handleScroll = () => {
+            if (window.location.hash === "#confidentialite") {
+                const timer = setTimeout(() => {
+                    const element = document.getElementById("confidentialite");
+                    if (element) {
+                        element.scrollIntoView({ behavior: "smooth" });
+                    }
+                }, 100);
+                return () => clearTimeout(timer);
+            } else {
+                window.scrollTo(0, 0);
+            }
+        };
+
+        // On l'exécute au chargement initial
+        handleScroll();
+
+        // On écoute aussi les changements d'adresse (clic footer depuis la même page)
+        window.addEventListener("hashchange", handleScroll);
+        return () => window.removeEventListener("hashchange", handleScroll);
     }, []);
+
 
     return (
         <main className="max-w-4xl mx-auto px-4 py-12 text-gray-800">
@@ -189,7 +208,7 @@ export default function MentionsLegalesPage() {
                     </p>
                     <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
                         <li><strong>NodeMailer :</strong> Gestion technique et envoi des e-mails du formulaire.</li>
-                        <li><strong>IONOS SE :</strong> Hébergement du site web (hébergeur allemand situé au sein de l'Union européenne).</li>
+                        <li><strong>IONOS SE :</strong> Hébergement du site web et envoi des e-mails (hébergeur allemand situé au sein de l'Union européenne).</li>
                     </ul>
                     <p className="text-sm text-gray-600 leading-relaxed mt-4">
                         Nous ne vendons ni ne louons vos données personnelles à des tiers.

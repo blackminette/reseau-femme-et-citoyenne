@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 4. Envoi de l'e-mail
-    // await transporter.sendMail(mailOptions);    
+    await transporter.sendMail(mailOptions);    
 
 
     // 5. Réponse de succès renvoyée à ton composant React
