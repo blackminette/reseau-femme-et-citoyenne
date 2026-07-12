@@ -110,7 +110,8 @@ export default async function EnfantLayout({
                     {children}
                 </div>
             </main>
-
+            {/* Bottom Navigation Menu (visible on mobile only) */}
+            <EnfantNavbar />
         </div>
     );
 }
