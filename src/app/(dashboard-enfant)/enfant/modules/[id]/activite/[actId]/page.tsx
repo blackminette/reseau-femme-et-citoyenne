@@ -18,6 +18,7 @@ type PageParams = Promise<{ id: string; actId: string }>;
 
 export default function EnfantActivityPage({ params }: { params: PageParams }) {
     const { id, actId } = use(params);
+    const router = useRouter();
     const controller = useActivityAdventureController({ id, actId });
     const { isModuleResolutionPending, ...viewProps } = controller;
 
