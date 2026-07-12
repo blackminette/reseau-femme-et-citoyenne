@@ -88,7 +88,6 @@ function buildFallbackReply({ message, currentModule, currentQuestion, context }
 
   return `Je ne peux pas interroger Gemini maintenant, mais je peux quand même t'aider sur ${moduleLabel}. Dis-moi la consigne exacte ou le point qui te bloque, et je te guide pas à pas.${age}`;
 }
-
 function requireAuth(role) {
   return (req, res, next) => {
     if (!req.auth) {
@@ -1141,7 +1140,6 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
         || detectModuleFromMessage(message);
 
       const prompt = buildSystemPrompt(context, currentModule, activityId, history, message, currentQuestion, sessionLearning, memories);
-
       const geminiModel = getGeminiClient().getGenerativeModel({
         model: MODEL,
         systemInstruction: prompt,
