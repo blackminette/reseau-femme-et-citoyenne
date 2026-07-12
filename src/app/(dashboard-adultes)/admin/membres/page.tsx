@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur } from './actions';
+import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur, reinitialiserMdp, toggleStatutUtilisateur, creerUtilisateursEnLot, supprimerUtilisateursEnMasse } from './actions';
 import Modal from '@/components/Modal';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
