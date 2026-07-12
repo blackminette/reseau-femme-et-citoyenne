@@ -22,9 +22,11 @@ type MembreAdmin = {
     id: string;
     nom: string;
     prenom: string;
+    username: string;
     email?: string | null;
     telephone: string | null;
     role: string;
+    isActive?: boolean;
     createdAt: string | Date;
     tuteur?: MembreTuteur | null;
     _count: MembreStatistiques;
