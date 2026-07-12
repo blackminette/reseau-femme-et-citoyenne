@@ -335,6 +335,7 @@ export async function obtenirProfilEnfant() {
                     for (const crs of mod.cours) {
                         if (!complCoursIds.has(crs.id)) {
                             recommandations.push({
+                                id: `reco_cours_${crs.id}`,
                                 moduleSlug: mapTitreToSlug(mod.titre),
                                 titre: `Leçon : ${crs.titre}`,
                                 action: "Découvrir",
@@ -346,6 +347,7 @@ export async function obtenirProfilEnfant() {
                         for (const ex of crs.exercices) {
                             if (!complExIds.has(ex.id)) {
                                 recommandations.push({
+                                    id: `reco_ex_${ex.id}`,
                                     moduleSlug: mapTitreToSlug(mod.titre),
                                     titre: `Exercice : ${ex.titre}`,
                                     action: "Résoudre",
