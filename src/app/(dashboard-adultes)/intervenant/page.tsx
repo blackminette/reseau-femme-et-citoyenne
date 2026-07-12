@@ -10,55 +10,7 @@ import {
     TimerReset,
     Users,
 } from 'lucide-react';
-import { obtenirIntervenantConnecte } from '@/lib/intervenant-dashboard';
-
-const indicateurs = [
-    {
-        titre: 'Heures validées',
-        valeur: '18,5 h',
-        description: 'Depuis le début du mois',
-        icone: TimerReset,
-        accent: 'bg-[#eedeff] text-[#752fbb]',
-    },
-    {
-        titre: 'Ateliers animés',
-        valeur: '6 / 8',
-        description: 'Sessions planifiées',
-        icone: CalendarDays,
-        accent: 'bg-[#ffd166]/25 text-[#9a6b00]',
-    },
-    {
-        titre: 'Documents à fournir',
-        valeur: '1',
-        description: 'Feuille de temps en attente',
-        icone: FileUp,
-        accent: 'bg-[#bc96e6]/20 text-[#752fbb]',
-    },
-];
-
-const prochainsAteliers = [
-    {
-        cours: 'Initiation numérique',
-        lieu: 'Maison des Assos Saint-Roch',
-        horaire: 'Mercredi 14h00 - 16h00',
-        participants: '8',
-        tag: 'Atelier',
-    },
-    {
-        cours: 'Scratch débutant',
-        lieu: 'IPSSI Nice',
-        horaire: 'Jeudi 10h00 - 12h00',
-        participants: '12',
-        tag: 'Pédagogie',
-    },
-    {
-        cours: 'Atelier autonomie',
-        lieu: 'Nice Centre',
-        horaire: 'Vendredi 09h30 - 11h30',
-        participants: '6',
-        tag: 'Suivi',
-    },
-];
+import { obtenirIntervenantConnecte, obtenirProchainsAteliers, obtenirStatistiquesIntervenant } from '@/lib/intervenant-dashboard';
 
 const notesAdmin = [
     '[15 Juin] Pensez à téléverser votre feuille de temps signée avant le 25 du mois.',
@@ -81,6 +33,34 @@ const statutsMateriel = [
 
 export default async function IntervenantPage() {
     const intervenant = await obtenirIntervenantConnecte();
+    
+    // Charger les données dynamiques depuis la base de données
+    const stats = await obtenirStatistiquesIntervenant(intervenant.id || '');
+    const ateliers = await obtenirProchainsAteliers(intervenant.id || '');
+
+    const indicateurs = [
+        {
+            titre: 'Heures validées',
+            valeur: stats.heuresValides,
+            description: 'Depuis le début du mois',
+            icone: TimerReset,
+            accent: 'bg-[#eedeff] text-[#752fbb]',
+        },
+        {
+            titre: 'Ateliers animés',
+            valeur: stats.totalAteliers,
+            description: 'Sessions planifiées',
+            icone: CalendarDays,
+            accent: 'bg-[#ffd166]/25 text-[#9a6b00]',
+        },
+        {
+            titre: 'Documents à fournir',
+            valeur: stats.documentsAttente,
+            description: 'Feuille de temps en attente',
+            icone: FileUp,
+            accent: 'bg-[#bc96e6]/20 text-[#752fbb]',
+        },
+    ];
 
     return (
         <div className="mx-auto max-w-[1100px]">
@@ -161,7 +141,7 @@ export default async function IntervenantPage() {
                     </div>
 
                     <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
-                        {prochainsAteliers.map((atelier) => (
+                        {ateliers.map((atelier) => (
                             <div
                                 key={`${atelier.cours}-${atelier.horaire}`}
                                 className="rounded-2xl border border-[#f2e7ff] bg-[#fcfaff] p-4 shadow-[0_10px_28px_rgba(117,47,187,0.06)] sm:p-4"
