@@ -56,6 +56,22 @@ export default function AdminMembresPage() {
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
+    const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchCurrentAdmin = async () => {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user) {
+                    setCurrentAdminId(user.id);
+                }
+            } catch (err) {
+                console.error("Erreur lors de la récupération de la session Admin:", err);
+            }
+        };
+        void fetchCurrentAdmin();
+    }, []);
+
     const [modifierForm, setModifierForm] = useState({
         nom: '',
         prenom: '',
