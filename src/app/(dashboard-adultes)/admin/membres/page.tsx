@@ -51,6 +51,11 @@ export default function AdminMembresPage() {
     const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
     const [modalLotIsOpen, setModalLotIsOpen] = useState(false);
 
+    const [filter, setFilter] = useState<string>("");
+    const [trie, setTrie] = useState<string>('DECROISSANT');
+    const [search, setSearch] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+
     const [modifierForm, setModifierForm] = useState({
         nom: '',
         prenom: '',
@@ -73,6 +78,17 @@ export default function AdminMembresPage() {
         role: 'ETUDIANT',
         nombre: 5
     });
+
+    // Effet de "Debounce" : Attend 400ms après la fin de la saisie avant de déclencher la recherche
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 400);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
 
     const chargerMembres = useCallback(async () => {
         await Promise.resolve();
