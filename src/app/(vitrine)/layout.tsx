@@ -4,12 +4,8 @@ import Footer from '@/components/Footer';
 
 export default function VitrineLayout({ children }: { children: React.ReactNode }) {
     return (
-        <>
-            <Header />
-            <main className="grow flex flex-col">
-                {children}
-            </main>
-            <Footer />
-        </>
+        <main className="grow flex flex-col">
+            {children}
+        </main>
     );
 }
