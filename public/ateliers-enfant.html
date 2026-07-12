@@ -1,0 +1,275 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes ateliers – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+<style>
+body{background:#f8f6fc;}
+
+/* ── Cartes réservations ── */
+.atelier-resa{background:white;border-radius:16px;padding:0;margin-bottom:12px;box-shadow:0 4px 16px rgba(109,91,168,0.06);display:flex;overflow:hidden;border-left:5px solid #9b8cff;}
+.atelier-resa.pending{border-left-color:#d68910;}
+.atelier-resa.validated{border-left-color:#00b894;}
+.atelier-resa.refused{border-left-color:#d63031;opacity:0.65;}
+.ar-date{min-width:90px;background:linear-gradient(135deg,#f4f1fb,#e8e2f8);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;text-align:center;}
+.ar-date .ar-day{font-size:28px;font-weight:800;color:#6d5ba8;line-height:1;}
+.ar-date .ar-month{font-size:12px;font-weight:600;color:#9b8cff;text-transform:uppercase;margin-top:3px;}
+.ar-date .ar-year{font-size:10px;color:#aaa;margin-top:2px;}
+.ar-date.nodate .ar-day{font-size:30px;}
+.ar-body{flex:1;padding:18px 22px;}
+.ar-title{font-size:16px;font-weight:700;color:#333;margin-bottom:6px;}
+.ar-meta{font-size:12.5px;color:#777;line-height:1.8;}
+.ar-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:18px 22px;gap:8px;}
+
+/* ── Séparateur ── */
+.section-divider{display:flex;align-items:center;gap:14px;margin:30px 0 22px;color:#9b8cff;font-size:13px;font-weight:700;letter-spacing:.3px;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#ddd6f5,transparent);}
+
+/* ── Section "proposés" ── */
+.suggest-intro{font-size:13px;color:#aaa;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.suggest-intro span{background:#f0ecfc;color:#9b8cff;border-radius:50px;padding:3px 12px;font-size:12px;font-weight:600;}
+
+.suggest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+.suggest-card{background:white;border-radius:16px;padding:18px;box-shadow:0 4px 14px rgba(109,91,168,0.07);display:flex;gap:14px;align-items:flex-start;border:1.5px solid #ede9f8;transition:.2s;}
+.suggest-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(109,91,168,.13);}
+.sc-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.sc-body{flex:1;min-width:0;}
+.sc-title{font-size:14px;font-weight:700;color:#2c2c3a;margin-bottom:4px;}
+.sc-desc{font-size:11.5px;color:#888;line-height:1.5;margin-bottom:9px;}
+.sc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.sc-meta span{font-size:11px;background:#f4f1fb;color:#6d5ba8;border-radius:50px;padding:2px 9px;font-weight:500;}
+.sc-age{display:inline-block;font-size:10.5px;background:linear-gradient(90deg,#9b8cff,#c8a0e6);color:white;border-radius:50px;padding:2px 10px;font-weight:600;}
+
+.suggest-empty{background:white;border-radius:16px;padding:36px;text-align:center;color:#bbb;font-size:13px;line-height:1.7;border:1.5px dashed #e0d9f5;}
+
+/* ── Tablette (≤900px) ── */
+@media(max-width:900px){
+  .suggest-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ── Mobile large (≤768px) — sidebar déjà gérée par style.css ── */
+@media(max-width:768px){
+  .suggest-intro{flex-wrap:wrap;gap:6px;font-size:12px;}
+  .suggest-grid{grid-template-columns:1fr 1fr;}
+  .section-divider{font-size:12px;margin:22px 0 16px;}
+}
+
+/* ── Mobile (≤600px) ── */
+@media(max-width:600px){
+  /* Cartes réservations : empilement vertical */
+  .atelier-resa{flex-direction:column;}
+  .ar-date{
+    flex-direction:row;gap:10px;min-width:0;
+    padding:12px 16px;justify-content:flex-start;
+  }
+  .ar-date .ar-day{font-size:22px;}
+  .ar-date .ar-month,.ar-date .ar-year{font-size:11px;}
+  .ar-body{padding:12px 16px;}
+  .ar-title{font-size:15px;}
+  .ar-side{align-items:flex-start;padding:0 16px 14px;flex-direction:row;}
+
+  /* Grille suggestions : 1 colonne */
+  .suggest-grid{grid-template-columns:1fr;}
+  .suggest-card{padding:14px;}
+  .sc-icon{width:40px;height:40px;font-size:20px;}
+  .sc-title{font-size:13px;}
+  .sc-desc{font-size:11px;}
+  .sc-meta{gap:5px;}
+  .sc-meta span{font-size:10px;padding:2px 8px;}
+
+  /* Intro */
+  .suggest-intro{flex-direction:column;align-items:flex-start;gap:6px;}
+
+  /* Séparateur */
+  .section-divider{font-size:11px;margin:18px 0 14px;}
+
+  /* Topbar title */
+  .topbar-title h1{font-size:20px;}
+  .topbar-title p{font-size:12px;}
+}
+</style>
+</head>
+<body>
+<button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<div class="app-layout">
+
+<aside class="sidebar">
+  <a href="index.html" class="sidebar-brand">
+    <div class="sidebar-brand-box"><small>RFC</small><span>06</span></div>
+    <div class="sidebar-brand-text">
+      <div class="sb-title">AtelierKids</div>
+      <div class="sb-sub">Grandir, apprendre, s'épanouir</div>
+    </div>
+  </a>
+  <nav class="sidebar-menu">
+    <a href="espace-enfant.html" class="sidebar-link"><span class="sl-icon">🏠</span> Mon espace</a>
+    <a href="espace-enfant.html#modules" class="sidebar-link"><span class="sl-icon">📚</span> Mes modules</a>
+    <a href="badges-enfant.html" class="sidebar-link"><span class="sl-icon">🏅</span> Mes badges</a>
+    <a href="ateliers-enfant.html" class="sidebar-link active"><span class="sl-icon">🎨</span> Mes ateliers</a>
+  </nav>
+  <div class="sidebar-help">
+    <h4>Besoin d'aide ?</h4>
+    <p>Parle à tes parents ou contacte le support AtelierKids.</p>
+    <a href="apropos.html" class="help-btn">Voir l'aide</a>
+  </div>
+  <button class="sidebar-logout" onclick="if(confirm('Veux-tu vraiment te déconnecter ?'))logout()">🚪 Se déconnecter</button>
+</aside>
+
+<main class="main-app">
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1>🎨 Mes ateliers</h1>
+      <p>Retrouve ici tes ateliers réservés et les propositions pour ton âge.</p>
+    </div>
+    <div class="topbar-actions">
+      <div class="user-chip">
+        <div class="user-chip-avatar" id="user-avatar">🧒</div>
+        <div class="user-chip-info">
+          <div class="user-chip-name" id="user-name">—</div>
+          <div class="user-chip-sub" id="user-sub">— ans</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="margin-bottom:24px;">
+    <div class="stat-card-v2" style="max-width:220px;"><div class="scv-icon c1">🎨</div><div class="scv-info"><div class="scv-value" id="st-total">0</div><div class="scv-label">Ateliers réservés</div></div></div>
+  </div>
+
+  <!-- ══ SECTION 1 : Ateliers réservés ══ -->
+  <h3 style="font-size:17px;color:#2c2c3a;font-weight:700;margin-bottom:14px;">📅 Mes ateliers réservés</h3>
+  <div id="resa-list"></div>
+
+  <!-- ══ Séparateur ══ -->
+  <div class="section-divider">✨ Ateliers proposés pour ton âge</div>
+
+  <!-- ══ SECTION 2 : Catalogue (view only) ══ -->
+  <div class="suggest-intro">
+    Ce qui est proposé pour toi — si quelque chose te plaît, parle-en à tes parents !
+    <span id="suggest-age-badge"></span>
+  </div>
+  <div id="suggest-list" class="suggest-grid"></div>
+
+</main>
+</div>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const child = await requireChild();
+  if (!child) return;
+
+  document.getElementById('user-name').textContent   = `${child.prenom} ${child.nom}`;
+  document.getElementById('user-sub').textContent    = `${child.age} ans`;
+  document.getElementById('user-avatar').textContent = child.avatar || '🧒';
+  document.getElementById('suggest-age-badge').textContent = child.age + ' ans';
+
+  // ── Réservations de la famille (filtrées côté serveur) ────
+  const myResas = await getReservations();
+
+  document.getElementById('st-total').textContent = myResas.length;
+
+  renderResas(myResas);
+  renderSuggestions(child.age, myResas);
+});
+
+// ── Rendu des réservations ────────────────────────────────────
+function renderResas(myResas) {
+  const list = document.getElementById('resa-list');
+  if (!myResas.length) {
+    list.innerHTML = `
+      <div style="background:white;border-radius:16px;padding:32px 24px;text-align:center;color:#aaa;
+                  box-shadow:0 4px 16px rgba(109,91,168,0.05);border:1.5px dashed #e0d9f5;margin-bottom:4px;">
+        <div style="font-size:44px;margin-bottom:12px;">📭</div>
+        <p style="font-size:14px;color:#888;margin:0;">Aucun atelier réservé pour l'instant.<br>
+        <span style="font-size:12px;color:#bbb;">Regarde les propositions ci-dessous et parle-en à tes parents !</span></p>
+      </div>`;
+    return;
+  }
+
+  const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  const statusInfo = {
+    pending:   { label:'⏱️ En attente', cls:'status-pending' },
+    validated: { label:'✓ Confirmé',    cls:'status-validated' },
+    refused:   { label:'✕ Refusé',      cls:'status-refused' },
+  };
+
+  list.innerHTML = myResas.sort((a,b) => new Date(b.date) - new Date(a.date)).map(r => {
+    const st = statusInfo[r.status] || statusInfo.pending;
+    let dateBlock;
+    if (r.dateSouhaitee) {
+      const d = new Date(r.dateSouhaitee);
+      dateBlock = `<div class="ar-date"><div class="ar-day">${d.getDate()}</div><div class="ar-month">${MONTHS[d.getMonth()]}</div><div class="ar-year">${d.getFullYear()}</div></div>`;
+    } else {
+      dateBlock = `<div class="ar-date nodate"><div class="ar-day">🗓️</div><div class="ar-month" style="font-size:9px;">à définir</div></div>`;
+    }
+    const payLabel = r.paiement === 'cb' ? '💳 Carte bancaire' : r.paiement === 'cash' ? '💶 Espèces' : '';
+    return `
+      <div class="atelier-resa ${r.status}">
+        ${dateBlock}
+        <div class="ar-body">
+          <div class="ar-title">${r.atelier}</div>
+          <div class="ar-meta">
+            📍 ${r.lieu || '—'}${r.age ? ' · 👶 ' + (typeof r.age === 'number' ? r.age + ' ans' : r.age) : ''}<br>
+            ${payLabel ? payLabel + ' · ' : ''}Demandé le ${formatDate(r.date)}
+            ${r.message ? `<br><em style="color:#999;">« ${r.message} »</em>` : ''}
+          </div>
+        </div>
+        <div class="ar-side">
+          <span class="status-pill ${st.cls}">${st.label}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Rendu des ateliers suggérés (view only) ───────────────────
+function renderSuggestions(age, myResas) {
+  const reservedNames = myResas.map(r => (r.atelier || '').toLowerCase());
+  const suggest = ATELIERS_CATALOGUE.filter(a =>
+    age >= a.ageMin && age <= a.ageMax &&
+    !reservedNames.includes(a.titre.toLowerCase())
+  );
+
+  const container = document.getElementById('suggest-list');
+  if (!suggest.length) {
+    container.innerHTML = `<div class="suggest-empty">Tu as déjà tous les ateliers de ton âge réservés — super ! 🌟</div>`;
+    return;
+  }
+
+  const MONTHS_LONG = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  container.innerHTML = suggest.map(a => {
+    const d = new Date(a.date);
+    const dateStr = `${d.getDate()} ${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`;
+    return `<div class="suggest-card">
+      <div class="sc-icon" style="background:${a.couleur}22;color:${a.couleur};font-size:24px;">${a.icon}</div>
+      <div class="sc-body">
+        <div class="sc-title">${a.titre}</div>
+        <div class="sc-desc">${a.desc}</div>
+        <div class="sc-meta">
+          <span>📅 ${dateStr}</span>
+          <span>⏰ ${a.heure}</span>
+          <span>📍 ${a.lieu}</span>
+          <span>👥 ${a.places} places</span>
+        </div>
+        <div class="sc-age">${a.ageMin} – ${a.ageMax} ans</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+</script>
+<script src="lang.js?v=20260603d"></script>
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

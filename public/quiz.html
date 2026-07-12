@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+</head>
+<body>
+
+<header>
+<div class="brand-group">
+<a href="index.html" class="brand brand-rfc"><span class="brand-tag">VITRINE</span><span class="brand-name">RFC 06</span></a>
+<a href="espace-enfant.html" id="brand-atelier-link" class="brand brand-atelier"><span class="brand-tag">PLATEFORME</span><span class="brand-name">AtelierKids</span></a>
+</div>
+<nav><ul><li><a href="espace-enfant.html">Mes modules</a></li></ul></nav>
+<div class="nav-auth">
+<a href="login.html" class="btn-nav" id="nav-login-link">Connexion</a>
+<a href="dashboard-parent.html" class="btn-nav btn-espace" id="nav-dashboard-link" style="display:none">Tableau de bord</a>
+<a href="espace-enfant.html" class="btn-nav btn-espace" id="nav-espace-link" style="display:none">Mon espace</a>
+<a href="admin.html" class="btn-nav btn-espace" id="nav-admin-link" style="display:none;background:linear-gradient(90deg,#1a1f4e,#2c3a8e);">Admin</a>
+<button class="btn-nav btn-logout" id="nav-logout-btn" onclick="logout()" style="display:none">Déconnexion</button>
+</div>
+</header>
+
+<div class="quiz-container">
+
+  <!-- Quiz en cours -->
+  <div id="screen-quiz">
+    <a href="#" class="back-link" id="back-link" onclick="quitQuiz(event)">← Retour</a>
+
+    <div class="quiz-top">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="progress-fill"></div></div>
+      <span class="quiz-counter" id="quiz-counter">1 / 10</span>
+      <span class="quiz-score-live" id="score-live">✅ 0</span>
+    </div>
+
+    <div class="quiz-question-card">
+      <div class="question-num" id="question-num">Question 1</div>
+      <div class="question-text" id="question-text"></div>
+    </div>
+
+    <div class="choices-grid" id="choices-grid"></div>
+
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+    <button class="quiz-next-btn" id="next-btn" onclick="nextQuestion()">Question suivante →</button>
+  </div>
+
+  <!-- Résultat -->
+  <div id="screen-result" style="display:none">
+    <a href="#" id="result-back" class="back-link">← Mes modules</a>
+    <div class="quiz-result">
+      <span class="result-emoji" id="result-emoji">🎉</span>
+      <div class="result-score" id="result-score">0</div>
+      <div class="result-total" id="result-total">/ 10 bonnes réponses</div>
+      <div class="result-stars" id="result-stars">⭐⭐⭐</div>
+      <div class="result-message" id="result-message">Bravo !</div>
+      <div class="result-actions">
+        <button class="btn-full" style="max-width:220px" onclick="retryQuiz()">🔄 Rejouer</button>
+        <a href="#" id="back-to-module" class="btn-secondary" style="padding:13px 26px">Retour au module</a>
+        <a href="espace-enfant.html" class="btn-secondary" style="padding:13px 26px">Mes modules</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+let moduleKey = null;
+let quizId    = null;
+let quiz      = null;
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let answered = false;
+let child = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  child = await requireChild();
+  if (!child) return;
+
+  const params = new URLSearchParams(window.location.search);
+  moduleKey = params.get('m');
+  quizId    = params.get('id');
+  if (!moduleKey || !quizId) { window.location.href = 'espace-enfant.html'; return; }
+
+  quiz = await getContentItem(moduleKey, 'quizzes', quizId);
+  if (!quiz) { window.location.href = 'module.html?m=' + moduleKey; return; }
+
+  document.getElementById('back-link').href = `module.html?m=${moduleKey}`;
+  document.getElementById('back-to-module').href = `module.html?m=${moduleKey}`;
+  document.getElementById('result-back').href = `module.html?m=${moduleKey}`;
+
+  // Mélanger et limiter à 10 max
+  questions = [...quiz.questions].sort(() => Math.random() - 0.5).slice(0, 10);
+  currentIdx = 0; score = 0;
+  renderQuestion();
+});
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const total = questions.length;
+
+  document.getElementById('progress-fill').style.width = ((currentIdx / total) * 100) + '%';
+  document.getElementById('quiz-counter').textContent  = `${currentIdx + 1} / ${total}`;
+  document.getElementById('score-live').textContent    = `✅ ${score}`;
+  document.getElementById('question-num').textContent  = `Question ${currentIdx + 1}`;
+  document.getElementById('question-text').textContent = q.q;
+
+  const grid = document.getElementById('choices-grid');
+  grid.innerHTML = q.c.map((choice, i) => `
+    <button class="choice-btn" onclick="selectAnswer(${i})">${choice}</button>
+  `).join('');
+
+  document.getElementById('quiz-feedback').className = 'quiz-feedback';
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('next-btn').className = 'quiz-next-btn';
+
+  // Expose la question courante à Milo (score inclus pour qu'il encourage selon la progression)
+  window.MILO_CURRENT_QUESTION = {
+    displayNumber: currentIdx + 1,
+    total,
+    text: q.q,
+    choices: q.c,
+    correctIndex: q.a,
+    currentScore: score,
+  };
+
+  // Animation
+  const card = document.querySelector('.quiz-question-card');
+  card.style.animation = 'none'; void card.offsetWidth; card.style.animation = 'slideIn 0.3s ease';
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[currentIdx];
+  const btns = document.querySelectorAll('.choice-btn');
+  const fb = document.getElementById('quiz-feedback');
+  btns.forEach(b => b.disabled = true);
+
+  if (idx === q.a) {
+    score++;
+    btns[idx].classList.add('correct', 'bounce');
+    fb.textContent = '✅ Bonne réponse ! Bravo !';
+    fb.className = 'quiz-feedback correct show';
+    if (typeof window.miloCorrectAnswer === 'function') window.miloCorrectAnswer();
+  } else {
+    btns[idx].classList.add('wrong', 'shake');
+    btns[q.a].classList.add('correct');
+    fb.textContent = `❌ Pas tout à fait… La bonne réponse était : ${q.c[q.a]}`;
+    fb.className = 'quiz-feedback wrong show';
+    if (typeof window.miloWrongAnswer === 'function') window.miloWrongAnswer(q.q, q.c[idx]);
+  }
+
+  document.getElementById('score-live').textContent = `✅ ${score}`;
+  const btn = document.getElementById('next-btn');
+  btn.className = 'quiz-next-btn show';
+  btn.textContent = (currentIdx === questions.length - 1) ? 'Voir mon score 🏆' : 'Question suivante →';
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= questions.length) endQuiz();
+  else {
+    renderQuestion();
+    if (typeof window.miloNewQuestion === 'function') window.miloNewQuestion();
+  }
+}
+
+async function endQuiz() {
+  const updated = await saveScore(child.id, moduleKey, 'quiz', score, questions.length, { ref: quizId });
+  if (updated) child = updated;
+  const pct = score / questions.length;
+  let emoji, msg, stars;
+  if (pct === 1)      { emoji='🏆'; stars='⭐⭐⭐'; msg='Score parfait ! Tu es incroyable ! 🎉'; }
+  else if (pct >= 0.8){ emoji='😄'; stars='⭐⭐⭐'; msg='Excellent ! Tu maîtrises vraiment bien !'; }
+  else if (pct >= 0.6){ emoji='😊'; stars='⭐⭐';   msg='Bien joué ! Continue à t\'entraîner !'; }
+  else if (pct >= 0.4){ emoji='🤔'; stars='⭐';    msg='Pas mal ! Lis les leçons et recommence !'; }
+  else                { emoji='💪'; stars='';     msg='Courage ! Chaque essai est un progrès !'; }
+
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-total').textContent = `/ ${questions.length} bonnes réponses`;
+  document.getElementById('result-stars').textContent = stars;
+  document.getElementById('result-message').textContent = msg;
+
+  document.getElementById('screen-quiz').style.display = 'none';
+  document.getElementById('screen-result').style.display = 'block';
+}
+
+function retryQuiz() {
+  questions = [...quiz.questions].sort(() => Math.random() - 0.5).slice(0, 10);
+  currentIdx = 0; score = 0;
+  document.getElementById('screen-result').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function quitQuiz(e) {
+  e.preventDefault();
+  if (confirm('Quitter le quiz ? Ta progression sera perdue.')) {
+    window.location.href = `module.html?m=${moduleKey}`;
+  }
+}
+</script>
+
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

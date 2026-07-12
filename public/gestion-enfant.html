@@ -1,0 +1,214 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion enfant – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+</head>
+<body>
+
+<header>
+<div class="brand-group">
+<a href="index.html" class="brand brand-rfc"><span class="brand-tag">VITRINE</span><span class="brand-name">RFC 06</span></a>
+<a href="login.html" id="brand-atelier-link" class="brand brand-atelier"><span class="brand-tag">PLATEFORME</span><span class="brand-name">AtelierKids</span></a>
+</div>
+<nav><ul>
+<li><a href="index.html">Accueil</a></li>
+<li><a href="dashboard-parent.html">Tableau de bord</a></li>
+</ul></nav>
+<div class="nav-auth">
+<a href="login.html" class="btn-nav" id="nav-login-link">Connexion</a>
+<a href="dashboard-parent.html" class="btn-nav btn-espace" id="nav-dashboard-link" style="display:none">Tableau de bord</a>
+<a href="espace-enfant.html" class="btn-nav btn-espace" id="nav-espace-link" style="display:none">Mon espace</a>
+<a href="admin.html" class="btn-nav btn-espace" id="nav-admin-link" style="display:none;background:linear-gradient(90deg,#1a1f4e,#2c3a8e);">Admin</a>
+<button class="btn-nav btn-logout" id="nav-logout-btn" onclick="logout()" style="display:none">Déconnexion</button>
+</div>
+</header>
+
+<div class="page-container">
+<a href="dashboard-parent.html" class="back-link">← Retour au tableau de bord</a>
+
+<div class="form-section">
+  <div class="form-card">
+    <h2 id="form-title">➕ Ajouter un enfant</h2>
+
+    <div id="alert" class="alert alert-error"></div>
+    <div id="alert-success" class="alert alert-success"></div>
+
+    <form id="child-form" onsubmit="handleSubmit(event)">
+
+      <!-- Avatar -->
+      <div class="form-group">
+        <label>Avatar</label>
+        <div class="avatar-picker" id="avatar-picker">
+          <!-- généré en JS -->
+        </div>
+        <input type="hidden" id="avatar-value" value="🦊">
+      </div>
+
+      <div class="form-divider"></div>
+
+      <!-- Infos personnelles -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="prenom">Prénom *</label>
+          <input type="text" id="prenom" placeholder="Léa" required>
+        </div>
+        <div class="form-group">
+          <label for="nom">Nom *</label>
+          <input type="text" id="nom" placeholder="Dupont" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="age">Âge *</label>
+        <select id="age" required>
+          <option value="">Sélectionner l'âge</option>
+          <option value="8">8 ans</option>
+          <option value="9">9 ans</option>
+          <option value="10">10 ans</option>
+          <option value="11">11 ans</option>
+          <option value="12">12 ans</option>
+        </select>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <!-- Identifiants de connexion -->
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        L'enfant se connectera avec ces identifiants dans l'espace "Enfant".
+      </p>
+
+      <div class="form-group">
+        <label for="username">Nom d'utilisateur *</label>
+        <input type="text" id="username" placeholder="lea_dupont" pattern="[a-zA-Z0-9_\-]+" title="Lettres, chiffres, _ et - uniquement" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password" id="password-label">Mot de passe *</label>
+        <input type="password" id="password" placeholder="Minimum 4 caractères" minlength="4">
+      </div>
+
+      <div style="display:flex;gap:14px;margin-top:8px;">
+        <button type="submit" class="btn-full" id="submit-btn">Créer le profil</button>
+        <a href="dashboard-parent.html" class="btn-secondary" style="flex:1;">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+
+<footer>
+<div class="logo">AtelierKids</div>
+<div>Conditions d'utilisation<br>Mentions légales</div>
+<div>contact@atelierkids.fr</div>
+</footer>
+
+<script src="app.js?v=20260603d"></script>
+<script>
+const AVATARS = ['🦊','🐯','🐻','🐼','🦁','🐸','🦋','🐬','🦄','🐧','🐺','🦅','🐙','🐝','🦖','🐉','🌟','🎨','🚀','🎮','⚽','🎸'];
+let editingId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const parent = await requireParent();
+  if (!parent) return;
+
+  renderAvatarPicker('🦊');
+
+  const params = new URLSearchParams(window.location.search);
+  const childId = params.get('id');
+
+  if (childId) {
+    editingId = childId;
+    const child = await getChildById(childId);
+    if (child && child.parentId === parent.id) {
+      prefillForm(child);
+    } else {
+      window.location.href = 'dashboard-parent.html';
+    }
+  }
+});
+
+function renderAvatarPicker(selected) {
+  const picker = document.getElementById('avatar-picker');
+  picker.innerHTML = '';
+  AVATARS.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'avatar-option' + (emoji === selected ? ' selected' : '');
+    btn.textContent = emoji;
+    btn.onclick = () => selectAvatar(emoji);
+    picker.appendChild(btn);
+  });
+}
+
+function selectAvatar(emoji) {
+  document.getElementById('avatar-value').value = emoji;
+  document.querySelectorAll('.avatar-option').forEach(b => {
+    b.classList.toggle('selected', b.textContent === emoji);
+  });
+}
+
+function prefillForm(child) {
+  document.getElementById('form-title').textContent = `✏️ Modifier : ${child.prenom}`;
+  document.getElementById('submit-btn').textContent = 'Enregistrer les modifications';
+  document.getElementById('password-label').textContent = 'Nouveau mot de passe (laisser vide = inchangé)';
+  document.getElementById('password').removeAttribute('minlength');
+  document.getElementById('prenom').value   = child.prenom;
+  document.getElementById('nom').value      = child.nom;
+  document.getElementById('age').value      = child.age;
+  document.getElementById('username').value = child.username;
+  document.getElementById('avatar-value').value = child.avatar || '🦊';
+  renderAvatarPicker(child.avatar || '🦊');
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const alertEl = document.getElementById('alert');
+  const successEl = document.getElementById('alert-success');
+  alertEl.classList.remove('show');
+  successEl.classList.remove('show');
+
+  const prenom   = document.getElementById('prenom').value.trim();
+  const nom      = document.getElementById('nom').value.trim();
+  const age      = document.getElementById('age').value;
+  const username = document.getElementById('username').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  const avatar   = document.getElementById('avatar-value').value;
+
+  if (!age) {
+    alertEl.textContent = 'Veuillez sélectionner l\'âge.';
+    alertEl.classList.add('show');
+    return;
+  }
+
+  if (editingId) {
+    const updates = { prenom, nom, age, username, avatar };
+    if (password) updates.password = password;
+    const res = await updateChild(editingId, updates);
+    if (res.error) { alertEl.textContent = res.error; alertEl.classList.add('show'); return; }
+    successEl.textContent = 'Profil mis à jour !';
+    successEl.classList.add('show');
+    setTimeout(() => window.location.href = 'dashboard-parent.html', 1000);
+  } else {
+    if (password.length < 4) {
+      alertEl.textContent = 'Le mot de passe doit faire au moins 4 caractères.';
+      alertEl.classList.add('show');
+      return;
+    }
+    const res = await createChild(null, { nom, prenom, age, username, password, avatar });
+    if (res.error) { alertEl.textContent = res.error; alertEl.classList.add('show'); return; }
+    successEl.textContent = `Profil de ${prenom} créé avec succès !`;
+    successEl.classList.add('show');
+    setTimeout(() => window.location.href = 'dashboard-parent.html', 1000);
+  }
+}
+</script>
+
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>

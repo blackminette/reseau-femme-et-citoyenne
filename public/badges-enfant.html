@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes badges – AtelierKids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260603d">
+<style>
+body{background:#f8f6fc;}
+.badge-big-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;}
+.badge-big{background:white;border-radius:20px;padding:26px 24px;box-shadow:0 4px 16px rgba(109,91,168,0.06);text-align:center;transition:0.25s;position:relative;overflow:hidden;border:2px solid transparent;}
+.badge-big.earned{border-color:#9b8cff;background:linear-gradient(160deg,#fff,#f7f4ff);}
+.badge-big.earned:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(155,140,255,0.2);}
+.badge-big.locked{opacity:0.85;}
+.badge-big-icon{font-size:54px;line-height:1;margin-bottom:12px;}
+.badge-big.locked .badge-big-icon{filter:grayscale(1);opacity:0.4;}
+.badge-big-name{font-size:17px;font-weight:800;color:#333;margin-bottom:6px;}
+.badge-big-desc{font-size:12.5px;color:#888;line-height:1.5;margin-bottom:14px;min-height:36px;}
+.badge-state{display:inline-block;padding:4px 14px;border-radius:50px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.badge-state.got{background:#f0fff4;color:#00b894;}
+.badge-state.todo{background:#f4f1fb;color:#9b8cff;}
+.badge-prog{margin-top:12px;}
+.badge-prog-bar{height:7px;background:#f0ecf8;border-radius:10px;overflow:hidden;margin-top:6px;}
+.badge-prog-fill{height:100%;background:linear-gradient(90deg,#9b8cff,#6d5ba8);border-radius:10px;transition:width 0.7s ease;}
+.badge-prog-txt{font-size:11px;color:#999;margin-top:5px;}
+.earned-ribbon{position:absolute;top:12px;right:-30px;background:#00b894;color:white;font-size:10px;font-weight:700;padding:3px 32px;transform:rotate(45deg);}
+</style>
+</head>
+<body>
+<button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<div class="app-layout">
+
+<aside class="sidebar">
+  <a href="index.html" class="sidebar-brand">
+    <div class="sidebar-brand-box"><small>RFC</small><span>06</span></div>
+    <div class="sidebar-brand-text">
+      <div class="sb-title">AtelierKids</div>
+      <div class="sb-sub">Grandir, apprendre, s'épanouir</div>
+    </div>
+  </a>
+  <nav class="sidebar-menu">
+    <a href="espace-enfant.html" class="sidebar-link"><span class="sl-icon">🏠</span> Mon espace</a>
+    <a href="espace-enfant.html#modules" class="sidebar-link"><span class="sl-icon">📚</span> Mes modules</a>
+    <a href="badges-enfant.html" class="sidebar-link active"><span class="sl-icon">🏅</span> Mes badges</a>
+    <a href="ateliers-enfant.html" class="sidebar-link"><span class="sl-icon">🎨</span> Mes ateliers</a>
+  </nav>
+  <div class="sidebar-help">
+    <h4>Besoin d'aide ?</h4>
+    <p>Parle à tes parents ou contacte le support AtelierKids.</p>
+    <a href="apropos.html" class="help-btn">Voir l'aide</a>
+  </div>
+  <button class="sidebar-logout" onclick="if(confirm('Veux-tu vraiment te déconnecter ?'))logout()">🚪 Se déconnecter</button>
+</aside>
+
+<main class="main-app">
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1>🏅 Mes badges</h1>
+      <p id="subtitle">Collectionne-les tous en réussissant des activités !</p>
+    </div>
+    <div class="topbar-actions">
+      <div class="user-chip">
+        <div class="user-chip-avatar" id="user-avatar">🧒</div>
+        <div class="user-chip-info">
+          <div class="user-chip-name" id="user-name">—</div>
+          <div class="user-chip-sub" id="user-sub">— ans</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bannière progression badges -->
+  <div class="welcome-v2" style="background:linear-gradient(135deg,#6d5ba8,#9b8cff);">
+    <div class="welcome-v2-text">
+      <h2 id="badge-count-title">0 badge sur 0</h2>
+      <p>Continue tes quiz et exercices pour débloquer de nouveaux badges 🎉</p>
+    </div>
+    <div class="welcome-v2-progress">
+      <div class="wv-prog-label">Collection complétée</div>
+      <div class="wv-prog-row">
+        <div class="wv-prog-bar"><div class="wv-prog-bar-fill" id="coll-fill" style="width:0%"></div></div>
+        <div class="wv-prog-value" id="coll-pct">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="badge-big-grid" id="badge-grid"></div>
+</main>
+</div>
+
+<script src="app.js?v=20260603d"></script>
+<script src="data.js?v=20260603d"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const child = await requireChild();
+  if (!child) return;
+
+  document.getElementById('user-name').textContent  = `${child.prenom} ${child.nom}`;
+  document.getElementById('user-sub').textContent   = `${child.age} ans`;
+  document.getElementById('user-avatar').textContent = child.avatar || '🧒';
+
+  const scores  = child.scores || [];
+  const earned  = child.badges || [];
+  const perfect = scores.filter(s => s.score === s.total).length;
+  const modules = new Set(scores.map(s => s.module)).size;
+
+  // Définition de la progression de chaque badge
+  const progressFor = {
+    premier_pas:  { cur: Math.min(scores.length, 1), max: 1,  txt: scores.length + ' activité(s) faite(s)' },
+    parfait:      { cur: Math.min(perfect, 1),        max: 1,  txt: perfect + ' score(s) parfait(s)' },
+    assidu:       { cur: Math.min(scores.length, 10), max: 10, txt: scores.length + ' / 10 activités' },
+    expert:       { cur: Math.min(perfect, 5),        max: 5,  txt: perfect + ' / 5 scores parfaits' },
+    curieux:      { cur: Math.min(modules, 3),        max: 3,  txt: modules + ' / 3 modules explorés' },
+    explorateur:  { cur: Math.min(modules, 6),        max: 6,  txt: modules + ' / 6 modules explorés' },
+  };
+
+  const totalBadges = Object.keys(BADGES).length;
+  const nbEarned = earned.length;
+  const pct = Math.round((nbEarned / totalBadges) * 100);
+
+  document.getElementById('badge-count-title').textContent = `${nbEarned} badge${nbEarned>1?'s':''} sur ${totalBadges}`;
+  document.getElementById('coll-fill').style.width = pct + '%';
+  document.getElementById('coll-pct').textContent = pct + '%';
+
+  const grid = document.getElementById('badge-grid');
+  grid.innerHTML = Object.entries(BADGES).map(([key, b]) => {
+    const got = earned.includes(key);
+    const prog = progressFor[key] || { cur: got ? 1 : 0, max: 1, txt: '' };
+    const progPct = Math.round((prog.cur / prog.max) * 100);
+    return `
+      <div class="badge-big ${got ? 'earned' : 'locked'}">
+        ${got ? '<div class="earned-ribbon">OBTENU</div>' : ''}
+        <div class="badge-big-icon">${b.icon}</div>
+        <div class="badge-big-name">${b.label}</div>
+        <div class="badge-big-desc">${b.desc}</div>
+        ${got
+          ? '<span class="badge-state got">✓ Débloqué</span>'
+          : `<span class="badge-state todo">🔒 À débloquer</span>
+             <div class="badge-prog">
+               <div class="badge-prog-bar"><div class="badge-prog-fill" style="width:${progPct}%"></div></div>
+               <div class="badge-prog-txt">${prog.txt}</div>
+             </div>`
+        }
+      </div>`;
+  }).join('');
+});
+</script>
+<script src="lang.js?v=20260603d"></script>
+<script src="ai-widget.js?v=20260703"></script>
+</body>
+</html>
