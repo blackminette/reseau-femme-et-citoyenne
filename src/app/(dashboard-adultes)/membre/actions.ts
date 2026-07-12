@@ -62,11 +62,7 @@ export async function obtenirProfilMembre() {
             include: {
                 cours: {
                     include: {
-                        compositions: {
-                            include: {
-                                exercice: true
-                            }
-                        }
+                        exercices: true
                     }
                 }
             }
@@ -77,9 +73,9 @@ export async function obtenirProfilMembre() {
 
         for (const mod of modules) {
             for (const crs of mod.cours) {
-                for (const comp of crs.compositions) {
+                for (const ex of crs.exercices) {
                     totalExercices++;
-                    exercicesIds.add(comp.exercice.id);
+                    exercicesIds.add(ex.id);
                 }
             }
         }
@@ -123,11 +119,7 @@ export async function obtenirModulesAdulteDepuisDB() {
                 cours: {
                     orderBy: { ordreDansModule: 'asc' },
                     include: {
-                        compositions: {
-                            include: {
-                                exercice: true
-                            }
-                        }
+                        exercices: true
                     }
                 }
             }
@@ -142,12 +134,12 @@ export async function obtenirModulesAdulteDepuisDB() {
             let completedEx = 0;
 
             for (const crs of mod.cours) {
-                for (const comp of crs.compositions) {
+                for (const ex of crs.exercices) {
                     totalEx++;
                     const score = await prisma.scoreQuiz.findFirst({
                         where: {
                             etudiantId: membreId,
-                            exerciceId: comp.exercice.id
+                            exerciceId: ex.id
                         }
                     });
                     if (score) completedEx++;
@@ -183,9 +175,7 @@ export async function obtenirDetailsModuleAdulte(moduleIdStr: string) {
                     cours: {
                         orderBy: { ordreDansModule: 'asc' },
                         include: {
-                            compositions: {
-                                include: { exercice: true }
-                            }
+                            exercices: true
                         }
                     }
                 }
@@ -199,9 +189,7 @@ export async function obtenirDetailsModuleAdulte(moduleIdStr: string) {
                     cours: {
                         orderBy: { ordreDansModule: 'asc' },
                         include: {
-                            compositions: {
-                                include: { exercice: true }
-                            }
+                            exercices: true
                         }
                     }
                 }
@@ -216,8 +204,7 @@ export async function obtenirDetailsModuleAdulte(moduleIdStr: string) {
         let completedCount = 0;
 
         for (const crs of dbModule.cours) {
-            for (const comp of crs.compositions) {
-                const ex = comp.exercice;
+            for (const ex of crs.exercices) {
 
                 const scoreRecord = await prisma.scoreQuiz.findFirst({
                     where: { etudiantId: membreId, exerciceId: ex.id },
@@ -295,18 +282,13 @@ export async function obtenirDetailsActiviteAdulte(exerciceIdStr: string) {
         const exercice = await prisma.exercice.findUnique({
             where: { id: parsedId },
             include: {
-                compositions: {
-                    include: {
-                        cours: true
-                    }
-                }
+                cours: true
             }
         });
 
         if (!exercice) return null;
 
-        const composition = exercice.compositions[0];
-        const cours = composition?.cours;
+        const cours = exercice.cours;
 
         return {
             id: exercice.id.toString(),
@@ -364,13 +346,9 @@ export async function obtenirActiviteRecenteAdulte() {
             include: {
                 exercice: {
                     include: {
-                        compositions: {
+                        cours: {
                             include: {
-                                cours: {
-                                    include: {
-                                        module: true
-                                    }
-                                }
+                                module: true
                             }
                         }
                     }
@@ -382,8 +360,8 @@ export async function obtenirActiviteRecenteAdulte() {
 
         return scores.map(s => {
             const ex = s.exercice;
-            const comp = ex.compositions[0];
-            const modTitre = comp?.cours?.module?.titre || "Module";
+            const cours = ex.cours;
+            const modTitre = cours?.module?.titre || "Module";
             let scoreStr = "1/1";
             let parfait = true;
 
