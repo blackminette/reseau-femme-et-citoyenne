@@ -51,8 +51,6 @@ export default function AdminMembresPage() {
     const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
     const [modalLotIsOpen, setModalLotIsOpen] = useState(false);
 
-    const [membreSelectionne, setMembreSelectionne] = useState<any>(null);
-
     const [modifierForm, setModifierForm] = useState({
         nom: '',
         prenom: '',
