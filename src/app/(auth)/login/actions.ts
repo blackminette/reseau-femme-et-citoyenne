@@ -8,7 +8,8 @@ export async function loginAction(formData: { email: string; password: string })
     const { email, password } = formData;
 
     try {
-        const fauxEmail = `${email.trim().toLowerCase()}@rfc06.fr`;
+        const inputEmail = email.trim().toLowerCase();
+        const fauxEmail = inputEmail.includes('@') ? inputEmail : `${inputEmail}@rfc06.fr`;
         const supabase = await getSupabaseServer();
 
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -30,17 +31,16 @@ export async function loginAction(formData: { email: string; password: string })
 
         // on vérifie que l'utilisateur existe bien dans la table Prisma
         let utilisateur = await prisma.utilisateur.findUnique({
-            where: { email: email }
+            where: { email: fauxEmail }
         });
 
         if (!utilisateur) {
-            console.log("[login] Profil Prisma manquant, création automatique pour:", email);
-            const username = authData.user.user_metadata?.username || email.split('@')[0];
+            console.log("[login] Profil Prisma manquant, création automatique pour:", fauxEmail);
             utilisateur = await prisma.utilisateur.create({
                 data: {
                     id: authData.user.id, // Synchronisation de l'ID
-                    email: email,
-                    username: email.split('@')[0],
+                    email: fauxEmail,
+                    username: fauxEmail.split('@')[0],
                     nom: authData.user.user_metadata?.nom || 'Nom par défaut',
                     prenom: authData.user.user_metadata?.prenom || 'Prénom par défaut',
                     role: 'MEMBRE' // Rôle par défaut
