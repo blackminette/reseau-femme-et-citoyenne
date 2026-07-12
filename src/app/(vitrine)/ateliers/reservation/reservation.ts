@@ -10,7 +10,7 @@ export async function reserverAtelier(prevState: any, formData: FormData) {
   const telephone = formData.get('telephone') as string;
   const modePaiement = formData.get('modePaiement') as string;
 
-  const utilisateurId = (rawUtilisateurId && rawUtilisateurId !== "") ? rawUtilisateurId : undefined;
+  const utilisateurId = (rawUtilisateurId && rawUtilisateurId !== "") ? rawUtilisateurId : null;
 
   try {
     return await prisma.$transaction(async (tx) => {
