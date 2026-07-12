@@ -64,7 +64,7 @@ ALTER TABLE public."Don" ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION public.get_auth_role()
 RETURNS TEXT AS $$
   SELECT COALESCE(
-    (SELECT role FROM public."Utilisateur" WHERE id = auth.uid()),
+    (SELECT role FROM public."Utilisateur" WHERE id = auth.uid()::text),
     'GUEST'
   );
 $$ LANGUAGE sql SECURITY DEFINER;
@@ -77,11 +77,11 @@ CREATE POLICY "Les admins peuvent tout faire" ON public."Utilisateur"
 
 CREATE POLICY "Les tuteurs peuvent voir leurs enfants" ON public."Utilisateur"
   FOR SELECT TO authenticated USING (
-    id = auth.uid() OR "tuteurId" = auth.uid()
+    id = auth.uid()::text OR "tuteurId" = auth.uid()::text
   );
 
 CREATE POLICY "Les utilisateurs peuvent modifier leur propre profil" ON public."Utilisateur"
-  FOR UPDATE TO authenticated USING (id = auth.uid());
+  FOR UPDATE TO authenticated USING (id = auth.uid()::text);
 
 
 -- 🛡️ TABLE : ScoreQuiz (Quiz enfants)
@@ -90,10 +90,10 @@ CREATE POLICY "Les admins gèrent tous les scores" ON public."ScoreQuiz"
   FOR ALL TO authenticated USING (public.get_auth_role() = 'ADMIN');
 
 CREATE POLICY "Les enfants voient leurs propres scores" ON public."ScoreQuiz"
-  FOR SELECT TO authenticated USING ("etudiantId" = auth.uid());
+  FOR SELECT TO authenticated USING ("etudiantId" = auth.uid()::text);
 
 CREATE POLICY "Les enfants peuvent ajouter leurs propres scores" ON public."ScoreQuiz"
-  FOR INSERT TO authenticated WITH CHECK ("etudiantId" = auth.uid());
+  FOR INSERT TO authenticated WITH CHECK ("etudiantId" = auth.uid()::text);
 
 
 -- 🛡️ TABLE : Reservation (Ateliers)
@@ -103,7 +103,7 @@ CREATE POLICY "Les admins gèrent toutes les réservations" ON public."Reservati
 
 CREATE POLICY "Les membres voient et gèrent leurs réservations" ON public."Reservation"
   FOR ALL TO authenticated USING (
-    "utilisateurId" = auth.uid()
+    "utilisateurId" = auth.uid()::text
   );
 
 
@@ -114,5 +114,5 @@ CREATE POLICY "Lecture publique des ateliers" ON public."Atelier"
 
 CREATE POLICY "Les admins et partenaires gèrent les ateliers" ON public."Atelier"
   FOR ALL TO authenticated USING (
-    public.get_auth_role() = 'ADMIN' OR "partenaireId" = auth.uid()
+    public.get_auth_role() = 'ADMIN' OR "partenaireId" = auth.uid()::text
   );
