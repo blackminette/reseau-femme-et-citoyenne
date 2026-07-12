@@ -22,7 +22,7 @@ type MembreAdmin = {
     id: string;
     nom: string;
     prenom: string;
-    email: string;
+    email?: string | null;
     telephone: string | null;
     role: string;
     createdAt: string | Date;
