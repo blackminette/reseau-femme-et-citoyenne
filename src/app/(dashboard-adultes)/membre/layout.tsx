@@ -2,6 +2,7 @@
 import React from 'react';
 import DashboardShell from '@/components/DashboardShell';
 import MemberSideMenu from '@/components/MemberSideMenu';
+import MemberMobileNav from '@/components/MemberMobileNav';
 
 /** Layout de l'espace membre : sidebar desktop + tiroir burger mobile (voir DashboardShell). */
 export default function MembreLayout({ children }: { children: React.ReactNode }) {
