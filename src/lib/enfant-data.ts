@@ -5,14 +5,14 @@
 import type { LucideIcon } from "lucide-react";
 import {
     BookOpen, Laptop, Cpu, Languages, Landmark, Leaf,
-    Target, Star, Trophy, Crown, HelpCircle, Check,
+    Target, Star, Trophy, Crown, Search, Globe, HelpCircle, Check,
     Palette, Drama, Cookie, Scissors, Shapes, Sprout, Music, Camera,
 } from "lucide-react";
 
 // Enfant connecté à son espace.
 export const ENFANT = {
     prenom: "Léa", nom: "Martin", age: 9, initiales: "LM",
-    progression: 73, badgesObtenus: 6,
+    progression: 73,
 };
 
 // Modules d'apprentissage. Couleurs reprises de la maquette (dégradés), icônes lucide.
@@ -26,17 +26,22 @@ export const MODULES: Module[] = [
     { id: "eco", label: "Éco-citoyenneté", Icon: Leaf, progression: 0, from: "#26a69a", to: "#00695c" },
 ];
 
-// Badges (4 affichés). obtenu = débloqué.
-export type Badge = { label: string; Icon: LucideIcon; desc: string; obtenu: boolean };
+// Badges. obtenu = débloqué ; sinon "progress" indique l'avancement vers le déblocage.
+export type Badge = {
+    label: string; emoji: string; desc: string; obtenu: boolean;
+    progress?: { cur: number; max: number; txt: string };
+};
 export const BADGES: Badge[] = [
-    { label: "1ers pas", Icon: Target, desc: "Terminer sa première activité.", obtenu: true },
-    { label: "Score parfait", Icon: Star, desc: "Obtenir une note maximale.", obtenu: true },
-    { label: "Assidu", Icon: Trophy, desc: "Compléter 10 activités au total.", obtenu: false },
-    { label: "Expert", Icon: Crown, desc: "Obtenir 5 scores parfaits.", obtenu: false },
+    { label: "1ers pas", emoji: "🎯", desc: "Terminer sa première activité.", obtenu: true },
+    { label: "Score parfait", emoji: "⭐", desc: "Obtenir une note maximale.", obtenu: true },
+    { label: "Assidu", emoji: "🏆", desc: "Compléter 10 activités au total.", obtenu: false, progress: { cur: 9, max: 10, txt: "9 / 10 activités" } },
+    { label: "Expert", emoji: "👑", desc: "Obtenir 5 scores parfaits.", obtenu: false, progress: { cur: 3, max: 5, txt: "3 / 5 scores parfaits" } },
+    { label: "Curieux", emoji: "🔍", desc: "Essayer 3 modules différents.", obtenu: true },
+    { label: "Explorateur", emoji: "🌍", desc: "Avoir touché à tous les modules !", obtenu: false, progress: { cur: 5, max: 6, txt: "5 / 6 modules explorés" } },
 ];
 
 // Dernier badge débloqué (bandeau "nouveau badge").
-export const DERNIER_BADGE = { label: "1ers pas", Icon: Target, desc: "Terminer sa première activité." };
+export const DERNIER_BADGE = { label: "1ers pas", emoji: "🎯", desc: "Terminer sa première activité." };
 
 // Derniers résultats (quiz / exercices).
 export type Resultat = { id: number; Icon: LucideIcon; titre: string; date: string; score: string; parfait: boolean };
