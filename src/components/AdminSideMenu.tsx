@@ -14,7 +14,8 @@ import {
     ClipboardCheck,
     ChevronRight,
     LogOut,
-    FileText
+    FileText,
+    UserCheck
 } from 'lucide-react';
 
 interface SidebarLinkProps {
