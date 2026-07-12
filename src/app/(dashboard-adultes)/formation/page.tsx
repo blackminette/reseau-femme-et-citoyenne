@@ -1,5 +1,4 @@
 // * src/app/(dashboard-adultes)/etudiant/page.tsx
-'use client';
 
 import React from 'react';
 import Link from 'next/link';
