@@ -4,8 +4,6 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-    BookOpen, Laptop, Cpu, Languages, Landmark, Leaf,
-    Target, Star, Trophy, Crown, Search, Globe, HelpCircle, Check,
     Palette, Drama, Cookie, Scissors, Shapes, Sprout, Music, Camera,
 } from "lucide-react";
 
