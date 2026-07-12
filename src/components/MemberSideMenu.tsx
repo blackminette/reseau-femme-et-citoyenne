@@ -46,7 +46,11 @@ const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: Luc
     },
 ];
 
-export default function MemberSideMenu() {
+interface MemberSideMenuProps {
+    onClose?: () => void;
+}
+
+export default function MemberSideMenu({ onClose }: MemberSideMenuProps = {}) {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -82,6 +86,7 @@ export default function MemberSideMenu() {
                                 <Link
                                     key={href}
                                     href={href}
+                                    onClick={onClose}
                                     className={`group relative flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                                         isActive
                                             ? 'bg-indigo-50 font-semibold text-indigo-600'
