@@ -1,7 +1,10 @@
 import { Phone, Mail, MapPin } from 'lucide-react';
 import ContactForm from '@/components/contact-form';
 
-
+export const metadata = {
+    title: 'Contact',
+    description: 'Une question ? Envie de devenir bénévole ou de participer à nos ateliers ? Contactez l\'association Réseau Femme et Citoyenne.',
+};
 
 export default function ContactPage() {
     const infoCards = [

@@ -1,6 +1,11 @@
 import Image from 'next/image';
 import { obtenirActualitesVitrine } from '@/lib/actualites';
 
+export const metadata = {
+    title: 'Actualités',
+    description: 'Suivez les actualités, ateliers pédagogiques et actions citoyennes de l\'association Réseau Femme et Citoyenne.',
+};
+
 export default async function ActualitesPage() {
     const actualites = await obtenirActualitesVitrine();
 

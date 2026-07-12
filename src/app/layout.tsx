@@ -11,8 +11,12 @@ const geist = Geist({
 });
 
 export const metadata = {
-    title: 'Mon Projet Association',
-    description: 'Application de gestion avec contrôle des rôles (RBAC)',
+    title: {
+        default: 'Réseau Femme et Citoyenne | Solidarité & Inclusion',
+        template: '%s | Réseau Femme et Citoyenne'
+    },
+    description: 'Association de Solidarité et d\'Éducation aux Alpes-Maritimes : inclusion, soutien aux femmes, éducation numérique et éco-citoyenneté des enfants.',
+    keywords: ['association', 'Réseau Femme et Citoyenne', 'solidarité', 'éducation', 'numérique', 'Nice', 'Alpes-Maritimes'],
 };
 
 /**
