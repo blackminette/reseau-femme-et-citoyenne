@@ -118,6 +118,15 @@ export default function AdminMembresPage() {
         return () => window.clearTimeout(timer);
     }, [chargerMembres]);
 
+    const handleToggleRole = (role: string) => {
+        setRolesSelectionnes((prev) =>
+            prev.includes(role)
+                ? prev.filter((r) => r !== role)
+                : [...prev, role]
+        );
+        setPageActuelle(1);
+    };
+
     const ouvrirModalModifier = (membre: MembreAdmin) => {
         setMembreSelectionne(membre);
         setModifierForm({
