@@ -12,6 +12,7 @@ import PremiumConfetti from '@/components/PremiumConfetti';
 import { MODULES } from '@/lib/enfant-data';
 
 import { obtenirDetailsActiviteDepuisDB, sauvegarderResultatActivite, enregistrerTentativeExercice, obtenirDetailsModuleDepuisDB, sauvegarderCompletionCours } from '../../../actions';
+import { useActivityAdventureController } from './use-activity-adventure-controller';
 
 type PageParams = Promise<{ id: string; actId: string }>;
 
