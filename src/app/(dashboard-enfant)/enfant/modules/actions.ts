@@ -1,7 +1,7 @@
 // * src/app/(dashboard-enfant)/enfant/modules/actions.ts
 'use server';
 
-import { Prisma, Parcours } from '@prisma/client';
+import { Parcours } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 
@@ -18,6 +18,60 @@ function mapTitreToSlug(titre: string): string {
     // Clean and return the title itself as slug if it's a specific custom module name
     return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || 'module';
 }
+
+function getFirstSentence(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+    const match = trimmed.match(/^[^.?!]+[.?!]?/);
+    return (match?.[0] || trimmed).trim();
+}
+
+function getCoursePreview(cours: { titre: string; contenu?: unknown }) {
+    const contenu = cours.contenu;
+
+    if (Array.isArray(contenu)) {
+        const firstBloc = contenu[0] as { titre?: string; texte?: string } | undefined;
+        const title = firstBloc?.titre?.trim();
+        const text = firstBloc?.texte?.trim();
+        if (title && text) {
+            return `${title} - ${getFirstSentence(text)}`;
+        }
+        if (text) {
+            return getFirstSentence(text);
+        }
+    }
+
+    return `Découvre les notions clés de ${cours.titre}.`;
+}
+
+type DiagnosticRecommandation = {
+    id: string;
+    moduleSlug: string;
+    titre: string;
+    action: string;
+    raison: string;
+};
+
+type DiagnosticDifficulte = {
+    parcours: string;
+    module: string;
+    pourcentage: number;
+    texte: string;
+};
+
+type ModulePerformanceExercice = {
+    id: string | number;
+    titre: string;
+    ratioPct: number;
+};
+
+type ModulePerformanceEntry = {
+    totalScore: number;
+    maxScore: number;
+    moduleTitre: string;
+    slug: string;
+    exNonReussis: ModulePerformanceExercice[];
+};
 
 // Helper to handle and log DB connection errors cleanly
 function gererErreurBaseDeDonnees(nomFonction: string, err: unknown) {
@@ -182,8 +236,8 @@ export async function obtenirProfilEnfant() {
         }
 
         // Analyser les difficultés et recommandations sur les exercices réels du profil
-        let recommandations = [];
-        let difficultes = [];
+        const recommandations: DiagnosticRecommandation[] = [];
+        const difficultes: DiagnosticDifficulte[] = [];
 
         try {
             // Récupérer toutes les tentatives détaillées de l'étudiant
@@ -490,7 +544,7 @@ export async function obtenirDetailsModuleDepuisDB(moduleIdStr: string) {
             activites.push({
                 id: coursKey,
                 titre: crs.titre,
-                description: "Découvre et apprends les notions clés de cette leçon !",
+                description: getCoursePreview(crs),
                 type: 'lecon',
                 statut: isCompleted ? 'termine' : 'verrouille',
                 score: isCompleted ? "1/1" : undefined,

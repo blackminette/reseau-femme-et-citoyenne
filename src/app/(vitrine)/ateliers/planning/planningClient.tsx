@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AtelierProps {
@@ -24,9 +24,45 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
     setCurrentDate(aujourdhui);
   }, []);
 
-  if (!currentDate) return <div className="p-12 text-center text-purple-600 font-bold">Chargement du planning...</div>;
+  // --- LOGIQUE DE LA SEMAINE EN COURS (Optimisée avec useMemo) ---
+  const semaine = useMemo(() => {
+    if (!currentDate) return null;
 
-  // Modifié ici : Next.js ignore le dossier (vitrine) dans l'URL !
+    const diff = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
+    
+    const monday = new Date(currentDate);
+    monday.setDate(currentDate.getDate() - diff);
+    monday.setHours(0, 0, 0, 0);
+    
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+    saturday.setHours(23, 59, 59, 999);
+
+    const weekDays = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+
+    // On ne garde que les ateliers prévus entre le Lundi et le Samedi de cette semaine
+    const ateliersDeLaSemaine = initialAteliers
+      .filter((a) => {
+        const dDebut = new Date(a.dateDebut);
+        return dDebut >= monday && dDebut <= saturday;
+      })
+      .sort((a, b) => new Date(a.dateDebut).getTime() - new Date(b.dateDebut).getTime());
+
+    return { monday, saturday, weekDays, ateliersDeLaSemaine };
+  }, [currentDate, initialAteliers]);
+
+  // Sécurité pendant le chargement côté client (Hydratation)
+  if (!currentDate || !semaine) {
+    return <div className="p-12 text-center text-purple-600 font-bold">Chargement du planning...</div>;
+  }
+
+  // Destructuration des variables calculées pour ne pas impacter ton JSX
+  const { monday, saturday, weekDays, ateliersDeLaSemaine } = semaine;
+
   const handleRedirection = () => {
     router.push('/ateliers/reservation');
   };
@@ -39,34 +75,12 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
     { label: '16h30 – 18h', startHour: 16 }
   ];
 
-  const diff = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
-  const monday = new Date(currentDate);
-  monday.setDate(currentDate.getDate() - diff);
-  monday.setHours(0, 0, 0, 0);
-  
-  const saturday = new Date(monday);
-  saturday.setDate(monday.getDate() + 5);
-  saturday.setHours(23, 59, 59, 999);
-
-  const weekDays = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
-  });
-
   const getAteliersForDateAndSlot = (date: Date, startHour: number) => {
     return initialAteliers.filter((a) => {
       const dDebut = new Date(a.dateDebut);
       return dDebut.toDateString() === date.toDateString() && dDebut.getHours() === startHour;
     });
   };
-
-  const ateliersDeLaSemaine = initialAteliers
-    .filter((a) => {
-      const dDebut = new Date(a.dateDebut);
-      return dDebut >= monday && dDebut <= saturday;
-    })
-    .sort((a, b) => new Date(a.dateDebut).getTime() - new Date(b.dateDebut).getTime());
 
   return (
     <div className="w-full bg-[#fbf9fe] min-h-screen font-sans pb-20">
@@ -95,11 +109,11 @@ export default function PlanningClient({ initialAteliers }: { initialAteliers: A
       {/* 2. TITRE DE LA SEMAINE */}
       <section className="max-w-7xl mx-auto px-4 pt-10 md:pt-16 pb-6 md:pb-8 text-center">
         <h2 className="text-2xl md:text-4xl font-black text-[#503d96] tracking-tight">
-          Semaine du {monday.getDate()} au {saturday.getDate()} {monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-        </h2>
+  Semaine du {monday.getDate()} {monday.toLocaleDateString('fr-FR', { month: 'short' })} au {saturday.getDate()} {saturday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+</h2>
         <p className="text-gray-500 text-xs md:text-sm mt-2 font-medium flex items-center justify-center flex-wrap gap-1">
           <span>Cliquez sur un atelier pour réserver</span> 
-          <span className="hidden sm:inline">— les places sont limitées ◆</span>
+          <span className="hidden sm:inline">— les places sont limited ◆</span>
         </p>
       </section>
 

@@ -49,6 +49,8 @@ model Atelier {
   titre             String
   description       String?
   placesMax         Int           @default(15)
+  trancheAge        String?
+  public           PublicCible   @default(ENFANT)
   estPrive          Boolean       @default(false)
   typePaiement      String?
   creneauVerrouille Boolean       @default(false)

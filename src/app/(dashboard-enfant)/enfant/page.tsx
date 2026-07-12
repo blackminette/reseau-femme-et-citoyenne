@@ -332,7 +332,7 @@ export default async function EnfantDashboard() {
                         <div className="flex flex-col items-center justify-center py-8 text-center min-h-[150px]">
                             <TrendingUp className="h-9 w-9 text-violet-300 animate-pulse" />
                             <p className="mt-2 text-xs text-violet-500 font-semibold">Aucune activité récente.</p>
-                            <p className="text-[10px] text-violet-400 mt-1">Tes leçons complétées s'afficheront ici !</p>
+                            <p className="text-[10px] text-violet-400 mt-1">Tes leçons complétées s&apos;afficheront ici !</p>
                         </div>
                     )}
                 </div>

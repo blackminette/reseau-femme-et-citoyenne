@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
@@ -12,6 +12,8 @@ export const metadata = {
     title: 'AtelierKids - Espace Enfant',
     description: 'Plateforme Pédagogique AtelierKids',
 };
+
+export const dynamic = 'force-dynamic';
 
 export default async function EnfantLayout({
     children,
