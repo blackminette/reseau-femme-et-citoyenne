@@ -28,6 +28,7 @@ model Utilisateur {
   temoignages     Temoignage[]
   tentatives      TentativeExercice[]
   completionsCours CompletionCours[]
+  progressionsFormation ProgressionFormation[]
   tuteur          Utilisateur?        @relation("ParentEnfant", fields: [tuteurId], references: [id], onDelete: Cascade)
   enfants         Utilisateur[]       @relation("ParentEnfant")
   badges          Badge[]
@@ -242,4 +243,20 @@ enum Difficulte {
   FACILE
   MOYEN
   DIFFICILE
+}
+
+model ProgressionFormation {
+  id            Int         @id @default(autoincrement())
+  utilisateurId String
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  moduleCle     String      // identifiant du module côté front (ex: "fichiers-windows")
+  etapeActuelle Int         @default(0) // dernière étape atteinte (0 = pas commencé)
+  totalEtapes   Int         @default(1) // nombre total d'étapes du module
+  scoreQuiz     Int?        // nombre de bonnes réponses au quiz (null = quiz pas encore passé)
+  totalQuiz     Int?        // nombre total de questions du quiz
+  terminee      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([utilisateurId, moduleCle])
 }
