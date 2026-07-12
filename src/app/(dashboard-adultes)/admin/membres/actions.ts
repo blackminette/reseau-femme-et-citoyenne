@@ -11,6 +11,7 @@ type FiltresUtilisateur = Prisma.UtilisateurWhereInput;
 type DonneesUtilisateur = {
     nom?: string;
     prenom?: string;
+    username?: string;
     email?: string;
     telephone?: string | null;
     role?: string;
