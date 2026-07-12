@@ -1,36 +1,19 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { listerLesUtilisateurs, modifierUtilisateur, supprimerUtilisateur, creerUtilisateur, reinitialiserMdp, toggleStatutUtilisateur, creerUtilisateursEnLot, supprimerUtilisateursEnMasse } from './actions';
+import React, { useEffect, useState } from 'react';
+import {
+    listerLesUtilisateurs,
+    modifierUtilisateur,
+    supprimerUtilisateur,
+    creerUtilisateur,
+    reinitialiserMdp,
+    toggleStatutUtilisateur,
+    creerUtilisateursEnLot,
+    supprimerUtilisateursEnMasse
+} from './actions';
 import Modal from '@/components/Modal';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ChevronDown, Plus, RotateCcw, UserCheck, UserX } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
-
-type MembreTuteur = {
-    nom: string;
-    prenom: string;
-};
-
-type MembreStatistiques = {
-    enfants: number;
-    reservations: number;
-    coursAnimes: number;
-    dons: number;
-};
-
-type MembreAdmin = {
-    id: string;
-    nom: string;
-    prenom: string;
-    username: string;
-    email?: string | null;
-    telephone: string | null;
-    role: string;
-    isActive?: boolean;
-    createdAt: string | Date;
-    tuteur?: MembreTuteur | null;
-    _count: MembreStatistiques;
-};
 
 const ROLE_STYLES: Record<string, string> = {
     ADMIN: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -43,16 +26,8 @@ const ROLE_STYLES: Record<string, string> = {
 };
 
 export default function AdminMembresPage() {
-    const [membres, setMembres] = useState<MembreAdmin[]>([]);
+    const [membres, setMembres] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [membreSelectionne, setMembreSelectionne] = useState<MembreAdmin | null>(null);
-
-    const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
-    const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
-    const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
-    const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
-    const [modalLotIsOpen, setModalLotIsOpen] = useState(false);
-
     const [recherche, setRecherche] = useState('');
     const [rolesSelectionnes, setRolesSelectionnes] = useState<string[]>([]);
     const [tri, setTri] = useState<'RECENT' | 'ANCIEN' | 'ALPHABETIQUE'>('RECENT');
@@ -60,22 +35,15 @@ export default function AdminMembresPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [pageActuelle, setPageActuelle] = useState(1);
     const [membresParPage, setMembresParPage] = useState(20);
-
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchCurrentAdmin = async () => {
-            try {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                if (user) {
-                    setCurrentAdminId(user.id);
-                }
-            } catch (err) {
-                console.error("Erreur lors de la récupération de la session Admin:", err);
-            }
-        };
-        void fetchCurrentAdmin();
-    }, []);
+    const [modalDetailsIsOpen, setModalDetailsIsOpen] = useState(false);
+    const [modalModifierIsOpen, setModalModifierIsOpen] = useState(false);
+    const [modalSupprimerIsOpen, setModalSupprimerIsOpen] = useState(false);
+    const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
+    const [modalLotIsOpen, setModalLotIsOpen] = useState(false);
+
+    const [membreSelectionne, setMembreSelectionne] = useState<any>(null);
 
     const [modifierForm, setModifierForm] = useState({
         nom: '',
@@ -100,23 +68,39 @@ export default function AdminMembresPage() {
         nombre: 5
     });
 
-    const chargerMembres = useCallback(async () => {
-        setIsLoading(true);
-        const reponse = await listerLesUtilisateurs();
+    useEffect(() => {
+        chargerMembres();
 
-        if (reponse.success && reponse.data) {
-            setMembres(reponse.data);
-        }
-        setIsLoading(false);
     }, []);
 
     useEffect(() => {
-        const timer = window.setTimeout(() => {
-            void chargerMembres();
-        }, 0);
+        setPageActuelle(1);
+    }, [recherche, rolesSelectionnes, statutFiltre]);
 
-        return () => window.clearTimeout(timer);
-    }, [chargerMembres]);
+    useEffect(() => {
+        const fetchCurrentAdmin = async () => {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user) {
+                    setCurrentAdminId(user.id);
+                }
+            } catch (err) {
+                console.error("Erreur lors de la récupération de la session Admin:", err);
+            }
+        };
+        fetchCurrentAdmin();
+    }, []);
+
+    const chargerMembres = async () => {
+        setIsLoading(true);
+        const result = await listerLesUtilisateurs();
+        if (result.success && result.data) {
+            setMembres(result.data);
+        } else {
+            alert(result.error || "Une erreur est survenue lors du chargement des membres.");
+        }
+        setIsLoading(false);
+    };
 
     const handleToggleRole = (role: string) => {
         setRolesSelectionnes((prev) =>
@@ -124,10 +108,50 @@ export default function AdminMembresPage() {
                 ? prev.filter((r) => r !== role)
                 : [...prev, role]
         );
-        setPageActuelle(1);
     };
 
-    const ouvrirModalModifier = (membre: MembreAdmin) => {
+    const handleActive = async (id: string, currentStatus: boolean) => {
+        if (id === currentAdminId) {
+            alert("Action impossible : Vous ne pouvez pas désactiver votre propre compte.");
+            return;
+        }
+
+        const statutActuel = currentStatus ?? true;
+        const actionTexte = statutActuel ? 'désactiver' : 'activer';
+
+        if (!confirm(`Voulez-vous ${actionTexte} ce membre ?`)) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await toggleStatutUtilisateur(id, statutActuel);
+            if (res.success) {
+                await chargerMembres();
+            } else {
+                alert(res.error || `Impossible de ${actionTexte} le membre.`);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Une erreur inattendue est survenue.");
+            setIsLoading(false);
+        }
+    };
+
+    const handleReinitialiser = async (username: string) => {
+        if (!confirm(`Êtes-vous sûr de vouloir réinitialiser le mot de passe de ${username} ?`)) {
+            return;
+        }
+        const result = await reinitialiserMdp(username);
+        if (result.success) {
+            alert(`Le mot de passe de ${username} a été réinitialisé à "Password123!". L'utilisateur devra le changer à sa prochaine connexion.`);
+        } else {
+            alert(result.error || "Une erreur est survenue.");
+        }
+    };
+
+    const ouvrirModalModifier = (membre: any) => {
         setMembreSelectionne(membre);
         setModifierForm({
             nom: membre.nom,
@@ -513,12 +537,40 @@ export default function AdminMembresPage() {
                                             <td className="py-4 px-6 font-mono text-xs text-slate-500">
                                                 @{membre.username}
                                             </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1.5 items-center">
-                                                    <span className={`px-2.5 py-0.5 border rounded-full text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[membre.role] || ROLE_STYLES.MEMBRE}`}>
-                                                        {membre.role?.toLowerCase()}
-                                                    </span>
+                                            <td className="py-4 px-6">
+                                                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${estActif
+                                                    ? (ROLE_STYLES[membre.role] || 'bg-slate-100 text-slate-700')
+                                                    : 'bg-slate-200 text-slate-500 border-slate-300 line-through'
+                                                    }`}>
+                                                    {membre.role}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-slate-500">
+                                                {membre.telephone || <span className="text-slate-300 italic text-xs">Non renseigné</span>}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                                                    {membre.role === 'ADMIN' && (
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">Accès Total</span>
+                                                    )}
+                                                    {membre.role === 'INTERVENANT' && (
+                                                        <span>📚 <b>{membre._count?.coursAnimes || 0}</b> cours</span>
+                                                    )}
+                                                    {membre.role === 'MEMBRE' && (
+                                                        <>
+                                                            <span>👶 <b>{membre._count?.enfants || 0}</b> enf.</span>
+                                                            <span>💳 <b>{membre._count?.dons || 0}</b> dons</span>
+                                                        </>
+                                                    )}
+                                                    {membre.role === 'ENFANT' && (
+                                                        <span>🗓️ <b>{membre._count?.reservations || 0}</b> res.</span>
+                                                    )}
+                                                    {membre.role === 'BENEVOLE' && (
+                                                        <span>🤝 Actif</span>
+                                                    )}
+                                                    {membre.role === 'PARTENAIRE' && (
+                                                        <span>🏢 Entreprise</span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6">
