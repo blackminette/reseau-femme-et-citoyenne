@@ -66,14 +66,14 @@ export default function Footer() {
                             <span className="h-1 w-1 bg-[#bc96e6] rounded-full"></span>
                             Mentions légales
                         </Link>
-                        <a href="/confidentialite" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
+                        <Link href="/mentions-legales#confidentialite" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
                             <span className="h-1 w-1 bg-[#bc96e6] rounded-full"></span>
                             Confidentialité
-                        </a>
-                        <a href="/contact" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
+                        </Link>
+                        <Link href="/contact" className="hover:text-[#ffd166] transition-colors flex items-center gap-2">
                             <span className="h-1 w-1 bg-[#bc96e6] rounded-full"></span>
                             Contactez-nous
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
