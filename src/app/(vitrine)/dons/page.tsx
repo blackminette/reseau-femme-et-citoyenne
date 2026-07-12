@@ -34,7 +34,7 @@ export default function DonsPage() {
   const formRef = useRef<HTMLDivElement>(null);
 
   // Helper to scroll to the form
-  const handleScrollToForm = () => {
+  const handleScrollToForm = (amount?: number) => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
