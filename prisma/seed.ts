@@ -435,7 +435,6 @@ async function main() {
         }
         supabaseAuthId = userExistant.id;
       } else {
-        console.error(`❌ Erreur Supabase Auth pour ${user.email}:`, authError.message);
         continue;
       }
     } else {

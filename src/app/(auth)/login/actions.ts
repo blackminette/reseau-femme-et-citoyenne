@@ -8,9 +8,11 @@ export async function loginAction(formData: { email: string; password: string })
     const { email, password } = formData;
 
     try {
+        const fauxEmail = `${username.trim().toLowerCase()}@rfc06.fr`;
         const supabase = await getSupabaseServer();
+
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email,
+            email: fauxEmail,
             password,
         });
 
@@ -52,14 +54,15 @@ export async function loginAction(formData: { email: string; password: string })
         // Si tout est bon, on renvoie le rôle de l'utilisateur pour adapter l'interface ensuite
         return {
             success: true,
-            role: utilisateur.role
+            role: utilisateur.role,
+            session: authData.session
         };
 
     } catch (error) {
-        console.error("[login] Erreur critique lors de la connexion :", error);
+        console.error("[loginAction] Erreur serveur critique :", error);
         return {
             success: false,
-            error: "[login] Une erreur serveur est survenue. Veuillez réessayer plus tard."
+            error: "Une erreur serveur est survenue. Veuillez réessayer plus tard."
         };
     }
 }

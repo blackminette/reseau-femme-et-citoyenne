@@ -1,18 +1,25 @@
 // * src/app/(dashboard-adultes)/admin/ateliers/page.tsx
 'use client'
 
+declare module '@fullcalendar/react';
+declare module '@fullcalendar/daygrid';
+declare module '@fullcalendar/timegrid';
+declare module '@fullcalendar/interaction';
+declare module '@fullcalendar/core/locales/fr';
+
 import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import frLocale from '@fullcalendar/core/locales/fr';
-import { Calendar, Loader2, Plus, Trash2, X } from 'lucide-react';
-import { listerAteliers, sauvegarderAteliers, supprimerAteliers } from './actions';
+import { Calendar, Loader2, Plus, Trash2, X, Users, MapPin } from 'lucide-react';
+import { listerAteliers, sauvegarderAteliers, supprimerAteliers, listerLieux } from './actions';
 import Modal from '@/components/Modal';
 
 export default function AdminAteliersPage() {
     const [events, setEvents] = useState<any[]>([]);
+    const [lieux, setLieux] = useState<any[]>([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [chargement, setChargement] = useState(true);
 
@@ -22,37 +29,57 @@ export default function AdminAteliersPage() {
     const [formStart, setFormStart] = useState('');
     const [formEnd, setFormEnd] = useState('');
 
-    const chargerLesAteliers = async () => {
+    const [formPlacesMax, setFormPlacesMax] = useState<number>(15);
+    const [formLieuId, setFormLieuId] = useState<string>('');
+    const [formNouveauLieuNom, setFormNouveauLieuNom] = useState<string>('');
+    const [formNouveauLieuAdresse, setFormNouveauLieuAdresse] = useState<string>('');
+
+    const chargerDonnees = async () => {
         setChargement(true);
         try {
-            const res = await listerAteliers();
-            if (res.success && res.data) {
-                const ateliersFormates = res.data.map((atelier: any) => ({
+            const [resAteliers, resLieux] = await Promise.all([listerAteliers(), listerLieux()]);
+
+            if (resLieux.success && resLieux.data) {
+                setLieux(resLieux.data);
+            }
+
+            if (resAteliers.success && resAteliers.data) {
+                const ateliersFormates = resAteliers.data.map((atelier: any) => ({
                     id: atelier.id.toString(),
                     title: atelier.titre,
                     start: new Date(atelier.dateDebut).toISOString().slice(0, 16),
                     end: new Date(atelier.dateFin).toISOString().slice(0, 16),
                     extendedProps: {
                         description: atelier.description || '',
+                        placesMax: atelier.placesMax,
+                        lieuId: atelier.lieuId
                     }
                 }));
                 setEvents(ateliersFormates);
             }
         } catch (error) {
-            console.error("Erreur chargement ateliers:", error);
+            console.error("Erreur chargement donnees:", error);
         } finally {
             setChargement(false);
         }
     };
 
     useEffect(() => {
-        chargerLesAteliers();
+        chargerDonnees();
     }, []);
 
-    const handleDateSelect = (selectInfo: any) => {
+    const resetFormulaire = () => {
         setSelectedEventId(null);
         setFormTitle('');
         setFormDescription('');
+        setFormPlacesMax(15);
+        setFormLieuId('');
+        setFormNouveauLieuNom('');
+        setFormNouveauLieuAdresse('');
+    };
+
+    const handleDateSelect = (selectInfo: any) => {
+        resetFormulaire();
         setFormStart(selectInfo.startStr.slice(0, 16));
         setFormEnd(selectInfo.endStr ? selectInfo.endStr.slice(0, 16) : selectInfo.startStr.slice(0, 16));
         setModalIsOpen(true);
@@ -65,6 +92,10 @@ export default function AdminAteliersPage() {
         setFormDescription(event.extendedProps.description || '');
         setFormStart(event.startStr.slice(0, 16));
         setFormEnd(event.endStr ? event.endStr.slice(0, 16) : event.startStr.slice(0, 16));
+        setFormPlacesMax(event.extendedProps.placesMax || 15);
+        setFormLieuId(event.extendedProps.lieuId || '');
+        setFormNouveauLieuNom('');
+        setFormNouveauLieuAdresse('');
         setModalIsOpen(true);
     };
 
@@ -75,7 +106,9 @@ export default function AdminAteliersPage() {
             title: event.title,
             description: event.extendedProps.description,
             start: new Date(event.startStr),
-            end: new Date(event.endStr || event.startStr)
+            end: new Date(event.endStr || event.startStr),
+            placesMax: event.extendedProps.placesMax || 15,
+            lieuId: event.extendedProps.lieuId
         });
 
         if (!res.success) {
@@ -86,6 +119,14 @@ export default function AdminAteliersPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formTitle || !formStart || !formEnd || !formLieuId) {
+            alert("Veuillez remplir les champs obligatoires (Titre, Dates et Lieu)");
+            return;
+        }
+        if (formLieuId === "nouveau" && (!formNouveauLieuNom.trim() || !formNouveauLieuAdresse.trim())) {
+            alert("Veuillez renseigner le nom et l'adresse du nouveau lieu");
+            return;
+        }
 
         const res = await sauvegarderAteliers({
             id: selectedEventId || undefined,
@@ -93,11 +134,15 @@ export default function AdminAteliersPage() {
             description: formDescription,
             start: new Date(formStart),
             end: new Date(formEnd),
+            placesMax: formPlacesMax,
+            lieuId: formLieuId,
+            nouveauLieuNom: formLieuId === "nouveau" ? formNouveauLieuNom : undefined,
+            nouveauLieuAdresse: formLieuId === "nouveau" ? formNouveauLieuAdresse : undefined
         });
 
         if (res.success) {
             setModalIsOpen(false);
-            chargerLesAteliers();
+            chargerDonnees();
         } else {
             alert("Une erreur est survenue lors de l'enregistrement.");
         }
@@ -110,7 +155,7 @@ export default function AdminAteliersPage() {
             const res = await supprimerAteliers(selectedEventId);
             if (res.success) {
                 setModalIsOpen(false);
-                chargerLesAteliers();
+                chargerDonnees();
             } else {
                 alert("Impossible de supprimer cet atelier.");
             }
@@ -132,9 +177,7 @@ export default function AdminAteliersPage() {
                 </div>
                 <button
                     onClick={() => {
-                        setSelectedEventId(null);
-                        setFormTitle('');
-                        setFormDescription('');
+                        resetFormulaire();
                         const maintenant = new Date().toISOString().slice(0, 16);
                         setFormStart(maintenant);
                         setFormEnd(maintenant);
@@ -181,19 +224,14 @@ export default function AdminAteliersPage() {
                         height="auto"
                     />
 
-                    {/* ENCAPSULATION ET SUBLIMATION DESIGN DE FULLCALENDAR */}
                     <style dangerouslySetInnerHTML={{
                         __html: `
                         .calendrier {
                             --fc-border-color: #e2dff0;
                             --fc-daygrid-event-dot-width: 8px;
-
-                            /* Événements globaux */
                             --fc-event-bg-color: #7c3aed;
                             --fc-event-border-color: #6d28d9;
                             --fc-event-text-color: #ffffff;
-
-                            /* Boutons de navigation */
                             --fc-button-bg-color: #ffffff;
                             --fc-button-border-color: #d8d4f2;
                             --fc-button-text-color: #1e1b4b; 
@@ -201,18 +239,12 @@ export default function AdminAteliersPage() {
                             --fc-button-hover-border-color: #a78bfa;
                             --fc-button-active-bg-color: #ede9fe;
                             --fc-button-active-border-color: #8b5cf6;
-
-                            /* Surlignage du jour actuel */
                             --fc-today-bg-color: #eee9ff !important; 
                         }
-
-                        /* Coloration du fond de la grille */
                         .calendrier .fc-timegrid-slots td, 
                         .calendrier .fc-daygrid-day {
                             background-color: #faf9ff;
                         }
-
-                        /* Titre principal du calendrier */
                         .calendrier .fc-toolbar-title {
                             font-size: 1.25rem !important;
                             font-weight: 700 !important;
@@ -220,8 +252,6 @@ export default function AdminAteliersPage() {
                             letter-spacing: -0.025em;
                             text-transform: capitalize;
                         }
-
-                        /* Boutons de navigation */
                         .calendrier .fc-button {
                             border-radius: 0.75rem !important;
                             font-size: 0.875rem !important;
@@ -231,19 +261,15 @@ export default function AdminAteliersPage() {
                             transition: all 0.2s;
                             text-transform: capitalize;
                         }
-
                         .calendrier .fc-button-primary:not(:disabled).fc-button-active,
                         .calendrier .fc-button-primary:not(:disabled):active {
                             background-color: #7c3aed !important;
                             color: #ffffff !important;
                             border-color: #6d28d9 !important;
                         }
-
                         .calendrier .fc-button-group {
                             gap: 4px;
                         }
-
-                        /* En-têtes des jours */
                         .calendrier .fc-col-header-cell {
                             background-color: #f5f3ff !important;
                             padding: 12px 0 !important;
@@ -255,15 +281,11 @@ export default function AdminAteliersPage() {
                             font-size: 0.875rem;
                             text-decoration: none !important;
                         }
-
-                        /* Axe des heures à gauche */
                         .calendrier .fc-timegrid-slot-label-cushion {
                             color: #6d28d9 !important;
                             font-size: 0.75rem !important;
                             font-weight: 500;
                         }
-
-                        /* Style des cartes événements */
                         .calendrier .fc-timegrid-event, .calendrier .fc-daygrid-event {
                             border-radius: 8px !important;
                             padding: 4px 6px !important;
@@ -272,7 +294,6 @@ export default function AdminAteliersPage() {
                             background-color: #7c3aed !important;
                             box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.2), 0 2px 4px -2px rgba(124, 58, 237, 0.2) !important;
                         }
-
                         .calendrier .fc-event-title {
                             font-weight: 600 !important;
                             font-size: 0.75rem !important;
@@ -339,6 +360,72 @@ export default function AdminAteliersPage() {
                             />
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* SELECTION DU LIEU */}
+                        <div>
+                            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1.5">
+                                <MapPin className="h-4 w-4 text-violet-400" /> Lieu de l'atelier
+                            </label>
+                            <select
+                                required
+                                value={formLieuId}
+                                onChange={(e) => setFormLieuId(e.target.value)}
+                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all bg-white"
+                            >
+                                <option value="" disabled>-- Sélectionner un lieu --</option>
+                                {lieux.map((lieu) => (
+                                    <option key={lieu.id} value={lieu.id}>
+                                        {lieu.nom}
+                                    </option>
+                                ))}
+                                <option value="nouveau" className="text-violet-600 font-semibold">+ Ajouter un nouveau lieu</option>
+                            </select>
+                        </div>
+
+                        {/* PLACES MAXIMUM */}
+                        <div>
+                            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1.5">
+                                <Users className="h-4 w-4 text-violet-400" /> Places maximum
+                            </label>
+                            <input
+                                type="number"
+                                min={1}
+                                required
+                                value={formPlacesMax}
+                                onChange={(e) => setFormPlacesMax(Number(e.target.value))}
+                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Formulaire imbriqué pour la création d'un nouveau lieu */}
+                    {formLieuId === "nouveau" && (
+                        <div className="p-4 bg-violet-50/50 border border-violet-100 rounded-xl space-y-4 animate-fadeIn">
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1">Nom du nouveau Lieu</label>
+                                <input
+                                    type="text"
+                                    required={formLieuId === "nouveau"}
+                                    value={formNouveauLieuNom}
+                                    onChange={(e) => setFormNouveauLieuNom(e.target.value)}
+                                    placeholder="Ex: Salle Polyvalente, Centre culturel..."
+                                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all bg-white placeholder:text-slate-400"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-violet-800 mb-1">Adresse ou descriptif du lieu</label>
+                                <input
+                                    type="text"
+                                    required={formLieuId === "nouveau"}
+                                    value={formNouveauLieuAdresse}
+                                    onChange={(e) => setFormNouveauLieuAdresse(e.target.value)}
+                                    placeholder="Ex: 12 Rue de la République, 06000 Nice"
+                                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm text-violet-900 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all bg-white placeholder:text-slate-400"
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* PIED DE MODAL ET ACTIONS */}
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-5 mt-6 border-t border-slate-100">

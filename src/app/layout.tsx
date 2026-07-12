@@ -16,8 +16,9 @@ export const metadata = {
 };
 
 /**
- * Root Layout obligatoire (Server Component).
- * Il contient les balises html, body et les métadonnées.
+ * Root Layout obligatoire (balises html/body).
+ * Header global conservé ; pas de Footer global → les dashboards n'ont pas de footer
+ * et la vitrine garde son propre VitrineFooter via (vitrine)/layout.tsx.
  */
 
 export default function RootLayout({

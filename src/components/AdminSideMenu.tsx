@@ -11,7 +11,6 @@ import {
     Users,
     CalendarDays,
     GraduationCap,
-    Inbox,
     ClipboardCheck,
     ChevronRight,
     LogOut,
@@ -83,7 +82,7 @@ export default function AdminSideMenu() {
             {/* SECTION 1 : VUE D'ENSEMBLE */}
             <div className="flex flex-col gap-1 w-full">
                 <h3 className="text-xxs font-bold uppercase tracking-widest text-slate-400 mb-1 px-3">
-                    Vue d&apos;ensemble
+                    Vue d'ensemble
                 </h3>
                 <SidebarLink
                     href="/admin"
@@ -114,11 +113,6 @@ export default function AdminSideMenu() {
                     label="Pédagogie & Cours"
                     icon={<GraduationCap className="h-4 w-4" />}
                 />
-                <SidebarLink
-                    href="/admin/blog"
-                    label="Actualités"
-                    icon={<FileText className="h-4 w-4" />}
-                />
             </div>
 
             {/* SECTION 3 : RELATIONS HUMAINES */}
@@ -132,9 +126,9 @@ export default function AdminSideMenu() {
                     icon={<Users className="h-4 w-4" />}
                 />
                 <SidebarLink
-                    href="/admin/messagerie"
-                    label="Messagerie"
-                    icon={<Inbox className="h-4 w-4" />}
+                    href="/admin/apprenants"
+                    label="Suivi apprenants"
+                    icon={<UserCheck className="h-4 w-4" />}
                 />
             </div>
 
