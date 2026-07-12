@@ -51,10 +51,13 @@ export default function AdminMembresPage() {
     const [modalCreerIsOpen, setModalCreerIsOpen] = useState(false);
     const [modalLotIsOpen, setModalLotIsOpen] = useState(false);
 
-    const [filter, setFilter] = useState<string>("");
-    const [trie, setTrie] = useState<string>('DECROISSANT');
-    const [search, setSearch] = useState<string>("");
-    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const [recherche, setRecherche] = useState('');
+    const [rolesSelectionnes, setRolesSelectionnes] = useState<string[]>([]);
+    const [tri, setTri] = useState<'RECENT' | 'ANCIEN' | 'ALPHABETIQUE'>('RECENT');
+    const [statutFiltre, setStatutFiltre] = useState<'TOUS' | 'ACTIF' | 'INACTIF'>('TOUS');
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [pageActuelle, setPageActuelle] = useState(1);
+    const [membresParPage, setMembresParPage] = useState(20);
 
     const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
@@ -95,40 +98,16 @@ export default function AdminMembresPage() {
         nombre: 5
     });
 
-    // Effet de "Debounce" : Attend 400ms après la fin de la saisie avant de déclencher la recherche
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 400);
-
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [search]);
-
     const chargerMembres = useCallback(async () => {
-        await Promise.resolve();
         setIsLoading(true);
-        const termeRecherche = filter || debouncedSearch;
-        const reponse = await listerLesUtilisateurs(trie, termeRecherche);
+        const reponse = await listerLesUtilisateurs();
 
         if (reponse.success && reponse.data) {
-            if (filter && debouncedSearch) {
-                const searchLower = debouncedSearch.toLowerCase();
-                const dataFiltree = reponse.data.filter((m: MembreAdmin) =>
-                    m.nom?.toLowerCase().includes(searchLower) ||
-                    m.prenom?.toLowerCase().includes(searchLower) ||
-                    m.email?.toLowerCase().includes(searchLower)
-                );
-                setMembres(dataFiltree);
-            } else {
-                setMembres(reponse.data);
-            }
+            setMembres(reponse.data);
         }
         setIsLoading(false);
-    }, [debouncedSearch, filter, trie]);
+    }, []);
 
-    // Le tableau se rafraîchit dès qu'un filtre, le texte ou le tri change
     useEffect(() => {
         const timer = window.setTimeout(() => {
             void chargerMembres();
