@@ -11,7 +11,7 @@ import {
     CalendarDays,
     ArrowUpRight,
 } from "lucide-react";
-import { PARTENAIRE, DEMANDES, STATS } from "@/lib/partenaire-data";
+import { obtenirPartenaireConnecte, obtenirDonneesPartenaire } from "@/lib/partenaire-dashboard";
 import DemandeCard from "@/components/DemandeCard";
 
 export const metadata = {
@@ -19,12 +19,15 @@ export const metadata = {
     description: "Suivez vos demandes de réservation d'ateliers et échangez avec l'équipe.",
 };
 
-export default function PartenaireDashboard() {
+export default async function PartenaireDashboard() {
+    const partenaire = await obtenirPartenaireConnecte();
+    const data = await obtenirDonneesPartenaire(partenaire.id || '');
+
     const STAT_CARDS: { Icon: LucideIcon; valeur: number; label: string; accent: "violet" | "emerald" | "amber" }[] = [
-        { Icon: ClipboardList, valeur: STATS.total, label: "Mes demandes", accent: "violet" },
-        { Icon: CheckCircle2, valeur: STATS.validees, label: "Validées", accent: "emerald" },
-        { Icon: Clock, valeur: STATS.enAttente, label: "En attente", accent: "amber" },
-        { Icon: MessagesSquare, valeur: STATS.messages, label: "Messages", accent: "violet" },
+        { Icon: ClipboardList, valeur: data.stats.total, label: "Mes demandes", accent: "violet" },
+        { Icon: CheckCircle2, valeur: data.stats.validees, label: "Validées", accent: "emerald" },
+        { Icon: Clock, valeur: data.stats.enAttente, label: "En attente", accent: "amber" },
+        { Icon: MessagesSquare, valeur: data.stats.messages, label: "Messages", accent: "violet" },
     ];
 
     const ACTIONS: { href: string; Icon: LucideIcon; titre: string; texte: string }[] = [
@@ -39,15 +42,15 @@ export default function PartenaireDashboard() {
             {/* ─── En-tête : salutation + chip organisation ─── */}
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-violet-200 pb-5">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-bold tracking-tight text-violet-950">Bonjour {PARTENAIRE.contact}</h1>
-                    <p className="text-sm text-violet-600">{PARTENAIRE.organisation} — {PARTENAIRE.type}.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-violet-950">Bonjour {partenaire.contact}</h1>
+                    <p className="text-sm text-violet-600">{partenaire.organisation} — {partenaire.type}.</p>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-2xl border border-violet-200 bg-white py-1.5 pl-1.5 pr-4 shadow-xs">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
-                        {PARTENAIRE.initiales}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white">
+                        {partenaire.initiales}
                     </div>
                     <div className="leading-tight">
-                        <div className="text-[13px] font-bold text-violet-950">{PARTENAIRE.organisation}</div>
+                        <div className="text-[13px] font-bold text-violet-950">{partenaire.organisation}</div>
                         <div className="text-[11px] text-violet-500">Compte partenaire</div>
                     </div>
                 </div>
@@ -110,19 +113,23 @@ export default function PartenaireDashboard() {
                 </div>
             </section>
 
-            {/* ─── Mes dernières demandes ─── */}
+            {/* ─── Suivi des demandes de réservation ─── */}
             <section className="mt-8 mb-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes dernières demandes</h3>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-lg font-semibold tracking-tight text-violet-800">Mes demandes de réservation</h3>
+                        <p className="text-xs text-violet-500">Historique et statut de vos demandes d&apos;ateliers</p>
+                    </div>
                     <Link
                         href="/partenaire/ateliers"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 transition-colors hover:text-violet-800"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-bold text-violet-700 shadow-xs hover:bg-violet-50 hover:text-violet-900 transition-colors"
                     >
-                        Tout voir <ArrowUpRight className="h-4 w-4" aria-hidden />
+                        Voir toutes les demandes <ArrowUpRight className="h-4 w-4" />
                     </Link>
                 </div>
-                <div className="mt-4 grid gap-4">
-                    {DEMANDES.map((demande) => (
+
+                <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {data.demandes.map((demande) => (
                         <DemandeCard key={demande.id} demande={demande} />
                     ))}
                 </div>

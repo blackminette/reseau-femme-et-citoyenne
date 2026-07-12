@@ -391,3 +391,150 @@ export async function obtenirActiviteRecenteAdulte() {
         return [];
     }
 }
+
+export async function obtenirEnfantsRattaches(membreId: string) {
+    try {
+        const enfants = await prisma.utilisateur.findMany({
+            where: {
+                tuteurId: membreId,
+                role: 'ENFANT'
+            },
+            include: {
+                badges: true,
+                ScoreQuiz: {
+                    include: {
+                        exercice: {
+                            include: {
+                                cours: {
+                                    include: {
+                                        module: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const listEnfants = await Promise.all(enfants.map(async (enfant) => {
+            const modules = await prisma.module.findMany({
+                where: { public: 'ENFANT' },
+                include: {
+                    cours: {
+                        include: {
+                            exercices: true
+                        }
+                    }
+                }
+            });
+
+            const exercicesIds = new Set<number>();
+            for (const mod of modules) {
+                for (const crs of mod.cours) {
+                    for (const ex of crs.exercices) {
+                        exercicesIds.add(ex.id);
+                    }
+                }
+            }
+
+            const totalEx = exercicesIds.size;
+            const completedExSet = new Set(enfant.ScoreQuiz.map(s => s.exerciceId));
+            const completedEx = completedExSet.size;
+
+            const progression = totalEx > 0 ? Math.round((completedEx / totalEx) * 100) : 0;
+
+            const tentatives = await prisma.tentativeExercice.findMany({
+                where: { etudiantId: enfant.id },
+                include: {
+                    exercice: true
+                }
+            });
+
+            const competenceFailed: string[] = [];
+            const competenceScores: Record<string, { correct: number, total: number }> = {};
+
+            for (const t of tentatives) {
+                const comp = t.exercice?.competence || "Général";
+                if (!competenceScores[comp]) {
+                    competenceScores[comp] = { correct: 0, total: 0 };
+                }
+                competenceScores[comp].correct += t.score;
+                competenceScores[comp].total += t.totalQuestions;
+            }
+
+            for (const [comp, stat] of Object.entries(competenceScores)) {
+                const ratio = stat.total > 0 ? (stat.correct / stat.total) * 100 : 100;
+                if (ratio < 80) {
+                    competenceFailed.push(comp);
+                }
+            }
+
+            let modPref = "Aucun";
+            const moduleCounts: Record<string, number> = {};
+            for (const s of enfant.ScoreQuiz) {
+                const modTitre = s.exercice?.cours?.module?.titre;
+                if (modTitre) {
+                    moduleCounts[modTitre] = (moduleCounts[modTitre] || 0) + 1;
+                }
+            }
+            const sortedMods = Object.entries(moduleCounts).sort((a, b) => b[1] - a[1]);
+            if (sortedMods.length > 0) {
+                modPref = sortedMods[0][0];
+            }
+
+            return {
+                nom: enfant.nom,
+                prenom: enfant.prenom,
+                username: enfant.username,
+                age: 9,
+                initiales: `${enfant.prenom?.[0] || ''}${enfant.nom?.[0] || ''}`.toUpperCase(),
+                couleur: "from-blue-400 to-indigo-500",
+                progression,
+                modulePref: modPref,
+                temps: completedEx > 0 ? `${completedEx * 15} min` : "0 min",
+                derniere: enfant.ScoreQuiz.length > 0 
+                    ? new Date(enfant.ScoreQuiz[0].createdAt).toLocaleDateString('fr-FR')
+                    : "Aucune",
+                serie: enfant.ScoreQuiz.length > 0 ? 1 : 0,
+                quizReussis: completedEx,
+                quizTotal: totalEx,
+                difficulte: competenceFailed.length > 0 ? competenceFailed : null
+            };
+        }));
+
+        return listEnfants;
+    } catch (e) {
+        console.error("Erreur obtenirEnfantsRattaches:", e);
+        return [];
+    }
+}
+
+export async function obtenirReservationsMembre(membreId: string) {
+    try {
+        const reservations = await prisma.reservation.findMany({
+            where: { utilisateurId: membreId },
+            include: {
+                atelier: {
+                    include: {
+                        lieu: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return reservations.map(r => ({
+            id: r.id.toString(),
+            atelierTitre: r.atelier.titre,
+            lieu: r.atelier.lieu.nom,
+            date: r.atelier.dateDebut.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
+            horaire: `${r.atelier.dateDebut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${r.atelier.dateFin.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+        }));
+    } catch (e) {
+        console.error("Erreur obtenirReservationsMembre:", e);
+        return [];
+    }
+}
