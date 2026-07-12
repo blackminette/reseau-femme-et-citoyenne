@@ -522,7 +522,7 @@ export async function obtenirReservationsMembre(membreId: string) {
                 }
             },
             orderBy: {
-                createdAt: 'desc'
+                dateReservation: 'desc'
             }
         });
 
