@@ -21,13 +21,15 @@ export type ActualiteVitrine = {
     cta: string;
     href: string;
     accent: string;
+    imageSrc?: string;
+    imageAlt?: string;
 };
 
 const ACTUALITES_DE_TEST: ActualiteSource[] = [
     {
         id: 1,
         titre: 'Label "Association Engagée" renouvelé pour 2025',
-        tag: 'EVENT',
+        tag: 'Vie associative',
         datePublication: new Date('2025-04-03T12:00:00.000Z'),
         extrait:
             'Pour la troisième année consécutive, la Ville de Nice renouvelle notre label qui récompense notre engagement auprès des familles.',
@@ -38,7 +40,7 @@ const ACTUALITES_DE_TEST: ActualiteSource[] = [
     {
         id: 2,
         titre: 'Nouveau : ateliers jardinage et permaculture',
-        tag: 'ATELIER',
+        tag: 'Atelier à thème',
         datePublication: new Date('2025-03-20T12:00:00.000Z'),
         extrait:
             'À partir d’avril, nous proposons des ateliers de jardinage urbain pour initier les enfants à la permaculture et au respect de la nature.',
@@ -49,7 +51,7 @@ const ACTUALITES_DE_TEST: ActualiteSource[] = [
     {
         id: 3,
         titre: 'Le spectacle de Noël : un franc succès !',
-        tag: 'SPECTACLE',
+        tag: 'Événement',
         datePublication: new Date('2025-01-10T12:00:00.000Z'),
         extrait:
             'Plus de 200 personnes ont assisté au spectacle de théâtre de décembre. Les enfants ont présenté une pièce écrite par eux-mêmes.',
@@ -60,7 +62,7 @@ const ACTUALITES_DE_TEST: ActualiteSource[] = [
     {
         id: 4,
         titre: 'Des actions construites avec les partenaires locaux',
-        tag: 'VIE ASSOCIATIVE',
+        tag: 'Partenaire',
         datePublication: new Date('2026-05-28T12:00:00.000Z'),
         extrait:
             'L’association continue de structurer ses contenus et ses actions pour proposer des repères clairs, utiles et accessibles à tous.',
@@ -68,25 +70,100 @@ const ACTUALITES_DE_TEST: ActualiteSource[] = [
         ctaHref: '/contact',
         ordre: 4,
     },
+    {
+        id: 5,
+        titre: 'Forum de l’engagement : présence de l’association',
+        tag: 'Événement',
+        datePublication: new Date('2026-06-10T12:00:00.000Z'),
+        extrait:
+            'L’association participe à un temps fort local pour présenter ses actions, ses ateliers et ses besoins en bénévoles.',
+        ctaLabel: 'Lire l’article',
+        ctaHref: '/actualites/forum-engagement-2026',
+        ordre: 5,
+    },
+    {
+        id: 6,
+        titre: 'Nouvelle session : accompagnement aux démarches',
+        tag: 'Plateforme éducative',
+        datePublication: new Date('2026-06-18T12:00:00.000Z'),
+        extrait:
+            'Un nouveau cycle de séances est prévu pour aider les publics à mieux comprendre les démarches du quotidien et avancer pas à pas.',
+        ctaLabel: 'Découvrir',
+        ctaHref: '/ateliers',
+        ordre: 6,
+    },
+    {
+        id: 7,
+        titre: 'Maison des Associations Saint Roch : atelier inclusion numérique',
+        tag: 'Atelier',
+        datePublication: new Date('2026-06-19T12:00:00.000Z'),
+        extrait:
+            'Atelier inclusion numérique le lundi de 14h à 16h pour accompagner les publics sur les bases du numérique.',
+        ctaLabel: 'Voir l’atelier',
+        ctaHref: '/ateliers',
+        ordre: 7,
+    },
 ];
 
 const ACCENT_PAR_TAG: Record<string, string> = {
-    EVENT: 'bg-[#ffd166] text-[#2b1459]',
-    ATELIER: 'bg-[#5fbf74] text-white',
-    SPECTACLE: 'bg-[#ef4b87] text-white',
-    'VIE ASSOCIATIVE': 'bg-[#752fbb] text-white',
+    'Vie associative': 'bg-[#7C6CF5] text-white',
+    'Événement': 'bg-[#FF9F1C] text-white',
+    Atelier: 'bg-[#3B82F6] text-white',
+    'Atelier à thème': 'bg-[#22C55E] text-white',
+    Partenaire: 'bg-[#06B6D4] text-white',
+    'Plateforme éducative': 'bg-[#FACC15] text-[#2b1459]',
 };
 
+function normaliserTag(tag: string): string {
+    switch (tag) {
+        case 'EVENT':
+        case 'EVENEMENT':
+        case 'ÉVÉNEMENT':
+        case 'SPECTACLE':
+            return 'Événement';
+        case 'ATELIER':
+            return 'Atelier';
+        case 'ATELIER_A_THEME':
+        case 'ATELIER À THÈME':
+        case 'Atelier à thème':
+            return 'Atelier à thème';
+        case 'VIE ASSOCIATIVE':
+            return 'Vie associative';
+        case 'PARTENAIRE':
+            return 'Partenaire';
+        case 'PLATEFORME ÉDUCATIVE':
+        case 'PLATEFORME EDUCATIVE':
+        case 'Plateforme éducative':
+            return 'Plateforme éducative';
+        default:
+            return tag;
+    }
+}
+
+export function obtenirBadgeTagActualite(tag: string): string {
+    const tagNormalise = normaliserTag(tag);
+    return ACCENT_PAR_TAG[tagNormalise] ?? 'bg-[#7C6CF5] text-white';
+}
+
 function transformerActualite(source: ActualiteSource): ActualiteVitrine {
+    const tagNormalise = normaliserTag(source.tag);
+    const imageSrc = source.titre.includes('Forum de l’engagement')
+        ? '/images/actualites/forum-engagement-2026.jpeg'
+        : undefined;
+
     return {
         id: source.id,
-        label: source.tag,
+        label: tagNormalise,
         date: format(source.datePublication, 'd MMMM yyyy', { locale: fr }),
         title: source.titre,
         excerpt: source.extrait,
         cta: source.ctaLabel,
         href: source.ctaHref,
-        accent: ACCENT_PAR_TAG[source.tag] ?? 'bg-[#752fbb] text-white',
+        accent: obtenirBadgeTagActualite(tagNormalise),
+        imageSrc,
+        imageAlt: imageSrc
+            ? 'Photo du Forum de l’Engagement 2026 à Nice'
+            : undefined,
     };
 }
 
