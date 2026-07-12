@@ -13,8 +13,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
     LayoutDashboard,
-    BookOpen,
-    TrendingUp,
     Award,
     ClipboardList,
     Palette,
@@ -28,13 +26,6 @@ const SECTIONS: { titre: string; liens: { href: string; label: string; Icon: Luc
     {
         titre: 'Mon espace',
         liens: [{ href: '/enfant', label: 'Tableau de bord', Icon: LayoutDashboard }],
-    },
-    {
-        titre: 'Apprendre',
-        liens: [
-            { href: '/enfant/modules', label: 'Mes modules', Icon: BookOpen },
-            { href: '/enfant#progres', label: 'Mes progrès', Icon: TrendingUp },
-        ],
     },
     {
         titre: 'Récompenses',

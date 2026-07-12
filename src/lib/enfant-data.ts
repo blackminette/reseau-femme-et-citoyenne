@@ -15,15 +15,15 @@ export const ENFANT = {
     progression: 73,
 };
 
-// Modules d'apprentissage. Couleurs reprises de la maquette (dégradés), icônes lucide.
-export type Module = { id: string; label: string; Icon: LucideIcon; progression: number; from: string; to: string; slug?: string };
+// Modules d'apprentissage. Couleurs et icônes (emojis colorés) repris de la maquette enfant.
+export type Module = { id: string; label: string; Icon?: LucideIcon; emoji?: string; progression: number; from: string; to: string; slug?: string };
 export const MODULES: Module[] = [
-    { id: "lecture", label: "Lecture & compréhension", Icon: BookOpen, progression: 73, from: "#66bb6a", to: "#2e7d32" },
-    { id: "numerique", label: "Numérique", Icon: Laptop, progression: 85, from: "#42a5f5", to: "#0d47a1" },
-    { id: "robotique", label: "Robotique", Icon: Cpu, progression: 0, from: "#9b8cff", to: "#6d5ba8" },
-    { id: "anglais", label: "Anglais", Icon: Languages, progression: 0, from: "#ec407a", to: "#880e4f" },
-    { id: "civique", label: "Éducation civique", Icon: Landmark, progression: 0, from: "#ffa726", to: "#e65100" },
-    { id: "eco", label: "Éco-citoyenneté", Icon: Leaf, progression: 0, from: "#26a69a", to: "#00695c" },
+    { id: "lecture", label: "Lecture & compréhension", emoji: "📖", progression: 73, from: "#4ade80", to: "#16a34a" },
+    { id: "numerique", label: "Numérique", emoji: "💻", progression: 85, from: "#38bdf8", to: "#2563eb" },
+    { id: "robotique", label: "Robotique", emoji: "🤖", progression: 0, from: "#a78bfa", to: "#7c3aed" },
+    { id: "anglais", label: "Anglais", emoji: "🇬🇧", progression: 0, from: "#f472b6", to: "#db2777" },
+    { id: "civique", label: "Éducation civique", emoji: "🏛️", progression: 0, from: "#fbbf24", to: "#f97316" },
+    { id: "eco", label: "Éco-citoyenneté", emoji: "🌱", progression: 0, from: "#2dd4bf", to: "#0d9488" },
 ];
 
 // Badges. obtenu = débloqué ; sinon "progress" indique l'avancement vers le déblocage.
@@ -44,20 +44,20 @@ export const BADGES: Badge[] = [
 export const DERNIER_BADGE = { label: "1ers pas", emoji: "🎯", desc: "Terminer sa première activité." };
 
 // Derniers résultats (quiz / exercices).
-export type Resultat = { id: number; Icon: LucideIcon; titre: string; date: string; score: string; parfait: boolean };
+export type Resultat = { id: number; emoji: string; titre: string; date: string; score: string; parfait: boolean };
 export const RESULTATS: Resultat[] = [
-    { id: 1, Icon: BookOpen, titre: "Quiz — Lecture & compréhension", date: "22/05/2026", score: "1/1", parfait: true },
-    { id: 2, Icon: BookOpen, titre: "Quiz — Lecture & compréhension", date: "20/05/2026", score: "2/5", parfait: false },
-    { id: 3, Icon: HelpCircle, titre: "Quiz — culturegen", date: "20/05/2026", score: "6/10", parfait: false },
-    { id: 4, Icon: HelpCircle, titre: "Quiz — maths", date: "20/05/2026", score: "3/10", parfait: false },
+    { id: 1, emoji: "📖", titre: "Quiz — Lecture & compréhension", date: "22/05/2026", score: "1/1", parfait: true },
+    { id: 2, emoji: "📖", titre: "Quiz — Lecture & compréhension", date: "20/05/2026", score: "2/5", parfait: false },
+    { id: 3, emoji: "🧠", titre: "Quiz — culturegen", date: "20/05/2026", score: "6/10", parfait: false },
+    { id: 4, emoji: "➗", titre: "Quiz — maths", date: "20/05/2026", score: "3/10", parfait: false },
 ];
 
 // Activité récente.
-export type ActiviteEnfant = { id: number; Icon: LucideIcon; titre: string; module: string; date: string; score: string; parfait: boolean };
+export type ActiviteEnfant = { id: number; emoji: string; titre: string; module: string; date: string; score: string; parfait: boolean };
 export const ACTIVITE: ActiviteEnfant[] = [
-    { id: 1, Icon: Star, titre: "Tu as terminé le quiz", module: "Lecture & compréhension", date: "22/05/2026", score: "1/1", parfait: true },
-    { id: 2, Icon: Check, titre: "Tu as terminé le quiz", module: "Lecture & compréhension", date: "20/05/2026", score: "2/5", parfait: false },
-    { id: 3, Icon: Check, titre: "Tu as terminé le quiz", module: "culturegen", date: "20/05/2026", score: "6/10", parfait: false },
+    { id: 1, emoji: "⭐", titre: "Tu as terminé le quiz", module: "Lecture & compréhension", date: "22/05/2026", score: "1/1", parfait: true },
+    { id: 2, emoji: "✅", titre: "Tu as terminé le quiz", module: "Lecture & compréhension", date: "20/05/2026", score: "2/5", parfait: false },
+    { id: 3, emoji: "✅", titre: "Tu as terminé le quiz", module: "culturegen", date: "20/05/2026", score: "6/10", parfait: false },
 ];
 
 // ─── Ateliers ───
