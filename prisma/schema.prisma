@@ -77,10 +77,19 @@ model Reservation {
   id              Int         @id @default(autoincrement())
   dateReservation DateTime    @default(now())
   statut          String      @default("PENDING")
-  utilisateurId   String
+
+  nom             String?     
+  email           String?     
+  telephone       String?     
+
+  modePaiement    String?   
+  statutPaiement  String      @default("EN_ATTENTE") 
+
+  utilisateurId   String?     
+  utilisateur     Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
   atelierId       Int
   atelier         Atelier     @relation(fields: [atelierId], references: [id], onDelete: Cascade)
-  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@unique([utilisateurId, atelierId])
 }
