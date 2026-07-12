@@ -301,6 +301,293 @@ async function seedNapoleonModule(intervenanteId: string) {
   console.log(`🧩 Module [Napoléon] seedé avec ${NAPOLEON_COURS.length} cours et ${NAPOLEON_EXERCICES.length} exercices.`);
 }
 
+async function seedExtraChildModules(intervenanteId: string) {
+  console.log('🌱 Seeding des modules enfants supplémentaires...');
+
+  // Clean up existing modules and dependencies
+  const childModules = await prisma.module.findMany({
+    where: {
+      titre: { in: ['Lecture & compréhension', 'Numérique', 'Robotique', 'Anglais', 'Éco-citoyenneté'] }
+    },
+    include: {
+      cours: {
+        include: {
+          exercices: true
+        }
+      }
+    }
+  });
+
+  const exIds = childModules.flatMap(m => m.cours.flatMap(c => c.exercices.map(e => e.id)));
+  const cIds = childModules.flatMap(m => m.cours.map(c => c.id));
+  const mIds = childModules.map(m => m.id);
+
+  if (exIds.length > 0) {
+    await prisma.scoreQuiz.deleteMany({ where: { exerciceId: { in: exIds } } });
+    await prisma.exercice.deleteMany({ where: { id: { in: exIds } } });
+  }
+  if (cIds.length > 0) {
+    await prisma.programme.deleteMany({ where: { coursId: { in: cIds } } });
+    await prisma.completionCours.deleteMany({ where: { coursId: { in: cIds } } });
+    await prisma.cours.deleteMany({ where: { id: { in: cIds } } });
+  }
+  if (mIds.length > 0) {
+    await prisma.module.deleteMany({ where: { id: { in: mIds } } });
+  }
+
+  // 1. Lecture
+  const lectureModule = await prisma.module.create({
+    data: {
+      titre: 'Lecture & compréhension',
+      description: 'Apprendre à lire et à bien comprendre les histoires.',
+      parcours: ['COMPREHENSION_LECTURE'],
+      difficulte: 'FACILE',
+      public: 'ENFANT',
+      isPublished: true
+    }
+  });
+  
+  const lectureCours = await prisma.cours.create({
+    data: {
+      titre: 'Pourquoi lire ?',
+      intervenanteId,
+      moduleId: lectureModule.id,
+      ordreDansModule: 1,
+      contenu: [
+        {
+          numeroPage: 1,
+          titre: 'Voyager avec les livres',
+          texteExplicatif: 'La lecture est une aventure fantastique ! Elle permet de voyager dans des mondes imaginaires et de comprendre les choses qui nous entourent.',
+          imageUrl: '/images/enfants/lecture_decouvrir.png',
+          texte: 'La lecture est une aventure fantastique ! Elle permet de voyager dans des mondes imaginaires.'
+        }
+      ]
+    }
+  });
+
+  await prisma.exercice.create({
+    data: {
+      titre: 'Quiz de lecture',
+      instructions: 'Réponds aux questions sur la lecture.',
+      type: 'QUIZ',
+      ordre: 1,
+      coursId: lectureCours.id,
+      contenu: [
+        {
+          id: 'q1',
+          question: 'Que permet de faire la lecture ?',
+          options: ['Voyager dans des mondes imaginaires', 'Dormir uniquement', 'Manger du chocolat'],
+          reponseCorrecte: 'Voyager dans des mondes imaginaires',
+          answer: 0,
+          explication: 'La lecture stimule notre imagination et nous fait découvrir de nouveaux horizons !'
+        }
+      ]
+    }
+  });
+
+  // 2. Numérique
+  const numeriqueModule = await prisma.module.create({
+    data: {
+      titre: 'Numérique',
+      description: 'Découvrir le fonctionnement des ordinateurs.',
+      parcours: ['NUMERIQUE'],
+      difficulte: 'FACILE',
+      public: 'ENFANT',
+      isPublished: true
+    }
+  });
+
+  const numeriqueCours = await prisma.cours.create({
+    data: {
+      titre: 'Qu\'est-ce qu\'un ordinateur ?',
+      intervenanteId,
+      moduleId: numeriqueModule.id,
+      ordreDansModule: 1,
+      contenu: [
+        {
+          numeroPage: 1,
+          titre: 'Le cerveau de la machine',
+          texteExplicatif: 'Un ordinateur est une machine qui traite des informations très vite. Il utilise un écran, un clavier et une souris pour communiquer avec nous.',
+          imageUrl: '/images/enfants/numerique_decouvrir.png',
+          texte: 'Un ordinateur traite des informations très rapidement grâce à ses composants.'
+        }
+      ]
+    }
+  });
+
+  await prisma.exercice.create({
+    data: {
+      titre: 'Quiz informatique',
+      instructions: 'Réponds aux questions sur les ordinateurs.',
+      type: 'QUIZ',
+      ordre: 1,
+      coursId: numeriqueCours.id,
+      contenu: [
+        {
+          id: 'q1',
+          question: 'Quel appareil utilise-t-on pour taper du texte sur l\'écran ?',
+          options: ['La souris', 'Le clavier', 'L\'imprimante'],
+          reponseCorrecte: 'Le clavier',
+          answer: 1,
+          explication: 'Le clavier sert à saisir des caractères et écrire sur l\'ordinateur.'
+        }
+      ]
+    }
+  });
+
+  // 3. Robotique
+  const robotiqueModule = await prisma.module.create({
+    data: {
+      titre: 'Robotique',
+      description: 'Découvrir le fonctionnement des robots.',
+      parcours: ['ROBOTIQUE'],
+      difficulte: 'MOYEN',
+      public: 'ENFANT',
+      isPublished: true
+    }
+  });
+
+  const robotiqueCours = await prisma.cours.create({
+    data: {
+      titre: 'Les composants d\'un robot',
+      intervenanteId,
+      moduleId: robotiqueModule.id,
+      ordreDansModule: 1,
+      contenu: [
+        {
+          numeroPage: 1,
+          titre: 'Moteurs et capteurs',
+          texteExplicatif: 'Un robot utilise des capteurs pour mesurer des choses (distance, lumière) et des moteurs pour réaliser des mouvements.',
+          imageUrl: '/images/enfants/quiz_robot.png',
+          texte: 'Un robot possède des capteurs pour analyser son environnement et des moteurs pour bouger.'
+        }
+      ]
+    }
+  });
+
+  await prisma.exercice.create({
+    data: {
+      titre: 'Quiz robotique',
+      instructions: 'Réponds aux questions sur les robots.',
+      type: 'QUIZ',
+      ordre: 1,
+      coursId: robotiqueCours.id,
+      contenu: [
+        {
+          id: 'q1',
+          question: 'À quoi servent les capteurs d\'un robot ?',
+          options: ['À lui donner de l\'électricité', 'À analyser et voir ce qui l\'entoure', 'À faire du bruit'],
+          reponseCorrecte: 'À analyser et voir ce qui l\'entoure',
+          answer: 1,
+          explication: 'Les capteurs sont comme les yeux et les oreilles du robot.'
+        }
+      ]
+    }
+  });
+
+  // 4. Anglais
+  const anglaisModule = await prisma.module.create({
+    data: {
+      titre: 'Anglais',
+      description: 'Apprendre le vocabulaire de base de la langue anglaise.',
+      parcours: ['ANGLAIS'],
+      difficulte: 'FACILE',
+      public: 'ENFANT',
+      isPublished: true
+    }
+  });
+
+  const anglaisCours = await prisma.cours.create({
+    data: {
+      titre: 'Les salutations en anglais',
+      intervenanteId,
+      moduleId: anglaisModule.id,
+      ordreDansModule: 1,
+      contenu: [
+        {
+          numeroPage: 1,
+          titre: 'Say Hello!',
+          texteExplicatif: 'En anglais, pour dire bonjour à quelqu\'un, on utilise le mot "Hello" ou "Hi" ! Pour dire au revoir, on dit "Goodbye" !',
+          imageUrl: '/images/enfants/anglais_decouvrir.png',
+          texte: 'Hello veut dire bonjour et Goodbye veut dire au revoir !'
+        }
+      ]
+    }
+  });
+
+  await prisma.exercice.create({
+    data: {
+      titre: 'Quiz d\'anglais',
+      instructions: 'Traduis les salutations.',
+      type: 'QUIZ',
+      ordre: 1,
+      coursId: anglaisCours.id,
+      contenu: [
+        {
+          id: 'q1',
+          question: 'Comment dit-on "Bonjour" en anglais ?',
+          options: ['Goodbye', 'Hello', 'Thank you'],
+          reponseCorrecte: 'Hello',
+          answer: 1,
+          explication: '"Hello" est la formule de politesse la plus commune pour dire bonjour.'
+        }
+      ]
+    }
+  });
+
+  // 5. Éco-citoyenneté
+  const ecoModule = await prisma.module.create({
+    data: {
+      titre: 'Éco-citoyenneté',
+      description: 'Apprendre à protéger notre planète.',
+      parcours: ['ECO_CITOYENNETE'],
+      difficulte: 'FACILE',
+      public: 'ENFANT',
+      isPublished: true
+    }
+  });
+
+  const ecoCours = await prisma.cours.create({
+    data: {
+      titre: 'Le tri des déchets',
+      intervenanteId,
+      moduleId: ecoModule.id,
+      ordreDansModule: 1,
+      contenu: [
+        {
+          numeroPage: 1,
+          titre: 'Trier pour recycler',
+          texteExplicatif: 'Le tri sélectif permet de séparer les emballages recyclables pour fabriquer de nouveaux objets et protéger la nature.',
+          imageUrl: '/images/enfants/eco_decouvrir.png',
+          texte: 'Trier ses déchets permet de recycler le plastique, le carton et le verre.'
+        }
+      ]
+    }
+  });
+
+  await prisma.exercice.create({
+    data: {
+      titre: 'Quiz éco-citoyen',
+      instructions: 'Trouve les bons gestes.',
+      type: 'QUIZ',
+      ordre: 1,
+      coursId: ecoCours.id,
+      contenu: [
+        {
+          id: 'q1',
+          question: 'Dans quelle poubelle jette-t-on les emballages en carton ?',
+          options: ['La poubelle jaune', 'La poubelle d\'ordures ménagères', 'Directement dans la nature'],
+          reponseCorrecte: 'La poubelle jaune',
+          answer: 0,
+          explication: 'Le carton se recycle et doit être jeté dans le bac jaune dédié au recyclage.'
+        }
+      ]
+    }
+  });
+
+  console.log('✅ Modules enfants supplémentaires seedés avec succès !');
+}
+
 async function main() {
   console.log('🌱 (Seeding) Début de la synchronisation Supabase + Prisma...');
 
@@ -472,6 +759,7 @@ async function main() {
   }
 
   await seedNapoleonModule(intervenante.id);
+  await seedExtraChildModules(intervenante.id);
 
   console.log('✅ Seeding terminé avec succès et prêt pour le login local !');
 }

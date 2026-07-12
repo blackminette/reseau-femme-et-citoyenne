@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
 import { defineConfig, env } from "prisma/config";
 
-// On lit .env.local (le même fichier que Next.js et le seed)
+// Charge d'abord .env puis .env.local si existant
+dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local" });
 
 export default defineConfig({
