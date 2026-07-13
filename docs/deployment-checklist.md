@@ -14,6 +14,7 @@ performed by this checklist.
 
 - [ ] `src/app/api/ai-chat/route.ts` exists and handles `POST /api/ai-chat`.
 - [ ] The route checks Supabase session and Prisma role `ENFANT`.
+- [ ] The route enforces its 16 KB request limit on the actual request stream, not only on `Content-Length`.
 - [ ] The route fails closed when identity services are unavailable.
 - [ ] The route resolves the published child parcours from the route activity or module reference.
 - [ ] The route uses only safe excerpts from published course/exercise JSON and excludes answer options and correct answers.

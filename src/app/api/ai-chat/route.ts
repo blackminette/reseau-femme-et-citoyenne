@@ -7,11 +7,11 @@ import { requestGeminiReply } from "@/lib/milo/gemini";
 import { findMiloGuardrailReply } from "@/lib/milo/guardrails";
 import { findMiloKnowledgeBaseAnswer } from "@/lib/milo/matching";
 import { checkMiloRateLimit } from "@/lib/milo/rate-limit";
+import { readMiloRequestBody } from "@/lib/milo/request-body";
 import { parseMiloChatRequest } from "@/lib/milo/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const MAX_CHAT_REQUEST_BYTES = 16_000;
 
 function json(body: Record<string, unknown>, status = 200, headers?: HeadersInit) {
   return NextResponse.json(body, {
@@ -35,21 +35,17 @@ export async function POST(request: Request) {
     return json({ error: "Le service de connexion est indisponible. Reessaie plus tard." }, 503);
   }
 
-  const contentLength = Number(request.headers.get("content-length"));
+  const bodyResult = await readMiloRequestBody(request);
 
-  if (Number.isFinite(contentLength) && contentLength > MAX_CHAT_REQUEST_BYTES) {
-    return json({ error: "Le message envoye a Milo est trop long." }, 413);
-  }
+  if ("error" in bodyResult) {
+    if (bodyResult.error === "too-large") {
+      return json({ error: "Le message envoye a Milo est trop long." }, 413);
+    }
 
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
     return json({ error: "La demande envoyee a Milo est invalide." }, 400);
   }
 
-  const chatRequest = parseMiloChatRequest(body);
+  const chatRequest = parseMiloChatRequest(bodyResult.body);
 
   if (!chatRequest) {
     return json({ error: "Ecris un message avant d'envoyer." }, 400);

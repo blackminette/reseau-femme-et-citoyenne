@@ -10,6 +10,7 @@ import { redactMiloTextForGemini, requestGeminiReply } from "../src/lib/milo/gem
 import { findMiloGuardrailReply } from "../src/lib/milo/guardrails";
 import { findMiloKnowledgeBaseAnswer } from "../src/lib/milo/matching";
 import { checkMiloRateLimit, miloRateLimitConfig } from "../src/lib/milo/rate-limit";
+import { MAX_MILO_REQUEST_BYTES, readMiloRequestBody } from "../src/lib/milo/request-body";
 import { parseMiloChatRequest } from "../src/lib/milo/request";
 
 async function run() {
@@ -145,6 +146,30 @@ async function run() {
   assert.equal(mapParcoursToMiloModule(["NUMERIQUE_ADULTE"]), null);
   assert.equal(parseMiloModuleReference("lecture"), "lecture");
   assert.equal(parseMiloModuleReference("module-inconnu"), null);
+
+  const validBody = await readMiloRequestBody(
+    new Request("http://localhost/api/ai-chat", {
+      method: "POST",
+      body: JSON.stringify({ message: "Bonjour" }),
+    }),
+  );
+  assert.deepEqual(validBody, { body: { message: "Bonjour" } });
+
+  const invalidBody = await readMiloRequestBody(
+    new Request("http://localhost/api/ai-chat", { method: "POST", body: "{" }),
+  );
+  assert.deepEqual(invalidBody, { error: "invalid" });
+
+  const oversizedBody = await readMiloRequestBody({
+    headers: new Headers({ "content-length": "1" }),
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(MAX_MILO_REQUEST_BYTES + 1));
+        controller.close();
+      },
+    }),
+  } as Request);
+  assert.deepEqual(oversizedBody, { error: "too-large" });
 
   const rateLimitChild = "milo-rate-limit-test";
   const rateLimitStart = 1_000_000;

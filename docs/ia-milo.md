@@ -19,8 +19,9 @@ d'execution de l'application Next.
 
 1. La route verifie la session Supabase et exige un profil Prisma de role `ENFANT`.
    Il n'existe aucun fallback vers un autre compte enfant.
-2. La route verifie la session avant de lire le JSON et refuse les corps annonces
-   au-dela de 16 Ko. La requete est ensuite bornee et nettoyee : message,
+2. La route verifie la session avant de lire le JSON et borne la lecture reelle du
+   corps HTTP a 16 Ko, y compris si `Content-Length` est absent ou incorrect. La
+   requete est ensuite nettoyee : message,
    historique et contexte de question. Le widget transmet uniquement le texte de
    la consigne : ni les choix ni un indice de bonne reponse ne quittent le
    navigateur.
