@@ -8,6 +8,7 @@ import { findMiloGuardrailReply } from "@/lib/milo/guardrails";
 import { findMiloKnowledgeBaseAnswer } from "@/lib/milo/matching";
 import { checkMiloRateLimit } from "@/lib/milo/rate-limit";
 import { readMiloRequestBody } from "@/lib/milo/request-body";
+import { hasTrustedMiloRequestOrigin } from "@/lib/milo/request-origin";
 import { parseMiloChatRequest } from "@/lib/milo/request";
 
 export const runtime = "nodejs";
@@ -21,6 +22,10 @@ function json(body: Record<string, unknown>, status = 200, headers?: HeadersInit
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedMiloRequestOrigin(request)) {
+    return json({ error: "Cette demande Milo vient d'une origine non autorisee." }, 403);
+  }
+
   const authentication = await authenticateMiloChild();
 
   if (authentication.status === "unauthenticated") {

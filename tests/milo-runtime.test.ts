@@ -12,6 +12,7 @@ import { findMiloKnowledgeBaseAnswer } from "../src/lib/milo/matching";
 import { checkMiloRateLimit, miloRateLimitConfig } from "../src/lib/milo/rate-limit";
 import { MAX_MILO_REQUEST_BYTES, readMiloRequestBody } from "../src/lib/milo/request-body";
 import { parseMiloChatRequest } from "../src/lib/milo/request";
+import { hasTrustedMiloRequestOrigin } from "../src/lib/milo/request-origin";
 
 async function run() {
   const exactMatch = findMiloKnowledgeBaseAnswer(
@@ -154,6 +155,40 @@ async function run() {
     }),
   );
   assert.deepEqual(validBody, { body: { message: "Bonjour" } });
+
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
+      new Request("https://atelierkids.example/api/ai-chat", {
+        method: "POST",
+        headers: { origin: "https://atelierkids.example" },
+      }),
+    ),
+    true,
+  );
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
+      new Request("https://atelierkids.example/api/ai-chat", {
+        method: "POST",
+        headers: { origin: "https://site-malveillant.example" },
+      }),
+    ),
+    false,
+  );
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
+      new Request("https://atelierkids.example/api/ai-chat", { method: "POST" }),
+    ),
+    true,
+  );
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
+      new Request("https://atelierkids.example/api/ai-chat", {
+        method: "POST",
+        headers: { origin: "not-a-url" },
+      }),
+    ),
+    false,
+  );
 
   const invalidBody = await readMiloRequestBody(
     new Request("http://localhost/api/ai-chat", { method: "POST", body: "{" }),

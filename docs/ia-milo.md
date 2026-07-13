@@ -17,29 +17,32 @@ d'execution de l'application Next.
 
 ## Flux de traitement
 
-1. La route verifie la session Supabase et exige un profil Prisma de role `ENFANT`.
+1. Si le navigateur fournit un en-tete `Origin`, la route le compare a l'origine
+   de l'application et rejette une origine differente avant toute authentification
+   ou appel Gemini. Les appels serveur sans en-tete `Origin` restent compatibles.
+2. La route verifie la session Supabase et exige un profil Prisma de role `ENFANT`.
    Il n'existe aucun fallback vers un autre compte enfant.
-2. La route verifie la session avant de lire le JSON et borne la lecture reelle du
+3. La route verifie la session avant de lire le JSON et borne la lecture reelle du
    corps HTTP a 16 Ko, y compris si `Content-Length` est absent ou incorrect. La
    requete est ensuite nettoyee : message,
    historique et contexte de question. Le widget transmet uniquement le texte de
    la consigne : ni les choix ni un indice de bonne reponse ne quittent le
    navigateur.
-3. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
+4. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
    publie en base. Pour une activite, il extrait aussi des reperes courts du JSON
    admin (`Cours.contenu` ou `Exercice.contenu`). Les choix et `reponseCorrecte`
    sont exclus de ce contexte. Une query string ne decide donc pas seule de la
    bibliotheque pedagogique utilisee.
-4. Un garde-fou traite les demandes de reponse directe et les propos agressifs
+5. Un garde-fou traite les demandes de reponse directe et les propos agressifs
    avant toute bibliotheque ou appel IA, y compris les demandes du type
    "reponds par A" ou "A ou B".
-5. Milo cherche ensuite une reponse dans la bibliotheque locale de Wael avant
+6. Milo cherche ensuite une reponse dans la bibliotheque locale de Wael avant
    tout appel IA.
-6. Pour les autres demandes, la route appelle Gemini cote serveur avec
+7. Pour les autres demandes, la route appelle Gemini cote serveur avec
    `GEMINI_API_KEY`.
-7. Une erreur Gemini, un quota epuise, un timeout ou une cle absente produit une
+8. Une erreur Gemini, un quota epuise, un timeout ou une cle absente produit une
    reponse pedagogique de secours. Le widget reste utilisable.
-8. Une meme session enfant est limitee a 12 messages par minute sur une instance
+9. Une meme session enfant est limitee a 12 messages par minute sur une instance
    Node.js. Cette limite protege contre les boucles et les abus simples ; elle
    devra etre remplacee par un limiteur partage si le deploiement utilise plusieurs
    instances.
