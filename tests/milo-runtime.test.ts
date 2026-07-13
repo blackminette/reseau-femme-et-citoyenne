@@ -66,6 +66,14 @@ async function run() {
     findMiloGuardrailReply("A ou B ?") ?? "",
     /ne te donne pas directement/i,
   );
+  assert.match(
+    findMiloGuardrailReply("La bonne reponse est C ?") ?? "",
+    /ne te donne pas directement/i,
+  );
+  assert.match(
+    findMiloGuardrailReply("Donne-moi juste la lettre") ?? "",
+    /ne te donne pas directement/i,
+  );
 
   const parsed = parseMiloChatRequest({
     message: "  Je bloque sur cet exercice  ",
