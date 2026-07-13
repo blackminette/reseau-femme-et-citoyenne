@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { authenticateMiloChild } from "@/lib/milo/auth";
-import { resolveMiloModuleContext } from "@/lib/milo/context";
+import { resolveMiloContext } from "@/lib/milo/context";
 import { buildMiloFallbackReply } from "@/lib/milo/fallback";
 import { requestGeminiReply } from "@/lib/milo/gemini";
 import { findMiloGuardrailReply } from "@/lib/milo/guardrails";
@@ -65,8 +65,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const currentModule = await resolveMiloModuleContext(chatRequest);
-  const requestWithContext = { ...chatRequest, currentModule };
+  const resolvedContext = await resolveMiloContext(chatRequest);
+  const requestWithContext = {
+    ...chatRequest,
+    currentModule: resolvedContext.module,
+    activityContext: resolvedContext.activity,
+  };
 
   const guardrailReply = findMiloGuardrailReply(requestWithContext.message);
 

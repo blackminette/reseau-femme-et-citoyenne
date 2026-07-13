@@ -9,7 +9,8 @@ d'execution de l'application Next.
 - `src/app/(dashboard-enfant)/layout.tsx` charge le widget dans l'espace enfant.
 - `public/ai-widget.js` fournit le panneau flottant, le mode plein ecran et la
   memoire courte de navigateur.
-- `public/assistant.html` charge le meme widget en plein ecran.
+- `/assistant.html` redirige vers `/enfant/assistant`, une route protegee qui
+  charge le meme widget en plein ecran.
 - `src/app/api/ai-chat/route.ts` recoit les messages et repond a `POST /api/ai-chat`.
 - `src/lib/milo/` contient la validation, l'authentification, le matching, les
   garde-fous, Gemini et le fallback.
@@ -23,8 +24,10 @@ d'execution de l'application Next.
    historique et contexte de question.
    Un indice de bonne reponse envoye par le navigateur est ignore.
 3. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
-   publie en base. Une query string ne decide donc pas seule de la bibliotheque
-   pedagogique utilisee.
+   publie en base. Pour une activite, il extrait aussi des reperes courts du JSON
+   admin (`Cours.contenu` ou `Exercice.contenu`). Les choix et `reponseCorrecte`
+   sont exclus de ce contexte. Une query string ne decide donc pas seule de la
+   bibliotheque pedagogique utilisee.
 4. Un garde-fou traite les demandes de reponse directe et les propos agressifs
    avant toute bibliotheque ou appel IA, y compris les demandes du type
    "reponds par A" ou "A ou B".
@@ -44,10 +47,11 @@ d'execution de l'application Next.
 - `GEMINI_API_KEY` est une variable serveur. Elle ne doit jamais porter le prefixe
   `NEXT_PUBLIC_` et ne doit jamais etre commitee.
 - Le serveur ajoute seulement le prenom de l'enfant et le contexte pedagogique
-  utile. Les adresses e-mail, numeros de telephone et secrets ecrits dans un
-  message sont masques avant l'appel Gemini. La detection automatique des noms
-  complets n'est pas fiable : le deploiement doit donc aussi prevoir une
-  information parentale et les conditions de traitement adaptees aux mineurs.
+  utile. Les adresses e-mail, numeros de telephone et secrets ecrits dans les
+  messages ou les extraits de contenu sont masques avant l'appel Gemini. La
+  detection automatique des noms complets n'est pas fiable : le deploiement doit
+  donc aussi prevoir une information parentale et les conditions de traitement
+  adaptees aux mineurs.
 - `sessionStorage` ne conserve que l'historique de la session et des statistiques
   locales. Sa lecture est protegee contre un JSON vide ou invalide.
 - Les endpoints `/api/ai-chat/revision` et `/api/ai-chat/revision/done` sont
@@ -69,7 +73,10 @@ GEMINI_MODEL=gemini-2.0-flash
 ## Verification manuelle
 
 - se connecter avec un compte enfant ;
-- ouvrir Milo depuis une page enfant et depuis `/assistant.html` ;
+- ouvrir Milo depuis une page enfant et verifier que `/assistant.html` redirige
+  vers `/enfant/assistant` ;
+- ouvrir une lecon et un exercice publies, puis verifier que Milo utilise leurs
+  reperes sans donner la reponse attendue ;
 - demander une definition connue de la bibliotheque ;
 - demander une aide hors bibliotheque ;
 - tester sans cle Gemini ou avec un quota limite ;

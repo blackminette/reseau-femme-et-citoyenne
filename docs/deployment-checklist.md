@@ -16,6 +16,7 @@ performed by this checklist.
 - [ ] The route checks Supabase session and Prisma role `ENFANT`.
 - [ ] The route fails closed when identity services are unavailable.
 - [ ] The route resolves the published child parcours from the route activity or module reference.
+- [ ] The route uses only safe excerpts from published course/exercise JSON and excludes answer options and correct answers.
 - [ ] `GEMINI_API_KEY` stays server-side.
 - [ ] Missing key, timeout and Gemini rate limit return a safe fallback.
 - [ ] The local answer library is queried before Gemini.
@@ -23,7 +24,7 @@ performed by this checklist.
 
 ## Frontend behavior
 
-- [ ] `/assistant.html` loads `public/ai-widget.js`.
+- [ ] `/assistant.html` redirects to the protected `/enfant/assistant` route.
 - [ ] A child page renders the floating Milo button.
 - [ ] A known question returns a library answer.
 - [ ] An unknown question reaches Gemini when configured.
@@ -36,7 +37,7 @@ performed by this checklist.
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `DATABASE_URL` are configured.
 - [ ] `GEMINI_API_KEY` is configured as a private server variable.
 - [ ] `GEMINI_MODEL` is configured or the documented default is accepted.
-- [ ] `/assistant.html` and `/api/ai-chat` are reachable on the target.
+- [ ] `/enfant/assistant` and `/api/ai-chat` are reachable on the target.
 - [ ] Logs can be consulted without exposing secrets or child data.
 
 ## Final gate

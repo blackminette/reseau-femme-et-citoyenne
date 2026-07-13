@@ -12,6 +12,12 @@ export type MiloQuestionContext = {
   choices: string[];
 };
 
+export type MiloActivityContext = {
+  kind: "lesson" | "exercise";
+  title: string;
+  excerpts: string[];
+};
+
 export type MiloChatRequest = {
   message: string;
   history: MiloMessage[];
@@ -19,6 +25,7 @@ export type MiloChatRequest = {
   moduleReference: string | null;
   activityReference: string | null;
   currentQuestion: MiloQuestionContext | null;
+  activityContext: MiloActivityContext | null;
 };
 
 function asTrimmedString(value: unknown, maximumLength: number): string {
@@ -76,5 +83,7 @@ export function parseMiloChatRequest(body: unknown): MiloChatRequest | null {
     moduleReference: moduleReference || null,
     activityReference: activityReference || null,
     currentQuestion,
+    // This field is resolved on the server from published child content only.
+    activityContext: null,
   };
 }

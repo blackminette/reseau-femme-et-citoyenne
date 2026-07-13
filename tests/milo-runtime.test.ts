@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import {
+  buildMiloActivityContext,
   mapParcoursToMiloModule,
   parseMiloModuleReference,
 } from "../src/lib/milo/context";
@@ -101,7 +102,42 @@ async function run() {
       text: "Quelle proposition est correcte ?",
       choices: ["A", "B"],
     },
+    activityContext: null,
   });
+
+  const courseContext = buildMiloActivityContext(
+    "lesson",
+    "Les institutions",
+    null,
+    [{ numeroPage: 1, titre: "La loi", texteExplicatif: "Une loi organise la vie commune." }],
+  );
+  assert.deepEqual(courseContext, {
+    kind: "lesson",
+    title: "Les institutions",
+    excerpts: ["La loi", "Une loi organise la vie commune."],
+  });
+
+  const exerciseContext = buildMiloActivityContext(
+    "exercise",
+    "Verifier ses connaissances",
+    "Lis la consigne avant de choisir.",
+    [{
+      numeroPage: 1,
+      question: "Quel texte organise une partie du droit ?",
+      options: ["A", "B"],
+      reponseCorrecte: "B",
+    }],
+  );
+  assert.deepEqual(exerciseContext, {
+    kind: "exercise",
+    title: "Verifier ses connaissances",
+    excerpts: [
+      "Lis la consigne avant de choisir.",
+      "Quel texte organise une partie du droit ?",
+    ],
+  });
+  assert.equal(JSON.stringify(exerciseContext).includes("reponseCorrecte"), false);
+  assert.equal(JSON.stringify(exerciseContext).includes("\"B\""), false);
 
   assert.equal(
     mapParcoursToMiloModule(["EDUCATION_CIVIQUE"]),
@@ -175,12 +211,23 @@ async function run() {
 
   try {
     const geminiReply = await requestGeminiReply(
-      { ...parsed, message: "Mon email est lea@example.com" },
+      {
+        ...parsed,
+        currentQuestion: null,
+        activityContext: {
+          ...exerciseContext!,
+          excerpts: [...exerciseContext!.excerpts, "Contact : lea@example.com"],
+        },
+        message: "Mon email est lea@example.com",
+      },
       "Lina",
     );
     assert.equal(geminiReply, "Je peux t'aider avec un indice.");
     assert.equal(JSON.stringify(geminiRequestBody).includes("lea@example.com"), false);
     assert.equal(JSON.stringify(geminiRequestBody).includes("adresse e-mail masquee"), true);
+    assert.equal(JSON.stringify(geminiRequestBody).includes("Quel texte organise"), true);
+    assert.equal(JSON.stringify(geminiRequestBody).includes("reponseCorrecte"), false);
+    assert.equal(JSON.stringify(geminiRequestBody).includes("\"B\""), false);
   } finally {
     globalThis.fetch = previousFetch;
   }
