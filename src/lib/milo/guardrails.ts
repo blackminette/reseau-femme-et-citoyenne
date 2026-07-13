@@ -1,7 +1,7 @@
 import { normalizeMiloText } from "@/lib/milo/matching";
 
 const ANSWER_REQUEST =
-  /(?:donne|dis) moi (?:directement )?la (bonne )?reponse|c est quoi la (bonne )?reponse|donne la solution/i;
+  /(?:donne|dis) moi (?:directement )?la (bonne )?reponse|c est quoi la (bonne )?reponse|quelle est la (bonne )?reponse|donne la solution|choisis pour moi|reponds?(?: juste| seulement)?(?: par)? [a-d]\b|\b[a-d]\s+ou\s+[a-d]\b/i;
 
 const ABUSIVE_LANGUAGE = /\b(idiot|debile|nul|ferme ta gueule|ta gueule|connard)\b/i;
 

@@ -24,7 +24,8 @@ d'execution de l'application Next.
    publie en base. Une query string ne decide donc pas seule de la bibliotheque
    pedagogique utilisee.
 4. Un garde-fou traite les demandes de reponse directe et les propos agressifs
-   avant toute bibliotheque ou appel IA.
+   avant toute bibliotheque ou appel IA, y compris les demandes du type
+   "reponds par A" ou "A ou B".
 5. Milo cherche ensuite une reponse dans la bibliotheque locale de Wael avant
    tout appel IA.
 6. Pour les autres demandes, la route appelle Gemini cote serveur avec

@@ -58,6 +58,14 @@ async function run() {
     findMiloKnowledgeBaseAnswer(directAnswerRequest, "lecture"),
     "Le cas de regression doit aussi correspondre a une entree de bibliotheque.",
   );
+  assert.match(
+    findMiloGuardrailReply("Reponds juste par B") ?? "",
+    /ne te donne pas directement/i,
+  );
+  assert.match(
+    findMiloGuardrailReply("A ou B ?") ?? "",
+    /ne te donne pas directement/i,
+  );
 
   const parsed = parseMiloChatRequest({
     message: "  Je bloque sur cet exercice  ",
