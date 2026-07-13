@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/auth';
 // Route sur laquelle le middleware s'applique (toutes les routes sauf fichiers statiques et API)
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp|ai-widget.js|assistant.html).*)',
     ],
 };
 
