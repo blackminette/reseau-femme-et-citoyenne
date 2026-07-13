@@ -18,7 +18,9 @@ d'execution de l'application Next.
 
 1. La route verifie la session Supabase et exige un profil Prisma de role `ENFANT`.
    Il n'existe aucun fallback vers un autre compte enfant.
-2. La requete est bornee et nettoyee : message, historique et contexte de question.
+2. La route verifie la session avant de lire le JSON et refuse les corps annonces
+   au-dela de 16 Ko. La requete est ensuite bornee et nettoyee : message,
+   historique et contexte de question.
    Un indice de bonne reponse envoye par le navigateur est ignore.
 3. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
    publie en base. Une query string ne decide donc pas seule de la bibliotheque

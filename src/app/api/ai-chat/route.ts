@@ -11,6 +11,7 @@ import { parseMiloChatRequest } from "@/lib/milo/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_CHAT_REQUEST_BYTES = 16_000;
 
 function json(body: Record<string, unknown>, status = 200, headers?: HeadersInit) {
   return NextResponse.json(body, {
@@ -20,20 +21,6 @@ function json(body: Record<string, unknown>, status = 200, headers?: HeadersInit
 }
 
 export async function POST(request: Request) {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "La demande envoyee a Milo est invalide." }, 400);
-  }
-
-  const chatRequest = parseMiloChatRequest(body);
-
-  if (!chatRequest) {
-    return json({ error: "Ecris un message avant d'envoyer." }, 400);
-  }
-
   const authentication = await authenticateMiloChild();
 
   if (authentication.status === "unauthenticated") {
@@ -46,6 +33,26 @@ export async function POST(request: Request) {
 
   if (authentication.status === "unavailable") {
     return json({ error: "Le service de connexion est indisponible. Reessaie plus tard." }, 503);
+  }
+
+  const contentLength = Number(request.headers.get("content-length"));
+
+  if (Number.isFinite(contentLength) && contentLength > MAX_CHAT_REQUEST_BYTES) {
+    return json({ error: "Le message envoye a Milo est trop long." }, 413);
+  }
+
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "La demande envoyee a Milo est invalide." }, 400);
+  }
+
+  const chatRequest = parseMiloChatRequest(body);
+
+  if (!chatRequest) {
+    return json({ error: "Ecris un message avant d'envoyer." }, 400);
   }
 
   const rateLimit = checkMiloRateLimit(authentication.child.id);
