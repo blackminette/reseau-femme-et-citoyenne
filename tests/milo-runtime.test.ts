@@ -5,7 +5,7 @@ import {
   parseMiloModuleReference,
 } from "../src/lib/milo/context";
 import { buildMiloFallbackReply } from "../src/lib/milo/fallback";
-import { requestGeminiReply } from "../src/lib/milo/gemini";
+import { redactMiloTextForGemini, requestGeminiReply } from "../src/lib/milo/gemini";
 import { findMiloGuardrailReply } from "../src/lib/milo/guardrails";
 import { findMiloKnowledgeBaseAnswer } from "../src/lib/milo/matching";
 import { checkMiloRateLimit, miloRateLimitConfig } from "../src/lib/milo/rate-limit";
@@ -123,6 +123,15 @@ async function run() {
   assert.match(fallback, /robotique/i);
   assert.match(fallback, /Quel bloc permet/i);
 
+  assert.equal(
+    redactMiloTextForGemini("Mon email est lea@example.com et mon numero est 06 12 34 56 78."),
+    "Mon email est [adresse e-mail masquee] et mon numero est [numero de telephone masque].",
+  );
+  assert.equal(
+    redactMiloTextForGemini("mot de passe: secret123"),
+    "mot de passe [masque]",
+  );
+
   const previousKey = process.env.GEMINI_API_KEY;
   process.env.GEMINI_API_KEY = "";
 
@@ -141,6 +150,29 @@ async function run() {
       (error: unknown) =>
         error instanceof Error && "status" in error && error.status === 429,
     );
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  let geminiRequestBody: Record<string, unknown> | null = null;
+  globalThis.fetch = async (_input, init) => {
+    geminiRequestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(
+      JSON.stringify({
+        candidates: [{ content: { parts: [{ text: "Je peux t'aider avec un indice." }] } }],
+      }),
+      { status: 200 },
+    );
+  };
+
+  try {
+    const geminiReply = await requestGeminiReply(
+      { ...parsed, message: "Mon email est lea@example.com" },
+      "Lina",
+    );
+    assert.equal(geminiReply, "Je peux t'aider avec un indice.");
+    assert.equal(JSON.stringify(geminiRequestBody).includes("lea@example.com"), false);
+    assert.equal(JSON.stringify(geminiRequestBody).includes("adresse e-mail masquee"), true);
   } finally {
     globalThis.fetch = previousFetch;
   }

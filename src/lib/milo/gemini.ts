@@ -18,7 +18,21 @@ export class GeminiRequestError extends Error {
 }
 
 function escapePromptValue(value: string): string {
-  return value.replace(/[<>]/g, "").slice(0, 500);
+  return value
+    .replace(/[\u0000-\u001F\u007F<>`]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 500);
+}
+
+export function redactMiloTextForGemini(value: string): string {
+  return value
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[adresse e-mail masquee]")
+    .replace(/(?:\+33|0)(?:[ .-]?\d){9}\b/g, "[numero de telephone masque]")
+    .replace(
+      /\b(?:mot de passe|password)\b\s*(?:=|:)\s*[^\s,;!?]+/gi,
+      "mot de passe [masque]",
+    );
 }
 
 function buildSystemInstruction(
@@ -82,7 +96,7 @@ export async function requestGeminiReply(
   const messages = [...request.history, { role: "user" as const, content: request.message }];
   const contents = messages.map((message) => ({
     role: message.role === "assistant" ? "model" : "user",
-    parts: [{ text: message.content }],
+    parts: [{ text: redactMiloTextForGemini(message.content) }],
   }));
 
   let response: Response;

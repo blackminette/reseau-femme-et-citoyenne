@@ -41,8 +41,11 @@ d'execution de l'application Next.
 
 - `GEMINI_API_KEY` est une variable serveur. Elle ne doit jamais porter le prefixe
   `NEXT_PUBLIC_` et ne doit jamais etre commitee.
-- Le prompt ne recoit que le prenom de l'enfant et la question utile. Il ne recoit
-  ni nom complet, ni email, ni mot de passe, ni bonne reponse du quiz.
+- Le serveur ajoute seulement le prenom de l'enfant et le contexte pedagogique
+  utile. Les adresses e-mail, numeros de telephone et secrets ecrits dans un
+  message sont masques avant l'appel Gemini. La detection automatique des noms
+  complets n'est pas fiable : le deploiement doit donc aussi prevoir une
+  information parentale et les conditions de traitement adaptees aux mineurs.
 - `sessionStorage` ne conserve que l'historique de la session et des statistiques
   locales. Sa lecture est protegee contre un JSON vide ou invalide.
 - Les endpoints `/api/ai-chat/revision` et `/api/ai-chat/revision/done` sont
