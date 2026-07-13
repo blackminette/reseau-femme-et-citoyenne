@@ -8,6 +8,7 @@ import { buildMiloFallbackReply } from "../src/lib/milo/fallback";
 import { requestGeminiReply } from "../src/lib/milo/gemini";
 import { findMiloGuardrailReply } from "../src/lib/milo/guardrails";
 import { findMiloKnowledgeBaseAnswer } from "../src/lib/milo/matching";
+import { checkMiloRateLimit, miloRateLimitConfig } from "../src/lib/milo/rate-limit";
 import { parseMiloChatRequest } from "../src/lib/milo/request";
 
 async function run() {
@@ -93,6 +94,19 @@ async function run() {
   assert.equal(mapParcoursToMiloModule(["NUMERIQUE_ADULTE"]), null);
   assert.equal(parseMiloModuleReference("lecture"), "lecture");
   assert.equal(parseMiloModuleReference("module-inconnu"), null);
+
+  const rateLimitChild = "milo-rate-limit-test";
+  const rateLimitStart = 1_000_000;
+  for (let index = 0; index < miloRateLimitConfig.maximumRequests; index += 1) {
+    assert.equal(checkMiloRateLimit(rateLimitChild, rateLimitStart).allowed, true);
+  }
+  const blockedRequest = checkMiloRateLimit(rateLimitChild, rateLimitStart);
+  assert.equal(blockedRequest.allowed, false);
+  assert.ok(blockedRequest.retryAfterSeconds > 0);
+  assert.equal(
+    checkMiloRateLimit(rateLimitChild, rateLimitStart + miloRateLimitConfig.windowMs).allowed,
+    true,
+  );
 
   const fallback = buildMiloFallbackReply({
     currentModule: "robotique",

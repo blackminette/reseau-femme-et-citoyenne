@@ -6,15 +6,16 @@ import { buildMiloFallbackReply } from "@/lib/milo/fallback";
 import { requestGeminiReply } from "@/lib/milo/gemini";
 import { findMiloGuardrailReply } from "@/lib/milo/guardrails";
 import { findMiloKnowledgeBaseAnswer } from "@/lib/milo/matching";
+import { checkMiloRateLimit } from "@/lib/milo/rate-limit";
 import { parseMiloChatRequest } from "@/lib/milo/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function json(body: Record<string, unknown>, status = 200) {
+function json(body: Record<string, unknown>, status = 200, headers?: HeadersInit) {
   return NextResponse.json(body, {
     status,
-    headers: { "Cache-Control": "no-store" },
+    headers: { "Cache-Control": "no-store", ...headers },
   });
 }
 
@@ -45,6 +46,16 @@ export async function POST(request: Request) {
 
   if (authentication.status === "unavailable") {
     return json({ error: "Le service de connexion est indisponible. Reessaie plus tard." }, 503);
+  }
+
+  const rateLimit = checkMiloRateLimit(authentication.child.id);
+
+  if (!rateLimit.allowed) {
+    return json(
+      { error: "Tu as envoye beaucoup de messages. Attends un petit instant avant de continuer." },
+      429,
+      { "Retry-After": String(rateLimit.retryAfterSeconds) },
+    );
   }
 
   const currentModule = await resolveMiloModuleContext(chatRequest);

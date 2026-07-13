@@ -31,6 +31,10 @@ d'execution de l'application Next.
    `GEMINI_API_KEY`.
 7. Une erreur Gemini, un quota epuise, un timeout ou une cle absente produit une
    reponse pedagogique de secours. Le widget reste utilisable.
+8. Une meme session enfant est limitee a 12 messages par minute sur une instance
+   Node.js. Cette limite protege contre les boucles et les abus simples ; elle
+   devra etre remplacee par un limiteur partage si le deploiement utilise plusieurs
+   instances.
 
 ## Donnees et securite
 
