@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 
-import { mapParcoursToMiloModule } from "../src/lib/milo/context";
+import {
+  mapParcoursToMiloModule,
+  parseMiloModuleReference,
+} from "../src/lib/milo/context";
 import { buildMiloFallbackReply } from "../src/lib/milo/fallback";
 import { requestGeminiReply } from "../src/lib/milo/gemini";
 import { findMiloGuardrailReply } from "../src/lib/milo/guardrails";
@@ -41,6 +44,10 @@ async function run() {
     findMiloGuardrailReply("Donne moi la bonne reponse") ?? "",
     /ne te donne pas directement/i,
   );
+  assert.match(
+    findMiloGuardrailReply("Donne-moi directement la bonne réponse.") ?? "",
+    /ne te donne pas directement/i,
+  );
 
   const parsed = parseMiloChatRequest({
     message: "  Je bloque sur cet exercice  ",
@@ -75,6 +82,8 @@ async function run() {
     "civique",
   );
   assert.equal(mapParcoursToMiloModule(["NUMERIQUE_ADULTE"]), null);
+  assert.equal(parseMiloModuleReference("lecture"), "lecture");
+  assert.equal(parseMiloModuleReference("module-inconnu"), null);
 
   const fallback = buildMiloFallbackReply({
     currentModule: "robotique",

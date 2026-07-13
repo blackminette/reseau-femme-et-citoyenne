@@ -430,7 +430,7 @@
     const match = window.location.pathname.match(/^\/enfant\/modules\/([^/?#]+)(?:\/activite\/([^/?#]+))?\/?$/);
     return {
       currentModule: getUrlParam('m'),
-      moduleReference: match ? match[1] : getUrlParam('moduleId'),
+      moduleReference: match ? match[1] : (getUrlParam('moduleId') || getUrlParam('m')),
       activityReference: match ? match[2] : getUrlParam('id'),
     };
   }

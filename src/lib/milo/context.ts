@@ -1,3 +1,5 @@
+import { Parcours } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 import type { MiloChatRequest } from "@/lib/milo/request";
 
@@ -21,10 +23,25 @@ const PARCOURS_TO_MILO_MODULE: Record<string, MiloModule> = {
   ECO_CITOYENNETE: "eco",
 };
 
+const MILO_MODULE_TO_PARCOURS: Record<MiloModule, Parcours> = {
+  lecture: Parcours.COMPREHENSION_LECTURE,
+  numerique: Parcours.NUMERIQUE,
+  robotique: Parcours.ROBOTIQUE,
+  anglais: Parcours.ANGLAIS,
+  civique: Parcours.EDUCATION_CIVIQUE,
+  eco: Parcours.ECO_CITOYENNETE,
+};
+
 function parseDatabaseId(value: string | null): number | null {
   if (!value || !/^[1-9]\d{0,8}$/.test(value)) return null;
 
   return Number(value);
+}
+
+export function parseMiloModuleReference(value: string | null): MiloModule | null {
+  return value && MILO_MODULES.includes(value as MiloModule)
+    ? (value as MiloModule)
+    : null;
 }
 
 export function mapParcoursToMiloModule(parcours: readonly string[]): MiloModule | null {
@@ -85,8 +102,20 @@ export async function resolveMiloModuleContext(
       select: { parcours: true },
     });
 
-    if (contentModule) return mapParcoursToMiloModule(contentModule.parcours);
+    return contentModule ? mapParcoursToMiloModule(contentModule.parcours) : null;
   }
 
-  return request.currentModule;
+  const moduleReference = parseMiloModuleReference(request.moduleReference);
+  if (!moduleReference) return null;
+
+  const contentModule = await prisma.module.findFirst({
+    where: {
+      parcours: { has: MILO_MODULE_TO_PARCOURS[moduleReference] },
+      public: "ENFANT",
+      isPublished: true,
+    },
+    select: { parcours: true },
+  });
+
+  return contentModule ? mapParcoursToMiloModule(contentModule.parcours) : null;
 }
