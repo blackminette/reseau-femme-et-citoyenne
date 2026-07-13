@@ -188,6 +188,20 @@ async function run() {
   );
   assert.equal(
     hasTrustedMiloRequestOrigin(
+      new Request("http://next-internal:3000/api/ai-chat", {
+        method: "POST",
+        headers: {
+          host: "next-internal:3000",
+          origin: "https://atelierkids.example",
+          "x-forwarded-host": "atelierkids.example",
+          "x-forwarded-proto": "https",
+        },
+      }),
+    ),
+    true,
+  );
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
       new Request("https://atelierkids.example/api/ai-chat", { method: "POST" }),
     ),
     true,
