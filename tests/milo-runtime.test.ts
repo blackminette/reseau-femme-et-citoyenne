@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import {
   buildMiloActivityContext,
@@ -14,7 +16,48 @@ import { MAX_MILO_REQUEST_BYTES, readMiloRequestBody } from "../src/lib/milo/req
 import { parseMiloChatRequest } from "../src/lib/milo/request";
 import { hasTrustedMiloRequestOrigin } from "../src/lib/milo/request-origin";
 
+type MiloWidgetSessionHelpers = {
+  sanitizeSessionContent: (value: string) => string;
+  sanitizeSessionHistory: (messages: unknown[]) => Array<{ role: string; content: string }>;
+};
+
+function readMiloWidgetSessionHelpers(): MiloWidgetSessionHelpers {
+  const source = readFileSync(path.join(process.cwd(), "public", "ai-widget.js"), "utf8");
+  const start = source.indexOf("  function sanitizeSessionContent");
+  const end = source.indexOf("  function saveHistory", start);
+
+  assert.ok(start >= 0 && end > start, "Les helpers de persistance Milo doivent rester presents.");
+  assert.match(source, /sessionStorage\.setItem\(_sessionKey\(\), JSON\.stringify\(sanitizeSessionHistory/);
+  assert.match(source, /history = Array\.isArray\(parsed\)\s*\? sanitizeSessionHistory\(parsed\)/);
+  assert.match(source, /function restoreHistory\(\)\s*\{\s*history\.forEach\(message => addBubble\(message\.role, message\.content\)\);\s*\}/);
+  assert.match(source, /restoreHistory\(\);/);
+
+  return new Function(
+    `${source.slice(start, end)}; return { sanitizeSessionContent, sanitizeSessionHistory };`,
+  )() as MiloWidgetSessionHelpers;
+}
+
 async function run() {
+  const sessionHelpers = readMiloWidgetSessionHelpers();
+  assert.equal(
+    sessionHelpers.sanitizeSessionContent(
+      "Email lea@example.com, tel 06 12 34 56 78, mot de passe: secret123",
+    ),
+    "Email [adresse e-mail masquee], tel [numero de telephone masque], mot de passe [masque]",
+  );
+  assert.deepEqual(
+    sessionHelpers.sanitizeSessionHistory([
+      { role: "user", content: "Contact lea@example.com" },
+      { role: "assistant", content: "mot de passe=secret123" },
+      { role: "system", content: "ignore" },
+      { role: "user", content: 42 },
+    ]),
+    [
+      { role: "user", content: "Contact [adresse e-mail masquee]" },
+      { role: "assistant", content: "mot de passe [masque]" },
+    ],
+  );
+
   const exactMatch = findMiloKnowledgeBaseAnswer(
     "C'est quoi un synonyme ?",
     "lecture",

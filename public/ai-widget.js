@@ -445,8 +445,19 @@
     const id = context.activityReference || context.moduleReference || context.currentModule || 'global';
     return `milo_h_${id}`;
   }
+  function sanitizeSessionContent(value) {
+    return value
+      .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[adresse e-mail masquee]')
+      .replace(/(?:\+33|0)(?:[ .-]?\d){9}\b/g, '[numero de telephone masque]')
+      .replace(/\b(?:mot de passe|password)\b\s*(?:=|:)\s*[^\s,;!?]+/gi, 'mot de passe [masque]');
+  }
+  function sanitizeSessionHistory(messages) {
+    return messages
+      .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .map(m => ({ role: m.role, content: sanitizeSessionContent(m.content) }));
+  }
   function saveHistory() {
-    try { sessionStorage.setItem(_sessionKey(), JSON.stringify(history.slice(-14))); } catch {}
+    try { sessionStorage.setItem(_sessionKey(), JSON.stringify(sanitizeSessionHistory(history.slice(-14)))); } catch {}
   }
   function loadHistory() {
     try {
@@ -454,7 +465,7 @@
       if (!raw) return;
       const parsed = JSON.parse(raw);
       history = Array.isArray(parsed)
-        ? parsed.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        ? sanitizeSessionHistory(parsed)
         : [];
     } catch {
       history = [];
@@ -618,6 +629,11 @@
     row.appendChild(bub); thread.appendChild(row); scrollBottom();
     return bub;
   }
+
+  function restoreHistory() {
+    history.forEach(message => addBubble(message.role, message.content));
+  }
+  restoreHistory();
 
   function addQuickReplies(reply) {
     const isCelebrate  = /bravo|félicit|génial|excellent|parfait|t['']as trouv|c['']est exact/i.test(reply);
