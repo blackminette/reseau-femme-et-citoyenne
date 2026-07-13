@@ -212,7 +212,6 @@ async function run() {
     const geminiReply = await requestGeminiReply(
       {
         ...parsed,
-        currentQuestion: null,
         activityContext: {
           ...exerciseContext!,
           excerpts: [...exerciseContext!.excerpts, "Contact : lea@example.com"],
@@ -224,6 +223,7 @@ async function run() {
     assert.equal(geminiReply, "Je peux t'aider avec un indice.");
     assert.equal(JSON.stringify(geminiRequestBody).includes("lea@example.com"), false);
     assert.equal(JSON.stringify(geminiRequestBody).includes("adresse e-mail masquee"), true);
+    assert.equal(JSON.stringify(geminiRequestBody).includes("Quelle proposition est correcte"), true);
     assert.equal(JSON.stringify(geminiRequestBody).includes("Quel texte organise"), true);
     assert.equal(JSON.stringify(geminiRequestBody).includes("reponseCorrecte"), false);
     assert.equal(JSON.stringify(geminiRequestBody).includes("\"B\""), false);
