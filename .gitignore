@@ -45,3 +45,6 @@ dev.err.log
 next-env.d.ts
 
 /src/generated/prisma
+
+# Base de données locale (AtelierKids)
+data/
