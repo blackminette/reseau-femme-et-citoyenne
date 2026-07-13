@@ -283,6 +283,18 @@ async function run() {
     globalThis.fetch = previousFetch;
   }
 
+  globalThis.fetch = async () => new Response("service unavailable", { status: 503 });
+
+  try {
+    await assert.rejects(
+      () => requestGeminiReply(parsed, "Lina"),
+      (error: unknown) =>
+        error instanceof Error && "status" in error && error.status === 503,
+    );
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
   let geminiRequestBody: Record<string, unknown> | null = null;
   globalThis.fetch = async (_input, init) => {
     geminiRequestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
