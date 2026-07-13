@@ -176,6 +176,18 @@ async function run() {
   );
   assert.equal(
     hasTrustedMiloRequestOrigin(
+      new Request("http://localhost:3011/api/ai-chat", {
+        method: "POST",
+        headers: {
+          host: "127.0.0.1:3011",
+          origin: "http://127.0.0.1:3011",
+        },
+      }),
+    ),
+    true,
+  );
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
       new Request("https://atelierkids.example/api/ai-chat", { method: "POST" }),
     ),
     true,
