@@ -1,5 +1,5 @@
 import React from 'react';
-import Image from 'next/image';
+import Script from 'next/script';
 import { LogOut } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
@@ -112,6 +112,7 @@ export default async function EnfantLayout({
             </main>
             {/* Bottom Navigation Menu (visible on mobile only) */}
             <EnfantNavbar />
+            <Script src="/ai-widget.js?v=20260713" strategy="afterInteractive" />
         </div>
     );
 }

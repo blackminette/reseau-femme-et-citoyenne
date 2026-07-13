@@ -346,9 +346,7 @@
   }
 
   // ── Gestion de l'état du personnage ────────────────────────────────────────
-  let charState = 'wave';
   function setCharState(state, duration = 0) {
-    charState = state;
     const wrap = document.getElementById('aiw-char-wrap');
     const hav  = document.getElementById('aiw-hav');
     if (wrap) {
@@ -428,13 +426,22 @@
   // ── Helpers ────────────────────────────────────────────────────────────────
   function getUrlParam(k) { return new URLSearchParams(window.location.search).get(k) || null; }
   const MOD_LABELS = {lecture:'Lecture',numerique:'Numérique',robotique:'Robotique',anglais:'Anglais',civique:'Éd. civique',eco:'Éco-citoyenneté'};
+  function getMiloPageContext() {
+    const match = window.location.pathname.match(/^\/enfant\/modules\/([^/?#]+)(?:\/activite\/([^/?#]+))?\/?$/);
+    return {
+      currentModule: getUrlParam('m'),
+      moduleReference: match ? match[1] : getUrlParam('moduleId'),
+      activityReference: match ? match[2] : getUrlParam('id'),
+    };
+  }
 
   // ── Persistance sessionStorage ────────────────────────────────────────────
   // L'historique est sauvegardé par activité pour survivre aux navigations
   // entre pages du même quiz (ex : enfant ouvre la leçon puis revient au quiz).
   let open = STANDALONE, history = [], unread = 0, _pendingWrongMsg = null;
   function _sessionKey() {
-    const id = getUrlParam('id') || getUrlParam('m') || window.location.pathname.split('/').pop();
+    const context = getMiloPageContext();
+    const id = context.activityReference || context.moduleReference || context.currentModule || 'global';
     return `milo_h_${id}`;
   }
   function saveHistory() {
@@ -460,7 +467,8 @@
   // enfant en série → célébration streak.
   // hints efficaces → continue sur la même approche.
   function _learningKey() {
-    const id = getUrlParam('id') || getUrlParam('m') || 'global';
+    const context = getMiloPageContext();
+    const id = context.activityReference || context.moduleReference || context.currentModule || 'global';
     return `milo_learn_${id}`;
   }
   function getSessionLearning() {
@@ -667,9 +675,8 @@
   }
 
   // ── Mini-quiz de révision (répétition espacée, 0 appel IA) ──────────────────
-  // À l'ouverture, si un concept vu il y a ≥3 jours est "dû", Milo propose de le
-  // retester. L'enfant s'auto-évalue, Milo rappelle la définition, et le souvenir
-  // est réactivé côté serveur pour ne pas être redemandé tout de suite.
+  // A future shared revision model may offer reminders here. Until then, the
+  // widget keeps only short-term data in sessionStorage.
   let _revisionOffered = false;
   async function offerRevision() {
     if (_revisionOffered || _pendingWrongMsg || history.length) return;
@@ -808,12 +815,12 @@
     setCharState('think');
     setStatus('Milo réfléchit…');
 
-    const currentModule = getUrlParam('m'), activityId = getUrlParam('id');
+    const context = getMiloPageContext();
     let res;
     try {
       res = await (typeof askAssistant==='function'
-        ? askAssistant(msg, history, currentModule, activityId)
-        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule,activityId,currentQuestion:window.MILO_CURRENT_QUESTION||null,sessionLearning:getSessionLearning()})}).then(r=>r.json()));
+        ? askAssistant(msg, history, context.currentModule, context.activityReference)
+        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule:context.currentModule,moduleReference:context.moduleReference,activityReference:context.activityReference,currentQuestion:window.MILO_CURRENT_QUESTION||null,sessionLearning:getSessionLearning()})}).then(r=>r.json()));
     } catch { res={error:'Serveur injoignable.'}; }
 
     typing.remove();
