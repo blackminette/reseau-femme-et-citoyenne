@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/auth';
 // Route sur laquelle le middleware s'applique (toutes les routes sauf fichiers statiques et API)
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp|ai-widget.js|assistant.html).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp|ai-widget.js).*)',
     ],
 };
 
@@ -49,6 +49,10 @@ export async function middleware(request: NextRequest) {
 
     // Si non connecté et tente d'aller sur une page privée -> Redirection /login
     if (!user) {
+        if (pathname === '/assistant.html') {
+            url.pathname = '/enfant/assistant';
+            return NextResponse.redirect(url);
+        }
         if (isPrivateRoute) {
             url.pathname = '/login';
             return NextResponse.redirect(url);
@@ -78,6 +82,11 @@ export async function middleware(request: NextRequest) {
             return redirectUserToDefaultDashboard(userRole, url);
         }
         url.pathname = '/';
+        return NextResponse.redirect(url);
+    }
+
+    if (pathname === '/assistant.html') {
+        url.pathname = '/enfant/assistant';
         return NextResponse.redirect(url);
     }
 
