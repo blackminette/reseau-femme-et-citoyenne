@@ -1,35 +1,65 @@
 # Milo / assistant IA
 
-Ce document résume le fonctionnement actuel de l'assistant IA de l'espace enfant.
+## Runtime actif
 
-## Vue d'ensemble
+Milo est execute par le serveur Next.js. Le prototype Express et SQLite sous
+`server/` reste une archive de travail, mais ne constitue plus le chemin
+d'execution de l'application Next.
 
-- `public/ai-widget.js` charge le widget Milo sur les pages enfants.
-- `public/assistant.html` ouvre Milo en mode plein écran.
-- `server/routes/ai-chat.js` reçoit les messages de l'enfant et interroge Gemini.
-- `server/ai-chat-utils.js` normalise les données lues côté serveur.
+- `src/app/(dashboard-enfant)/layout.tsx` charge le widget dans l'espace enfant.
+- `public/ai-widget.js` fournit le panneau flottant, le mode plein ecran et la
+  memoire courte de navigateur.
+- `public/assistant.html` charge le meme widget en plein ecran.
+- `src/app/api/ai-chat/route.ts` recoit les messages et repond a `POST /api/ai-chat`.
+- `src/lib/milo/` contient la validation, l'authentification, le matching, les
+  garde-fous, Gemini et le fallback.
 
-## Comportement important
+## Flux de traitement
 
-- Le widget peut fonctionner en mode flottant ou en mode autonome.
-- L'historique est stocké dans `sessionStorage` avec une lecture protégée contre le JSON invalide.
-- Si les données du stockage local sont corrompues, l'assistant repart avec un historique vide.
-- La route serveur reconstruit le contexte de l'enfant à partir des scores, badges et contenus du module actif.
+1. La route verifie la session Supabase et exige un profil Prisma de role `ENFANT`.
+   Il n'existe aucun fallback vers un autre compte enfant.
+2. La requete est bornee et nettoyee : message, historique et contexte de question.
+   Un indice de bonne reponse envoye par le navigateur est ignore.
+3. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
+   publie en base. Une query string ne decide donc pas seule de la bibliotheque
+   pedagogique utilisee.
+4. Milo cherche une reponse dans la bibliotheque locale de Wael avant tout appel IA.
+5. Un garde-fou traite les demandes de reponse directe et les propos agressifs.
+6. Pour les autres demandes, la route appelle Gemini cote serveur avec
+   `GEMINI_API_KEY`.
+7. Une erreur Gemini, un quota epuise, un timeout ou une cle absente produit une
+   reponse pedagogique de secours. Le widget reste utilisable.
 
-## Points de vigilance
+## Donnees et securite
 
-- Ne pas remettre de dépendance implicite vers des helpers absents.
-- Ne pas stocker de données sensibles dans le front.
-- Garder les messages courts, clairs et adaptés à un enfant.
-- Vérifier le comportement après recharge de page et avec un `sessionStorage` vide ou invalide.
+- `GEMINI_API_KEY` est une variable serveur. Elle ne doit jamais porter le prefixe
+  `NEXT_PUBLIC_` et ne doit jamais etre commitee.
+- Le prompt ne recoit que le prenom de l'enfant et la question utile. Il ne recoit
+  ni nom complet, ni email, ni mot de passe, ni bonne reponse du quiz.
+- `sessionStorage` ne conserve que l'historique de la session et des statistiques
+  locales. Sa lecture est protegee contre un JSON vide ou invalide.
+- Les endpoints `/api/ai-chat/revision` et `/api/ai-chat/revision/done` sont
+  conserves pour le widget. Ils ne persisteront aucune revision tant qu'un modele
+  de donnees partage et valide n'aura pas ete decide par l'equipe.
 
-## Vérifications utiles
+## Configuration requise
 
-- charger l'espace enfant ;
-- ouvrir Milo en mode flottant ;
-- ouvrir Milo via `assistant.html` ;
-- envoyer une bonne réponse ;
-- envoyer une mauvaise réponse ;
-- recharger la page ;
-- vider `sessionStorage` ;
-- injecter un JSON invalide dans `sessionStorage`.
+Variables du serveur deploiement :
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+DATABASE_URL=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+## Verification manuelle
+
+- se connecter avec un compte enfant ;
+- ouvrir Milo depuis une page enfant et depuis `/assistant.html` ;
+- demander une definition connue de la bibliotheque ;
+- demander une aide hors bibliotheque ;
+- tester sans cle Gemini ou avec un quota limite ;
+- vider puis corrompre `sessionStorage` ;
+- verifier qu'aucune erreur console ni requete 404 vers `/api/ai-chat` ne subsiste.

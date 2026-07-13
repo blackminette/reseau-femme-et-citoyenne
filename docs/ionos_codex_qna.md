@@ -56,7 +56,7 @@ Contexte de ce document :
     Réponse : **Pour le chatbot Milo, il faut au minimum le backend IA + le widget/assistant**.
 
 16. **La base SQLite doit-elle être utilisée en production ?**  
-    Réponse : **Non décidé à ce stade**.
+   Réponse : **Non. Le runtime Next de Milo ne depend pas de SQLite ; la memoire longue doit etre definie avec un modele partage et valide.**
 
 17. **Qui valide les changements DNS ?**  
     Réponse : **Un humain responsable uniquement**.
@@ -93,11 +93,11 @@ Position retenue :
 
 ### 4. Backend Milo
 État vérifié :
-- `server/routes/ai-chat.js` existe ;
-- la route `POST /api/ai-chat` existe ;
-- `GEMINI_API_KEY` et `GEMINI_MODEL` sont utilisés ;
-- `server/ai-chat-utils.js` est importé ;
-- le backend gère les erreurs et l’absence de clé.
+- `src/app/api/ai-chat/route.ts` expose `POST /api/ai-chat` dans Next.js ;
+- `GEMINI_API_KEY` et `GEMINI_MODEL` sont lus uniquement cote serveur ;
+- la session Supabase et le role Prisma `ENFANT` sont verifies ;
+- la bibliotheque locale est interrogee avant Gemini ;
+- le backend gere les erreurs, le quota et l'absence de cle avec une reponse de secours.
 
 ### 5. Front assistant
 État vérifié :
@@ -110,7 +110,7 @@ Position retenue :
 ### 6. Documentation Milo
 État vérifié :
 - `docs/ia-milo.md` existe ;
-- il correspond au comportement actuel du widget et du backend.
+- il decrit le runtime Next, le widget, les garde-fous et les limites de memoire.
 
 ### 7. Module Napoléon
 État vérifié dans cette copie du workspace :
@@ -119,8 +119,8 @@ Position retenue :
 - il faut le bon dépôt ou le bon chemin local pour faire cet audit.
 
 ## Ce qui est certain aujourd’hui
-- Milo backend : présent et cohérent sur la copie auditée.
-- Assistant front : présent et cohérent sur la copie auditée.
+- Milo backend : route Next presente et compilee, avec authentification enfant et fallback.
+- Assistant front : present, charge dans l'espace enfant et accessible via `assistant.html`.
 - Déploiement : non fait.
 - IONOS exact : non identifié.
 - Napoléon source : absente dans cette copie du workspace.
@@ -131,4 +131,3 @@ Position retenue :
 3. le besoin réel : chatbot seul ou site complet ;
 4. le bon dépôt contenant réellement le module Napoléon ;
 5. la stratégie de déploiement minimale pour Milo.
-
