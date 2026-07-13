@@ -9,7 +9,6 @@ export type MiloMessage = {
 
 export type MiloQuestionContext = {
   text: string;
-  choices: string[];
 };
 
 export type MiloActivityContext = {
@@ -63,14 +62,8 @@ export function parseMiloChatRequest(body: unknown): MiloChatRequest | null {
     ? (() => {
         const candidate = question as Record<string, unknown>;
         const text = asTrimmedString(candidate.text, 500);
-        const choices = Array.isArray(candidate.choices)
-          ? candidate.choices
-              .slice(0, 6)
-              .map((choice) => asTrimmedString(choice, 180))
-              .filter(Boolean)
-          : [];
 
-        return text ? { text, choices } : null;
+        return text ? { text } : null;
       })()
     : null;
 

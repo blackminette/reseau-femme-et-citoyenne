@@ -817,11 +817,24 @@
     setStatus('Milo réfléchit…');
 
     const context = getMiloPageContext();
+    const rawQuestion = window.MILO_CURRENT_QUESTION;
     let res;
     try {
-      res = await (typeof askAssistant==='function'
-        ? askAssistant(msg, history, context.currentModule, context.activityReference)
-        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule:context.currentModule,moduleReference:context.moduleReference,activityReference:context.activityReference,currentQuestion:window.MILO_CURRENT_QUESTION||null,sessionLearning:getSessionLearning()})}).then(r=>r.json()));
+      res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          message: msg,
+          history,
+          currentModule: context.currentModule,
+          moduleReference: context.moduleReference,
+          activityReference: context.activityReference,
+          currentQuestion: rawQuestion && typeof rawQuestion.text === 'string'
+            ? { text: rawQuestion.text }
+            : null,
+        }),
+      }).then((response) => response.json());
     } catch { res={error:'Serveur injoignable.'}; }
 
     typing.remove();

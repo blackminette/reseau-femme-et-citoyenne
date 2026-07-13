@@ -21,8 +21,9 @@ d'execution de l'application Next.
    Il n'existe aucun fallback vers un autre compte enfant.
 2. La route verifie la session avant de lire le JSON et refuse les corps annonces
    au-dela de 16 Ko. La requete est ensuite bornee et nettoyee : message,
-   historique et contexte de question.
-   Un indice de bonne reponse envoye par le navigateur est ignore.
+   historique et contexte de question. Le widget transmet uniquement le texte de
+   la consigne : ni les choix ni un indice de bonne reponse ne quittent le
+   navigateur.
 3. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
    publie en base. Pour une activite, il extrait aussi des reperes courts du JSON
    admin (`Cours.contenu` ou `Exercice.contenu`). Les choix et `reponseCorrecte`

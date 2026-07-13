@@ -43,7 +43,7 @@ function buildSystemInstruction(
     ? `Le module actuel est: ${request.currentModule}.`
     : "Le module actuel n'est pas identifie.";
   const questionContext = request.currentQuestion
-    ? `Question affichee: ${escapePromptValue(request.currentQuestion.text)}\nChoix proposes: ${request.currentQuestion.choices.map(escapePromptValue).join(" | ")}`
+    ? `Question affichee: ${escapePromptValue(request.currentQuestion.text)}`
     : "Aucune question ecran n'est fournie.";
   const activityContext = request.activityContext
     ? [

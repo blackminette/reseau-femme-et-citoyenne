@@ -100,7 +100,6 @@ async function run() {
     history: [{ role: "user", content: "Bonjour" }],
     currentQuestion: {
       text: "Quelle proposition est correcte ?",
-      choices: ["A", "B"],
     },
     activityContext: null,
   });

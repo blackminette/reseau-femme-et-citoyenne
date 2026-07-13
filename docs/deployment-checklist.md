@@ -17,6 +17,7 @@ performed by this checklist.
 - [ ] The route fails closed when identity services are unavailable.
 - [ ] The route resolves the published child parcours from the route activity or module reference.
 - [ ] The route uses only safe excerpts from published course/exercise JSON and excludes answer options and correct answers.
+- [ ] The widget sends only the current question text, never choices or a correct answer index.
 - [ ] `GEMINI_API_KEY` stays server-side.
 - [ ] Missing key, timeout and Gemini rate limit return a safe fallback.
 - [ ] The local answer library is queried before Gemini.
