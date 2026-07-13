@@ -90,32 +90,38 @@ async function resolveActivityModule(activityReference: string): Promise<MiloMod
 export async function resolveMiloModuleContext(
   request: MiloChatRequest,
 ): Promise<MiloModule | null> {
-  if (request.activityReference) {
-    const activityModule = await resolveActivityModule(request.activityReference);
-    if (activityModule) return activityModule;
-  }
+  try {
+    if (request.activityReference) {
+      const activityModule = await resolveActivityModule(request.activityReference);
+      if (activityModule) return activityModule;
+    }
 
-  const moduleId = parseDatabaseId(request.moduleReference);
-  if (moduleId) {
+    const moduleId = parseDatabaseId(request.moduleReference);
+    if (moduleId) {
+      const contentModule = await prisma.module.findFirst({
+        where: { id: moduleId, public: "ENFANT", isPublished: true },
+        select: { parcours: true },
+      });
+
+      return contentModule ? mapParcoursToMiloModule(contentModule.parcours) : null;
+    }
+
+    const moduleReference = parseMiloModuleReference(request.moduleReference);
+    if (!moduleReference) return null;
+
     const contentModule = await prisma.module.findFirst({
-      where: { id: moduleId, public: "ENFANT", isPublished: true },
+      where: {
+        parcours: { has: MILO_MODULE_TO_PARCOURS[moduleReference] },
+        public: "ENFANT",
+        isPublished: true,
+      },
       select: { parcours: true },
     });
 
     return contentModule ? mapParcoursToMiloModule(contentModule.parcours) : null;
+  } catch (error) {
+    // A context lookup failure must not turn a child request into an unhandled 500.
+    console.warn("[Milo] Contexte pedagogique indisponible.", error);
+    return null;
   }
-
-  const moduleReference = parseMiloModuleReference(request.moduleReference);
-  if (!moduleReference) return null;
-
-  const contentModule = await prisma.module.findFirst({
-    where: {
-      parcours: { has: MILO_MODULE_TO_PARCOURS[moduleReference] },
-      public: "ENFANT",
-      isPublished: true,
-    },
-    select: { parcours: true },
-  });
-
-  return contentModule ? mapParcoursToMiloModule(contentModule.parcours) : null;
 }
