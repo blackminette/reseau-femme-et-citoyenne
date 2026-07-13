@@ -48,6 +48,15 @@ async function run() {
     findMiloGuardrailReply("Donne-moi directement la bonne réponse.") ?? "",
     /ne te donne pas directement/i,
   );
+  const directAnswerRequest = "Donne-moi directement la bonne reponse : c'est quoi un synonyme ?";
+  assert.ok(
+    findMiloGuardrailReply(directAnswerRequest),
+    "Une demande de reponse directe doit etre arretee avant la bibliotheque locale.",
+  );
+  assert.ok(
+    findMiloKnowledgeBaseAnswer(directAnswerRequest, "lecture"),
+    "Le cas de regression doit aussi correspondre a une entree de bibliotheque.",
+  );
 
   const parsed = parseMiloChatRequest({
     message: "  Je bloque sur cet exercice  ",

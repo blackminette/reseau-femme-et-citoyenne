@@ -23,8 +23,10 @@ d'execution de l'application Next.
 3. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
    publie en base. Une query string ne decide donc pas seule de la bibliotheque
    pedagogique utilisee.
-4. Milo cherche une reponse dans la bibliotheque locale de Wael avant tout appel IA.
-5. Un garde-fou traite les demandes de reponse directe et les propos agressifs.
+4. Un garde-fou traite les demandes de reponse directe et les propos agressifs
+   avant toute bibliotheque ou appel IA.
+5. Milo cherche ensuite une reponse dans la bibliotheque locale de Wael avant
+   tout appel IA.
 6. Pour les autres demandes, la route appelle Gemini cote serveur avec
    `GEMINI_API_KEY`.
 7. Une erreur Gemini, un quota epuise, un timeout ou une cle absente produit une

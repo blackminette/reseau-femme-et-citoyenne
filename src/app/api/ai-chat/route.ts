@@ -50,6 +50,12 @@ export async function POST(request: Request) {
   const currentModule = await resolveMiloModuleContext(chatRequest);
   const requestWithContext = { ...chatRequest, currentModule };
 
+  const guardrailReply = findMiloGuardrailReply(requestWithContext.message);
+
+  if (guardrailReply) {
+    return json({ reply: guardrailReply, source: "guardrail" });
+  }
+
   const knowledgeBaseMatch = findMiloKnowledgeBaseAnswer(
     requestWithContext.message,
     requestWithContext.currentModule,
@@ -61,12 +67,6 @@ export async function POST(request: Request) {
       source: "knowledge-base",
       match: knowledgeBaseMatch.source,
     });
-  }
-
-  const guardrailReply = findMiloGuardrailReply(requestWithContext.message);
-
-  if (guardrailReply) {
-    return json({ reply: guardrailReply, source: "guardrail" });
   }
 
   try {
