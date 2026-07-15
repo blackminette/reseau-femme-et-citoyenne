@@ -69,6 +69,7 @@ cible de deploiement n'a pas ete validee dans cet audit.
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
+| Integration avec `origin/main` | CI `29419731439`, verification TypeScript | Bloquee hors Milo : `main` expose d'autres noms d'actions auth que les composants de la branche |
 
 ## Revue de securite
 
@@ -106,6 +107,16 @@ les migrations historiques, par exemple `Utilisateur.avatar` et
 sur cette base jetable pour tester le build. Cela ne modifie aucune base de
 production, mais l'equipe backend doit traiter cette divergence avant une
 installation sur une base vide.
+
+### Majeur : divergence auth introduite par `main`
+
+Apres `git fetch origin`, `origin/main` est sur `1877959` et a remplace les
+exports `forgotPasswordAction` et `resetPasswordAction` par
+`submitForgotRequestAction` et `submitResetRequestAction`. Les composants
+d'authentification presents dans la branche Milo importent encore les anciens
+noms. Le job CI `29419731439` echoue donc avec deux erreurs TypeScript sur ces
+imports, avant toute erreur Milo. Cette correction appartient a l'equipe auth
+ou a l'integration de `main` ; elle n'a pas ete appliquee dans la PR Milo.
 
 ### Modere : limitation de debit en memoire
 
