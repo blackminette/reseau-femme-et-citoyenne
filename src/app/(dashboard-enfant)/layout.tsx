@@ -1,11 +1,11 @@
 import React from 'react';
-import Script from 'next/script';
 import { LogOut } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseServer } from '@/lib/supabase';
 import EnfantNavbar from '@/components/EnfantNavbar';
 import { deconnexionUtilisateur } from '@/app/auth/auth';
 import DynamicChildAvatar from '@/components/DynamicChildAvatar';
+import MiloWidgetLoader from '@/components/MiloWidgetLoader';
 
 export const metadata = {
     title: 'AtelierKids - Espace Enfant',
@@ -112,7 +112,7 @@ export default async function EnfantLayout({
             </main>
             {/* Bottom Navigation Menu (visible on mobile only) */}
             <EnfantNavbar />
-            <Script src="/ai-widget.js?v=20260713" strategy="afterInteractive" />
+            <MiloWidgetLoader />
         </div>
     );
 }

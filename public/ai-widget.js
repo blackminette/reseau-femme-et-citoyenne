@@ -1,12 +1,14 @@
 // ── Widget assistant IA — AtelierKids ────────────────────────────────────────
 (function () {
   'use strict';
+  if (document.getElementById('aiw-panel')) return;
   const STANDALONE = window.location.pathname.endsWith('assistant.html')
     || window.location.pathname.endsWith('/enfant/assistant')
     || new URLSearchParams(window.location.search).get('assistant') === '1';
 
   // ── Styles ────────────────────────────────────────────────────────────────
   const style = document.createElement('style');
+  style.id = 'milo-widget-styles';
   style.textContent = `
   /* ── Keyframes ── */
   @keyframes aiw-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
