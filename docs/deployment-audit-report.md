@@ -18,7 +18,8 @@ du perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 - Branche : `feat/milo-runtime-next`
 - Arbre de travail : propre
 - Base : `origin/main` est un ancetre de la branche.
-- Etat local : un commit d'avance sur `origin/feat/milo-runtime-next`.
+- Etat local : des commits locaux non pousses sont presents ; le nombre exact doit
+  etre verifie avec `git status --short --branch --untracked-files=all` avant le push.
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
 - Etat de la pull request : ouverte, non brouillon, fusionnable, sans conflit.
 - Controles GitHub : aucun n'est remonte ; cela ne signifie pas que la CI est verte.
@@ -123,4 +124,4 @@ ne contient aucune migration de base.
 
 Ne pas fusionner silencieusement. Envoyer la PR 28 en revue humaine avec ce
 rapport, faire valider la CI et le responsable du deploiement, puis seulement
-pousser le commit local en attente et fusionner selon le processus convenu.
+pousser les commits locaux en attente et fusionner selon le processus convenu.

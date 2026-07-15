@@ -7,7 +7,7 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 
 - [x] Branche dediee basee sur la branche d'integration actuelle.
 - [x] `git status --short --branch --untracked-files=all` est compris.
-- [x] Seuls les fichiers Milo sont indexes.
+- [x] Seuls les fichiers Milo et sa documentation de livraison sont indexes.
 - [x] Aucun `.env`, cle, jeton, journal ou base locale n'est indexe.
 
 ## Moteur Next.js
