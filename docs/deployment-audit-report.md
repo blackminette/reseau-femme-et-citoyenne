@@ -8,21 +8,21 @@ ni la messagerie, ni les identifiants de production, ni les zones hors sujet.
 
 ## Decision
 
-Milo est valide sur l'environnement local et pret pour une revue humaine dans la
-pull request 28. Le depot n'est pas declare pret pour une livraison en
-production : aucune verification CI n'est remontee, le lint global echoue hors
-du perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
+Milo est valide sur l'environnement local et dans la CI, et pret pour une revue
+humaine dans la pull request 28. Le depot n'est pas declare pret pour une
+livraison en production : le lint global echoue hors du perimetre Milo et la
+cible de deploiement n'a pas ete validee dans cet audit.
 
 ## Etat Git
 
 - Branche : `feat/milo-runtime-next`
 - Arbre de travail : propre
 - Base : `origin/main` est un ancetre de la branche.
-- Etat local : la synchronisation avec la branche distante doit etre verifiee avec
-  `git status --short --branch --untracked-files=all` avant chaque livraison.
+- Etat local : propre et synchronise avec `origin/feat/milo-runtime-next` au
+  moment de cet audit (`0` commit en avance et `0` en retard).
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
 - Etat de la pull request : ouverte, non brouillon, fusionnable, sans conflit.
-- Controles GitHub : aucun n'est remonte ; cela ne signifie pas que la CI est verte.
+- Controles GitHub : le workflow `Validation Milo` est vert sur le push et la PR.
 
 ## Implementation verifiee
 
@@ -58,6 +58,7 @@ du perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 | TypeScript | `npx tsc --noEmit --pretty false` | Reussi |
 | Proprete du diff | `git diff --check` | Reussi |
 | Build de production | `npm run build` avec l'environnement local charge uniquement en memoire | Reussi ; 55/55 pages statiques generees |
+| CI GitHub | Workflow `Validation Milo` sur la PR 28 | Reussi ; migrations ephemeres, tests, lint, types et build valides |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
 | Connexion enfant reelle | Navigateur sur `http://localhost:3017/login` | Authentification Supabase reussie ; profil enfant retrouve |
 | Page assistant | Navigateur sur `http://localhost:3017/enfant/assistant` | Chargee correctement |
@@ -82,18 +83,22 @@ du perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 
 ## Problemes restants
 
-### Majeur : aucun resultat CI remonte
-
-Aucun workflow n'est present dans `.github/workflows` et la PR 28 ne remonte
-aucun controle. Un responsable doit valider la branche ou l'equipe doit fournir
-un travail CI avant de declarer la porte de livraison verte.
-
 ### Majeur : le lint global n'est pas vert
 
 `npm run lint` remonte 272 erreurs et 120 avertissements dans le depot. Les
 erreurs concernent notamment des fichiers hors Milo. Ils n'ont pas ete modifies
 pendant cet audit ; l'equipe doit decider de les corriger separement ou de les
 accepter explicitement comme dette d'integration preexistante.
+
+### Majeur : migrations et schema ne sont pas totalement alignes
+
+Dans la base PostgreSQL ephemere, `prisma migrate deploy` termine mais le build
+revele ensuite des colonnes attendues par le schema courant qui manquent dans
+les migrations historiques, par exemple `Utilisateur.avatar` et
+`Atelier.trancheAge`. La CI applique donc ensuite `prisma db push` uniquement
+sur cette base jetable pour tester le build. Cela ne modifie aucune base de
+production, mais l'equipe backend doit traiter cette divergence avant une
+installation sur une base vide.
 
 ### Modere : limitation de debit en memoire
 
@@ -122,6 +127,6 @@ ne contient aucune migration de base.
 
 ## Recommandation
 
-Ne pas fusionner silencieusement. Envoyer la PR 28 en revue humaine avec ce
-rapport, faire valider la CI et le responsable du deploiement, puis seulement
-pousser les commits locaux en attente et fusionner selon le processus convenu.
+Ne pas fusionner silencieusement. La CI est validee ; il reste la revue humaine,
+la decision sur le lint global et la validation du responsable du deploiement
+avant fusion et livraison selon le processus convenu.

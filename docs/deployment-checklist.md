@@ -9,6 +9,7 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 - [x] `git status --short --branch --untracked-files=all` est compris.
 - [x] Seuls les fichiers Milo et sa documentation de livraison sont indexes.
 - [x] Aucun `.env`, cle, jeton, journal ou base locale n'est indexe.
+- [x] Le workflow GitHub `Validation Milo` est present et cible la PR et la branche Milo.
 
 ## Moteur Next.js
 
@@ -41,6 +42,7 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 - [x] `GEMINI_MODEL` est configure ou la valeur par defaut documentee est acceptee localement.
 - [ ] `/enfant/assistant` et `/api/ai-chat` sont accessibles sur la cible de production.
 - [x] Les journaux locaux peuvent etre consultes sans exposer de secret ni de donnee enfant.
+- [x] La CI valide Prisma et le build sur une base PostgreSQL ephemere.
 
 ## Porte finale
 
@@ -49,4 +51,5 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 - [x] `git diff --check` passe.
 - [x] Le resultat du build est documente, y compris les blocages hors perimetre.
 - [x] Le test navigateur utilise une vraie session enfant et un environnement local controle.
+- [x] La CI GitHub est verte sur la PR 28.
 - [ ] La validation humaine est enregistree avant le deploiement.
