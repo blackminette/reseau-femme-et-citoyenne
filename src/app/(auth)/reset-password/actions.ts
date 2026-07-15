@@ -1,30 +1,35 @@
-// * src/app/(auth)/reset-password/actions.ts
 'use server';
 
-import { getSupabaseServer } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 
-export async function resetPasswordAction(password: string) {
-    if (!password) {
-        return { success: false, error: "Le nouveau mot de passe est obligatoire." };
+type PasswordRequest = {
+    username: string;
+    message: string;
+};
+
+export async function submitResetRequestAction(formData: PasswordRequest) {
+    const { username, message } = formData;
+
+    if (!username || !message) {
+        return { success: false, error: "Tous les champs sont obligatoires." };
     }
 
     try {
-        const supabase = await getSupabaseServer();
-        
-        // On met à jour le mot de passe de l'utilisateur actuellement sessionné (via le callback)
-        const { error } = await supabase.auth.updateUser({
-            password: password
-        });
+        const fauxEmail = `${username.trim().toLowerCase()}@rfc06.fr`;
 
-        if (error) {
-            console.error("[reset-password] Erreur Supabase:", error.message);
-            return { success: false, error: error.message };
-        }
+        await prisma.messageContact.create({
+            data: {
+                nom: username.trim(),
+                email: fauxEmail,
+                sujet: "Demande de réinitialisation de mot de passe",
+                message: message.trim()
+            }
+        });
 
         return { success: true };
 
     } catch (error) {
-        console.error("[reset-password] Erreur critique :", error);
+        console.error("[reset-password-contact] Erreur critique :", error);
         return {
             success: false,
             error: "Une erreur serveur est survenue. Veuillez réessayer plus tard."
