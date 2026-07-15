@@ -11,6 +11,8 @@ Il ne remplace pas le smoke test de production dans
 - Pull request : https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28
 - Dernier correctif Milo : `d49f368 fix(milo): charger le widget dans l'espace enfant`
 - Aucun fichier d'environnement ou secret n'est suivi par Git.
+- L origine publique de production doit etre renseignee cote serveur dans
+  `MILO_TRUSTED_ORIGIN` avant la mise en ligne.
 
 ## Resultats confirmes localement
 

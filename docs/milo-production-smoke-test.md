@@ -20,6 +20,8 @@ variables suivantes cote serveur :
 - `DATABASE_URL`
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL` si une valeur particuliere est utilisee
+- `MILO_TRUSTED_ORIGIN`, avec l URL HTTPS publique exacte du site, par exemple
+  `https://www.exemple.fr`
 
 La cle Gemini ne doit jamais etre ajoutee a une variable `NEXT_PUBLIC_*`, a un
 commit ou a un log.

@@ -229,25 +229,60 @@ async function run() {
     ),
     true,
   );
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("http://next-internal:3000/api/ai-chat", {
-        method: "POST",
-        headers: {
-          host: "next-internal:3000",
-          origin: "https://atelierkids.example",
-          "x-forwarded-host": "atelierkids.example",
-          "x-forwarded-proto": "https",
-        },
-      }),
-    ),
-    true,
-  );
+  const previousTrustedOrigin = process.env.MILO_TRUSTED_ORIGIN;
+  process.env.MILO_TRUSTED_ORIGIN = "https://atelierkids.example";
+
+  try {
+    assert.equal(
+      hasTrustedMiloRequestOrigin(
+        new Request("http://next-internal:3000/api/ai-chat", {
+          method: "POST",
+          headers: {
+            host: "next-internal:3000",
+            origin: "https://atelierkids.example",
+            "x-forwarded-proto": "https",
+          },
+        }),
+      ),
+      true,
+    );
+    assert.equal(
+      hasTrustedMiloRequestOrigin(
+        new Request("http://next-internal:3000/api/ai-chat", {
+          method: "POST",
+          headers: {
+            host: "next-internal:3000",
+            origin: "https://site-malveillant.example",
+            "x-forwarded-host": "site-malveillant.example",
+            "x-forwarded-proto": "https",
+          },
+        }),
+      ),
+      false,
+      "Une origine ne doit pas etre validee par un x-forwarded-host forge.",
+    );
+  } finally {
+    if (previousTrustedOrigin === undefined) {
+      delete process.env.MILO_TRUSTED_ORIGIN;
+    } else {
+      process.env.MILO_TRUSTED_ORIGIN = previousTrustedOrigin;
+    }
+  }
   assert.equal(
     hasTrustedMiloRequestOrigin(
       new Request("https://atelierkids.example/api/ai-chat", { method: "POST" }),
     ),
     true,
+  );
+  assert.equal(
+    hasTrustedMiloRequestOrigin(
+      new Request("https://atelierkids.example/api/ai-chat", {
+        method: "POST",
+        headers: { "sec-fetch-site": "cross-site" },
+      }),
+    ),
+    false,
+    "Une requete navigateur cross-site sans origine ne doit pas etre acceptee.",
   );
   assert.equal(
     hasTrustedMiloRequestOrigin(
