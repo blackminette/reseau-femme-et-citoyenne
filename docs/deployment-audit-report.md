@@ -63,7 +63,7 @@ perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 | TypeScript | `npx tsc --noEmit --pretty false` | Reussi |
 | Proprete du diff | `git diff --check` | Reussi |
 | Build de production | `npm run build` avec les variables locales chargees uniquement en memoire | Reussi localement : compilation, typage et generation de 55/55 pages |
-| CI GitHub | Workflow `Validation Milo` sur le commit `0f6c440` | Deux jobs verts : `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29436790003` et `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29436794525` |
+| CI GitHub | Workflow `Validation Milo` sur le commit `78b7eaa` | Deux jobs verts : `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29442005612` et `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29441996124` |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
 | Page de connexion locale | Navigateur sur `http://127.0.0.1:3010/login` avec variables de test | Chargee ; formulaire present ; aucune erreur console |
 | Route assistant sans session | Navigateur sur `http://127.0.0.1:3010/assistant.html` | Redirection vers `/login` apres la redirection intermediaire `/enfant/assistant` |
@@ -75,6 +75,7 @@ perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 | Historique vide et invalide | `sessionStorage` vide, puis valeur `{invalid-json`, rechargement navigateur | Reussi ; widget charge et reste utilisable, sans historique corrompu |
 | Console navigateur | Parcours Milo local et navigateur de developpement | Aucune erreur Milo observee; un `favicon.ico` absent est sans impact sur Milo |
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi pour erreurs fournisseur simulees et retour `429` apres le seuil |
+| Anciennes maquettes enfant | Requetes HTTP sans session vers les dix pages enfant `public/*.html` | Reussi ; chaque route retourne `307` vers `/enfant` |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
 | Integration avec `origin/main` | Fusion locale puis controle CI de la PR | Conflits auth resolus ; CI push et PR vertes |
@@ -91,6 +92,9 @@ perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
   renvoye au navigateur.
 - Le widget echappe le texte de l'assistant avant d'afficher son sous-ensemble
   Markdown limite.
+- Les anciennes maquettes enfant ne sont plus directement accessibles. Elles
+  redirigent vers la route Next.js `/enfant`, ce qui evite notamment
+  l'exposition historique de `correctIndex` dans les anciens quiz.
 - `npm audit --omit=dev` signale cinq vulnerabilites moderees liees a
   `@hono/node-server`, `@prisma/dev`, `prisma`, `next` et `postcss`.
 - `npm audit fix --dry-run --omit=dev` confirme que la correction automatique

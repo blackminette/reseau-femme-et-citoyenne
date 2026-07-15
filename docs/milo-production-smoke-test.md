@@ -44,6 +44,21 @@ if ($assistantLocation -notmatch '/enfant/assistant') {
   throw "La cible de redirection est inattendue."
 }
 
+$legacyChildPages = @(
+  '/ateliers-enfant.html', '/badges-enfant.html', '/espace-enfant.html',
+  '/exercice.html', '/gestion-enfant.html', '/lecon.html', '/module.html',
+  '/profil-enfant.html', '/quiz.html', '/video.html'
+)
+
+foreach ($path in $legacyChildPages) {
+  $headers = curl.exe -sS -D - -o NUL "$baseUrl$path"
+  $status = ($headers | Select-String '^HTTP/' | Select-Object -Last 1).ToString()
+  $location = ($headers | Select-String '^location:' | Select-Object -Last 1).ToString()
+  if ($status -notmatch '307' -or $location -notmatch '/enfant') {
+    throw "La maquette historique $path reste accessible directement."
+  }
+}
+
 $unauthStatus = curl.exe -sS -o NUL -w "%{http_code}" `
   -X POST `
   -H "Content-Type: application/json" `
@@ -58,6 +73,7 @@ if ($unauthStatus -ne "401") {
 Resultats attendus :
 
 - `/assistant.html` redirige vers `/enfant/assistant` ;
+- les anciennes maquettes enfant redirigent vers `/enfant` ;
 - l API refuse une requete sans session avec `401` ;
 - aucune cle, cookie ou erreur interne n apparait dans la sortie.
 
@@ -83,6 +99,7 @@ mot de passe dans ce document.
 | Controle | Resultat attendu |
 | --- | --- |
 | Redirection de la page historique | `307` vers `/enfant/assistant` |
+| Maquettes enfant historiques | `307` vers `/enfant` |
 | API sans session | `401` |
 | Origine web etrangere | `403` |
 | Session enfant valide | Reponse Milo affichee |

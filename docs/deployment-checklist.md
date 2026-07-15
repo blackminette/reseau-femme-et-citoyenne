@@ -7,7 +7,8 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 
 - [x] Branche dediee basee sur la branche d'integration actuelle.
 - [x] `git status --short --branch --untracked-files=all` est compris.
-- [x] Seuls les fichiers Milo et sa documentation de livraison sont indexes.
+- [x] Seuls les fichiers Milo, le middleware de protection cible et sa
+      documentation de livraison sont indexes.
 - [x] Aucun `.env`, cle, jeton, journal ou base locale n'est indexe.
 - [x] Le workflow GitHub `Validation Milo` est present et cible la PR et la branche Milo.
 
@@ -28,6 +29,8 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 ## Comportement de l'interface
 
 - [x] `/assistant.html` redirige vers la route protegee `/enfant/assistant`.
+- [x] Les anciennes maquettes enfant accessibles depuis `public/*.html` sont
+      redirigees vers `/enfant` et ne servent plus de contenu historique.
 - [x] Une page enfant affiche le bouton flottant Milo.
 - [x] Une question connue renvoie une reponse de la bibliotheque.
 - [x] Une question inconnue atteint Gemini lorsqu'il est configure.
