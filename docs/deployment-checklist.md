@@ -53,6 +53,10 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 - [x] Le test navigateur local verifie le rendu de `/login`, la redirection de
       `/assistant.html` et l'absence d'erreur console.
 - [x] La CI GitHub est verte sur le push de la branche et sur la PR 28.
-- [ ] Une session enfant reelle a ete testee dans le navigateur avec les
-      variables Supabase et Gemini de l'environnement cible.
+- [x] Une session enfant reelle a ete testee dans le navigateur local avec les
+      variables Supabase et Gemini chargees uniquement dans le processus de test.
+- [x] Gemini invalide simule dans le navigateur : Milo repond par son secours et
+      le champ reste utilisable.
+- [x] `sessionStorage` vide puis JSON invalide testes dans le navigateur : le
+      widget se recharge sans erreur et reste utilisable.
 - [ ] La validation humaine est enregistree avant le deploiement.

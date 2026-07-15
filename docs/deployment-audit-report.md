@@ -8,7 +8,7 @@ ni la messagerie, ni les identifiants de production, ni les zones hors sujet.
 
 ## Decision
 
-Milo est valide sur l'environnement local controle et sur la CI de sa branche,
+Milo est valide sur l'environnement local connecte et sur la CI de sa branche,
 et pret pour une revue humaine dans la pull request 28. Le depot n'est pas
 declare pret pour une livraison en production : le lint global echoue hors du
 perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
@@ -17,8 +17,9 @@ perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 
 - Branche : `feat/milo-runtime-next`
 - Arbre de travail : propre
-- Base : `origin/main` a avance depuis la derniere synchronisation de la
-  branche ; la simulation `git merge-tree` est propre, sans conflit Git.
+- Base : au controle du 15 juillet 2026, la branche ne comporte aucun commit en
+  retard sur `origin/main`; elle contient ses propres commits Milo en attente
+  de fusion. La pull request est propre, sans conflit Git.
 - Etat local : propre et synchronise avec `origin/feat/milo-runtime-next` au
   moment de cet audit (`0` commit en avance et `0` en retard sur la branche
   distante).
@@ -61,19 +62,19 @@ perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 | Lint Milo | `npx eslint src/lib/milo` | Reussi |
 | TypeScript | `npx tsc --noEmit --pretty false` | Reussi |
 | Proprete du diff | `git diff --check` | Reussi |
-| Build de production | `npm run build` dans la CI de la branche | Reussi ; 55/55 pages statiques generees |
-| Relance du build local | `npm run build` avec une URL PostgreSQL factice | Non concluant : aucune base PostgreSQL locale n'est disponible ; aucune conclusion negative sur le code Milo |
-| CI GitHub | Workflow `Validation Milo` sur le push et la PR 28 | Push et PR reussis ; jobs verts : `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29433943127` et `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29433943612` |
+| Build de production | `npm run build` avec les variables locales chargees uniquement en memoire | Reussi localement : compilation, typage et generation de 55/55 pages |
+| CI GitHub | Workflow `Validation Milo` sur le commit `0f6c440` | Deux jobs verts : `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29436790003` et `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29436794525` |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
 | Page de connexion locale | Navigateur sur `http://127.0.0.1:3010/login` avec variables de test | Chargee ; formulaire present ; aucune erreur console |
 | Route assistant sans session | Navigateur sur `http://127.0.0.1:3010/assistant.html` | Redirection vers `/login` apres la redirection intermediaire `/enfant/assistant` |
 | Origine web etrangere | `POST /api/ai-chat` avec une origine externe | Retourne 403 |
 | API sans session | `POST /api/ai-chat` avec une origine locale | Retourne 401 |
-| Connexion enfant reelle | Compte Supabase enfant sur environnement local | Non teste dans cet audit ; les secrets et services reels ne sont pas disponibles |
-| Requete de discussion | Question envoyee avec une session enfant reelle | Non teste dans cet audit |
-| Historique invalide | Valeur `{` forcee dans `sessionStorage`, puis rechargement avec session enfant | Non teste dans cet audit ; couvert par le test runtime automatise |
-| Console navigateur | Page de connexion locale apres navigation | Aucune erreur ou alerte console detectee |
-| Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
+| Connexion enfant reelle | Compte enfant Supabase dans le navigateur local | Reussie ; acces a `/enfant` et bouton Milo visibles |
+| Requete de discussion | Question pedagogique envoyee avec une session enfant reelle | Reussie ; `POST /api/ai-chat` retourne `200` et la reponse est affichee |
+| Secours Gemini reel | Cle Gemini invalide uniquement dans un processus Next.js de test | Reussie ; Gemini retourne `400`, Milo affiche le secours et le champ reste utilisable |
+| Historique vide et invalide | `sessionStorage` vide, puis valeur `{invalid-json`, rechargement navigateur | Reussi ; widget charge et reste utilisable, sans historique corrompu |
+| Console navigateur | Parcours Milo local et navigateur de developpement | Aucune erreur Milo observee; un `favicon.ico` absent est sans impact sur Milo |
+| Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi pour erreurs fournisseur simulees et retour `429` apres le seuil |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
 | Integration avec `origin/main` | Fusion locale puis controle CI de la PR | Conflits auth resolus ; CI push et PR vertes |
