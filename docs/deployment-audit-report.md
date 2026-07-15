@@ -100,7 +100,7 @@ perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 
 ### Majeur : le lint global n'est pas vert
 
-`npm run lint` remonte 272 erreurs et 120 avertissements dans le depot. Les
+`npm run lint` remonte 287 erreurs et 120 avertissements dans le depot. Les
 erreurs concernent notamment des fichiers hors Milo. Ils n'ont pas ete modifies
 pendant cet audit ; l'equipe doit decider de les corriger separement ou de les
 accepter explicitement comme dette d'integration preexistante.
