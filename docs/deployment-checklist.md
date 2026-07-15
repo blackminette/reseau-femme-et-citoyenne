@@ -50,7 +50,9 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 - [x] ESLint passe sur les fichiers Milo.
 - [x] `git diff --check` passe.
 - [x] Le resultat du build est documente, y compris les blocages hors perimetre.
-- [x] Le test navigateur utilise une vraie session enfant et un environnement local controle.
-- [ ] La CI GitHub est verte sur la PR 28 : le push de la branche est vert,
-      mais le controle de fusion echoue sur deux imports auth hors Milo.
+- [x] Le test navigateur local verifie le rendu de `/login`, la redirection de
+      `/assistant.html` et l'absence d'erreur console.
+- [x] La CI GitHub est verte sur le push de la branche et sur la PR 28.
+- [ ] Une session enfant reelle a ete testee dans le navigateur avec les
+      variables Supabase et Gemini de l'environnement cible.
 - [ ] La validation humaine est enregistree avant le deploiement.

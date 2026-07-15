@@ -8,11 +8,10 @@ ni la messagerie, ni les identifiants de production, ni les zones hors sujet.
 
 ## Decision
 
-Milo est valide sur l'environnement local et sur la CI de sa branche, et pret
-pour une revue humaine dans la pull request 28. Le depot n'est pas declare
-pret pour une livraison en production : le lint global echoue hors du
-perimetre Milo, le controle de fusion de la PR echoue sur une divergence auth
-de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
+Milo est valide sur l'environnement local controle et sur la CI de sa branche,
+et pret pour une revue humaine dans la pull request 28. Le depot n'est pas
+declare pret pour une livraison en production : le lint global echoue hors du
+perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 
 ## Etat Git
 
@@ -22,12 +21,12 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
   branche ; la simulation `git merge-tree` est propre, sans conflit Git.
 - Etat local : propre et synchronise avec `origin/feat/milo-runtime-next` au
   moment de cet audit (`0` commit en avance et `0` en retard sur la branche
-  distante ; `1` commit en retard et `36` commits en avance sur `origin/main`).
+  distante).
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
-- Etat de la pull request : ouverte, non brouillon, sans conflit Git detecte,
-  mais non validable tant que le controle de fusion echoue.
-- Controles GitHub : le workflow est vert sur le push de la branche ; le
-  controle de fusion de la PR echoue sur deux imports auth hors Milo.
+- Etat de la pull request : ouverte, non brouillon, `MERGEABLE`, avec un etat
+  de fusion `CLEAN`.
+- Controles GitHub : le workflow `Validation Milo` est vert sur le push de la
+  branche et sur la PR 28.
 
 ## Implementation verifiee
 
@@ -64,17 +63,20 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 | Proprete du diff | `git diff --check` | Reussi |
 | Build de production | `npm run build` dans la CI de la branche | Reussi ; 55/55 pages statiques generees |
 | Relance du build local | `npm run build` avec une URL PostgreSQL factice | Non concluant : aucune base PostgreSQL locale n'est disponible ; aucune conclusion negative sur le code Milo |
-| CI GitHub | Workflow `Validation Milo` sur le push et la PR 28 | Push de la branche reussi ; controle PR bloque par deux imports auth hors Milo |
+| CI GitHub | Workflow `Validation Milo` sur le push et la PR 28 | Push et PR reussis ; jobs verts : `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29433943127` et `https://github.com/blackminette/reseau-femme-et-citoyenne/actions/runs/29433943612` |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
-| Connexion enfant reelle | Navigateur sur `http://127.0.0.1:3021/login` | Authentification Supabase reussie ; profil enfant retrouve |
-| Page assistant | Navigateur sur `http://127.0.0.1:3021/enfant/assistant` | Chargee correctement |
-| Requete de discussion | Question pedagogique envoyee dans le widget | Reponse de secours affichee ; parcours utilisable |
-| Historique invalide | Valeur `{` forcee dans `sessionStorage`, puis rechargement | Espace enfant et widget toujours utilisables |
-| Console navigateur | Apres rechargement du parcours local | Aucune nouvelle erreur applicative ; un `404` historique concerne seulement `favicon.ico` |
+| Page de connexion locale | Navigateur sur `http://127.0.0.1:3010/login` avec variables de test | Chargee ; formulaire present ; aucune erreur console |
+| Route assistant sans session | Navigateur sur `http://127.0.0.1:3010/assistant.html` | Redirection vers `/login` apres la redirection intermediaire `/enfant/assistant` |
+| Origine web etrangere | `POST /api/ai-chat` avec une origine externe | Retourne 403 |
+| API sans session | `POST /api/ai-chat` avec une origine locale | Retourne 401 |
+| Connexion enfant reelle | Compte Supabase enfant sur environnement local | Non teste dans cet audit ; les secrets et services reels ne sont pas disponibles |
+| Requete de discussion | Question envoyee avec une session enfant reelle | Non teste dans cet audit |
+| Historique invalide | Valeur `{` forcee dans `sessionStorage`, puis rechargement avec session enfant | Non teste dans cet audit ; couvert par le test runtime automatise |
+| Console navigateur | Page de connexion locale apres navigation | Aucune erreur ou alerte console detectee |
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
-| Integration avec `origin/main` | `git merge-tree --write-tree HEAD origin/main`, controle CI de la PR | Simulation Git propre ; controle TypeScript de la PR bloque hors Milo car `main` expose d'autres noms d'actions auth |
+| Integration avec `origin/main` | Fusion locale puis controle CI de la PR | Conflits auth resolus ; CI push et PR vertes |
 
 ## Revue de securite
 
@@ -113,16 +115,6 @@ sur cette base jetable pour tester le build. Cela ne modifie aucune base de
 production, mais l'equipe backend doit traiter cette divergence avant une
 installation sur une base vide.
 
-### Majeur : divergence auth introduite par `main`
-
-Apres `git fetch origin`, `origin/main` est sur `1877959` et a remplace les
-exports `forgotPasswordAction` et `resetPasswordAction` par
-`submitForgotRequestAction` et `submitResetRequestAction`. Les composants
-d'authentification presents dans la branche Milo importent encore les anciens
-noms. Le job CI `29419731439` echoue donc avec deux erreurs TypeScript sur ces
-imports, avant toute erreur Milo. Cette correction appartient a l'equipe auth
-ou a l'integration de `main` ; elle n'a pas ete appliquee dans la PR Milo.
-
 ### Modere : limitation de debit en memoire
 
 La limite est propre a chaque processus Node.js. Un deploiement multi-instance
@@ -156,7 +148,6 @@ ne contient aucune migration de base.
 
 ## Recommandation
 
-Ne pas fusionner silencieusement. La CI de la branche est validee, mais le
-controle de fusion de la PR est en echec. Il reste la correction ou la
-validation par l'equipe auth, la revue humaine, la decision sur le lint global
-et la validation du responsable du deploiement avant fusion et livraison.
+La CI de la branche et de la PR est validee. Il reste la revue humaine, la
+decision de l'equipe sur le lint global, la disponibilite des variables reelles
+et la validation du responsable du deploiement avant livraison.
