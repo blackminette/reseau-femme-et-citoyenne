@@ -27,7 +27,7 @@ export async function authenticateMiloChild(): Promise<MiloAuthenticationResult>
         return { status: "unauthenticated" };
       }
 
-      console.error("[Milo] Impossible de verifier la session Supabase:", error.message);
+      console.error("[Milo] Impossible de verifier la session Supabase.");
       return { status: "unavailable" };
     }
 
@@ -47,8 +47,8 @@ export async function authenticateMiloChild(): Promise<MiloAuthenticationResult>
         firstName: profile.prenom.trim().slice(0, 80) || "toi",
       },
     };
-  } catch (error) {
-    console.error("[Milo] Service d'authentification indisponible:", error);
+  } catch {
+    console.error("[Milo] Service d'authentification indisponible.");
     return { status: "unavailable" };
   }
 }

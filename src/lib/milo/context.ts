@@ -199,9 +199,9 @@ export async function resolveMiloContext(
       module: contentModule ? mapParcoursToMiloModule(contentModule.parcours) : null,
       activity: null,
     };
-  } catch (error) {
+  } catch {
     // A context lookup failure must not turn a child request into an unhandled 500.
-    console.warn("[Milo] Contexte pedagogique indisponible.", error);
+    console.warn("[Milo] Contexte pedagogique indisponible.");
     return { module: null, activity: null };
   }
 }
