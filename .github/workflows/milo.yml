@@ -1,0 +1,73 @@
+name: Validation Milo
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/milo-runtime-next]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: Tests et build Milo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      NEXT_PUBLIC_SUPABASE_URL: https://ci.invalid.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+      GEMINI_API_KEY: ""
+      GEMINI_MODEL: gemini-2.5-flash
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Installer les dependances verrouillees
+        run: npm ci --no-audit
+
+      - name: Valider le schema Prisma
+        run: npx prisma validate
+
+      - name: Generer le client Prisma
+        run: npx prisma generate
+
+      - name: Appliquer les migrations sur la base ephemere
+        run: npx prisma migrate deploy
+
+      - name: Executer les tests Milo
+        run: npx tsx tests/milo-runtime.test.ts
+
+      - name: Verifier le lint Milo
+        run: npx eslint src/lib/milo
+
+      - name: Verifier les types TypeScript
+        run: npx tsc --noEmit --pretty false
+
+      - name: Construire l application
+        run: npm run build
