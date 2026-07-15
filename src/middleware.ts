@@ -11,6 +11,10 @@ export const config = {
     ],
 };
 
+// Anciennes maquettes HTML enfant : elles embarquent des donnees de quiz cote
+// navigateur. Elles ne doivent plus etre servies directement.
+const legacyChildExercisePages = new Set(['/quiz.html', '/exercice.html']);
+
 export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
         request: { headers: request.headers },
@@ -42,6 +46,11 @@ export async function middleware(request: NextRequest) {
     }
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
+
+    if (legacyChildExercisePages.has(pathname)) {
+        url.pathname = '/enfant';
+        return NextResponse.redirect(url);
+    }
 
     // Détection des routes privées (/admin, /membre...)
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin', '/benevole'];
