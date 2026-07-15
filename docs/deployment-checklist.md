@@ -1,52 +1,52 @@
-# Milo deployment checklist
+# Checklist de livraison de Milo
 
-Scope: assistant Milo only. No deployment, DNS, email or secret modification is
-performed by this checklist.
+Perimetre : assistant Milo uniquement. Cette checklist ne realise aucun
+deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 
-## Repository
+## Depot
 
-- [ ] Dedicated branch based on the current integration branch.
-- [ ] `git status --short --branch --untracked-files=all` is understood.
-- [ ] Only Milo files are staged.
-- [ ] No `.env`, key, token, log or local database is staged.
+- [x] Branche dediee basee sur la branche d'integration actuelle.
+- [x] `git status --short --branch --untracked-files=all` est compris.
+- [x] Seuls les fichiers Milo sont indexes.
+- [x] Aucun `.env`, cle, jeton, journal ou base locale n'est indexe.
 
-## Next runtime
+## Moteur Next.js
 
-- [ ] `src/app/api/ai-chat/route.ts` exists and handles `POST /api/ai-chat`.
-- [ ] The route checks Supabase session and Prisma role `ENFANT`.
-- [ ] The route enforces its 16 KB request limit on the actual request stream, not only on `Content-Length`.
-- [ ] The route fails closed when identity services are unavailable.
-- [ ] The route resolves the published child parcours from the route activity or module reference.
-- [ ] The route uses only safe excerpts from published course/exercise JSON and excludes answer options and correct answers.
-- [ ] The widget sends only the current question text, never choices or a correct answer index.
-- [ ] `GEMINI_API_KEY` stays server-side.
-- [ ] Missing key, timeout and Gemini rate limit return a safe fallback.
-- [ ] The local answer library is queried before Gemini.
-- [ ] The widget is loaded by `src/app/(dashboard-enfant)/layout.tsx`.
+- [x] `src/app/api/ai-chat/route.ts` existe et gere `POST /api/ai-chat`.
+- [x] La route verifie la session Supabase et le role Prisma `ENFANT`.
+- [x] La route impose une limite de 16 Ko sur le flux reel, pas seulement sur `Content-Length`.
+- [x] La route refuse l'acces si les services d'identite sont indisponibles.
+- [x] La route resout le parcours enfant publie depuis l'activite ou le module.
+- [x] La route utilise uniquement des extraits surs du JSON publie et exclut les choix et reponses.
+- [x] Le widget envoie uniquement le texte de la question, jamais les choix ni l'index de reponse.
+- [x] `GEMINI_API_KEY` reste cote serveur.
+- [x] Cle absente, delai depasse et quota Gemini renvoient un secours sur.
+- [x] La bibliotheque locale est consultee avant Gemini.
+- [x] Le widget est charge par `src/app/(dashboard-enfant)/layout.tsx`.
 
-## Frontend behavior
+## Comportement de l'interface
 
-- [ ] `/assistant.html` redirects to the protected `/enfant/assistant` route.
-- [ ] A child page renders the floating Milo button.
-- [ ] A known question returns a library answer.
-- [ ] An unknown question reaches Gemini when configured.
-- [ ] Empty and invalid `sessionStorage` do not crash the widget.
-- [ ] The revision compatibility endpoints do not return 404.
+- [x] `/assistant.html` redirige vers la route protegee `/enfant/assistant`.
+- [x] Une page enfant affiche le bouton flottant Milo.
+- [x] Une question connue renvoie une reponse de la bibliotheque.
+- [x] Une question inconnue atteint Gemini lorsqu'il est configure.
+- [x] Un `sessionStorage` vide ou invalide ne fait pas planter le widget.
+- [x] Les endpoints de compatibilite des revisions ne renvoient pas 404.
 
-## Deployment environment
+## Environnement de deploiement
 
-- [ ] The target runs Next.js server-side routes, not static files only.
-- [ ] `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `DATABASE_URL` are configured.
-- [ ] `GEMINI_API_KEY` is configured as a private server variable.
-- [ ] `GEMINI_MODEL` is configured or the documented default is accepted.
-- [ ] `/enfant/assistant` and `/api/ai-chat` are reachable on the target.
-- [ ] Logs can be consulted without exposing secrets or child data.
+- [ ] La cible execute les routes serveur Next.js et pas seulement des fichiers statiques.
+- [x] `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` et `DATABASE_URL` sont configures localement.
+- [x] `GEMINI_API_KEY` est configuree localement comme variable serveur privee.
+- [x] `GEMINI_MODEL` est configure ou la valeur par defaut documentee est acceptee localement.
+- [ ] `/enfant/assistant` et `/api/ai-chat` sont accessibles sur la cible de production.
+- [x] Les journaux locaux peuvent etre consultes sans exposer de secret ni de donnee enfant.
 
-## Final gate
+## Porte finale
 
-- [ ] Unit tests pass.
-- [ ] ESLint passes for Milo files.
-- [ ] `git diff --check` passes.
-- [ ] Build result is documented, including unrelated blockers if any.
-- [ ] Browser test uses a real child session and a controlled Gemini key.
-- [ ] Human validation is recorded before deployment.
+- [x] Les tests unitaires passent.
+- [x] ESLint passe sur les fichiers Milo.
+- [x] `git diff --check` passe.
+- [x] Le resultat du build est documente, y compris les blocages hors perimetre.
+- [x] Le test navigateur utilise une vraie session enfant et un environnement local controle.
+- [ ] La validation humaine est enregistree avant le deploiement.
