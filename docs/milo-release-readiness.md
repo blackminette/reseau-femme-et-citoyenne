@@ -9,7 +9,8 @@ Il ne remplace pas le smoke test de production dans
 
 - Branche : `feat/milo-runtime-next`
 - Pull request : https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28
-- Dernier correctif Milo : `d49f368 fix(milo): charger le widget dans l'espace enfant`
+- Correctif de chargement du widget : `d49f368 fix(milo): charger le widget dans l'espace enfant`
+- Correctif de controle d'origine : `3dac33c fix(milo): securiser la verification d'origine`
 - Aucun fichier d'environnement ou secret n'est suivi par Git.
 - L origine publique de production doit etre renseignee cote serveur dans
   `MILO_TRUSTED_ORIGIN` avant la mise en ligne.
@@ -41,7 +42,9 @@ Les controles HTTP sans session ont donne les statuts attendus :
 Les tests unitaires couvrent notamment la persistance courte dans
 `sessionStorage`, l'assainissement des messages, les donnees invalides, le
 matching de la bibliotheque, les garde-fous pedagogiques, les limites de debit
-et les erreurs Gemini `429` et `503`.
+et les erreurs Gemini `429` et `503`. Ils couvrent aussi le rejet d'une origine
+forgee via `x-forwarded-host` et d'une requete navigateur `cross-site` sans
+en-tete `Origin`.
 
 ## Etat de la pull request
 
