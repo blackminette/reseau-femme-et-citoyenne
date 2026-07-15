@@ -19,7 +19,8 @@ cible de deploiement n'a pas ete validee dans cet audit.
 - Arbre de travail : propre
 - Base : `origin/main` est un ancetre de la branche.
 - Etat local : propre et synchronise avec `origin/feat/milo-runtime-next` au
-  moment de cet audit (`0` commit en avance et `0` en retard).
+  moment de cet audit (`0` commit en avance et `0` en retard sur la branche
+  distante ; `32` commits en avance sur `origin/main`).
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
 - Etat de la pull request : ouverte, non brouillon, fusionnable, sans conflit.
 - Controles GitHub : le workflow `Validation Milo` est vert sur le push et la PR.
@@ -60,11 +61,13 @@ cible de deploiement n'a pas ete validee dans cet audit.
 | Build de production | `npm run build` avec l'environnement local charge uniquement en memoire | Reussi ; 55/55 pages statiques generees |
 | CI GitHub | Workflow `Validation Milo` sur la PR 28 | Reussi ; migrations ephemeres, tests, lint, types et build valides |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
-| Connexion enfant reelle | Navigateur sur `http://localhost:3017/login` | Authentification Supabase reussie ; profil enfant retrouve |
-| Page assistant | Navigateur sur `http://localhost:3017/enfant/assistant` | Chargee correctement |
-| Requete de discussion | Message navigateur `Bonjour Milo` | `POST /api/ai-chat 200` ; reponse affichee |
-| Console navigateur | Apres le parcours local reussi | Aucune erreur remontee |
+| Connexion enfant reelle | Navigateur sur `http://127.0.0.1:3021/login` | Authentification Supabase reussie ; profil enfant retrouve |
+| Page assistant | Navigateur sur `http://127.0.0.1:3021/enfant/assistant` | Chargee correctement |
+| Requete de discussion | Question pedagogique envoyee dans le widget | Reponse de secours affichee ; parcours utilisable |
+| Historique invalide | Valeur `{` forcee dans `sessionStorage`, puis rechargement | Espace enfant et widget toujours utilisables |
+| Console navigateur | Apres rechargement du parcours local | Aucune nouvelle erreur applicative ; un `404` historique concerne seulement `favicon.ico` |
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
+| Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 
 ## Revue de securite
 
@@ -116,9 +119,12 @@ partagee tant qu'un modele de donnees et des regles d'acces n'ont pas ete valide
 
 ### Porte de livraison ouverte
 
-Aucun deploiement de production, configuration IONOS, test de fumee apres
-deploiement ou repetition de retour arriere n'a ete realise. Ces actions exigent
-le responsable du deploiement et les identifiants de production de l'equipe.
+Aucun deploiement de production ni test de fumee apres deploiement n'a ete
+valide. Le domaine configure dans `src/app/sitemap.ts`,
+`https://reseau-femme-et-citoyenne.fr`, ne se resout pas en DNS depuis
+l'environnement de test : `curl.exe` retourne `Could not resolve host` et le
+statut `000`. La configuration IONOS, le DNS et le retour arriere doivent donc
+etre verifies par le responsable du deploiement avec les acces de production.
 
 ## Retour arriere
 
