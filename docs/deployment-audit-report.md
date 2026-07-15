@@ -18,8 +18,8 @@ du perimetre Milo et la cible de deploiement n'a pas ete validee dans cet audit.
 - Branche : `feat/milo-runtime-next`
 - Arbre de travail : propre
 - Base : `origin/main` est un ancetre de la branche.
-- Etat local : des commits locaux non pousses sont presents ; le nombre exact doit
-  etre verifie avec `git status --short --branch --untracked-files=all` avant le push.
+- Etat local : la synchronisation avec la branche distante doit etre verifiee avec
+  `git status --short --branch --untracked-files=all` avant chaque livraison.
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
 - Etat de la pull request : ouverte, non brouillon, fusionnable, sans conflit.
 - Controles GitHub : aucun n'est remonte ; cela ne signifie pas que la CI est verte.
