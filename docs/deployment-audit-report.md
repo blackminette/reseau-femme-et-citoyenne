@@ -68,6 +68,7 @@ cible de deploiement n'a pas ete validee dans cet audit.
 | Console navigateur | Apres rechargement du parcours local | Aucune nouvelle erreur applicative ; un `404` historique concerne seulement `favicon.ico` |
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
+| Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
 
 ## Revue de securite
 
@@ -123,8 +124,11 @@ Aucun deploiement de production ni test de fumee apres deploiement n'a ete
 valide. Le domaine configure dans `src/app/sitemap.ts`,
 `https://reseau-femme-et-citoyenne.fr`, ne se resout pas en DNS depuis
 l'environnement de test : `curl.exe` retourne `Could not resolve host` et le
-statut `000`. La configuration IONOS, le DNS et le retour arriere doivent donc
-etre verifies par le responsable du deploiement avec les acces de production.
+statut `000`. L'audit IONOS en lecture seule retourne aussi `401 Unauthorized`
+sur `GET /zones`; aucune zone n'a donc pu etre inspectee. La configuration
+IONOS, le type de cle API, le DNS et le retour arriere doivent etre verifies par
+le responsable du deploiement avec les acces de production. Aucune tentative
+d'ecriture n'a ete effectuee.
 
 ## Retour arriere
 
