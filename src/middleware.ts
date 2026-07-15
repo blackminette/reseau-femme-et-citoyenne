@@ -11,9 +11,20 @@ export const config = {
     ],
 };
 
-// Anciennes maquettes HTML enfant : elles embarquent des donnees de quiz cote
-// navigateur. Elles ne doivent plus etre servies directement.
-const legacyChildExercisePages = new Set(['/quiz.html', '/exercice.html']);
+// Anciennes maquettes HTML enfant : elles sont remplacees par les routes Next.js
+// et ne doivent plus etre servies directement.
+const legacyChildPages = new Set([
+    '/ateliers-enfant.html',
+    '/badges-enfant.html',
+    '/espace-enfant.html',
+    '/exercice.html',
+    '/gestion-enfant.html',
+    '/lecon.html',
+    '/module.html',
+    '/profil-enfant.html',
+    '/quiz.html',
+    '/video.html',
+]);
 
 export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
@@ -47,7 +58,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
-    if (legacyChildExercisePages.has(pathname)) {
+    if (legacyChildPages.has(pathname)) {
         url.pathname = '/enfant';
         return NextResponse.redirect(url);
     }
