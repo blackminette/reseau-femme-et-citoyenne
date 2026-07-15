@@ -51,5 +51,6 @@ deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 - [x] `git diff --check` passe.
 - [x] Le resultat du build est documente, y compris les blocages hors perimetre.
 - [x] Le test navigateur utilise une vraie session enfant et un environnement local controle.
-- [x] La CI GitHub est verte sur la PR 28.
+- [ ] La CI GitHub est verte sur la PR 28 : le push de la branche est vert,
+      mais le controle de fusion echoue sur deux imports auth hors Milo.
 - [ ] La validation humaine est enregistree avant le deploiement.

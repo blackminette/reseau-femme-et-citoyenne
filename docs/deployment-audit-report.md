@@ -18,14 +18,17 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 
 - Branche : `feat/milo-runtime-next`
 - Arbre de travail : propre
-- Base : `origin/main` est un ancetre de la branche.
+- Base : `origin/main` a avance depuis la derniere synchronisation de la
+  branche ; la simulation `git merge-tree` est propre, sans conflit Git.
 - Etat local : propre et synchronise avec `origin/feat/milo-runtime-next` au
   moment de cet audit (`0` commit en avance et `0` en retard sur la branche
-  distante ; `32` commits en avance sur `origin/main`).
+  distante ; `1` commit en retard et `36` commits en avance sur `origin/main`).
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
-- Etat de la pull request : ouverte, non brouillon, fusionnable, sans conflit.
-- Controles GitHub : le workflow est vert sur le push de la branche ; le
-  controle de la PR echoue sur deux imports auth hors Milo (`29420364091`).
+- Etat de la pull request : ouverte, non brouillon, sans conflit Git detecte,
+  mais non validable tant que le controle de fusion echoue.
+- Controles GitHub : le workflow est vert sur le push de la branche
+  (`29420685630`) ; le controle de fusion de la PR echoue sur deux imports
+  auth hors Milo (`29420690839`).
 
 ## Implementation verifiee
 
@@ -71,7 +74,7 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
-| Integration avec `origin/main` | CI `29419731439`, verification TypeScript | Bloquee hors Milo : `main` expose d'autres noms d'actions auth que les composants de la branche |
+| Integration avec `origin/main` | `git merge-tree --write-tree HEAD origin/main`, CI `29420690839` | Simulation Git propre ; controle TypeScript de la PR bloque hors Milo car `main` expose d'autres noms d'actions auth |
 
 ## Revue de securite
 
@@ -153,6 +156,7 @@ ne contient aucune migration de base.
 
 ## Recommandation
 
-Ne pas fusionner silencieusement. La CI est validee ; il reste la revue humaine,
-la decision sur le lint global et la validation du responsable du deploiement
-avant fusion et livraison selon le processus convenu.
+Ne pas fusionner silencieusement. La CI de la branche est validee, mais le
+controle de fusion de la PR est en echec. Il reste la correction ou la
+validation par l'equipe auth, la revue humaine, la decision sur le lint global
+et la validation du responsable du deploiement avant fusion et livraison.
