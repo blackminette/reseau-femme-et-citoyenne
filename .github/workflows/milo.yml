@@ -60,6 +60,9 @@ jobs:
       - name: Appliquer les migrations sur la base ephemere
         run: npx prisma migrate deploy
 
+      - name: Aligner le schema courant sur la base de test
+        run: npx prisma db push --accept-data-loss
+
       - name: Executer les tests Milo
         run: npx tsx tests/milo-runtime.test.ts
 
