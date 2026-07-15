@@ -26,9 +26,8 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
 - Etat de la pull request : ouverte, non brouillon, sans conflit Git detecte,
   mais non validable tant que le controle de fusion echoue.
-- Controles GitHub : le workflow est vert sur le push de la branche
-  (`29422678410`) ; le controle de fusion de la PR echoue sur deux imports
-  auth hors Milo (`29422682899`).
+- Controles GitHub : le workflow est vert sur le push de la branche ; le
+  controle de fusion de la PR echoue sur deux imports auth hors Milo.
 
 ## Implementation verifiee
 
@@ -63,7 +62,7 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 | Lint Milo | `npx eslint src/lib/milo` | Reussi |
 | TypeScript | `npx tsc --noEmit --pretty false` | Reussi |
 | Proprete du diff | `git diff --check` | Reussi |
-| Build de production | `npm run build` dans la CI (`29422678410`) | Reussi ; 55/55 pages statiques generees |
+| Build de production | `npm run build` dans la CI de la branche | Reussi ; 55/55 pages statiques generees |
 | Relance du build local | `npm run build` avec une URL PostgreSQL factice | Non concluant : aucune base PostgreSQL locale n'est disponible ; aucune conclusion negative sur le code Milo |
 | CI GitHub | Workflow `Validation Milo` sur le push et la PR 28 | Push de la branche reussi ; controle PR bloque par deux imports auth hors Milo |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
@@ -75,7 +74,7 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
-| Integration avec `origin/main` | `git merge-tree --write-tree HEAD origin/main`, CI `29421683895` | Simulation Git propre ; controle TypeScript de la PR bloque hors Milo car `main` expose d'autres noms d'actions auth |
+| Integration avec `origin/main` | `git merge-tree --write-tree HEAD origin/main`, controle CI de la PR | Simulation Git propre ; controle TypeScript de la PR bloque hors Milo car `main` expose d'autres noms d'actions auth |
 
 ## Revue de securite
 
