@@ -78,8 +78,11 @@ cible de deploiement n'a pas ete validee dans cet audit.
   renvoye au navigateur.
 - Le widget echappe le texte de l'assistant avant d'afficher son sous-ensemble
   Markdown limite.
-- `npm audit --omit=dev` signale cinq vulnerabilites moderees. La correction forcee
-  proposerait une mise a jour majeure de Next.js ou Prisma et n'a pas ete executee.
+- `npm audit --omit=dev` signale cinq vulnerabilites moderees liees a
+  `@hono/node-server`, `@prisma/dev`, `prisma`, `next` et `postcss`.
+- `npm audit fix --dry-run --omit=dev` confirme que la correction automatique
+  forcerait notamment Prisma `6.19.3` et Next.js `9.3.3`. Elle n'a pas ete
+  executee car ces versions seraient incompatibles avec la branche actuelle.
 
 ## Problemes restants
 
