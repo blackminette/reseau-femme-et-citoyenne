@@ -27,8 +27,8 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 - Etat de la pull request : ouverte, non brouillon, sans conflit Git detecte,
   mais non validable tant que le controle de fusion echoue.
 - Controles GitHub : le workflow est vert sur le push de la branche
-  (`29421680944`) ; le controle de fusion de la PR echoue sur deux imports
-  auth hors Milo (`29421683895`).
+  (`29422678410`) ; le controle de fusion de la PR echoue sur deux imports
+  auth hors Milo (`29422682899`).
 
 ## Implementation verifiee
 
@@ -63,7 +63,8 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 | Lint Milo | `npx eslint src/lib/milo` | Reussi |
 | TypeScript | `npx tsc --noEmit --pretty false` | Reussi |
 | Proprete du diff | `git diff --check` | Reussi |
-| Build de production | `npm run build` avec l'environnement local charge uniquement en memoire | Reussi ; 55/55 pages statiques generees |
+| Build de production | `npm run build` dans la CI (`29422678410`) | Reussi ; 55/55 pages statiques generees |
+| Relance du build local | `npm run build` avec une URL PostgreSQL factice | Non concluant : aucune base PostgreSQL locale n'est disponible ; aucune conclusion negative sur le code Milo |
 | CI GitHub | Workflow `Validation Milo` sur le push et la PR 28 | Push de la branche reussi ; controle PR bloque par deux imports auth hors Milo |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
 | Connexion enfant reelle | Navigateur sur `http://127.0.0.1:3021/login` | Authentification Supabase reussie ; profil enfant retrouve |
