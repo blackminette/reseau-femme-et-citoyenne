@@ -8,10 +8,11 @@ ni la messagerie, ni les identifiants de production, ni les zones hors sujet.
 
 ## Decision
 
-Milo est valide sur l'environnement local et dans la CI, et pret pour une revue
-humaine dans la pull request 28. Le depot n'est pas declare pret pour une
-livraison en production : le lint global echoue hors du perimetre Milo et la
-cible de deploiement n'a pas ete validee dans cet audit.
+Milo est valide sur l'environnement local et sur la CI de sa branche, et pret
+pour une revue humaine dans la pull request 28. Le depot n'est pas declare
+pret pour une livraison en production : le lint global echoue hors du
+perimetre Milo, le controle de fusion de la PR echoue sur une divergence auth
+de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 
 ## Etat Git
 
@@ -23,7 +24,8 @@ cible de deploiement n'a pas ete validee dans cet audit.
   distante ; `32` commits en avance sur `origin/main`).
 - Pull request : `https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28`
 - Etat de la pull request : ouverte, non brouillon, fusionnable, sans conflit.
-- Controles GitHub : le workflow `Validation Milo` est vert sur le push et la PR.
+- Controles GitHub : le workflow est vert sur le push de la branche ; le
+  controle de la PR echoue sur deux imports auth hors Milo (`29420364091`).
 
 ## Implementation verifiee
 
@@ -59,7 +61,7 @@ cible de deploiement n'a pas ete validee dans cet audit.
 | TypeScript | `npx tsc --noEmit --pretty false` | Reussi |
 | Proprete du diff | `git diff --check` | Reussi |
 | Build de production | `npm run build` avec l'environnement local charge uniquement en memoire | Reussi ; 55/55 pages statiques generees |
-| CI GitHub | Workflow `Validation Milo` sur la PR 28 | Reussi ; migrations ephemeres, tests, lint, types et build valides |
+| CI GitHub | Workflow `Validation Milo` sur le push et la PR 28 | Push de la branche reussi ; controle PR bloque par deux imports auth hors Milo |
 | API sans session | `POST /api/ai-chat` sans session | Retourne 401 |
 | Connexion enfant reelle | Navigateur sur `http://127.0.0.1:3021/login` | Authentification Supabase reussie ; profil enfant retrouve |
 | Page assistant | Navigateur sur `http://127.0.0.1:3021/enfant/assistant` | Chargee correctement |
