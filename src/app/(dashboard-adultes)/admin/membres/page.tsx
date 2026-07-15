@@ -832,116 +832,109 @@ export default function AdminMembresPage() {
                 </div>
             </Modal>
 
-            {/* Modal de création */}
-            <Modal isOpen={modalCreerIsOpen} onClose={() => setModalCreerIsOpen(false)} title="Créer un nouveau membre">
-                <form onSubmit={handleCreerSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nom</label>
-                            <input
-                                type="text"
-                                value={creerForm.nom}
-                                onChange={(e) => setCreerForm({ ...creerForm, nom: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                                required
-                            />
+            {/* MODAL DE CRÉATION */}
+            <Modal
+                isOpen={modalCreerIsOpen}
+                onClose={() => setModalCreerIsOpen(false)}
+                title="Créer un nouveau membre"
+            >
+                <div className="p-1">
+                    <form onSubmit={handleCreerSubmit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nom</label>
+                                <input
+                                    type="text"
+                                    value={creerForm.nom}
+                                    onChange={(e) => setCreerForm({ ...creerForm, nom: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors placeholder:text-slate-400 text-slate-700"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Prénom</label>
+                                <input
+                                    type="text"
+                                    value={creerForm.prenom}
+                                    onChange={(e) => setCreerForm({ ...creerForm, prenom: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors placeholder:text-slate-400 text-slate-700"
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Prénom</label>
-                            <input
-                                type="text"
-                                value={creerForm.prenom}
-                                onChange={(e) => setCreerForm({ ...creerForm, prenom: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                                required
-                            />
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Identifiant (Lettres, chiffres, _ )</label>
-                            <input
-                                type="text"
-                                value={creerForm.username}
-                                onChange={(e) => setCreerForm({ ...creerForm, username: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                                placeholder="ex: j_dupont99"
-                                pattern="^[a-zA-Z0-9_]+$"
-                                title="L'identifiant doit contenir uniquement des lettres (sans accents), des chiffres ou des underscores (_)."
-                                required
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Identifiant (Lettres, chiffres, _ )</label>
+                                <input
+                                    type="text"
+                                    value={creerForm.username}
+                                    onChange={(e) => setCreerForm({ ...creerForm, username: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors placeholder:text-slate-400 text-slate-700"
+                                    placeholder="ex: j_dupont99"
+                                    pattern="^[a-zA-Z0-9_]+$"
+                                    title="L'identifiant doit contenir uniquement des lettres (sans accents), des chiffres ou des underscores (_)."
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Téléphone</label>
+                                <input
+                                    type="text"
+                                    value={creerForm.telephone}
+                                    onChange={(e) => setCreerForm({ ...creerForm, telephone: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors placeholder:text-slate-400 text-slate-700"
+                                    placeholder="ex: 0612345678"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Adresse Email</label>
-                            <input
-                                type="email"
-                                value={creerForm.email}
-                                onChange={(e) => setCreerForm({ ...creerForm, email: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                                placeholder="ex: jean.dupont@mail.com"
-                                required
-                            />
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Mot de passe initial</label>
-                            <input
-                                type="text"
-                                value={creerForm.password}
-                                onChange={(e) => setCreerForm({ ...creerForm, password: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-lg text-sm focus:outline-none"
-                                readOnly
-                                required
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Mot de passe par défaut</label>
+                                <input
+                                    type="text"
+                                    value={creerForm.password}
+                                    disabled
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-400 rounded-lg text-sm cursor-not-allowed select-none"
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1">Généré automatiquement par le système.</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rôle</label>
+                                <select
+                                    value={creerForm.role}
+                                    onChange={(e) => setCreerForm({ ...creerForm, role: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-violet-500 transition-colors text-slate-700 font-medium"
+                                >
+                                    <option value="ADMIN">Administrateur</option>
+                                    <option value="INTERVENANT">Intervenant</option>
+                                    <option value="MEMBRE">Membre</option>
+                                    <option value="ENFANT">Enfant</option>
+                                    <option value="PARTENAIRE">Partenaire</option>
+                                    <option value="BENEVOLE">Bénévole</option>
+                                    <option value="ETUDIANT">Étudiant</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Téléphone</label>
-                            <input
-                                type="text"
-                                value={creerForm.telephone}
-                                onChange={(e) => setCreerForm({ ...creerForm, telephone: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                                placeholder="ex: 0612345678"
-                            />
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setModalCreerIsOpen(false)}
+                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors cursor-pointer"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 text-sm font-medium transition-colors cursor-pointer"
+                            >
+                                Créer l'utilisateur
+                            </button>
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rôle initial</label>
-                        <select
-                            value={creerForm.role}
-                            onChange={(e) => setCreerForm({ ...creerForm, role: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-violet-500 transition-colors"
-                        >
-                            <option value="ADMIN">Administrateur</option>
-                            <option value="INTERVENANT">Intervenant</option>
-                            <option value="MEMBRE">Membre</option>
-                            <option value="ENFANT">Enfant</option>
-                            <option value="PARTENAIRE">Partenaire</option>
-                            <option value="BENEVOLE">Bénévole</option>
-                            <option value="ETUDIANT">Étudiant</option>
-                        </select>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button
-                            type="button"
-                            onClick={() => setModalCreerIsOpen(false)}
-                            className="px-4 py-2 bg-violet-100 text-violet-800 rounded-lg text-sm font-medium hover:bg-violet-200 transition-colors"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm font-medium transition-colors"
-                        >
-                            Ajouter
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </Modal>
 
             {/* Modal de création en lot */}

@@ -2,12 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 
-type PasswordRequest = {
-    username: string;
-    message: string;
-};
-
-export async function submitResetRequestAction(formData: PasswordRequest) {
+export async function submitResetRequestAction(formData: any) {
     const { username, message } = formData;
 
     if (!username || !message) {
