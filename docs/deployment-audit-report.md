@@ -27,8 +27,8 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 - Etat de la pull request : ouverte, non brouillon, sans conflit Git detecte,
   mais non validable tant que le controle de fusion echoue.
 - Controles GitHub : le workflow est vert sur le push de la branche
-  (`29420685630`) ; le controle de fusion de la PR echoue sur deux imports
-  auth hors Milo (`29420690839`).
+  (`29421680944`) ; le controle de fusion de la PR echoue sur deux imports
+  auth hors Milo (`29421683895`).
 
 ## Implementation verifiee
 
@@ -74,7 +74,7 @@ de `main` et la cible de deploiement n'a pas ete validee dans cet audit.
 | Secours et limitation de debit | Couverts par `tests/milo-runtime.test.ts` | Reussi avec des reponses fournisseur simulees |
 | Cible de production | `curl.exe` vers `https://reseau-femme-et-citoyenne.fr` | Bloquee avant HTTP : `Could not resolve host`, statut `000` |
 | Audit DNS IONOS en lecture seule | `node tools/ionos/ionos-hosting-readonly.js` (`GET /zones`) | Bloque par IONOS : `401 Unauthorized`; aucune zone ni aucun enregistrement n'a ete lu |
-| Integration avec `origin/main` | `git merge-tree --write-tree HEAD origin/main`, CI `29420690839` | Simulation Git propre ; controle TypeScript de la PR bloque hors Milo car `main` expose d'autres noms d'actions auth |
+| Integration avec `origin/main` | `git merge-tree --write-tree HEAD origin/main`, CI `29421683895` | Simulation Git propre ; controle TypeScript de la PR bloque hors Milo car `main` expose d'autres noms d'actions auth |
 
 ## Revue de securite
 
