@@ -123,7 +123,7 @@ Si Milo provoque une regression :
 2. noter le commit deploye et l erreur exacte ;
 3. redeployer la derniere version stable validee ;
 4. verifier `/login`, `/enfant` et les routes API principales ;
-5. conserver la PR 28 ouverte pour correction, sans push force ;
+5. creer une branche corrective et une nouvelle pull request, sans push force ;
 6. ne pas modifier la base de production pour contourner un bug applicatif.
 
 Le retour arriere doit etre valide par le responsable du deploiement. Cette PR

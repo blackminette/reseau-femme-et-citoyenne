@@ -199,100 +199,113 @@ async function run() {
   );
   assert.deepEqual(validBody, { body: { message: "Bonjour" } });
 
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("https://atelierkids.example/api/ai-chat", {
-        method: "POST",
-        headers: { origin: "https://atelierkids.example" },
-      }),
-    ),
-    true,
-  );
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("https://atelierkids.example/api/ai-chat", {
-        method: "POST",
-        headers: { origin: "https://site-malveillant.example" },
-      }),
-    ),
-    false,
-  );
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("http://localhost:3011/api/ai-chat", {
-        method: "POST",
-        headers: {
-          host: "127.0.0.1:3011",
-          origin: "http://127.0.0.1:3011",
-        },
-      }),
-    ),
-    true,
-  );
-  const previousTrustedOrigin = process.env.MILO_TRUSTED_ORIGIN;
-  process.env.MILO_TRUSTED_ORIGIN = "https://atelierkids.example";
+  // Ces controles couvrent les origines deduites et configurees. Ils doivent
+  // rester independants de la configuration presente sur le poste ou en CI.
+  const initialTrustedOrigin = process.env.MILO_TRUSTED_ORIGIN;
+  delete process.env.MILO_TRUSTED_ORIGIN;
 
   try {
     assert.equal(
       hasTrustedMiloRequestOrigin(
-        new Request("http://next-internal:3000/api/ai-chat", {
+        new Request("https://atelierkids.example/api/ai-chat", {
           method: "POST",
-          headers: {
-            host: "next-internal:3000",
-            origin: "https://atelierkids.example",
-            "x-forwarded-proto": "https",
-          },
+          headers: { origin: "https://atelierkids.example" },
         }),
       ),
       true,
     );
     assert.equal(
       hasTrustedMiloRequestOrigin(
-        new Request("http://next-internal:3000/api/ai-chat", {
+        new Request("https://atelierkids.example/api/ai-chat", {
           method: "POST",
-          headers: {
-            host: "next-internal:3000",
-            origin: "https://site-malveillant.example",
-            "x-forwarded-host": "site-malveillant.example",
-            "x-forwarded-proto": "https",
-          },
+          headers: { origin: "https://site-malveillant.example" },
         }),
       ),
       false,
-      "Une origine ne doit pas etre validee par un x-forwarded-host forge.",
+    );
+    assert.equal(
+      hasTrustedMiloRequestOrigin(
+        new Request("http://localhost:3011/api/ai-chat", {
+          method: "POST",
+          headers: {
+            host: "127.0.0.1:3011",
+            origin: "http://127.0.0.1:3011",
+          },
+        }),
+      ),
+      true,
+    );
+    const previousTrustedOrigin = process.env.MILO_TRUSTED_ORIGIN;
+    process.env.MILO_TRUSTED_ORIGIN = "https://atelierkids.example";
+
+    try {
+      assert.equal(
+        hasTrustedMiloRequestOrigin(
+          new Request("http://next-internal:3000/api/ai-chat", {
+            method: "POST",
+            headers: {
+              host: "next-internal:3000",
+              origin: "https://atelierkids.example",
+              "x-forwarded-proto": "https",
+            },
+          }),
+        ),
+        true,
+      );
+      assert.equal(
+        hasTrustedMiloRequestOrigin(
+          new Request("http://next-internal:3000/api/ai-chat", {
+            method: "POST",
+            headers: {
+              host: "next-internal:3000",
+              origin: "https://site-malveillant.example",
+              "x-forwarded-host": "site-malveillant.example",
+              "x-forwarded-proto": "https",
+            },
+          }),
+        ),
+        false,
+        "Une origine ne doit pas etre validee par un x-forwarded-host forge.",
+      );
+    } finally {
+      if (previousTrustedOrigin === undefined) {
+        delete process.env.MILO_TRUSTED_ORIGIN;
+      } else {
+        process.env.MILO_TRUSTED_ORIGIN = previousTrustedOrigin;
+      }
+    }
+    assert.equal(
+      hasTrustedMiloRequestOrigin(
+        new Request("https://atelierkids.example/api/ai-chat", { method: "POST" }),
+      ),
+      true,
+    );
+    assert.equal(
+      hasTrustedMiloRequestOrigin(
+        new Request("https://atelierkids.example/api/ai-chat", {
+          method: "POST",
+          headers: { "sec-fetch-site": "cross-site" },
+        }),
+      ),
+      false,
+      "Une requete navigateur cross-site sans origine ne doit pas etre acceptee.",
+    );
+    assert.equal(
+      hasTrustedMiloRequestOrigin(
+        new Request("https://atelierkids.example/api/ai-chat", {
+          method: "POST",
+          headers: { origin: "not-a-url" },
+        }),
+      ),
+      false,
     );
   } finally {
-    if (previousTrustedOrigin === undefined) {
+    if (initialTrustedOrigin === undefined) {
       delete process.env.MILO_TRUSTED_ORIGIN;
     } else {
-      process.env.MILO_TRUSTED_ORIGIN = previousTrustedOrigin;
+      process.env.MILO_TRUSTED_ORIGIN = initialTrustedOrigin;
     }
   }
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("https://atelierkids.example/api/ai-chat", { method: "POST" }),
-    ),
-    true,
-  );
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("https://atelierkids.example/api/ai-chat", {
-        method: "POST",
-        headers: { "sec-fetch-site": "cross-site" },
-      }),
-    ),
-    false,
-    "Une requete navigateur cross-site sans origine ne doit pas etre acceptee.",
-  );
-  assert.equal(
-    hasTrustedMiloRequestOrigin(
-      new Request("https://atelierkids.example/api/ai-chat", {
-        method: "POST",
-        headers: { origin: "not-a-url" },
-      }),
-    ),
-    false,
-  );
 
   const invalidBody = await readMiloRequestBody(
     new Request("http://localhost/api/ai-chat", { method: "POST", body: "{" }),
