@@ -1,74 +1,65 @@
-# Deployment checklist
+# Checklist de livraison de Milo
 
-Project scope for this audit:
-- Milo backend and assistant widget in this repository.
-- No deployment action.
-- No secret inspection or modification.
-- No DNS change.
+Perimetre : assistant Milo uniquement. Cette checklist ne realise aucun
+deploiement et ne modifie ni DNS, ni messagerie, ni secret.
 
-## 1. Repository state
+## Depot
 
-- [ ] `git branch --show-current` is a dedicated branch for this work.
-- [ ] `git status --short --branch --untracked-files=all` is understood before any change.
-- [ ] Only the intended files are modified.
-- [ ] No secret file is changed.
-- [ ] No unrelated module is touched.
+- [x] Branche dediee basee sur la branche d'integration actuelle.
+- [x] `git status --short --branch --untracked-files=all` est compris.
+- [x] Seuls les fichiers Milo, le middleware de protection cible et sa
+      documentation de livraison sont indexes.
+- [x] Aucun `.env`, cle, jeton, journal ou base locale n'est indexe.
+- [x] Le workflow GitHub `Validation Milo` est present et cible la PR et la branche Milo.
 
-## 2. Milo backend
+## Moteur Next.js
 
-- [ ] `server/routes/ai-chat.js` exists.
-- [ ] `server/routes/ai-chat.js` exposes `POST /api/ai-chat`.
-- [ ] `server/routes/ai-chat.js` reads `GEMINI_API_KEY`.
-- [ ] `server/routes/ai-chat.js` reads `GEMINI_MODEL`.
-- [ ] `server/routes/ai-chat.js` fails safely if the key is missing.
-- [ ] `server/routes/ai-chat.js` keeps the child persona and module context logic coherent.
-- [ ] `server/ai-chat-utils.js` is present and imported correctly.
+- [x] `src/app/api/ai-chat/route.ts` existe et gere `POST /api/ai-chat`.
+- [x] La route verifie la session Supabase et le role Prisma `ENFANT`.
+- [x] La route impose une limite de 16 Ko sur le flux reel, pas seulement sur `Content-Length`.
+- [x] La route refuse l'acces si les services d'identite sont indisponibles.
+- [x] La route resout le parcours enfant publie depuis l'activite ou le module.
+- [x] La route utilise uniquement des extraits surs du JSON publie et exclut les choix et reponses.
+- [x] Le widget envoie uniquement le texte de la question, jamais les choix ni l'index de reponse.
+- [x] `GEMINI_API_KEY` reste cote serveur.
+- [x] Cle absente, delai depasse et quota Gemini renvoient un secours sur.
+- [x] La bibliotheque locale est consultee avant Gemini.
+- [x] Le widget est charge par `src/app/(dashboard-enfant)/layout.tsx`.
 
-## 3. Front assistant
+## Comportement de l'interface
 
-- [ ] `public/ai-widget.js` exists.
-- [ ] `public/ai-widget.js` calls `/api/ai-chat`.
-- [ ] `public/ai-widget.js` can run in floating mode.
-- [ ] `public/ai-widget.js` can run in standalone mode.
-- [ ] `public/assistant.html` loads `public/ai-widget.js`.
-- [ ] `public/assistant.html` opens correctly without extra app code.
-- [ ] The widget handles empty or invalid session history without crashing.
+- [x] `/assistant.html` redirige vers la route protegee `/enfant/assistant`.
+- [x] Les anciennes maquettes enfant accessibles depuis `public/*.html` sont
+      redirigees vers `/enfant` et ne servent plus de contenu historique.
+- [x] Une page enfant affiche le bouton flottant Milo.
+- [x] Une question connue renvoie une reponse de la bibliotheque.
+- [x] Une question inconnue atteint Gemini lorsqu'il est configure.
+- [x] Un `sessionStorage` vide ou invalide ne fait pas planter le widget.
+- [x] Les endpoints de compatibilite des revisions ne renvoient pas 404.
 
-## 4. Milo documentation
+## Environnement de deploiement
 
-- [ ] `docs/ia-milo.md` matches the current runtime behavior.
-- [ ] The document explains the backend / front / history split clearly.
-- [ ] The document stays aligned with the current route names and widget behavior.
+- [ ] La cible execute les routes serveur Next.js et pas seulement des fichiers statiques.
+- [x] `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` et `DATABASE_URL` sont configures localement.
+- [x] `GEMINI_API_KEY` est configuree localement comme variable serveur privee.
+- [x] `GEMINI_MODEL` est configure ou la valeur par defaut documentee est acceptee localement.
+- [ ] `/enfant/assistant` et `/api/ai-chat` sont accessibles sur la cible de production.
+- [x] Les journaux locaux peuvent etre consultes sans exposer de secret ni de donnee enfant.
+- [x] La CI valide Prisma et le build sur une base PostgreSQL ephemere.
 
-## 5. Deployment readiness
+## Porte finale
 
-- [ ] Gemini API key is available in the deployment environment.
-- [ ] Gemini model value is defined.
-- [ ] The deployment target supports the backend process required by the assistant.
-- [ ] Static files are served correctly.
-- [ ] `/assistant.html` is reachable in the final environment.
-- [ ] `/api/ai-chat` responds in the final environment.
-- [ ] Logs are readable in case of AI failures.
-
-## 6. Napoleonic module audit status
-
-Important fact:
-- The current repository does **not** contain the Napoleonic module source files under `src/`.
-- Therefore, this repository cannot be used to audit or modify the Napoleonic page code directly.
-
-If the Napoleonic module lives in another repository or another workspace copy, audit that copy separately before deployment:
-- [ ] verify `/enfant/modules/napoleon`;
-- [ ] verify lesson routing;
-- [ ] verify exercise routing;
-- [ ] verify image assets;
-- [ ] verify that lesson content is unique;
-- [ ] verify that no unrelated module is modified.
-
-## 7. Final gate before publish
-
-- [ ] Local tests passed.
-- [ ] Browser verification done.
-- [ ] No console error remains.
-- [ ] No secret is exposed.
-- [ ] No extra branch is left unreviewed.
-- [ ] Human validation completed before any publish.
+- [x] Les tests unitaires passent.
+- [x] ESLint passe sur les fichiers Milo.
+- [x] `git diff --check` passe.
+- [x] Le resultat du build est documente, y compris les blocages hors perimetre.
+- [x] Le test navigateur local verifie le rendu de `/login`, la redirection de
+      `/assistant.html` et l'absence d'erreur console.
+- [x] La CI GitHub est verte sur le push de la branche et sur la PR 28.
+- [x] Une session enfant reelle a ete testee dans le navigateur local avec les
+      variables Supabase et Gemini chargees uniquement dans le processus de test.
+- [x] Gemini invalide simule dans le navigateur : Milo repond par son secours et
+      le champ reste utilisable.
+- [x] `sessionStorage` vide puis JSON invalide testes dans le navigateur : le
+      widget se recharge sans erreur et reste utilisable.
+- [ ] La validation humaine est enregistree avant le deploiement.
