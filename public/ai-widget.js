@@ -42,7 +42,7 @@
   #aiw-badge { position:absolute; top:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#e53935; border:2.5px solid #fff; display:none; font-size:9px; color:#fff; align-items:center; justify-content:center; font-weight:800; }
 
   /* ── Panel ── */
-  #aiw-panel { position:fixed; bottom:104px; right:26px; z-index:9999; width:362px; max-height:545px; background:#faf9fc; border-radius:24px; box-shadow:0 14px 52px rgba(0,0,0,.19); display:flex; flex-direction:column; overflow:hidden; transform:scale(.78) translateY(38px); opacity:0; pointer-events:none; transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .22s; transform-origin:bottom right; }
+  #aiw-panel { position:fixed; bottom:104px; right:26px; z-index:9999; width:430px; height:min(720px, calc(100vh - 132px)); max-height:calc(100vh - 132px); background:#faf9fc; border-radius:24px; box-shadow:0 14px 52px rgba(0,0,0,.19); display:flex; flex-direction:column; overflow:hidden; transform:scale(.78) translateY(38px); opacity:0; pointer-events:none; transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .22s; transform-origin:bottom right; }
   #aiw-panel.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
 
   /* ── Header ── */
@@ -57,7 +57,7 @@
   #aiw-close:hover { background:rgba(255,255,255,.28); }
 
   /* ── Thread ── */
-  #aiw-thread { flex:1; overflow-y:auto; padding:14px 14px 8px; background:#faf9fc; display:flex; flex-direction:column; gap:10px; min-height:220px; }
+  #aiw-thread { flex:1; overflow-y:auto; padding:14px 14px 8px; background:#faf9fc; display:flex; flex-direction:column; gap:10px; min-height:300px; }
   #aiw-thread::-webkit-scrollbar { width:4px; }
   #aiw-thread::-webkit-scrollbar-thumb { background:#ddd; border-radius:4px; }
 
@@ -140,7 +140,7 @@
   #aiw-footer { text-align:center; padding:5px 0 9px; font-size:11px; color:#c5c5c5; background:#fff; flex-shrink:0; }
   #aiw-footer a { color:#7a69c2; text-decoration:none; font-weight:600; }
   #aiw-footer a:hover { text-decoration:underline; }
-  @media(max-width:420px){ #aiw-panel{width:calc(100vw - 18px);right:9px;bottom:92px;} #aiw-btn{right:12px;bottom:12px;} }
+  @media(max-width:470px){ #aiw-panel{width:calc(100vw - 18px);right:9px;bottom:92px;height:calc(100vh - 108px);max-height:calc(100vh - 108px);} #aiw-btn{right:12px;bottom:12px;} }
   `;
   if (STANDALONE) {
     style.textContent += `
@@ -540,6 +540,9 @@
           document.getElementById('aiw-input').value = _pendingWrongMsg;
           _pendingWrongMsg = null;
           setTimeout(sendMsg, 700);
+        } else {
+          // Sinon, proposer une révision si un concept ancien est "dû"
+          offerRevision();
         }
       }, 300);
       if (!document.getElementById('aiw-chips').children.length) renderChips();
@@ -650,6 +653,62 @@
       qr.appendChild(b);
     });
     thread.appendChild(qr); scrollBottom();
+  }
+
+  // Boutons à actions LOCALES (pas d'appel serveur) — utilisé par le mini-quiz de révision
+  function addLocalQuickReplies(options) {
+    const qr = document.createElement('div'); qr.className = 'aiw-qr';
+    options.forEach(({ label, handler }) => {
+      const b = document.createElement('button'); b.className = 'aiw-qr-btn'; b.textContent = label;
+      b.addEventListener('click', () => { qr.remove(); handler(); });
+      qr.appendChild(b);
+    });
+    thread.appendChild(qr); scrollBottom();
+  }
+
+  // ── Mini-quiz de révision (répétition espacée, 0 appel IA) ──────────────────
+  // À l'ouverture, si un concept vu il y a ≥3 jours est "dû", Milo propose de le
+  // retester. L'enfant s'auto-évalue, Milo rappelle la définition, et le souvenir
+  // est réactivé côté serveur pour ne pas être redemandé tout de suite.
+  let _revisionOffered = false;
+  async function offerRevision() {
+    if (_revisionOffered || _pendingWrongMsg || history.length) return;
+    try { if (sessionStorage.getItem('milo_revision_offered')) return; } catch {}
+
+    let data;
+    try { data = await fetch('/api/ai-chat/revision', { credentials: 'same-origin' }).then(r => r.json()); }
+    catch { return; }
+    const rev = data && data.revision;
+    if (!rev || !rev.reminder) return;
+
+    _revisionOffered = true;
+    try { sessionStorage.setItem('milo_revision_offered', '1'); } catch {}
+
+    clearWelcome();
+    const when = rev.daysAgo >= 7 ? 'il y a quelque temps' : `il y a ${rev.daysAgo} jour${rev.daysAgo > 1 ? 's' : ''}`;
+    addBubble('assistant', `🎯 **Petit défi révision !**\nOn avait parlé de **${rev.concept}** ${when}. Tu t'en souviens encore ?`);
+    setCharState('wave');
+
+    const finish = (remembered) => {
+      const intro = remembered
+        ? 'Bravo, quelle mémoire ! 🌟 Juste pour être bien sûrs :\n\n'
+        : 'Pas de souci, ça arrive à tout le monde ! 😊 Petit rappel :\n\n';
+      addBubble('assistant', intro + rev.reminder);
+      setCharState(remembered ? 'cheer' : 'idle', 2000);
+      fetch('/api/ai-chat/revision/done', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin', body: JSON.stringify({ concept: rev.concept }),
+      }).catch(() => {});
+      addLocalQuickReplies([{ label: '👍 Merci Milo', handler: () => {
+        addBubble('assistant', ['Avec plaisir ! 😄', 'Quand tu veux ! 💪', 'On révisera d\'autres trucs bientôt 🚀'][Math.floor(Math.random() * 3)]);
+        scrollBottom();
+      } }]);
+    };
+
+    addLocalQuickReplies([
+      { label: 'Oui, je me souviens ✅', handler: () => { addBubble('user', 'Oui, je me souviens'); finish(true); } },
+      { label: "J'ai un peu oublié 🤔",  handler: () => { addBubble('user', "J'ai un peu oublié"); finish(false); } },
+    ]);
   }
 
   // Appelé quand l'enfant passe à la question suivante

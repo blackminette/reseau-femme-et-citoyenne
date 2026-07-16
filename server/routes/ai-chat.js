@@ -128,12 +128,27 @@ module.exports = function aiChatRoutes(db) {
     FROM milo_memory WHERE child_id = ? ORDER BY last_seen DESC LIMIT 30
   `);
   const stmtGetMemory    = db.prepare(`SELECT id FROM milo_memory WHERE child_id = ? AND concept_low = ?`);
+  const stmtRecallMemory = db.prepare(`
+    SELECT concept, times_seen, CAST((julianday('now') - julianday(last_seen)) AS INTEGER) AS days_ago
+    FROM milo_memory WHERE child_id = ? AND concept_low = ?
+  `);
   const stmtInsertMemory = db.prepare(`
     INSERT OR IGNORE INTO milo_memory (child_id, module, concept, concept_low, context, summary)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
   const stmtUpdateMemory = db.prepare(`
     UPDATE milo_memory SET times_seen = times_seen + 1, last_seen = datetime('now') WHERE id = ?
+  `);
+
+  // Bibliothèque de réponses préfabriquées (KB) — servies sans appel API
+  const stmtLoadKb = db.prepare('SELECT * FROM milo_kb WHERE enabled = 1');
+  const stmtKbHit  = db.prepare('UPDATE milo_kb SET hits = hits + 1 WHERE id = ?');
+
+  // Journal des questions "définition" non couvertes par la KB → candidates à ajouter
+  const stmtKbMiss = db.prepare(`
+    INSERT INTO milo_kb_miss (message_norm, module) VALUES (?, ?)
+    ON CONFLICT(message_norm, module)
+    DO UPDATE SET count = count + 1, last_seen = datetime('now')
   `);
 
   // ─── Chargement des données ──────────────────────────────────────────────────
@@ -342,8 +357,11 @@ module.exports = function aiChatRoutes(db) {
       const m = msg.match(re);
       if (m) return parseInt(m[1], 10);
     }
-    // Ordinaux en toutes lettres
-    const ordinals = { premi: 1, deuxi: 2, troisi: 3, quatri: 4, cinqui: 5, sixi: 6 };
+    // Ordinaux en toutes lettres (les quiz vont jusqu'à 10 questions)
+    const ordinals = {
+      premi: 1, deuxi: 2, troisi: 3, quatri: 4, cinqui: 5,
+      sixi: 6, septi: 7, huiti: 8, neuvi: 9, dixi: 10,
+    };
     const low = msg.toLowerCase();
     for (const [prefix, n] of Object.entries(ordinals)) {
       if (low.includes(prefix)) return n;
@@ -359,12 +377,12 @@ module.exports = function aiChatRoutes(db) {
   function detectModuleFromMessage(msg) {
     const low = msg.toLowerCase();
     const aliases = {
-      lecture:   ['lecture', 'lire', 'texte', 'compréhension', 'comprehension', 'synonyme', 'antonyme', 'contraire'],
-      numerique: ['numérique', 'numerique', 'informatique', 'ordinateur', 'internet', 'réseau', 'adresse ip'],
-      robotique: ['robotique', 'robot', 'programme', 'séquence', 'sequence', 'algorithme', 'algo', 'boucle', 'instruction'],
-      anglais:   ['anglais', 'english', 'traduction', 'traduire', 'vocabulary', 'grammaire'],
-      civique:   ['civique', 'citoyenneté', 'citoyennete', 'droits', 'devoirs', 'société', 'loi', 'démocratie'],
-      eco:       ['éco', 'eco', 'environnement', 'nature', 'planète', 'planete', 'recyclage', 'climat', 'énergie'],
+      lecture:   ['lecture', 'lire', 'texte', 'compréhension', 'comprehension', 'synonyme', 'antonyme', 'contraire', 'histoire', 'paragraphe', 'personnage', 'morale'],
+      numerique: ['numérique', 'numerique', 'informatique', 'ordinateur', 'internet', 'réseau', 'reseau', 'adresse ip', 'wifi', 'wi-fi', 'email', 'mail', 'fichier', 'logiciel', 'mot de passe'],
+      robotique: ['robotique', 'robot', 'programme', 'séquence', 'sequence', 'algorithme', 'algo', 'boucle', 'instruction', 'capteur', 'moteur', 'scratch', 'actionneur', 'microcontrôleur', 'microcontroleur'],
+      anglais:   ['anglais', 'english', 'traduction', 'traduire', 'vocabulary', 'grammaire', 'mot anglais'],
+      civique:   ['civique', 'citoyenneté', 'citoyennete', 'droits', 'devoirs', 'société', 'societe', 'loi', 'démocratie', 'democratie', 'laïcité', 'laicite', 'vote', 'président', 'president', 'marianne', 'harcèlement', 'harcelement'],
+      eco:       ['éco', 'eco', 'environnement', 'nature', 'planète', 'planete', 'recyclage', 'climat', 'énergie', 'energie', 'pollution', 'déchet', 'dechet', 'tri', 'biodiversité', 'biodiversite', 'compost'],
     };
     for (const [key, words] of Object.entries(aliases)) {
       if (words.some(w => low.includes(w))) return key;
@@ -379,8 +397,39 @@ module.exports = function aiChatRoutes(db) {
    * @returns {string|null}
    */
   function extractWrongAnswer(msg) {
-    const m = msg.match(/(?:j'?ai répondu|j'?ai choisi|j'?ai mis|j'?ai dit)\s*[«"']?([^«"',!?\.]+)[»"']?\s*(?:mais|et|or|pourtant)/i);
+    // Couvre les tournures directes ("j'ai répondu X") et rétrospectives ("j'avais mis X"),
+    // avec ou sans connecteur de contraste explicite ("mais c'est faux" est optionnel :
+    // le contexte "mauvaise réponse" est parfois déjà donné par miloWrongAnswer()).
+    const m = msg.match(
+      /(?:j'?ai (?:répondu|choisi|mis|dit|coché|coche|sélectionné|selectionne)|j'?avais (?:mis|répondu|choisi)|je pensais que c'?[ée]tait)\s*[«"']?([^«"',!?\.]+?)[»"']?(?:\s*(?:mais|et|or|pourtant)\b.*)?$/i
+    );
     return m ? m[1].trim() : null;
+  }
+
+  /**
+   * Si l'enfant tape juste le texte d'un choix (sans phrase complète), détecte à quel
+   * choix ça correspond parmi ceux de la question affichée — et si c'est le bon.
+   * Réduit le risque que Gemini se trompe en interprétant une réponse ambiguë.
+   * Ignoré si le message est long (probable question/phrase, pas une simple réponse)
+   * ou si plusieurs choix matchent à la fois (ambigu).
+   *
+   * @returns {{ choice:string, correct:boolean } | null}
+   */
+  function detectProposedChoice(msg, currentQuestion) {
+    if (!currentQuestion || !Array.isArray(currentQuestion.choices)) return null;
+    const norm = normalize(msg);
+    if (!norm || norm.length > 40) return null;
+
+    const matches = [];
+    currentQuestion.choices.forEach((choice, i) => {
+      const cNorm = normalize(choice);
+      if (!cNorm) return;
+      const allowed = Math.max(1, Math.floor(cNorm.length * 0.2));
+      if (approxSubstringDistance(norm, cNorm) <= allowed) matches.push({ choice, i });
+    });
+
+    if (matches.length !== 1) return null; // 0 ou ambigu (plusieurs choix) → on ne tranche pas
+    return { choice: matches[0].choice, correct: matches[0].i === currentQuestion.correctIndex };
   }
 
   /**
@@ -402,6 +451,218 @@ module.exports = function aiChatRoutes(db) {
    */
   function loadMemories(childId) {
     return stmtLoadMemories.all(childId);
+  }
+
+  // ─── Bibliothèque de réponses préfabriquées ──────────────────────────────────
+
+  /**
+   * Normalise un texte pour la comparaison : minuscules, sans accents,
+   * ponctuation remplacée par des espaces, espaces multiples réduits.
+   * Ainsi "C'est quoi un Synonyme ?" et "cest quoi un synonyme" matchent.
+   */
+  function normalize(text) {
+    return String(text || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')  // retire les accents
+      .replace(/[^a-z0-9]+/g, ' ')                        // ponctuation → espace
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
+   * Traduit les raccourcis systématiques des enfants vers une forme standard,
+   * pour que la bibliothèque les comprenne ("c koi" → "c est quoi", "koi" → "quoi").
+   * S'applique à un texte DÉJÀ normalisé (minuscules, sans accents, tokenisé par espaces).
+   */
+  function kidSpeak(msg) {
+    let s = ' ' + msg + ' ';
+    s = s.replace(/ ko[ia] /g, ' quoi ')                       // koi, koa → quoi
+         .replace(/ ki /g, ' qui ')
+         .replace(/ (koman|komen|comen) /g, ' comment ')       // koman → comment
+         .replace(/ (pk|pkoi|pq|pourkoi|pourkoa) /g, ' pourquoi ')
+         .replace(/ (keske|kesske|keske|kes ke) /g, ' qu est ce que ')
+         .replace(/ (c|ce|s|se|cet|cest) quoi /g, ' c est quoi ') // c koi / ce koi → c est quoi
+         .replace(/ (sa|ca) (ve|veu) /g, ' ca veut ')           // sa ve dire → ca veut dire
+         .replace(/ dir /g, ' dire ');
+    return s.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Distance d'édition minimale pour aligner `pattern` sur N'IMPORTE QUEL
+   * sous-texte de `text` (approximate substring matching). La 1ʳᵉ ligne de la
+   * matrice reste à 0 : le motif peut donc commencer à n'importe quel endroit.
+   * Sert à tolérer les fautes d'orthographe des enfants ("sinonime" ≈ "synonyme").
+   */
+  function approxSubstringDistance(text, pattern) {
+    const n = text.length, m = pattern.length;
+    if (m === 0) return 0;
+    let prev = new Array(n + 1).fill(0);
+    for (let i = 1; i <= m; i++) {
+      const cur = new Array(n + 1);
+      cur[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const cost = pattern[i - 1] === text[j - 1] ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      prev = cur;
+    }
+    return Math.min(...prev);
+  }
+
+  /**
+   * Cherche une réponse préfabriquée correspondant au message de l'enfant.
+   *
+   * 1) Correspondance EXACTE : une phrase-déclencheur (séparées par |) est
+   *    contenue telle quelle dans le message → le déclencheur le plus long gagne.
+   * 2) Repli TOLÉRANT AUX FAUTES : si rien d'exact, on accepte une phrase-
+   *    déclencheur approchée (≤20% de fautes) — mais on exige que TOUTE la phrase
+   *    corresponde, pas juste le mot-concept, pour éviter les faux positifs.
+   *
+   * Les entrées ciblées par `module` ne matchent que dans ce module.
+   * @returns {{ id:number, answer:string, source:'exact'|'fuzzy' } | null}
+   */
+  function findKbAnswer(message, resolvedModule) {
+    const msg = kidSpeak(normalize(message));
+    if (msg.length < 3) return null;
+
+    const entries = stmtLoadKb.all().filter(e => !e.module || e.module === resolvedModule);
+
+    // — 1) Exact (rapide, prioritaire) —
+    let best = null, bestLen = 0;
+    for (const entry of entries) {
+      for (const trigger of entry.keywords.split('|')) {
+        const t = normalize(trigger);
+        if (t.length >= 4 && msg.includes(t) && t.length > bestLen) {
+          best = entry; bestLen = t.length;
+        }
+      }
+    }
+    if (best) return { id: best.id, answer: best.answer, label: best.label, source: 'exact' };
+
+    // — 2) Tolérant aux fautes (uniquement sur phrases assez longues) —
+    let fuzzyBest = null, fuzzyScore = Infinity;
+    for (const entry of entries) {
+      for (const trigger of entry.keywords.split('|')) {
+        const t = normalize(trigger);
+        if (t.length < 8) continue;                       // trop court → risque de faux positif
+        const allowed = Math.max(2, Math.floor(t.length * 0.2));
+        const d = approxSubstringDistance(msg, t);
+        if (d <= allowed) {
+          // À nombre de fautes égal, on préfère la phrase-déclencheur la plus longue
+          const score = d / t.length - t.length / 1000;
+          if (score < fuzzyScore) { fuzzyBest = entry; fuzzyScore = score; }
+        }
+      }
+    }
+    return fuzzyBest ? { id: fuzzyBest.id, answer: fuzzyBest.answer, label: fuzzyBest.label, source: 'fuzzy' } : null;
+  }
+
+  /** Choisit un élément au hasard dans un tableau. */
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  /**
+   * Relie une réponse de la bibliothèque à la mémoire persistante de Milo,
+   * et VARIE la formulation pour ne jamais répéter le même texte à l'identique.
+   *
+   * Trois cas selon l'historique du concept (entrées "Définition : X" / "Astuce : X") :
+   *   • Jamais vu           → réponse telle quelle.
+   *   • Revu le jour même   → courte intro "on vient d'en parler" (variée).
+   *   • Revu il y a ≥2 jours → rappel affectueux daté ("tu te rappelles, il y a 3 jours…").
+   *
+   * Dans tous les cas le concept est enregistré/réactivé en mémoire, pour que les
+   * explications instantanées comptent autant que celles générées par Gemini.
+   *
+   * @returns {string} La réponse finale (éventuellement préfixée).
+   */
+  function applyKbMemory(childId, module, kb, questionText) {
+    const conceptMatch = /^(?:Définition|Astuce)\s*:\s*(.+)$/.exec(kb.label || '');
+    if (!conceptMatch) return kb.answer;                 // politesse, soutien… → pas un concept
+
+    const concept = conceptMatch[1].trim();
+    const low = concept.toLowerCase();
+    let reply = kb.answer;
+
+    try {
+      const mem = stmtRecallMemory.get(childId, low);
+      if (mem && mem.days_ago >= 2) {
+        // Rappel long terme : on date le souvenir
+        const when = mem.days_ago < 7 ? `il y a ${mem.days_ago} jours` : 'il y a quelque temps';
+        reply = `${pick([
+          `Tu te rappelles, on en avait parlé ${when} 😊 Petit rappel :`,
+          `Ça me dit quelque chose… on avait vu ça ${when} ! Je te rafraîchis la mémoire :`,
+          `On en a déjà parlé ${when}, tu te souviens ? 💡 Voilà pour te rappeler :`,
+        ])}\n\n${kb.answer}`;
+      } else if (mem && mem.times_seen >= 1) {
+        // Même session / même journée : rotation déterministe (jamais 2× la même de suite)
+        const variants = [
+          'Encore un petit rappel 😊 :',
+          'Pas de souci, on revoit ça ensemble :',
+          'Je te le remets, tranquille 👍 :',
+          'Tu y es presque — voilà encore une fois :',
+        ];
+        reply = `${variants[mem.times_seen % variants.length]}\n\n${kb.answer}`;
+      }
+      // Enregistre / réactive le concept en mémoire (silencieux si échec)
+      saveMemory(childId, module || null, concept, questionText || null, kb.answer.slice(0, 200));
+    } catch (e) {
+      console.warn('[Milo] Mémoire KB ignorée :', e.message);
+    }
+    return reply;
+  }
+
+  // ─── Garde-fou : détection d'usage détourné (charabia, provoc') ──────────────
+
+  /**
+   * Détecte un message qui n'est pas une vraie demande d'aide : clavier tapé au
+   * hasard, mots rigolos, ou provocation envers Milo. Renvoie une réponse douce
+   * (0 token, jamais vexée) pour recadrer, ou null si le message semble légitime.
+   *
+   * Volontairement CONSERVATEUR : en cas de doute, on renvoie null → Gemini prend
+   * le relais. On ne bloque JAMAIS une vraie question. On ne traite pas les
+   * répétitions (cliquer plusieurs fois "Encore un indice" est légitime).
+   *
+   * @returns {{ reply:string } | null}
+   */
+  function detectMisuse(message) {
+    const low = normalize(message);
+    if (!low) return null;
+    const compact = low.replace(/\s+/g, '');
+
+    // 1) Charabia : suite de lettres sans voyelle, lettre répétée 4×+, ou rangée de clavier
+    const gibberish =
+      (/^[a-z]{4,}$/.test(compact) && !/[aeiouy]/.test(compact)) ||
+      /([a-z])\1{3,}/.test(compact) ||
+      /\b(azerty|qwerty|azertyuiop|qwertyuiop|asdfgh|qsdfgh|wxcvbn|hjklm|bidule|blabla|nawak)\b/.test(low);
+
+    if (gibberish) {
+      return { reply: pick([
+        "Oups, j'ai pas compris ça 😅 Réécris-moi ta question autrement et je t'aide !",
+        "Hmm, on dirait que ton chat a marché sur le clavier 🐱 Dis-moi ce qui te bloque !",
+        "Là je suis un peu perdu 😄 Reformule-moi ce que tu cherches, on va y arriver !",
+      ]) };
+    }
+
+    // 2) Mots rigolos → on rit avec l'enfant puis on recentre
+    if (/\b(caca|pipi|prout|zizi|crotte|popo|kaka|pet|pets|fesse|fesses)\b/.test(low)) {
+      return { reply: pick([
+        "Haha 😄 Bon, on se concentre sur la question maintenant — je suis là pour t'aider à la réussir !",
+        "Hihi 🙈 Allez, revenons à ton exercice ! Dis-moi ce qui te bloque.",
+      ]) };
+    }
+
+    // 3) Provocation / impolitesse envers Milo → on reste calme, jamais vexé
+    const rude = /\b(idiot|idiote|debile|stupide|abruti|abrutie|cretin|cretine|nul a chier|con|conne|connard|salope|merde|putain|pd|tg)\b/
+      .test(low) || /t'?es? (nul|bete|moche|debile)|tu es (nul|bete|debile)|tu ser[st] a rien|ta gueule|tais[ -]?toi|ferme[ -]?la/.test(low);
+
+    if (rude) {
+      return { reply: pick([
+        "Pas grave si tu es un peu agacé 😊 Moi je reste ton copain. Dis-moi ce qui coince dans la question et on avance !",
+        "Oh là ! 😮 Entre copains, on reste polis. Allez, montre-moi ce qui te bloque, je suis là pour t'aider !",
+        "Je ne me fâche jamais, moi 😄 On repart du bon pied ? Dis-moi ce que tu ne comprends pas.",
+      ]) };
+    }
+
+    return null;
   }
 
   /**
@@ -570,11 +831,11 @@ ${lines.join('\n')}`;
    */
   function detectEmotion(msg) {
     const low = msg.toLowerCase();
-    if (/j'?ai trouv|c'?est [çca]a|j'?ai compris|jai compris|j'?y suis|c'?est bon|trop bien|j'?ai eu/.test(low))
+    if (/j'?ai trouv|c'?est [çca]a|j'?ai compris|jai compris|j'?y suis|c'?est bon|trop bien|j'?ai eu|j'?ai gagn|r[ée]ussi|voil[àa]/.test(low))
       return 'success';
-    if (/comprend(s)? (rien|pas)|nul(le)?|trop dur|c'?est dur|j'?arrive pas|impossible|abandonne|j'?en peux plus|chui nul|je suis nul|jai la flemme|je veux plus/.test(low))
+    if (/comprend(s)? (rien|pas)|nul(le)?|trop dur|c'?est dur|j'?arrive pas|impossible|abandonne|j'?en peux plus|chui nul|je suis nul|jai la flemme|je veux plus|j'?en ai marre|ras le bol|trop long|p[ée]nible/.test(low))
       return 'frustrated';
-    if (/quoi[?!]|hein[?!]|\?\?\?|pas s[uû]r|comprend pas la question|c['']?est quoi|jsp|sé pa|sais pas|je sais pas|chui perdu|perdu|comprends rien/.test(low))
+    if (/quoi[?!]|hein[?!]|\?\?\?|pas s[uû]r|comprend pas la question|c['']?est quoi|jsp|sé pa|sais pas|je sais pas|chui perdu|perdu|comprends rien|bloqu[ée]|coinc[ée]/.test(low))
       return 'confused';
     return 'neutral';
   }
@@ -654,6 +915,15 @@ ${lines.join('\n')}`;
         ? `\nL'enfant a choisi "${wrongAnswer}" — explique spécifiquement POURQUOI ce choix est incorrect,\npuis guide-le vers "${correct}" sans le donner directement.`
         : '';
 
+      // Si l'enfant a juste tapé un mot (sans phrase "j'ai répondu..."), on a déjà
+      // vérifié nous-mêmes s'il correspond à un choix — Gemini n'a plus à deviner.
+      const proposed = wrongAnswer ? null : detectProposedChoice(message, currentQuestion);
+      const proposedNote = proposed
+        ? proposed.correct
+          ? `\nL'enfant vient de proposer "${proposed.choice}" — C'EST LA BONNE RÉPONSE. Félicite-le et explique brièvement pourquoi c'est juste.`
+          : `\nL'enfant vient de proposer "${proposed.choice}" — c'est INCORRECT. Explique pourquoi, puis guide-le vers "${correct}" sans le donner directement.`
+        : '';
+
       // Le score en cours permet à Milo d'adapter son encouragement ("déjà 4/6, super !")
       const scoreNote = (typeof currentScore === 'number' && displayNumber > 1)
         ? `\nScore session : ${currentScore}/${displayNumber - 1} bonnes réponses sur les questions précédentes.`
@@ -666,7 +936,7 @@ ${lines.join('\n')}`;
 "${text}"
 
 ${choiceLines}
-${correct ? `\n→ Réponse correcte : "${correct}"` : ''}${wrongNote}${scoreNote}
+${correct ? `\n→ Réponse correcte : "${correct}"` : ''}${wrongNote}${proposedNote}${scoreNote}
 
 ⚠️  RÈGLE ABSOLUE : Cette question est ce que l'enfant voit EN CE MOMENT.
 Tout ce que tu dis doit concerner UNIQUEMENT cette question.
@@ -835,6 +1105,31 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(503).json({ error: 'Assistant IA non configuré.' });
 
+    // ── Voie rapide : bibliothèque de réponses préfabriquées ──────────────────
+    // Si le message correspond à une entrée connue, on répond instantanément
+    // sans appeler Gemini (0 token consommé, 0 latence réseau).
+    const kbModule = currentModule || detectModuleFromMessage(message);
+    try {
+      const kb = findKbAnswer(message, kbModule);
+      if (kb) {
+        stmtKbHit.run(kb.id);
+        // Relie la réponse à la mémoire persistante : rappel si déjà vu + enregistrement
+        const reply = applyKbMemory(req.auth.id, kbModule, kb, currentQuestion?.text);
+        return res.json({ reply, source: 'kb' });
+      }
+      // Garde-fou : charabia / provoc' → recadrage doux sans appeler Gemini
+      const misuse = detectMisuse(message);
+      if (misuse) return res.json({ reply: misuse.reply, source: 'guard' });
+      // Question type "définition" non couverte → on la note pour enrichir la KB
+      if (/c'?est quoi|ca veut dire|que veut dire|c'?est koi|ce koi|definition|a quoi (ca |sa )?sert/i.test(message)) {
+        const norm = message.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+          .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+        if (norm.length >= 3) stmtKbMiss.run(norm, kbModule || null);
+      }
+    } catch (e) {
+      console.warn('[Milo] Bibliothèque KB ignorée :', e.message);
+    }
+
     try {
       const context  = buildChildContext(req);
       const memories = loadMemories(req.auth.id);
@@ -851,10 +1146,13 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
         model: MODEL,
         systemInstruction: prompt,
         generationConfig: {
-          temperature:     0.6,   // Assez créatif pour varier le ton, assez précis pour ne pas halluciner
+          temperature:     0.6,
           topP:            0.90,
           topK:            40,
-          maxOutputTokens: 800,   // Réponses concises — les enfants ne lisent pas les pavés
+          maxOutputTokens: 800,
+          // Désactive le mode "thinking" de Gemini 2.5 — évite que le modèle
+          // sorte sa chaîne de raisonnement dans la réponse visible par l'enfant
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
 
@@ -902,6 +1200,69 @@ ${formatModulesForPrompt(modules, resolvedModule)}`;
         });
       }
       res.status(502).json({ error: "L'assistant IA est momentanément indisponible." });
+    }
+  });
+
+  // ─── Mini-quiz de révision (répétition espacée, 0 token) ─────────────────────
+
+  // Sélectionne le concept "dû" : vu il y a ≥3 jours, le moins réactivé et le plus ancien.
+  const stmtDueRevision = db.prepare(`
+    SELECT concept, module, summary,
+           CAST((julianday('now') - julianday(last_seen)) AS INTEGER) AS days_ago
+    FROM milo_memory
+    WHERE child_id = ? AND (julianday('now') - julianday(last_seen)) >= 3
+    ORDER BY times_seen ASC, last_seen ASC
+    LIMIT 1
+  `);
+
+  /** Retourne la définition de la bibliothèque pour un concept, si elle existe. */
+  function kbDefinitionFor(concept) {
+    const low = concept.toLowerCase().trim();
+    for (const e of stmtLoadKb.all()) {
+      const m = /^Définition\s*:\s*(.+)$/.exec(e.label || '');
+      if (m && m[1].trim().toLowerCase() === low) return e.answer;
+    }
+    return null;
+  }
+
+  /**
+   * GET /revision — propose un concept à réviser (ou { revision: null } si rien n'est dû).
+   * Le "rappel" renvoyé vient de la bibliothèque si possible, sinon du souvenir stocké.
+   */
+  router.get('/revision', requireAuth('child'), (req, res) => {
+    try {
+      const due = stmtDueRevision.get(req.auth.id);
+      if (!due) return res.json({ revision: null });
+
+      const reminder = kbDefinitionFor(due.concept) || due.summary || null;
+      res.json({
+        revision: {
+          concept:  due.concept,
+          module:   due.module || null,
+          daysAgo:  due.days_ago,
+          reminder,
+        },
+      });
+    } catch (e) {
+      console.warn('[Milo] Révision indisponible :', e.message);
+      res.json({ revision: null });
+    }
+  });
+
+  /**
+   * POST /revision/done — l'enfant a fait sa révision : on réactive le souvenir
+   * (times_seen++ et last_seen = maintenant) pour ne pas le redemander tout de suite.
+   */
+  router.post('/revision/done', requireAuth('child'), (req, res) => {
+    try {
+      const concept = String(req.body.concept || '').trim();
+      if (concept) {
+        const existing = stmtGetMemory.get(req.auth.id, concept.toLowerCase());
+        if (existing) stmtUpdateMemory.run(existing.id);
+      }
+      res.json({ ok: true });
+    } catch (e) {
+      res.json({ ok: false });
     }
   });
 

@@ -5,6 +5,9 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 
+# Base de données locale (AtelierKids)
+data/
+
 # Logs
 *.log
 

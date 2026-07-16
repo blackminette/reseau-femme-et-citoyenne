@@ -144,6 +144,27 @@ CREATE TABLE IF NOT EXISTS milo_memory (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_milo_memory_unique ON milo_memory(child_id, concept_low);
 CREATE INDEX IF NOT EXISTS idx_milo_memory_child ON milo_memory(child_id, last_seen DESC);
+
+CREATE TABLE IF NOT EXISTS milo_kb (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  module     TEXT,                         -- null = valable pour tous les modules
+  label      TEXT NOT NULL,                -- titre lisible dans l'admin (ex: "Définition : synonyme")
+  keywords   TEXT NOT NULL,                -- phrases déclencheuses séparées par | (OU)
+  answer     TEXT NOT NULL,                -- réponse préfabriquée renvoyée telle quelle
+  enabled    INTEGER NOT NULL DEFAULT 1,
+  hits       INTEGER NOT NULL DEFAULT 0,   -- nombre de fois où la réponse a été servie
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_milo_kb_enabled ON milo_kb(enabled);
+
+CREATE TABLE IF NOT EXISTS milo_kb_miss (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  message_norm TEXT NOT NULL,               -- message normalisé (minuscules, sans accents)
+  module       TEXT,
+  count        INTEGER NOT NULL DEFAULT 1,   -- nombre de fois où cette question a échappé à la bibliothèque
+  last_seen    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_milo_kb_miss_unique ON milo_kb_miss(message_norm, module);
 `;
 
 function initDb() {
