@@ -1,0 +1,111 @@
+import { NextResponse } from "next/server";
+
+import { authenticateMiloChild } from "@/lib/milo/auth";
+import { resolveMiloContext } from "@/lib/milo/context";
+import { buildMiloFallbackReply } from "@/lib/milo/fallback";
+import { requestGeminiReply } from "@/lib/milo/gemini";
+import { findMiloGuardrailReply } from "@/lib/milo/guardrails";
+import { findMiloKnowledgeBaseAnswer } from "@/lib/milo/matching";
+import { checkMiloRateLimit } from "@/lib/milo/rate-limit";
+import { readMiloRequestBody } from "@/lib/milo/request-body";
+import { hasTrustedMiloRequestOrigin } from "@/lib/milo/request-origin";
+import { parseMiloChatRequest } from "@/lib/milo/request";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function json(body: Record<string, unknown>, status = 200, headers?: HeadersInit) {
+  return NextResponse.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store", ...headers },
+  });
+}
+
+export async function POST(request: Request) {
+  if (!hasTrustedMiloRequestOrigin(request)) {
+    return json({ error: "Cette demande Milo vient d'une origine non autorisee." }, 403);
+  }
+
+  const authentication = await authenticateMiloChild();
+
+  if (authentication.status === "unauthenticated") {
+    return json({ error: "Connexion requise pour utiliser Milo." }, 401);
+  }
+
+  if (authentication.status === "forbidden") {
+    return json({ error: "Milo est reserve a l'espace enfant." }, 403);
+  }
+
+  if (authentication.status === "unavailable") {
+    return json({ error: "Le service de connexion est indisponible. Reessaie plus tard." }, 503);
+  }
+
+  const bodyResult = await readMiloRequestBody(request);
+
+  if ("error" in bodyResult) {
+    if (bodyResult.error === "too-large") {
+      return json({ error: "Le message envoye a Milo est trop long." }, 413);
+    }
+
+    return json({ error: "La demande envoyee a Milo est invalide." }, 400);
+  }
+
+  const chatRequest = parseMiloChatRequest(bodyResult.body);
+
+  if (!chatRequest) {
+    return json({ error: "Ecris un message avant d'envoyer." }, 400);
+  }
+
+  const rateLimit = checkMiloRateLimit(authentication.child.id);
+
+  if (!rateLimit.allowed) {
+    return json(
+      { error: "Tu as envoye beaucoup de messages. Attends un petit instant avant de continuer." },
+      429,
+      { "Retry-After": String(rateLimit.retryAfterSeconds) },
+    );
+  }
+
+  const resolvedContext = await resolveMiloContext(chatRequest);
+  const requestWithContext = {
+    ...chatRequest,
+    currentModule: resolvedContext.module,
+    activityContext: resolvedContext.activity,
+  };
+
+  const guardrailReply = findMiloGuardrailReply(requestWithContext.message);
+
+  if (guardrailReply) {
+    return json({ reply: guardrailReply, source: "guardrail" });
+  }
+
+  const knowledgeBaseMatch = findMiloKnowledgeBaseAnswer(
+    requestWithContext.message,
+    requestWithContext.currentModule,
+  );
+
+  if (knowledgeBaseMatch) {
+    return json({
+      reply: knowledgeBaseMatch.answer,
+      source: "knowledge-base",
+      match: knowledgeBaseMatch.source,
+    });
+  }
+
+  try {
+    const reply = await requestGeminiReply(requestWithContext, authentication.child.firstName);
+    return json({ reply, source: "gemini" });
+  } catch (error) {
+    const status = error instanceof Error && "status" in error ? error.status : null;
+    console.warn("[Milo] Gemini indisponible, reponse de secours utilisee.", { status });
+
+    return json({
+      reply: buildMiloFallbackReply({
+        currentModule: requestWithContext.currentModule,
+        currentQuestion: requestWithContext.currentQuestion?.text ?? null,
+      }),
+      degraded: true,
+      source: "fallback",
+    });
+  }
+}

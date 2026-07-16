@@ -1,19 +1,9 @@
 // * src/app/(dashboard-adultes)/admin/membres/actions.ts
 'use server'
 
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseAdmin, getSupabaseServer } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
-
-type DonneesUtilisateur = {
-    nom?: string;
-    prenom?: string;
-    username?: string;
-    email?: string;
-    telephone?: string | null;
-    role?: string;
-};
 
 export async function listerLesUtilisateurs() {
     try {
@@ -51,7 +41,7 @@ export async function listerLesUtilisateurs() {
     }
 }
 
-export async function modifierUtilisateur(id: string, nouvelleDonnees: DonneesUtilisateur) {
+export async function modifierUtilisateur(id: string, nouvelleDonnees: any) {
     try {
         const membreModifie = await prisma.utilisateur.update({
             where: { id: id },

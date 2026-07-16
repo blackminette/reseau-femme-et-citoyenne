@@ -1,35 +1,89 @@
 # Milo / assistant IA
 
-Ce document résume le fonctionnement actuel de l'assistant IA de l'espace enfant.
+## Runtime actif
 
-## Vue d'ensemble
+Milo est execute par le serveur Next.js. Le prototype Express et SQLite sous
+`server/` reste une archive de travail, mais ne constitue plus le chemin
+d'execution de l'application Next.
 
-- `public/ai-widget.js` charge le widget Milo sur les pages enfants.
-- `public/assistant.html` ouvre Milo en mode plein écran.
-- `server/routes/ai-chat.js` reçoit les messages de l'enfant et interroge Gemini.
-- `server/ai-chat-utils.js` normalise les données lues côté serveur.
+- `src/app/(dashboard-enfant)/layout.tsx` charge le widget dans l'espace enfant.
+- `public/ai-widget.js` fournit le panneau flottant, le mode plein ecran et la
+  memoire courte de navigateur.
+- `/assistant.html` redirige vers `/enfant/assistant`, une route protegee qui
+  charge le meme widget en plein ecran.
+- `src/app/api/ai-chat/route.ts` recoit les messages et repond a `POST /api/ai-chat`.
+- `src/lib/milo/` contient la validation, l'authentification, le matching, les
+  garde-fous, Gemini et le fallback.
 
-## Comportement important
+## Flux de traitement
 
-- Le widget peut fonctionner en mode flottant ou en mode autonome.
-- L'historique est stocké dans `sessionStorage` avec une lecture protégée contre le JSON invalide.
-- Si les données du stockage local sont corrompues, l'assistant repart avec un historique vide.
-- La route serveur reconstruit le contexte de l'enfant à partir des scores, badges et contenus du module actif.
+1. Si le navigateur fournit un en-tete `Origin`, la route le compare a l'origine
+   de l'application et rejette une origine differente avant toute authentification
+   ou appel Gemini. Les appels serveur sans en-tete `Origin` restent compatibles.
+2. La route verifie la session Supabase et exige un profil Prisma de role `ENFANT`.
+   Il n'existe aucun fallback vers un autre compte enfant.
+3. La route verifie la session avant de lire le JSON et borne la lecture reelle du
+   corps HTTP a 16 Ko, y compris si `Content-Length` est absent ou incorrect. La
+   requete est ensuite nettoyee : message,
+   historique et contexte de question. Le widget transmet uniquement le texte de
+   la consigne : ni les choix ni un indice de bonne reponse ne quittent le
+   navigateur.
+4. Sur les routes Next, Milo resout le parcours depuis l'activite ou le module
+   publie en base. Pour une activite, il extrait aussi des reperes courts du JSON
+   admin (`Cours.contenu` ou `Exercice.contenu`). Les choix et `reponseCorrecte`
+   sont exclus de ce contexte. Une query string ne decide donc pas seule de la
+   bibliotheque pedagogique utilisee.
+5. Un garde-fou traite les demandes de reponse directe et les propos agressifs
+   avant toute bibliotheque ou appel IA, y compris les demandes du type
+   "reponds par A" ou "A ou B".
+6. Milo cherche ensuite une reponse dans la bibliotheque locale de Wael avant
+   tout appel IA.
+7. Pour les autres demandes, la route appelle Gemini cote serveur avec
+   `GEMINI_API_KEY`.
+8. Une erreur Gemini, un quota epuise, un timeout ou une cle absente produit une
+   reponse pedagogique de secours. Le widget reste utilisable.
+9. Une meme session enfant est limitee a 12 messages par minute sur une instance
+   Node.js. Cette limite protege contre les boucles et les abus simples ; elle
+   devra etre remplacee par un limiteur partage si le deploiement utilise plusieurs
+   instances.
 
-## Points de vigilance
+## Donnees et securite
 
-- Ne pas remettre de dépendance implicite vers des helpers absents.
-- Ne pas stocker de données sensibles dans le front.
-- Garder les messages courts, clairs et adaptés à un enfant.
-- Vérifier le comportement après recharge de page et avec un `sessionStorage` vide ou invalide.
+- `GEMINI_API_KEY` est une variable serveur. Elle ne doit jamais porter le prefixe
+  `NEXT_PUBLIC_` et ne doit jamais etre commitee.
+- Le serveur ajoute seulement le prenom de l'enfant et le contexte pedagogique
+  utile. Les adresses e-mail, numeros de telephone et secrets ecrits dans les
+  messages ou les extraits de contenu sont masques avant l'appel Gemini. La
+  detection automatique des noms complets n'est pas fiable : le deploiement doit
+  donc aussi prevoir une information parentale et les conditions de traitement
+  adaptees aux mineurs.
+- `sessionStorage` ne conserve que l'historique de la session et des statistiques
+  locales. Sa lecture est protegee contre un JSON vide ou invalide.
+- Les endpoints `/api/ai-chat/revision` et `/api/ai-chat/revision/done` sont
+  conserves pour le widget. Ils ne persisteront aucune revision tant qu'un modele
+  de donnees partage et valide n'aura pas ete decide par l'equipe.
 
-## Vérifications utiles
+## Configuration requise
 
-- charger l'espace enfant ;
-- ouvrir Milo en mode flottant ;
-- ouvrir Milo via `assistant.html` ;
-- envoyer une bonne réponse ;
-- envoyer une mauvaise réponse ;
-- recharger la page ;
-- vider `sessionStorage` ;
-- injecter un JSON invalide dans `sessionStorage`.
+Variables du serveur deploiement :
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+DATABASE_URL=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+## Verification manuelle
+
+- se connecter avec un compte enfant ;
+- ouvrir Milo depuis une page enfant et verifier que `/assistant.html` redirige
+  vers `/enfant/assistant` ;
+- ouvrir une lecon et un exercice publies, puis verifier que Milo utilise leurs
+  reperes sans donner la reponse attendue ;
+- demander une definition connue de la bibliotheque ;
+- demander une aide hors bibliotheque ;
+- tester sans cle Gemini ou avec un quota limite ;
+- vider puis corrompre `sessionStorage` ;
+- verifier qu'aucune erreur console ni requete 404 vers `/api/ai-chat` ne subsiste.

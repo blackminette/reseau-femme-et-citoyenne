@@ -1,11 +1,14 @@
 // ── Widget assistant IA — AtelierKids ────────────────────────────────────────
 (function () {
   'use strict';
+  if (document.getElementById('aiw-panel')) return;
   const STANDALONE = window.location.pathname.endsWith('assistant.html')
+    || window.location.pathname.endsWith('/enfant/assistant')
     || new URLSearchParams(window.location.search).get('assistant') === '1';
 
   // ── Styles ────────────────────────────────────────────────────────────────
   const style = document.createElement('style');
+  style.id = 'milo-widget-styles';
   style.textContent = `
   /* ── Keyframes ── */
   @keyframes aiw-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
@@ -346,9 +349,7 @@
   }
 
   // ── Gestion de l'état du personnage ────────────────────────────────────────
-  let charState = 'wave';
   function setCharState(state, duration = 0) {
-    charState = state;
     const wrap = document.getElementById('aiw-char-wrap');
     const hav  = document.getElementById('aiw-hav');
     if (wrap) {
@@ -415,7 +416,7 @@
       <textarea id="aiw-input" placeholder="Dis-moi ce qui te bloque…" rows="1"></textarea>
       <button id="aiw-send"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
     </div>
-    <div id="aiw-footer"><a href="/assistant.html">Ouvrir en plein écran ↗</a></div>`;
+    <div id="aiw-footer"><a href="/enfant/assistant">Ouvrir en plein écran ↗</a></div>`;
 
   document.body.appendChild(btn);
   document.body.appendChild(panel);
@@ -428,17 +429,37 @@
   // ── Helpers ────────────────────────────────────────────────────────────────
   function getUrlParam(k) { return new URLSearchParams(window.location.search).get(k) || null; }
   const MOD_LABELS = {lecture:'Lecture',numerique:'Numérique',robotique:'Robotique',anglais:'Anglais',civique:'Éd. civique',eco:'Éco-citoyenneté'};
+  function getMiloPageContext() {
+    const match = window.location.pathname.match(/^\/enfant\/modules\/([^/?#]+)(?:\/activite\/([^/?#]+))?\/?$/);
+    return {
+      currentModule: getUrlParam('m'),
+      moduleReference: match ? match[1] : (getUrlParam('moduleId') || getUrlParam('m')),
+      activityReference: match ? match[2] : getUrlParam('id'),
+    };
+  }
 
   // ── Persistance sessionStorage ────────────────────────────────────────────
   // L'historique est sauvegardé par activité pour survivre aux navigations
   // entre pages du même quiz (ex : enfant ouvre la leçon puis revient au quiz).
   let open = STANDALONE, history = [], unread = 0, _pendingWrongMsg = null;
   function _sessionKey() {
-    const id = getUrlParam('id') || getUrlParam('m') || window.location.pathname.split('/').pop();
+    const context = getMiloPageContext();
+    const id = context.activityReference || context.moduleReference || context.currentModule || 'global';
     return `milo_h_${id}`;
   }
+  function sanitizeSessionContent(value) {
+    return value
+      .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[adresse e-mail masquee]')
+      .replace(/(?:\+33|0)(?:[ .-]?\d){9}\b/g, '[numero de telephone masque]')
+      .replace(/\b(?:mot de passe|password)\b\s*(?:=|:)\s*[^\s,;!?]+/gi, 'mot de passe [masque]');
+  }
+  function sanitizeSessionHistory(messages) {
+    return messages
+      .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .map(m => ({ role: m.role, content: sanitizeSessionContent(m.content) }));
+  }
   function saveHistory() {
-    try { sessionStorage.setItem(_sessionKey(), JSON.stringify(history.slice(-14))); } catch {}
+    try { sessionStorage.setItem(_sessionKey(), JSON.stringify(sanitizeSessionHistory(history.slice(-14)))); } catch {}
   }
   function loadHistory() {
     try {
@@ -446,7 +467,7 @@
       if (!raw) return;
       const parsed = JSON.parse(raw);
       history = Array.isArray(parsed)
-        ? parsed.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        ? sanitizeSessionHistory(parsed)
         : [];
     } catch {
       history = [];
@@ -460,7 +481,8 @@
   // enfant en série → célébration streak.
   // hints efficaces → continue sur la même approche.
   function _learningKey() {
-    const id = getUrlParam('id') || getUrlParam('m') || 'global';
+    const context = getMiloPageContext();
+    const id = context.activityReference || context.moduleReference || context.currentModule || 'global';
     return `milo_learn_${id}`;
   }
   function getSessionLearning() {
@@ -610,6 +632,11 @@
     return bub;
   }
 
+  function restoreHistory() {
+    history.forEach(message => addBubble(message.role, message.content));
+  }
+  restoreHistory();
+
   function addQuickReplies(reply) {
     const isCelebrate  = /bravo|félicit|génial|excellent|parfait|t['']as trouv|c['']est exact/i.test(reply);
     const isErrorExpl  = /pas tout à fait|mauvais|incorrect|c'?était faux|erreur|en réalité|en fait|c'?est pour [çca]a|parce que/i.test(reply);
@@ -667,9 +694,8 @@
   }
 
   // ── Mini-quiz de révision (répétition espacée, 0 appel IA) ──────────────────
-  // À l'ouverture, si un concept vu il y a ≥3 jours est "dû", Milo propose de le
-  // retester. L'enfant s'auto-évalue, Milo rappelle la définition, et le souvenir
-  // est réactivé côté serveur pour ne pas être redemandé tout de suite.
+  // A future shared revision model may offer reminders here. Until then, the
+  // widget keeps only short-term data in sessionStorage.
   let _revisionOffered = false;
   async function offerRevision() {
     if (_revisionOffered || _pendingWrongMsg || history.length) return;
@@ -808,12 +834,25 @@
     setCharState('think');
     setStatus('Milo réfléchit…');
 
-    const currentModule = getUrlParam('m'), activityId = getUrlParam('id');
+    const context = getMiloPageContext();
+    const rawQuestion = window.MILO_CURRENT_QUESTION;
     let res;
     try {
-      res = await (typeof askAssistant==='function'
-        ? askAssistant(msg, history, currentModule, activityId)
-        : fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({message:msg,history,currentModule,activityId,currentQuestion:window.MILO_CURRENT_QUESTION||null,sessionLearning:getSessionLearning()})}).then(r=>r.json()));
+      res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          message: msg,
+          history,
+          currentModule: context.currentModule,
+          moduleReference: context.moduleReference,
+          activityReference: context.activityReference,
+          currentQuestion: rawQuestion && typeof rawQuestion.text === 'string'
+            ? { text: rawQuestion.text }
+            : null,
+        }),
+      }).then((response) => response.json());
     } catch { res={error:'Serveur injoignable.'}; }
 
     typing.remove();

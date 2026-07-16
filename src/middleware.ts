@@ -7,9 +7,24 @@ import type { UserRole } from '@/types/auth';
 // Route sur laquelle le middleware s'applique (toutes les routes sauf fichiers statiques et API)
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|images|logo.ico|logo.webp|ai-widget.js).*)',
     ],
 };
+
+// Anciennes maquettes HTML enfant : elles sont remplacees par les routes Next.js
+// et ne doivent plus etre servies directement.
+const legacyChildPages = new Set([
+    '/ateliers-enfant.html',
+    '/badges-enfant.html',
+    '/espace-enfant.html',
+    '/exercice.html',
+    '/gestion-enfant.html',
+    '/lecon.html',
+    '/module.html',
+    '/profil-enfant.html',
+    '/quiz.html',
+    '/video.html',
+]);
 
 export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
@@ -43,12 +58,21 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     const pathname = url.pathname;
 
+    if (legacyChildPages.has(pathname)) {
+        url.pathname = '/enfant';
+        return NextResponse.redirect(url);
+    }
+
     // Détection des routes privées (/admin, /membre...)
     const privateRoutes = ['/partenaire', '/membre', '/etudiant', '/intervenant', '/enfant', '/admin', '/benevole'];
     const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
     // Si non connecté et tente d'aller sur une page privée -> Redirection /login
     if (!user) {
+        if (pathname === '/assistant.html') {
+            url.pathname = '/enfant/assistant';
+            return NextResponse.redirect(url);
+        }
         if (isPrivateRoute) {
             url.pathname = '/login';
             return NextResponse.redirect(url);
@@ -78,6 +102,11 @@ export async function middleware(request: NextRequest) {
             return redirectUserToDefaultDashboard(userRole, url);
         }
         url.pathname = '/';
+        return NextResponse.redirect(url);
+    }
+
+    if (pathname === '/assistant.html') {
+        url.pathname = '/enfant/assistant';
         return NextResponse.redirect(url);
     }
 
