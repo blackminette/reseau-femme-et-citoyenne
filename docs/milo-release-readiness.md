@@ -7,7 +7,7 @@ Il ne remplace pas le smoke test de production dans
 
 ## Perimetre verifie
 
-- Branche : `feat/milo-runtime-next`
+- Integration : PR 28 fusionnee dans `main` via le commit `08b5b19`
 - Pull request : https://github.com/blackminette/reseau-femme-et-citoyenne/pull/28
 - Correctif de chargement du widget : `d49f368 fix(milo): charger le widget dans l'espace enfant`
 - Correctif de controle d'origine : `3dac33c fix(milo): securiser la verification d'origine`
@@ -46,11 +46,12 @@ et les erreurs Gemini `429` et `503`. Ils couvrent aussi le rejet d'une origine
 forgee via `x-forwarded-host` et d'une requete navigateur `cross-site` sans
 en-tete `Origin`.
 
-## Etat de la pull request
+## Etat de l integration
 
-La PR 28 est ouverte, sans conflit et ses deux executions de CI sont en
-succes. La branche locale est synchronisee avec
-`origin/feat/milo-runtime-next` au moment de ce controle.
+La PR 28 est fusionnee dans `main` via `08b5b19`. Ses deux executions de CI
+"Tests et build Milo" sont en succes. Toute correction ulterieure doit etre
+proposee dans une nouvelle branche et une nouvelle pull request, sans
+reecrire l historique de la branche deja fusionnee.
 
 ## Problemes externes a traiter avant une livraison globale
 
@@ -83,14 +84,15 @@ valides.
 
 ## Decision de livraison
 
-Milo est pret pour revue et fusion via la PR 28. La mise en production doit
-encore respecter le smoke test de production et recevoir les validations de
-l'equipe sur la migration Prisma et sur le lint global. Aucun tag de version ne
-doit etre cree avant ces validations.
+Milo est integre dans `main`. La mise en production doit encore respecter le
+smoke test de production et recevoir les validations de l'equipe sur la
+migration Prisma et sur le lint global. Aucun tag de version ne doit etre cree
+avant ces validations.
 
 ## Retour arriere
 
 La PR Milo ne contient pas de migration. En cas de regression, redeployer le
-dernier commit valide ou revertir les commits Milo concernes, puis verifier
-`/login`, `/enfant`, `/enfant/assistant` et `/api/ai-chat` selon la procedure
-de `docs/milo-production-smoke-test.md`.
+dernier commit valide ou revertir le merge de la PR 28 depuis `main`, puis
+verifier `/login`, `/enfant`, `/enfant/assistant` et `/api/ai-chat` selon la
+procedure de `docs/milo-production-smoke-test.md`. Cette operation doit etre
+validee par le responsable de l integration.
